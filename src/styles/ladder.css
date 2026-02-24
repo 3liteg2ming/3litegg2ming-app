@@ -299,7 +299,7 @@
   text-overflow: ellipsis;
   max-width: 32%;
   text-shadow: 0 2px 8px rgba(0,0,0,0.25);
-  display: block;
+  display: none;
 }
 
 /* Right columns */
@@ -444,7 +444,7 @@
   .cPos { font-size: 16px; color: rgba(255,255,255,0.60); }
   .clubLogo { width: 58px; height: 58px; }
   .logoImg { width: 42px; height: 42px; }
-  .clubName { font-size: 14px; max-width: 28%; }
+  .clubName { font-size: 14px; max-width: 28%; display: none; }
   .cClub { height: 68px; padding: 5px 12px; }
   .egAflRow { min-height: 80px; grid-template-columns: 36px 1fr auto; gap: 10px; padding: 6px 14px; }
 
