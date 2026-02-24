@@ -199,10 +199,10 @@
   display: grid;
   grid-template-columns: 40px 1fr auto;
   align-items: center;
-  gap: 14px;
-  padding: 8px 18px;
+  gap: 12px;
+  padding: 6px 16px;
   margin-bottom: 10px;
-  border-radius: 18px;
+  border-radius: 16px;
   position: relative;
   background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
   border: 1px solid rgba(255,255,255,0.12);
@@ -210,7 +210,7 @@
   backdrop-filter: blur(10px);
   overflow: visible;
   box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-  min-height: 88px;
+  min-height: 86px;
 }
 
 /* Team color tint background */
@@ -243,14 +243,15 @@
 
 /* Club pill - now stretches to fill space */
 .cClub {
-  height: 76px;
-  border-radius: 18px;
+  height: 74px;
+  border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.15);
   background: linear-gradient(90deg, rgba(0,0,0,0.1), rgba(0,0,0,0.05));
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 6px 18px;
+  justify-content: flex-start;
+  gap: 14px;
+  padding: 5px 14px;
   position: relative;
   overflow: visible;
   min-width: 0;
@@ -258,24 +259,24 @@
 }
 
 .clubLogo {
-  width: 68px;
-  height: 68px;
+  width: 64px;
+  height: 64px;
   border-radius: 999px;
   display: grid;
   place-items: center;
   background: linear-gradient(135deg, var(--teamA), var(--teamB));
-  border: 2px solid rgba(255,255,255,0.3);
-  flex: 0 0 68px;
+  border: 2px solid rgba(255,255,255,0.25);
+  flex: 0 0 64px;
   position: relative;
   z-index: 2;
-  box-shadow: 0 8px 28px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.15);
   align-self: center;
   overflow: visible;
 }
 
 .logoImg {
-  width: 50px;
-  height: 50px;
+  width: 46px;
+  height: 46px;
   object-fit: contain;
   display: block;
   max-width: 100%;
@@ -435,11 +436,11 @@
   }
 
   .cPos { font-size: 16px; color: rgba(255,255,255,0.60); }
-  .clubLogo { width: 62px; height: 62px; flex: 0 0 62px; }
-  .logoImg { width: 44px; height: 44px; }
-  .clubName { font-size: 17px; }
-  .cClub { height: 70px; gap: 14px; padding: 6px 14px; }
-  .egAflRow { min-height: 80px; grid-template-columns: 36px 1fr auto; }
+  .clubLogo { width: 58px; height: 58px; flex: 0 0 58px; }
+  .logoImg { width: 42px; height: 42px; }
+  .clubName { font-size: 16px; }
+  .cClub { height: 68px; gap: 12px; padding: 5px 12px; }
+  .egAflRow { min-height: 80px; grid-template-columns: 36px 1fr auto; gap: 10px; padding: 6px 14px; }
 
   .hCols[data-mode="SUMMARY"],
   .cCols[data-mode="SUMMARY"] {
