@@ -177,16 +177,11 @@ const LadderRow = memo(function LadderRow({ entry, mode }: { entry: LadderEntry;
 
         {mode === 'EXTENDED' && (
           <>
-            <div className="cell"><div className="k">P</div><div className="v">{entry.played}</div></div>
             <div className="cell"><div className="k">W</div><div className="v">{entry.wins}</div></div>
             <div className="cell"><div className="k">L</div><div className="v">{entry.losses}</div></div>
             <div className="cell"><div className="k">D</div><div className="v">{entry.draws}</div></div>
-            <div className="cell"><div className="k">PF</div><div className="v">{entry.pf}</div></div>
             <div className="cell"><div className="k">PA</div><div className="v">{entry.pa}</div></div>
-            <div className="cell"><div className="k">Pts</div><div className="v vPts">{entry.points}</div></div>
-
-            {/* FIXED: JSX cannot contain "</" in raw text */}
-            <div className="cell"><div className="k">%</div><div className="v">{entry.percentage.toFixed(1)}</div></div>
+            <div className="cell"><div className="k">PF</div><div className="v">{entry.pf}</div></div>
           </>
         )}
 
@@ -227,7 +222,7 @@ export default function LadderPage() {
 
   const headerCols = useMemo(() => {
     if (mode === 'SUMMARY') return ['P', 'Pts', '%'];
-    if (mode === 'EXTENDED') return ['P', 'W', 'L', 'D', 'PF', 'PA', 'Pts', '%'];
+    if (mode === 'EXTENDED') return ['W', 'L', 'D', 'PA', 'PF'];
     return ['Last 5', 'Odds'];
   }, [mode]);
 
