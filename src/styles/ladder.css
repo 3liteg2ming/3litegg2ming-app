@@ -1,0 +1,393 @@
+/* =========================
+   Elite Gaming — Ladder (AFL-style)
+   ========================= */
+
+.ladderPage {
+  width: 100%;
+  min-height: 100%;
+  padding: 0 0 20px;
+  color: rgba(255,255,255,0.92);
+}
+
+/* IMPORTANT: stop any parent clipping */
+.ladderWrap {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 14px 14px 0;
+}
+
+/* HERO (keeps your existing style hooks) */
+.ladderHero {
+  border-radius: 22px;
+  padding: 18px 18px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+}
+
+.ladderHero .heroTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.ladderHero .kicker {
+  font-size: 14px;
+  letter-spacing: 0.4px;
+  color: rgba(255,255,255,0.62);
+  font-weight: 700;
+}
+
+.ladderHero .title {
+  font-size: 48px;
+  line-height: 1;
+  font-weight: 900;
+  margin-top: 6px;
+}
+
+.ladderHero .rule {
+  height: 3px;
+  width: 82px;
+  margin-top: 10px;
+  border-radius: 999px;
+  background: rgba(245,196,0,0.95);
+  box-shadow: 0 0 18px rgba(245,196,0,0.25);
+}
+
+.ladderHero .hint {
+  margin-top: 10px;
+  font-size: 16px;
+  color: rgba(255,255,255,0.55);
+  font-weight: 700;
+}
+
+.ladderHero .seasonPill {
+  flex: 0 0 auto;
+  background: linear-gradient(180deg, rgba(245,196,0,1), rgba(212,160,0,1));
+  color: rgba(0,0,0,0.88);
+  font-weight: 900;
+  border-radius: 999px;
+  padding: 10px 16px;
+  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.35);
+}
+
+/* TABS — smaller + AFL-like */
+.aflTabsWrap {
+  margin-top: 14px;
+}
+
+.aflTabs {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.aflTabs .t {
+  appearance: none;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.78);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: 0.2px;
+  line-height: 1;
+}
+
+.aflTabs .t.isOn {
+  background: rgba(245,196,0,0.14);
+  border-color: rgba(245,196,0,0.55);
+  color: rgba(245,196,0,0.98);
+  box-shadow: 0 0 0 1px rgba(245,196,0,0.12) inset;
+}
+
+/* TABLE WRAP */
+.aflTable {
+  margin-top: 12px;
+  border-radius: 18px;
+  background: rgba(10,12,16,0.34); /* lighter than before */
+  border: 1px solid rgba(255,255,255,0.10);
+  overflow: hidden;
+}
+
+.aflScroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.aflInner {
+  width: 100%;
+}
+
+/* Head row */
+.aflHead {
+  display: grid;
+  grid-template-columns: 64px 260px 1fr;
+  align-items: center;
+  gap: 0;
+  padding: 10px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03);
+}
+
+.hPos, .hClub {
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 1.2px;
+  color: rgba(255,255,255,0.58);
+  text-transform: none;
+}
+
+.hCols {
+  display: grid;
+  align-items: center;
+  justify-items: end;
+  gap: 8px;
+}
+
+.hCols[data-mode="SUMMARY"] {
+  grid-template-columns: repeat(3, minmax(56px, 1fr));
+}
+
+.hCols[data-mode="EXTENDED"] {
+  grid-template-columns: repeat(8, minmax(56px, 1fr));
+}
+
+.hCols[data-mode="FORM"] {
+  grid-template-columns: minmax(220px, 1fr) minmax(110px, 140px);
+}
+
+.hCols .h {
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.52);
+  justify-self: end;
+}
+
+/* Rows */
+.aflList {
+  display: flex;
+  flex-direction: column;
+}
+
+.loading {
+  padding: 18px;
+  color: rgba(255,255,255,0.65);
+  font-weight: 800;
+}
+
+/* One row container */
+.egAflRow {
+  display: grid;
+  grid-template-columns: 64px 260px 1fr;
+  align-items: center;
+  padding: 10px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.09);
+  position: relative;
+  background: rgba(255,255,255,0.015);
+}
+
+/* Make left two columns sticky inside horizontal scroll */
+.egAflRow .cPos,
+.aflHead .hPos {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: rgba(12,14,18,0.62);
+}
+
+.egAflRow .cClub,
+.aflHead .hClub {
+  position: sticky;
+  left: 64px;
+  z-index: 3;
+  background: rgba(12,14,18,0.62);
+}
+
+/* Pos */
+.cPos {
+  font-size: 30px;
+  font-weight: 950;
+  color: rgba(255,255,255,0.92);
+  padding-left: 6px;
+}
+
+/* Club pill */
+.cClub {
+  height: 54px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: linear-gradient(90deg, rgba(255,255,255,0.035), rgba(255,255,255,0.018));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.clubTint {
+  position: absolute;
+  inset: -40px -60px -40px -60px;
+  background:
+    radial-gradient(120px 120px at 20% 50%, var(--teamA), transparent 70%),
+    radial-gradient(180px 180px at 55% 50%, var(--teamB), transparent 70%);
+  filter: saturate(1.15);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.cClub::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+  pointer-events: none;
+}
+
+.clubLogo {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,0.22);
+  border: 1px solid rgba(255,255,255,0.14);
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.logoImg {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.clubName {
+  position: relative;
+  z-index: 1;
+  font-size: 28px;
+  font-weight: 950;
+  color: rgba(255,255,255,0.94);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 190px;
+}
+
+/* Right columns */
+.cCols {
+  display: grid;
+  align-items: center;
+  justify-items: end;
+  gap: 8px;
+  padding-left: 10px;
+}
+
+.cCols[data-mode="SUMMARY"] {
+  grid-template-columns: repeat(3, minmax(56px, 1fr));
+}
+
+.cCols[data-mode="EXTENDED"] {
+  grid-template-columns: repeat(8, minmax(56px, 1fr));
+}
+
+.cCols[data-mode="FORM"] {
+  grid-template-columns: minmax(220px, 1fr) minmax(110px, 140px);
+}
+
+.cell {
+  width: 100%;
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+
+.cell .k {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1.2px;
+  color: rgba(255,255,255,0.45);
+}
+
+.cell .v {
+  font-size: 22px;
+  font-weight: 950;
+  color: rgba(255,255,255,0.92);
+}
+
+.cell .vPts {
+  color: rgba(245,196,0,0.98);
+  text-shadow: 0 0 16px rgba(245,196,0,0.15);
+}
+
+/* Form column */
+.formCol .k,
+.oddsCol .k {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1.2px;
+  color: rgba(255,255,255,0.45);
+  text-align: right;
+  margin-bottom: 6px;
+}
+
+.dots {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 2px rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.12);
+}
+
+.dot.w { background: rgba(36, 196, 108, 0.95); }
+.dot.l { background: rgba(255, 72, 72, 0.95); }
+.dot.d { background: rgba(245, 196, 0, 0.95); }
+.dot.n { background: rgba(255,255,255,0.18); }
+
+.oddsPill {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: 22px;
+  font-weight: 950;
+  color: rgba(255,255,255,0.92);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+/* Bottom spacer */
+.safeBottom,
+.ladderSafeBottom {
+  height: 110px;
+}
+
+/* Mobile tightening */
+@media (max-width: 420px) {
+  .ladderWrap { padding: 12px 12px 0; }
+  .ladderHero .title { font-size: 44px; }
+  .aflHead { grid-template-columns: 56px 236px 1fr; }
+  .egAflRow { grid-template-columns: 56px 236px 1fr; }
+  .egAflRow .cClub, .aflHead .hClub { left: 56px; }
+  .clubName { font-size: 26px; max-width: 170px; }
+  .cell .v { font-size: 20px; }
+  .dot { width: 15px; height: 15px; }
+}

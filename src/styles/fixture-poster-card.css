@@ -1,0 +1,491 @@
+/* src/styles/fixture-poster-card.css */
+
+.fxPosterCard,
+.fxPosterCard * {
+  box-sizing: border-box;
+}
+
+.fxPosterCard {
+  /* ===== SIZING / TUNING ===== */
+  --padX: 18px;
+  --radius: 34px;
+
+  /* Team tiles */
+  --tile: 104px;
+  --logo: 72px;
+  --gap: 26px;
+
+  /* Score size (main knob) */
+  --score: clamp(20px, 3.2vw, 34px);
+  --dash: clamp(14px, 2.0vw, 18px);
+
+  /* Minor row (goals.behinds) */
+  --minor: 14px;
+
+  /* Coaches */
+  --coachH: 62px;
+  --coachRadius: 18px;
+
+  /* Status pill */
+  --statusH: 40px;
+  --statusW: 200px;
+
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius);
+  overflow: hidden;
+
+  color: rgba(255, 255, 255, 0.92);
+
+  background:
+    radial-gradient(ellipse 55% 75% at 15% 45%, rgba(var(--homeR), var(--homeG), var(--homeB), 0.24) 0%, rgba(0,0,0,0) 70%),
+    radial-gradient(ellipse 55% 75% at 85% 45%, rgba(var(--awayR), var(--awayG), var(--awayB), 0.24) 0%, rgba(0,0,0,0) 70%),
+    linear-gradient(145deg, rgba(26,26,44,0.60) 0%, rgba(12,12,20,0.72) 100%);
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(40px) saturate(1.4);
+  -webkit-backdrop-filter: blur(40px) saturate(1.4);
+
+  box-shadow:
+    0 25px 60px -12px rgba(0,0,0,0.70),
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    inset 0 -1px 0 rgba(255,255,255,0.04);
+}
+
+/* ===== STATUS PILL (top drop-down glass) ===== */
+.fxPosterCard__statusWrap{
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  pointer-events: none;
+}
+
+.fxPosterCard__statusPill{
+  width: var(--statusW);
+  height: var(--statusH);
+  border-radius: 0 0 20px 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  box-shadow:
+    0 16px 30px rgba(0,0,0,0.32),
+    inset 0 1px 0 rgba(255,255,255,0.10);
+}
+
+.fxPosterCard__statusDot{
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: #ff4d4d;
+  box-shadow: 0 0 16px rgba(255,77,77,0.45);
+}
+
+.fxPosterCard--upcoming .fxPosterCard__statusDot{
+  background: #f5c400;
+  box-shadow: 0 0 16px rgba(245,196,0,0.45);
+}
+
+.fxPosterCard--live .fxPosterCard__statusDot{
+  background: #f5c400;
+  box-shadow: 0 0 16px rgba(245,196,0,0.45);
+  animation: fxPulse 1.8s ease-in-out infinite;
+}
+
+.fxPosterCard__statusText{
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.78);
+  line-height: 1;
+}
+
+/* ===== MAIN GRID ===== */
+.fxPosterCard__main{
+  position: relative;
+  z-index: 3;
+
+  display: grid;
+  grid-template-columns: var(--tile) minmax(0, 1fr) var(--tile);
+  align-items: center;
+  justify-items: center;
+  column-gap: var(--gap);
+
+  /* Push content down so it doesn't clash with status pill */
+  padding: calc(var(--statusH) + 22px) var(--padX) 10px;
+
+}
+
+/* ===== TEAM SIDES ===== */
+.fxPosterCard__side{
+  width: var(--tile);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.fxPosterCard__teamGlow{
+  position: absolute;
+  inset: -18px;
+  border-radius: 999px;
+  filter: blur(22px);
+  opacity: 0.38;
+  pointer-events: none;
+}
+
+.fxPosterCard__side--home .fxPosterCard__teamGlow{
+  background: radial-gradient(circle,
+    rgba(var(--homeR), var(--homeG), var(--homeB), 0.62) 0%,
+    rgba(0,0,0,0) 70%);
+}
+
+.fxPosterCard__side--away .fxPosterCard__teamGlow{
+  background: radial-gradient(circle,
+    rgba(var(--awayR), var(--awayG), var(--awayB), 0.62) 0%,
+    rgba(0,0,0,0) 70%);
+}
+
+.fxPosterCard__teamBox{
+  width: var(--tile);
+  height: var(--tile);
+  border-radius: 26px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.12);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  box-shadow:
+    0 0 30px -5px rgba(255,255,255,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.fxPosterCard__logo{
+  width: var(--logo);
+  height: var(--logo);
+  object-fit: contain;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,0.45));
+}
+
+.fxPosterCard__abbr{
+  margin-top: 10px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+}
+
+/* ===== CENTER ===== */
+.fxPosterCard__center{
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.fxPosterCard__scoreRow{
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.fxPosterCard__score{
+  font-size: var(--score);
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: -0.03em;
+  color: rgba(255,255,255,0.96);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 14px 26px rgba(0,0,0,0.40);
+}
+
+.fxPosterCard__score--placeholder{
+  color: rgba(255,255,255,0.22);
+}
+
+.fxPosterCard__score--dim{
+  color: rgba(255,255,255,0.40);
+}
+
+.fxPosterCard__dash{
+  font-size: var(--dash);
+  font-weight: 500;
+  color: rgba(255,255,255,0.26);
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+.fxPosterCard__minor{
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  padding: 8px 14px;
+  border-radius: 999px;
+
+  background: rgba(0,0,0,0.20);
+  border: 1px solid rgba(255,255,255,0.10);
+
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.fxPosterCard__minorVal{
+  font-size: var(--minor);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.62);
+  font-variant-numeric: tabular-nums;
+}
+
+.fxPosterCard__minorVal--placeholder{
+  color: rgba(255,255,255,0.26);
+}
+
+.fxPosterCard__minorDivider{
+  width: 1px;
+  height: 14px;
+  background: rgba(255,255,255,0.14);
+}
+
+/* UPCOMING: VS only */
+.fxPosterCard__vsOnly{
+  font-size: clamp(18px, 3.6vw, 26px);
+  font-weight: 950;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.60);
+  text-shadow: 0 16px 30px rgba(0,0,0,0.40);
+  padding-top: 10px;
+}
+
+/* ===== COACHES ===== */
+.fxPosterCard__coachesLabel{
+  position: relative;
+  z-index: 3;
+  text-align: center;
+  margin-top: 2px;
+  padding: 6px 0 8px;
+
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.34);
+}
+
+.fxPosterCard__coachRow{
+  position: relative;
+  z-index: 3;
+
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+
+  padding: 0 var(--padX) 10px;
+}
+
+.fxPosterCard__coachCard{
+  height: var(--coachH);
+  border-radius: var(--coachRadius);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.fxPosterCard__coachCard--home{
+  background:
+    linear-gradient(180deg, rgba(var(--homeR), var(--homeG), var(--homeB), 0.10) 0%, rgba(255,255,255,0.04) 100%);
+}
+
+.fxPosterCard__coachCard--away{
+  background:
+    linear-gradient(180deg, rgba(var(--awayR), var(--awayG), var(--awayB), 0.10) 0%, rgba(255,255,255,0.04) 100%);
+}
+
+.fxPosterCard__coachName{
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.62);
+  line-height: 1.1;
+}
+
+.fxPosterCard__coachPsnRow{
+  margin-top: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.fxPosterCard__psIconImg{
+  height: 22px;
+  width: auto;
+  max-width: 30px;
+  object-fit: contain;
+  display: block;
+  opacity: 0.92;
+}
+
+.fxPosterCard__psIconImg--white{
+  filter: brightness(0) invert(1);
+}
+
+.fxPosterCard__coachPsn{
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.62);
+  line-height: 1;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===== VENUE / RESULT ===== */
+.fxPosterCard__venue{
+  position: relative;
+  z-index: 3;
+  text-align: center;
+
+  padding: 10px var(--padX) 4px;
+
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: rgba(255,255,255,0.70);
+}
+
+.fxPosterCard__result{
+  position: relative;
+  z-index: 3;
+  text-align: center;
+
+  padding: 0 var(--padX) 14px;
+
+  font-size: 16px;
+  font-weight: 950;
+  color: rgba(245,196,0,0.92);
+}
+
+/* ===== CTA ===== */
+.fxPosterCard__cta{
+  position: relative;
+  z-index: 4;
+
+  width: 100%;
+  border: 0;
+  cursor: pointer;
+
+  padding: 12px 18px;
+  border-radius: 0 0 var(--radius) var(--radius);
+
+  font-size: 14px;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+
+  color: rgba(10,12,18,0.92);
+
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.00) 55%),
+    linear-gradient(180deg, #F7D24A 0%, #F5C400 45%, #E2A800 100%);
+
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.26),
+    inset 0 -10px 18px rgba(0,0,0,0.08),
+    0 -10px 30px rgba(0,0,0,0.16);
+}
+
+.fxPosterCard__cta::before{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  top:0;
+  height:1px;
+  background: rgba(255,255,255,0.16);
+  opacity: 0.7;
+}
+
+.fxPosterCard__cta:active{
+  filter: brightness(0.985);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.20),
+    inset 0 0 0 999px rgba(0,0,0,0.04);
+}
+
+.fxPosterCard__cta:focus-visible{
+  outline: 2px solid rgba(255,255,255,0.35);
+  outline-offset: -4px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 420px){
+  .fxPosterCard{
+    --padX: 16px;
+    --tile: 92px;
+    --logo: 66px;
+    --gap: 18px;
+
+    /* keep scores readable on phones */
+    --score: clamp(22px, 8.0vw, 36px);
+    --dash: clamp(14px, 5.0vw, 18px);
+
+    --statusW: 214px;
+    --coachH: 58px;
+  }
+
+  .fxPosterCard__coachPsn{
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .fxPosterCard--live .fxPosterCard__statusDot{ animation: none !important; }
+}
+
+@keyframes fxPulse{
+  0%,100%{ opacity: 1; }
+  50%{ opacity: 0.35; }
+}

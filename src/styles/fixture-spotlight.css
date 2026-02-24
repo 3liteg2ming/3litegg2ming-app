@@ -1,0 +1,397 @@
+/* src/styles/fixture-spotlight.css
+   ✅ Fixes clipping on Fixtures page
+   ✅ Uses fixed side columns + flexible centre so it NEVER overflows
+   ✅ PSN glass pills now match side-column width (NOT long)
+   ✅ Adds result pill ("Adelaide by 10") without date/time
+*/
+
+.fxPoster,
+.fxPoster *{
+  box-sizing: border-box;
+}
+
+.fxPoster{
+  /* responsive sizing variables */
+  --fxPadX: clamp(12px, 3.6vw, 18px);
+  --fxGap: clamp(10px, 2.8vw, 14px);
+  --fxSide: clamp(74px, 18.5vw, 118px); /* side column width */
+  --fxBox: var(--fxSide);               /* logo box size */
+  --fxScore: clamp(30px, 9.2vw, 58px);  /* score size */
+
+  position: relative;
+  width: 100%;
+  border-radius: 28px;
+  overflow: hidden;
+  color: rgba(255,255,255,0.92);
+
+  background:
+    radial-gradient(70% 90% at 14% 50%, rgba(var(--homeR), var(--homeG), var(--homeB), 0.30) 0%, rgba(0,0,0,0) 70%),
+    radial-gradient(70% 90% at 86% 50%, rgba(var(--awayR), var(--awayG), var(--awayB), 0.30) 0%, rgba(0,0,0,0) 70%),
+    linear-gradient(145deg, rgba(28,30,46,0.62) 0%, rgba(10,11,18,0.76) 100%);
+
+  border: 1px solid rgba(255,255,255,0.14);
+  backdrop-filter: blur(34px) saturate(1.35);
+  -webkit-backdrop-filter: blur(34px) saturate(1.35);
+
+  box-shadow:
+    0 24px 60px -12px rgba(0,0,0,0.72),
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    inset 0 -1px 0 rgba(255,255,255,0.05);
+}
+
+/* top gradient line */
+.fxPoster::before{
+  content:"";
+  position:absolute;
+  left:0; right:0; top:0;
+  height:2px;
+  background: linear-gradient(
+    90deg,
+    rgba(var(--homeR), var(--homeG), var(--homeB), 0.95),
+    rgba(255,255,255,0.18) 50%,
+    rgba(var(--awayR), var(--awayG), var(--awayB), 0.95)
+  );
+  z-index: 3;
+}
+
+/* subtle side rails */
+.fxPoster::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:
+    linear-gradient(180deg, rgba(var(--homeR), var(--homeG), var(--homeB), 0.55), rgba(0,0,0,0) 65%) left/2px 100% no-repeat,
+    linear-gradient(180deg, rgba(var(--awayR), var(--awayG), var(--awayB), 0.55), rgba(0,0,0,0) 65%) right/2px 100% no-repeat;
+  z-index: 2;
+  opacity: 0.9;
+}
+
+/* shimmer */
+.fxPoster__halo{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index: 1;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255,255,255,0.04) 46%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.04) 54%,
+    transparent 60%
+  );
+  background-size: 200% 100%;
+  animation: fxPoster-shimmer 4.4s ease-in-out infinite;
+  opacity: 0.75;
+}
+@keyframes fxPoster-shimmer{
+  0%{ background-position: 200% 0; }
+  100%{ background-position: -200% 0; }
+}
+
+/* optional debug badge (DEV only) */
+.fxPoster__debug{
+  position:absolute;
+  right: 12px;
+  top: 10px;
+  z-index: 6;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.65);
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 999px;
+  padding: 6px 10px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* top row */
+.fxPoster__top{
+  position: relative;
+  z-index: 4;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 16px var(--fxPadX) 10px;
+}
+.fxPoster__topLeft,
+.fxPoster__topRight{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+.fxPoster__bolt{
+  font-size: 12px;
+  color: var(--refGold, #F5C400);
+  opacity: 0.95;
+}
+.fxPoster__topText{
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.78);
+}
+.fxPoster__dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(245,196,0,0.95);
+}
+.fxPoster__dot--final{ background: #ef4444; }
+.fxPoster__dot--live{ background: #f59e0b; animation: fxPoster-dot 1.2s ease-in-out infinite; }
+.fxPoster__dot--upcoming{ background: rgba(245,196,0,0.95); }
+@keyframes fxPoster-dot{
+  0%,100%{ transform: scale(1); opacity: 0.8; }
+  50%{ transform: scale(1.25); opacity: 1; }
+}
+
+/* title */
+.fxPoster__title{
+  position: relative;
+  z-index: 4;
+  text-align:center;
+  padding: 0 var(--fxPadX) 14px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.42);
+}
+
+/* ✅ CRITICAL: fixed side columns + flexible centre (never overflows) */
+.fxPoster__main{
+  position: relative;
+  z-index: 4;
+  display:grid;
+  grid-template-columns: var(--fxSide) minmax(0, 1fr) var(--fxSide);
+  align-items:center;
+  column-gap: var(--fxGap);
+  padding: 0 var(--fxPadX) 10px;
+}
+
+.fxPoster__side{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  min-width: 0;
+}
+
+.fxPoster__teamBox{
+  width: var(--fxBox);
+  height: var(--fxBox);
+  max-width: 100%;
+  border-radius: 20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.14);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.fxPoster__logoWrap{
+  width: 78%;
+  height: 78%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.fxPoster__logo{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,0.35));
+}
+
+.fxPoster__abbr{
+  margin-top: 10px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.50);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+  text-align:center;
+}
+
+/* centre scores */
+.fxPoster__center{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-width: 0;
+}
+
+.fxPoster__scorePill{
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.fxPoster__scoreNum{
+  font-size: var(--fxScore);
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: -0.03em;
+  color: rgba(255,255,255,0.98);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 16px 30px rgba(0,0,0,0.34);
+}
+
+.fxPoster__scoreNum--win{
+  color: var(--refGold, #F5C400);
+  text-shadow:
+    0 16px 30px rgba(0,0,0,0.38),
+    0 0 26px rgba(245,196,0,0.25);
+}
+
+.fxPoster__scoreDash{
+  font-size: clamp(16px, 2.4vw, 22px);
+  font-weight: 300;
+  color: rgba(255,255,255,0.20);
+}
+
+.fxPoster__minor{
+  margin-top: 10px;
+  display:flex;
+  align-items:center;
+  gap: 14px;
+  color: rgba(255,255,255,0.42);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.fxPoster__minorVal{ font-size: 16px; }
+.fxPoster__minorDivider{
+  width: 1px;
+  height: 16px;
+  background: rgba(255,255,255,0.12);
+}
+
+/* =========================================================
+   ✅ FIX: PSN row now uses the SAME 3-col grid as main.
+   This stops the glass pills being long / stretched.
+   ========================================================= */
+.fxPoster__psnRow{
+  position: relative;
+  z-index: 4;
+
+  display:grid;
+  grid-template-columns: var(--fxSide) minmax(0, 1fr) var(--fxSide);
+  column-gap: var(--fxGap);
+  align-items:center;
+
+  padding: 10px var(--fxPadX) 12px;
+}
+
+.fxPoster__psnRow .fxPoster__psn:nth-child(1){
+  grid-column: 1;
+  justify-self: start;
+}
+
+.fxPoster__psnRow .fxPoster__psn:nth-child(2){
+  grid-column: 3;
+  justify-self: end;
+}
+
+.fxPoster__psn{
+  width: 100%;                /* ✅ fills side column only */
+  max-width: var(--fxSide);   /* ✅ hard cap */
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  padding: 10px 10px;         /* ✅ slightly tighter */
+  border-radius: 16px;
+
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.fxPoster__psIconWrap{
+  width: 22px;
+  height: 22px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color: rgba(255,255,255,0.72);
+  flex: 0 0 auto;
+}
+.fxPoster__psIconSvg{ width: 22px; height: 22px; display:block; }
+
+.fxPoster__psnText{
+  min-width:0;
+  font-size: 13px;            /* ✅ a touch smaller looks more premium */
+  font-weight: 750;
+  color: rgba(255,255,255,0.62);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ✅ result pill ("Adelaide by 10") */
+.fxPoster__resultRow{
+  position: relative;
+  z-index: 4;
+  display:flex;
+  justify-content:center;
+  padding: 0 var(--fxPadX) 14px;
+}
+
+.fxPoster__resultPill{
+  max-width: 92%;
+  text-align:center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.34);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.58);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* CTA */
+.fxPoster__cta{
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  border: 0;
+  cursor: pointer;
+  padding: 18px 16px;
+  border-radius: 0 0 28px 28px;
+
+  font-size: 14px;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+
+  color: #12121a;
+  background: linear-gradient(135deg, #f5c400, #ffd54a, #f5c400);
+  box-shadow: 0 -4px 22px -4px rgba(245,196,0,0.25);
+}
+.fxPoster__cta:active{ transform: translateY(1px); }
+
+@media (max-width: 380px){
+  .fxPoster{
+    --fxSide: clamp(70px, 19vw, 110px);
+    --fxScore: clamp(28px, 9.8vw, 52px);
+  }
+  .fxPoster__minorVal{ font-size: 15px; }
+}

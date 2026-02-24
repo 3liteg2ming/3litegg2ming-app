@@ -1,0 +1,22 @@
+{
+  "season_slug": "afl26-season-two",
+  "season_name": "AFL 26 Season Two",
+  "rounds": [
+    {
+      "round": 1,
+      "matches": [
+        {
+          "home_team_slug": "adelaide",
+          "away_team_slug": "brisbane",
+          "venue": "MCG, Melbourne",
+          "start_time": "2026-03-01T09:30:00Z",
+          "status": "SCHEDULED",
+          "home_coach_name": "TBC",
+          "away_coach_name": "TBC",
+          "home_psn": "PSN",
+          "away_psn": "PSN"
+        }
+      ]
+    }
+  ]
+}

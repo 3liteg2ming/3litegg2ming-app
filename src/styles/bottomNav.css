@@ -1,0 +1,145 @@
+:root{
+  --eg-yellow:#F5C400;
+  --eg-yellow-2:#D6AA00;
+}
+
+/* IMPORTANT:
+   This nav is designed to sit inside your "phone" container (.eg-device).
+   .eg-device already acts like the app frame.
+*/
+
+.egBottomNav{
+  position: absolute;            /* ✅ inside the device, not the whole browser */
+  left: 0;
+  right: 0;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+  z-index: 9999;
+
+  display: flex;
+  justify-content: center;
+  padding: 0 14px;
+
+  pointer-events: none;
+}
+
+.egBottomNav__bar{
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  /* ✅ match device width and keep it tight */
+  width: 100%;
+  max-width: 420px;              /* phone width cap */
+  padding: 10px 10px;
+
+  border-radius: 999px;
+
+  background:
+    radial-gradient(120% 160% at 30% 20%,
+      rgba(255,255,255,0.14) 0%,
+      rgba(255,255,255,0.06) 36%,
+      rgba(0,0,0,0.10) 100%
+    ),
+    rgba(255,255,255,0.035);
+
+  border: 1px solid rgba(255,255,255,0.10);
+
+  -webkit-backdrop-filter: blur(22px) saturate(1.25);
+  backdrop-filter: blur(22px) saturate(1.25);
+
+  box-shadow:
+    0 18px 44px rgba(0,0,0,0.55),
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    inset 0 -1px 0 rgba(0,0,0,0.35);
+}
+
+/* Base item (icon-only pill) */
+.egBottomNav__item{
+  position: relative;
+  height: 48px;
+  width: 48px;
+  flex: 0 0 48px;
+
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  text-decoration: none;
+  user-select: none;
+
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.08);
+
+  transition:
+    width 180ms ease,
+    flex-basis 180ms ease,
+    transform 140ms ease,
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+
+  overflow: hidden;
+}
+
+.egBottomNav__item:hover{ transform: translateY(-1px); }
+.egBottomNav__item:active{ transform: translateY(0px) scale(0.985); }
+
+.egBottomNav__icon{
+  width: 20px;
+  height: 20px;
+  color: rgba(255,255,255,0.72);
+}
+
+.egBottomNav__label{
+  display: none;
+  font-family: ui-sans-serif, system-ui, -apple-system, "SF Pro Text", "SF Pro Display",
+               "Segoe UI", Roboto, Helvetica, Arial;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.15px;
+  white-space: nowrap;
+  color: rgba(0,0,0,0.86);
+}
+
+/* Active item expands + shows label */
+.egBottomNav__item--active{
+  width: 154px;
+  flex: 0 0 154px;
+  justify-content: flex-start;
+  padding-left: 14px;
+
+  background:
+    radial-gradient(120% 160% at 35% 20%,
+      rgba(255,255,255,0.26) 0%,
+      rgba(255,255,255,0.10) 32%,
+      rgba(0,0,0,0) 60%
+    ),
+    linear-gradient(135deg, var(--eg-yellow) 0%, var(--eg-yellow-2) 100%);
+
+  border-color: rgba(255,255,255,0.22);
+
+  box-shadow:
+    0 16px 36px rgba(245,196,0,0.18),
+    0 12px 26px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.32),
+    inset 0 -1px 0 rgba(0,0,0,0.14);
+}
+
+.egBottomNav__item--active .egBottomNav__icon{
+  color: rgba(0,0,0,0.86);
+}
+.egBottomNav__item--active .egBottomNav__label{
+  display: inline-block;
+}
+
+/* Mobile tuning */
+@media (max-width: 380px){
+  .egBottomNav{ padding: 0 10px; }
+  .egBottomNav__bar{ gap: 7px; padding: 9px 9px; max-width: 100%; }
+  .egBottomNav__item{ width: 46px; flex-basis: 46px; height: 46px; }
+  .egBottomNav__item--active{ width: 140px; flex-basis: 140px; height: 46px; padding-left: 13px; }
+  .egBottomNav__icon{ width: 19px; height: 19px; }
+}

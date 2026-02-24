@@ -1,0 +1,47 @@
+/* styles/appFrame.css - Remove white border, full bleed */
+:root {
+  --eg-device-w: 100vw;
+  --eg-device-h: 100vh;
+}
+
+.eg-viewport {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  background: #000;
+  margin: 0;
+  padding: 0;
+}
+
+/* Mobile: full width, no border */
+.eg-device {
+  width: 100vw;
+  height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  background: #000;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Desktop: still full bleed but centered */
+@media (min-width: 520px) {
+  .eg-viewport {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .eg-device {
+    width: 430px;
+    height: 100vh;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+  }
+}

@@ -1,0 +1,486 @@
+/* Stats Home — Elite Gaming Black/Glass Theme */
+
+.eg-stats-page {
+  background: linear-gradient(180deg, hsl(230 20% 6%) 0%, hsl(230 25% 4%) 100%);
+  color: hsl(0 0% 95%);
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Glass card base */
+.eg-glass {
+  background: linear-gradient(
+    135deg,
+    hsla(0 0% 100% / 0.07) 0%,
+    hsla(0 0% 100% / 0.03) 100%
+  );
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid hsla(0 0% 100% / 0.08);
+  box-shadow:
+    0 8px 32px hsla(0 0% 0% / 0.4),
+    inset 0 1px 0 hsla(0 0% 100% / 0.06);
+}
+
+/* Gold accent */
+.eg-gold {
+  color: hsl(43 96% 56%);
+}
+.eg-gold-bg {
+  background: hsl(43 96% 56%);
+  color: hsl(230 25% 8%);
+}
+
+/* Toggle pill container */
+.eg-toggle-bar {
+  display: flex;
+  border-radius: 9999px;
+  padding: 3px;
+  gap: 0;
+  background: hsla(0 0% 100% / 0.06);
+  border: 1px solid hsla(0 0% 100% / 0.08);
+}
+.eg-toggle-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 700;
+  color: hsla(0 0% 100% / 0.45);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+.eg-toggle-btn.active {
+  background: hsl(43 96% 56%);
+  color: hsl(230 25% 8%);
+  box-shadow: 0 2px 12px hsla(43 96% 56% / 0.35);
+}
+.eg-toggle-btn:not(.active):hover {
+  color: hsla(0 0% 100% / 0.7);
+}
+
+/* Scope chips */
+.eg-chip-bar {
+  display: flex;
+  gap: 8px;
+}
+.eg-chip {
+  padding: 6px 16px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid hsla(0 0% 100% / 0.1);
+  background: transparent;
+  color: hsla(0 0% 100% / 0.45);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.eg-chip.active {
+  background: hsl(43 96% 56%);
+  color: hsl(230 25% 8%);
+  border-color: hsl(43 96% 56%);
+  box-shadow: 0 2px 10px hsla(43 96% 56% / 0.3);
+}
+
+/* Search */
+.eg-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 14px;
+  padding: 12px 16px;
+  background: hsla(0 0% 100% / 0.05);
+  border: 1px solid hsla(0 0% 100% / 0.08);
+}
+.eg-search input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: hsl(0 0% 95%);
+  font-size: 14px;
+  width: 100%;
+  font-weight: 500;
+}
+.eg-search input::placeholder {
+  color: hsla(0 0% 100% / 0.3);
+}
+
+/* Carousel */
+.eg-carousel {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-left: 20px;
+  scroll-padding-right: 20px;
+  padding: 0 20px 16px 20px;
+  gap: 14px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.eg-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+/* Leader card */
+.eg-leader-card {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+  width: 82vw;
+  max-width: 340px;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 1px solid hsla(0 0% 100% / 0.1);
+  box-shadow:
+    0 12px 40px hsla(0 0% 0% / 0.5),
+    inset 0 1px 0 hsla(0 0% 100% / 0.08);
+  transition: transform 0.2s ease;
+}
+.eg-leader-card:hover {
+  transform: scale(1.02);
+}
+
+.eg-leader-hero {
+  position: relative;
+  padding: 16px 20px 20px;
+  min-height: 200px;
+  overflow: hidden;
+}
+
+/* Dark glass overlay on top of team colour */
+.eg-leader-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    hsla(0 0% 0% / 0.15) 0%,
+    hsla(0 0% 0% / 0.35) 100%
+  );
+  z-index: 0;
+}
+
+.eg-leader-hero-glow {
+  position: absolute;
+  inset: 0;
+  opacity: 0.25;
+  z-index: 0;
+}
+
+/* Team logo watermark */
+.eg-leader-team-logo {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 44px;
+  height: 44px;
+  z-index: 3;
+  opacity: 0.85;
+  filter: drop-shadow(0 2px 6px hsla(0 0% 0% / 0.5));
+}
+.eg-leader-team-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.eg-leader-stat-chip {
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: hsl(43 96% 56%);
+  color: hsl(230 25% 8%);
+}
+
+.eg-leader-value {
+  position: relative;
+  z-index: 2;
+  margin-top: 14px;
+}
+.eg-leader-value .big-num {
+  font-size: 52px;
+  font-weight: 900;
+  line-height: 1;
+  color: hsl(0 0% 100%);
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 12px hsla(0 0% 0% / 0.4);
+}
+.eg-leader-value .per-game {
+  font-size: 11px;
+  font-weight: 700;
+  color: hsla(0 0% 100% / 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-left: 6px;
+}
+.eg-leader-name {
+  position: relative;
+  z-index: 2;
+  margin-top: 8px;
+}
+.eg-leader-name .first {
+  font-size: 13px;
+  color: hsla(0 0% 100% / 0.7);
+  font-weight: 500;
+}
+.eg-leader-name .last {
+  font-size: 22px;
+  font-weight: 900;
+  color: hsl(0 0% 100%);
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  text-shadow: 0 1px 8px hsla(0 0% 0% / 0.3);
+}
+.eg-leader-name .team-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: hsla(0 0% 100% / 0.5);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.eg-leader-name .team-label {
+  font-size: 18px;
+  font-weight: 800;
+  color: hsl(0 0% 100%);
+}
+
+.eg-leader-headshot {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 130px;
+  height: 165px;
+  z-index: 1;
+  mask-image: linear-gradient(to left, black 60%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to left, black 60%, transparent 100%);
+}
+.eg-leader-headshot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+.eg-leader-headshot .initials-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  font-weight: 900;
+  color: hsla(0 0% 100% / 0.15);
+  background: hsla(0 0% 100% / 0.04);
+}
+
+/* Runners list */
+.eg-runners {
+  border-top: 1px solid hsla(0 0% 100% / 0.06);
+  background: linear-gradient(
+    135deg,
+    hsla(0 0% 100% / 0.06) 0%,
+    hsla(0 0% 100% / 0.02) 100%
+  );
+}
+.eg-runner-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  gap: 10px;
+  border-bottom: 1px solid hsla(0 0% 100% / 0.04);
+}
+.eg-runner-rank {
+  width: 18px;
+  font-size: 12px;
+  font-weight: 600;
+  color: hsla(0 0% 100% / 0.35);
+  text-align: center;
+}
+.eg-runner-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: hsla(0 0% 100% / 0.06);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.eg-runner-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.eg-runner-avatar .mini-initials {
+  font-size: 11px;
+  font-weight: 700;
+  color: hsla(0 0% 100% / 0.3);
+}
+.eg-runner-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.eg-runner-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: hsla(0 0% 100% / 0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.eg-runner-team {
+  font-size: 11px;
+  font-weight: 500;
+  color: hsla(0 0% 100% / 0.35);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.eg-runner-val {
+  font-size: 15px;
+  font-weight: 800;
+  color: hsl(0 0% 100%);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Full table CTA */
+.eg-card-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px;
+  border-top: 1px solid hsla(0 0% 100% / 0.06);
+  font-size: 13px;
+  font-weight: 700;
+  color: hsl(43 96% 56%);
+  cursor: pointer;
+  transition: opacity 0.2s;
+  background: transparent;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  width: 100%;
+}
+.eg-card-cta:hover {
+  opacity: 0.8;
+}
+
+/* Compare section */
+.eg-compare-section {
+  border-radius: 28px;
+  padding: 28px 24px;
+  margin: 0 20px;
+}
+
+.eg-compare-circles {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+.eg-compare-ring {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  padding: 3px;
+  background: conic-gradient(
+    from 0deg,
+    hsl(43 96% 56%),
+    hsl(270 60% 45%),
+    hsl(43 96% 56%)
+  );
+}
+.eg-compare-ring-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: hsl(230 20% 10%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.eg-compare-vs {
+  font-size: 18px;
+  font-weight: 900;
+  color: hsla(0 0% 100% / 0.25);
+}
+
+/* Section heading gold gradient underline */
+.eg-gradient-line {
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    hsl(43 96% 56%) 0%,
+    hsl(270 60% 45%) 60%,
+    hsla(270 60% 45% / 0) 100%
+  );
+}
+
+/* ─────────────────────────────────────────────
+   Scoped utility classes (Tailwind-equivalents)
+   Lovable uses Tailwind spacing/typography classes.
+   This app does NOT ship global Tailwind utilities, so we
+   provide the exact subset needed — scoped to Stats only.
+   This keeps the rest of the app unchanged.
+   ───────────────────────────────────────────── */
+
+/* layout */
+.eg-stats-page .flex{display:flex;}
+.eg-stats-page .inline-flex{display:inline-flex;}
+.eg-stats-page .flex-col{flex-direction:column;}
+.eg-stats-page .items-center{align-items:center;}
+.eg-stats-page .items-end{align-items:flex-end;}
+.eg-stats-page .justify-between{justify-content:space-between;}
+.eg-stats-page .justify-center{justify-content:center;}
+.eg-stats-page .gap-1{gap:0.25rem;}
+.eg-stats-page .gap-2{gap:0.5rem;}
+.eg-stats-page .gap-4{gap:1rem;}
+.eg-stats-page .gap-5{gap:1.25rem;}
+.eg-stats-page .gap-6{gap:1.5rem;}
+
+/* padding */
+.eg-stats-page .px-5{padding-left:1.25rem;padding-right:1.25rem;}
+.eg-stats-page .px-3{padding-left:0.75rem;padding-right:0.75rem;}
+.eg-stats-page .pt-5{padding-top:1.25rem;}
+.eg-stats-page .pb-2{padding-bottom:0.5rem;}
+.eg-stats-page .py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem;}
+.eg-stats-page .pb-28{padding-bottom:7rem;}
+
+/* margins */
+.eg-stats-page .mt-2{margin-top:0.5rem;}
+.eg-stats-page .mt-3{margin-top:0.75rem;}
+.eg-stats-page .mt-4{margin-top:1rem;}
+.eg-stats-page .mt-6{margin-top:1.5rem;}
+.eg-stats-page .mb-1{margin-bottom:0.25rem;}
+.eg-stats-page .mb-4{margin-bottom:1rem;}
+.eg-stats-page .mb-5{margin-bottom:1.25rem;}
+
+/* typography */
+.eg-stats-page .text-2xl{font-size:1.5rem;line-height:2rem;}
+.eg-stats-page .text-lg{font-size:1.125rem;line-height:1.75rem;}
+.eg-stats-page .text-base{font-size:1rem;line-height:1.5rem;}
+.eg-stats-page .text-xs{font-size:0.75rem;line-height:1rem;}
+.eg-stats-page .font-black{font-weight:900;}
+.eg-stats-page .font-bold{font-weight:700;}
+.eg-stats-page .font-extrabold{font-weight:800;}
+.eg-stats-page .tracking-tight{letter-spacing:-0.025em;}
+
+/* radius */
+.eg-stats-page .rounded-full{border-radius:9999px;}

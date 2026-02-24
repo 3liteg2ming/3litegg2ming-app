@@ -1,0 +1,128 @@
+import React, { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowLeft, SlidersHorizontal } from "lucide-react";
+import { mockPlayers, mockTeams } from "@/data/stats2MockData";
+import {
+  PLAYER_STAT_CONFIGS,
+  TEAM_STAT_CONFIGS,
+  StatsMode,
+  StatsScope,
+  Player,
+  Team,
+  PlayerStatKey,
+  TeamStatKey,
+} from "@/types/stats2";
+import "@/styles/stat-leaders.css";
+
+const playerVal = (p: Player, key: string, scope: StatsScope) => {
+  const raw = p.stats[key as PlayerStatKey];
+  return scope === "average" ? +(raw / p.gamesPlayed).toFixed(1) : raw;
+};
+const teamVal = (t: Team, key: string, scope: StatsScope) => {
+  const raw = t.stats[key as TeamStatKey];
+  if (key === "goalEfficiency") return raw;
+  return scope === "average" ? +(raw / t.gamesPlayed).toFixed(1) : raw;
+};
+
+const getInitials = (name: string) =>
+  name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+
+const StatLeadersPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+
+  const modeParam = (params.get("mode") as StatsMode) || "players";
+  const statParam = params.get("stat") || "goals";
+  const scopeParam = (params.get("scope") as StatsScope) || "total";
+
+  const [stat, setStat] = useState(statParam);
+  const [scope, setScope] = useState<StatsScope>(scopeParam);
+
+  const configs = modeParam === "players" ? PLAYER_STAT_CONFIGS : TEAM_STAT_CONFIGS;
+  const currentConfig = configs.find((c) => c.key === stat) || configs[0];
+
+  const sorted =
+    modeParam === "players"
+      ? [...mockPlayers].sort((a, b) => playerVal(b, stat, scope) - playerVal(a, stat, scope))
+      : [...mockTeams].sort((a, b) => teamVal(b, stat, scope) - teamVal(a, stat, scope));
+
+  return (
+    <div className="eg-leaders-page pb-28">
+      {/* Top bar */}
+      <div className="eg-leaders-topbar">
+        <button className="eg-leaders-back" onClick={() => navigate(-1)}>
+          <ArrowLeft size={18} />
+        </button>
+        <span className="eg-leaders-title">Stat Leaders</span>
+      </div>
+
+      {/* Controls */}
+      <div className="eg-leaders-controls">
+        <div className="eg-leaders-row">
+          <select className="eg-stat-select" value={stat} onChange={(e) => setStat(e.target.value)}>
+            {configs.map((c) => (
+              <option key={c.key} value={c.key}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+          <button className="eg-filter-btn">
+            <SlidersHorizontal size={14} /> Filter
+          </button>
+        </div>
+
+        {/* Scope toggle */}
+        <div className="eg-chip-bar">
+          {(["total", "average"] as const).map((s) => (
+            <button key={s} className={`eg-chip ${scope === s ? "active" : ""}`} onClick={() => setScope(s)}>
+              {s.charAt(0).toUpperCase() + s.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* List header */}
+      <div className="eg-list-header">
+        <span className="eg-list-header-label" style={{ flex: 1, paddingLeft: 36 }}>
+          {modeParam === "players" ? "Player" : "Team"}
+        </span>
+        <span className="eg-list-header-label">{currentConfig.abbreviation}</span>
+      </div>
+
+      {/* Rows */}
+      <div>
+        {sorted.map((entry, idx) => {
+          const val =
+            modeParam === "players"
+              ? playerVal(entry as Player, stat, scope)
+              : teamVal(entry as Team, stat, scope);
+          const name = modeParam === "players" ? (entry as Player).name : (entry as Team).name;
+          const teamName = modeParam === "players" ? (entry as Player).teamName : undefined;
+          const src = modeParam === "players" ? (entry as Player).headshotUrl : (entry as Team).logoUrl;
+
+          return (
+            <div key={idx} className={`eg-list-row ${idx < 3 ? "top-3" : ""}`}>
+              <span className="eg-list-rank">{idx + 1}</span>
+              <div className="eg-list-avatar">
+                <AvatarImg src={src} name={name} />
+              </div>
+              <div className="eg-list-info">
+                <div className="eg-list-name">{name}</div>
+                {teamName && <div className="eg-list-team">{teamName}</div>}
+              </div>
+              <span className="eg-list-value">{val}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const AvatarImg: React.FC<{ src: string; name: string }> = ({ src, name }) => {
+  const [failed, setFailed] = useState(false);
+  if (failed || !src) return <span className="list-initials">{getInitials(name)}</span>;
+  return <img src={src} alt={name} onError={() => setFailed(true)} />;
+};
+
+export default StatLeadersPage;

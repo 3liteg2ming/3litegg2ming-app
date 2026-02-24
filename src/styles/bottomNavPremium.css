@@ -1,0 +1,210 @@
+:root{
+  --eg-yellow:#F5C400;
+  --eg-yellow-2:#D6AA00;
+  --eg-ink:#0b0f14;
+}
+
+/* ✅ Premium iOS glass dock that DOES NOT SQUISH on mobile */
+.egNavDock{
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+  width: min(420px, calc(100% - 24px));
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.egNavDock__glass{
+  pointer-events: auto;
+  border-radius: 22px;
+  padding: 8px;
+
+  background:
+    radial-gradient(120% 140% at 50% -50%,
+      rgba(255,255,255,0.18) 0%,
+      rgba(255,255,255,0.08) 35%,
+      rgba(255,255,255,0.03) 62%,
+      rgba(0,0,0,0.18) 100%
+    ),
+    linear-gradient(180deg,
+      rgba(16,18,20,0.64) 0%,
+      rgba(10,12,14,0.56) 55%,
+      rgba(8,10,12,0.62) 100%
+    );
+
+  border: 1px solid rgba(255,255,255,0.10);
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+
+  box-shadow:
+    0 18px 52px rgba(0,0,0,0.70),
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    inset 0 -1px 0 rgba(0,0,0,0.35);
+}
+
+.egNavDock__row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* ✅ Non-active buttons: LOCK size so they never compress into skinny ovals */
+.egNavDock__btn{
+  position: relative;
+  flex: 0 0 46px;
+  width: 46px;
+  height: 46px;
+
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+
+  background:
+    radial-gradient(120% 120% at 30% 20%,
+      rgba(255,255,255,0.14) 0%,
+      rgba(255,255,255,0.05) 38%,
+      rgba(0,0,0,0.10) 100%
+    ),
+    rgba(255,255,255,0.035);
+
+  border: 1px solid rgba(255,255,255,0.11);
+
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+
+  box-shadow:
+    0 12px 26px rgba(0,0,0,0.55),
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    inset 0 -1px 0 rgba(0,0,0,0.32);
+
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.egNavDock__btn:hover{
+  transform: translateY(-1px);
+  border-color: rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.05);
+}
+
+.egNavDock__btn:active{
+  transform: translateY(0px) scale(0.985);
+}
+
+.egNavDock__btnLens{
+  position: absolute;
+  inset: 5px;
+  border-radius: 999px;
+  background: radial-gradient(70% 70% at 30% 25%,
+    rgba(255,255,255,0.18) 0%,
+    rgba(255,255,255,0.07) 38%,
+    rgba(0,0,0,0) 72%
+  );
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+/* ✅ Active pill: compact on mobile */
+.egNavDock__pill{
+  position: relative;
+  flex: 0 0 auto;
+
+  height: 46px;
+  border-radius: 18px;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 8px 14px;
+  text-decoration: none;
+
+  /* Keep the active pill compact like the reference */
+  min-width: 116px;
+  max-width: 150px;
+
+  background:
+    radial-gradient(120% 160% at 35% 20%,
+      rgba(255,255,255,0.26) 0%,
+      rgba(255,255,255,0.08) 30%,
+      rgba(0,0,0,0) 56%
+    ),
+    linear-gradient(135deg, var(--eg-yellow) 0%, var(--eg-yellow-2) 100%);
+
+  border: 1px solid rgba(255,255,255,0.20);
+
+  box-shadow:
+    0 14px 34px rgba(245,196,0,0.18),
+    0 8px 18px rgba(0,0,0,0.32),
+    inset 0 1px 0 rgba(255,255,255,0.34),
+    inset 0 -1px 0 rgba(0,0,0,0.14);
+
+  transition: transform 140ms ease;
+}
+
+.egNavDock__pill:hover{ transform: translateY(-1px); }
+.egNavDock__pill:active{ transform: translateY(0px) scale(0.992); }
+
+.egNavDock__pillIcon{
+  width: 32px;
+  height: 32px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.18),
+    inset 0 -1px 0 rgba(0,0,0,0.18);
+}
+
+.egNavDock__pillText{
+  font-family: ui-sans-serif, system-ui, -apple-system, "SF Pro Display", "SF Pro Text",
+               "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.15px;
+  color: var(--eg-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.egNavDock__icon{
+  width: 20px;
+  height: 20px;
+  color: rgba(255,255,255,0.82);
+}
+
+.egNavDock__icon--active{
+  color: var(--eg-ink);
+}
+
+/* ✅ Extra-small phones: keep premium but shrink slightly */
+@media (max-width: 360px){
+  .egNavDock{ width: calc(100% - 18px); }
+  .egNavDock__row{ gap: 6px; }
+
+  .egNavDock__btn{
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+  }
+
+  .egNavDock__pill{
+    height: 42px;
+    min-width: 118px;
+    max-width: 150px;
+    border-radius: 16px;
+  }
+
+  .egNavDock__pillIcon{
+    width: 30px;
+    height: 30px;
+    border-radius: 12px;
+  }
+
+  .egNavDock__icon{ width: 19px; height: 19px; }
+}

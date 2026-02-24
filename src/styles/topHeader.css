@@ -1,0 +1,246 @@
+:root {
+  --eg-header-h: 72px;
+}
+
+/* push fixtures sticky below header */
+.fxAflStickyNav {
+  top: var(--eg-header-h) !important;
+}
+
+.egTopHeader {
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  width: 100%;
+  height: var(--eg-header-h);
+
+  background:
+    radial-gradient(900px 120px at 50% 115%, rgba(255, 255, 255, 0.06), transparent 62%),
+    linear-gradient(180deg, rgba(8, 10, 14, 0.92), rgba(8, 10, 14, 0.82));
+
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+}
+
+.egTopHeader__inner {
+  height: var(--eg-header-h);
+  padding: 0 14px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+/* Left */
+.egTopHeader__left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+}
+
+.egTopHeader__switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 42px;
+  padding: 0 12px 0 10px;
+  border-radius: 999px;
+
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+}
+
+.egTopHeader__switch:active {
+  transform: translateY(1px);
+}
+
+.egTopHeader__switchIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.egTopHeader__switchLogo {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+
+.egTopHeader__chev {
+  opacity: 0.9;
+}
+
+/* Dropdown */
+.egTopHeader__menu {
+  position: absolute;
+  top: 52px;
+  left: 0;
+  width: 250px;
+  border-radius: 18px;
+  padding: 8px;
+
+  background: rgba(10, 12, 16, 0.78);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.45);
+}
+
+.egTopHeader__menuItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 10px;
+  border-radius: 14px;
+
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.92);
+  text-align: left;
+}
+
+.egTopHeader__menuItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.egTopHeader__menuItem.isActive {
+  background: rgba(245, 196, 0, 0.14);
+  border: 1px solid rgba(245, 196, 0, 0.26);
+}
+
+.egTopHeader__menuItemIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  flex: 0 0 auto;
+}
+
+.egTopHeader__menuLogo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.egTopHeader__menuText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.egTopHeader__menuTitle {
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.egTopHeader__menuSub {
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.72;
+}
+
+/* Center */
+.egTopHeader__center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ✅ Move the WHOLE center block up so it aligns with left pill + avatar */
+.egTopHeader__brand {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+
+  transform: translateY(-4px); /* ✅ this is the alignment fix */
+}
+
+.egTopHeader__brandCrop {
+  height: 54px;
+  width: 168px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+/* ✅ Then fine tune the image inside the crop */
+.egTopHeader__brandLogo--cropped {
+  height: 124px;
+  width: auto;
+  object-fit: contain;
+
+  transform: translateY(-16px) scale(1.06); /* keep your size, centered properly now */
+  transform-origin: center;
+
+  filter:
+    drop-shadow(0 16px 28px rgba(0, 0, 0, 0.45))
+    drop-shadow(0 0 22px rgba(245, 196, 0, 0.18));
+}
+
+/* Right */
+.egTopHeader__right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.egTopHeader__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+}
+
+.egTopHeader__avatar:active {
+  transform: translateY(1px);
+}
+
+@media (max-width: 420px) {
+  .egTopHeader__inner {
+    padding: 0 10px;
+  }
+
+  .egTopHeader__brand {
+    transform: translateY(-4px);
+  }
+
+  .egTopHeader__brandCrop {
+    width: 150px;
+    height: 52px;
+  }
+
+  .egTopHeader__brandLogo--cropped {
+    height: 118px;
+    transform: translateY(-16px) scale(1.06);
+  }
+}

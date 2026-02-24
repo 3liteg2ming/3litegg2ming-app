@@ -1,0 +1,26 @@
+/* Fixtures typography upgrade (iOS-esque) */
+
+.fxType{
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display",
+    "SF Pro Text", "Inter", "Segoe UI", Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+.fxType .fxHeroV3__title{
+  font-weight: 1000;
+  letter-spacing: -0.04em;
+}
+
+.fxType .fxPanelV3__roundLabel{
+  font-weight: 1000;
+  letter-spacing: -0.02em;
+}
+
+.fxType .fxFilterPill{
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.fxType .fxRoundDot{
+  font-weight: 900;
+}

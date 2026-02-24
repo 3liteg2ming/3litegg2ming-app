@@ -1,0 +1,361 @@
+/* styles/home.css - Fix header spacing and match card overflow */
+:root {
+  --eg-yellow: #F5C400;
+  --eg-yellow-dark: #D4A800;
+  --bg-dark: #000000;
+  --surface: #0A0A0A;
+  --surface-elevated: #141414;
+  --border: rgba(255, 255, 255, 0.08);
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --text-tertiary: rgba(255, 255, 255, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  margin: 0;
+  padding: 0;
+}
+
+.app {
+  min-height: 100vh;
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  width: 100%;
+  max-width: 100vw;
+  padding: 0 12px; /* Reduced from 16px */
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* HEADER - Better spacing for login area */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 20px;
+  width: 100%;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* Reduced from 16px */
+  flex: 1;
+  min-width: 0; /* Allow shrinking */
+}
+
+/* Glass EG Logo Box - Filled properly */
+.logoGlassBox {
+  width: 64px; /* Slightly smaller */
+  height: 64px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.12) 0%, 
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  flex-shrink: 0; /* Don't shrink */
+}
+
+.egLogoBig {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0; /* Allow text truncation */
+  flex: 1;
+}
+
+.brandTitle {
+  font-size: 22px; /* Slightly smaller */
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brandSub {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--eg-yellow);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Space for login/signup - bigger area */
+.headerRight {
+  width: 60px; /* Increased from 48px */
+  height: 60px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* Section Headers */
+.rowHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  margin-top: 24px;
+}
+
+.rowTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.rowHint {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Toggle - Yellow */
+.toggle {
+  display: flex;
+  background: var(--surface-elevated);
+  border-radius: 10px;
+  padding: 3px;
+  border: 1px solid var(--border);
+}
+
+.toggleBtn {
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggleBtn.active {
+  background: var(--eg-yellow);
+  color: #000;
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(245, 196, 0, 0.3);
+}
+
+/* Season Rail */
+.seasonRail {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 4px 0;
+  margin: 0 -4px;
+  width: 100%;
+}
+
+.seasonRail::-webkit-scrollbar {
+  display: none;
+}
+
+/* Season Cards */
+.seasonTile {
+  flex: 0 0 auto;
+  width: calc(100vw - 40px); /* Responsive width */
+  max-width: 320px;
+  scroll-snap-align: start;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  text-align: left;
+  cursor: pointer;
+  background: var(--surface);
+}
+
+.seasonTile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('https://ftgejkaokqjmwbjorihs.supabase.co/storage/v1/object/public/Public/mcg-stadium.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.6;
+  z-index: 0;
+}
+
+.seasonTile.pro::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, 
+    rgba(124, 58, 237, 0.45) 0%, 
+    rgba(76, 29, 149, 0.55) 50%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
+  z-index: 1;
+}
+
+.seasonTile.afl::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, 
+    rgba(30, 64, 175, 0.45) 0%, 
+    rgba(15, 23, 42, 0.55) 50%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
+  z-index: 1;
+}
+
+.seasonTileContent {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.seasonTileTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.seasonTileTag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.seasonTileAction {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--eg-yellow);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.seasonTileMid {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.seasonTileLogoWrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  backdrop-filter: blur(10px);
+}
+
+.seasonTileLogo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.seasonTileText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.seasonTileTitle {
+  font-size: 22px;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.seasonTileSub {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.seasonTileBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.seasonTileHint {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Quick Previews - Ensure no overflow */
+.previewsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 40px;
+  width: 100%;
+}
+
+/* Empty State */
+.emptyState {
+  width: 100%;
+  padding: 40px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+
+.safeBottom {
+  height: 20px;
+}

@@ -1,0 +1,157 @@
+/* styles/ladderPreview.css - Like reference image with team colors */
+.lp-wrap {
+  background: var(--surface-elevated);
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.lp-head {
+  padding: 20px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.lp-kicker {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+}
+
+.lp-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+.lp-sub {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
+.lp-pill {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: var(--eg-yellow);
+  color: black;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 8px 16px;
+  border-radius: 20px;
+}
+
+/* Column Headers */
+.lp-cols {
+  display: grid;
+  grid-template-columns: 40px 1fr 50px 50px 50px 40px;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-tertiary);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.lp-col {
+  text-align: center;
+}
+
+.lp-col.team {
+  text-align: left;
+  padding-left: 8px;
+}
+
+/* Team Row with gradient background like reference */
+.lp-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 50px 50px 50px 40px;
+  gap: 8px;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0.03) 0%, 
+    transparent 50%
+  );
+  position: relative;
+}
+
+.lp-row:last-child {
+  border-bottom: none;
+}
+
+/* Team-specific colors like reference (Crows red, Lions maroon, etc) */
+.lp-row.crows { background: linear-gradient(90deg, rgba(239, 68, 68, 0.1) 0%, transparent 50%); }
+.lp-row.lions { background: linear-gradient(90deg, rgba(153, 27, 27, 0.15) 0%, transparent 50%); }
+.lp-row.blues { background: linear-gradient(90deg, rgba(37, 99, 235, 0.1) 0%, transparent 50%); }
+.lp-row.pies { background: linear-gradient(90deg, rgba(0, 0, 0, 0.3) 0%, transparent 50%); }
+
+.lp-pos {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.lp-posNum {
+  font-size: 24px;
+  font-weight: 800;
+  color: white;
+}
+
+.lp-move {
+  font-size: 11px;
+  color: #4ADE80;
+  font-weight: 600;
+}
+
+.lp-team {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lp-logoRing {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.lp-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.lp-name {
+  font-size: 17px;
+  font-weight: 600;
+  color: white;
+}
+
+.lp-gp, .lp-pct, .lp-form {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.lp-pts {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--eg-yellow);
+}

@@ -1,0 +1,153 @@
+/* styles/goalsPreview.css - Like reference with player photos */
+.gp-card {
+  background: var(--surface-elevated);
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.gp-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.3) 0%, rgba(37, 99, 235, 0.2) 100%);
+  border-bottom: 1px solid var(--border);
+}
+
+.gp-topTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: white;
+  letter-spacing: 0.05em;
+}
+
+.gp-full {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+/* Hero Section with big number and photo */
+.gp-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.gp-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gp-big {
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1;
+  color: white;
+}
+
+.gp-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+  margin-top: 4px;
+}
+
+.gp-team {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* Player Photo - Like reference */
+.gp-headshotWrap {
+  width: 80px;
+  height: 80px;
+  border-radius: 16px;
+  background: var(--surface-higher);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.gp-headshot {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* List */
+.gp-list {
+  padding: 8px;
+}
+
+.gp-row {
+  display: grid;
+  grid-template-columns: 30px 40px 1fr 40px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.gp-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.gp-rank {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.gp-avatarRing {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface-higher);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.gp-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gp-player {
+  min-width: 0;
+}
+
+.gp-pName {
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gp-pTeam {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.gp-goals {
+  text-align: right;
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+}

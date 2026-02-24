@@ -1,0 +1,111 @@
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+
+import HomePage from './pages/HomePage';
+import AFL26FixturesPage from './pages/AFL26FixturesPage';
+import LadderPage from './pages/LadderPage';
+
+import ComingSoonPage from './pages/ComingSoonPage';
+import MatchCentrePage from './pages/MatchCentrePage';
+import MembersPage from './pages/MembersPage';
+import SubmitPage from './pages/SubmitPage';
+
+import SignInPage from './pages/auth/SignInPage';
+import SignUpPage from './pages/auth/SignUpPage';
+
+import { ProtectedRoute } from './state/auth/ProtectedRoute';
+
+import AdminCreateFixturePage from './pages/admin/AdminCreateFixturePage';
+
+import BottomNav from './components/BottomNav';
+import TopHeader from './components/TopHeader';
+
+// Lovable-styled Stats pages (wired to /stats3)
+import AFL2026StatsPage from './pages/AFL2026StatsPage';
+import StatLeadersPage from './pages/StatLeadersPage';
+
+import './styles/appFrame.css';
+import './styles/auth.css';
+
+export default function App() {
+  const location = useLocation();
+
+  const hideNav =
+    location.pathname.startsWith('/auth/sign-in') ||
+    location.pathname.startsWith('/auth/sign-up');
+
+  return (
+    <div className="eg-viewport">
+      <div className="eg-device" role="application" aria-label="Elite Gaming App">
+        <TopHeader />
+
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+
+          {/* Core */}
+          <Route path="/fixtures" element={<AFL26FixturesPage />} />
+          <Route path="/ladder" element={<LadderPage />} />
+
+          {/* ✅ Stats v3 */}
+          <Route path="/stats3" element={<AFL2026StatsPage />} />
+          <Route path="/stats3/leaders" element={<StatLeadersPage />} />
+          <Route path="/stats3/compare" element={<ComingSoonPage />} />
+
+          {/* Lovable compare route (older link in the design) */}
+          <Route path="/stats2/compare" element={<ComingSoonPage />} />
+
+          {/* Backward compatibility */}
+          <Route path="/stats" element={<Navigate to="/stats3" replace />} />
+          <Route path="/stats/leaders" element={<Navigate to="/stats3/leaders" replace />} />
+
+          {/* Submit Results (protected) */}
+          <Route
+            path="/submit"
+            element={
+              <ProtectedRoute>
+                <SubmitPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Auth */}
+          <Route path="/auth/sign-in" element={<SignInPage />} />
+          <Route path="/auth/sign-up" element={<SignUpPage />} />
+
+          {/* Members (protected) */}
+          <Route
+            path="/members"
+            element={
+              <ProtectedRoute>
+                <MembersPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Pro Team placeholder */}
+          <Route path="/pro-team" element={<ComingSoonPage />} />
+
+          {/* Admin (protected) */}
+          <Route
+            path="/admin/create-fixture"
+            element={
+              <ProtectedRoute>
+                <AdminCreateFixturePage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Match Centre */}
+          <Route path="/match-centre" element={<MatchCentrePage />} />
+          <Route path="/match-centre/:matchId" element={<MatchCentrePage />} />
+
+          <Route path="/coming-soon" element={<ComingSoonPage />} />
+
+          {/* fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+
+        {!hideNav ? <BottomNav /> : null}
+      </div>
+    </div>
+  );
+}

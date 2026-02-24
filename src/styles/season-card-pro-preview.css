@@ -1,0 +1,261 @@
+/* FINAL TUNE — logo higher, remove meta line, show more MCG */
+
+.eg-seasonProCard{
+  position:relative;
+  width:100%;
+  max-width:520px;
+  aspect-ratio:4/4.15;
+  border:0;
+  padding:0;
+  border-radius:34px;
+  cursor:pointer;
+  overflow:hidden;
+  background:transparent;
+  text-align:left;
+  -webkit-tap-highlight-color:transparent;
+  transform:translateZ(0);
+}
+
+/* Outer glow */
+.eg-seasonProCard::before{
+  content:'';
+  position:absolute;
+  inset:-18px;
+  border-radius:52px;
+  background:
+    radial-gradient(60% 60% at 15% 10%, rgba(170,110,255,0.55), transparent 55%),
+    radial-gradient(65% 65% at 95% 0%, rgba(255,190,90,0.55), transparent 55%),
+    radial-gradient(70% 70% at 30% 95%, rgba(120,70,255,0.35), transparent 60%),
+    radial-gradient(75% 75% at 90% 90%, rgba(255,170,90,0.22), transparent 65%);
+  filter:blur(18px);
+  opacity:0.65;
+  z-index:0;
+}
+
+/* Gradient border ring */
+.eg-seasonProCard::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:34px;
+  padding:2px;
+  background:linear-gradient(135deg, rgba(191,130,255,0.95), rgba(255,200,120,0.95));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  opacity:0.95;
+  z-index:3;
+  pointer-events:none;
+}
+
+/* Stadium background (more visible) */
+.eg-seasonProCard__bg{
+  position:absolute;
+  inset:0;
+  background-size:cover;
+
+  /* ✅ show more stadium */
+  background-position:center 62%;
+
+  /* ✅ less blur + a touch brighter */
+  transform:scale(1.05);
+  filter:blur(0.6px) saturate(1.1) contrast(1.02) brightness(1.03);
+
+  opacity:0.98;
+  z-index:0;
+}
+
+/* Purple glass overlay (lighter so MCG comes through) */
+.eg-seasonProCard__bg::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(120% 110% at 20% 5%,
+      rgba(155,90,255,0.52),
+      rgba(35,14,66,0.72) 55%,
+      rgba(7,9,12,0.80) 100%
+    ),
+    linear-gradient(180deg, rgba(120,70,255,0.14), rgba(0,0,0,0.50));
+}
+
+/* Grain + vignette */
+.eg-seasonProCard__grain{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+  background:
+    radial-gradient(120% 120% at 50% 40%, rgba(255,255,255,0.06), transparent 55%),
+    radial-gradient(110% 90% at 50% 100%, rgba(0,0,0,0.55), transparent 55%),
+    radial-gradient(120% 80% at 50% 0%, rgba(0,0,0,0.32), transparent 60%),
+    repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,0.02),
+      rgba(255,255,255,0.02) 1px,
+      rgba(0,0,0,0.02) 2px,
+      rgba(0,0,0,0.02) 3px
+    );
+  mix-blend-mode:overlay;
+  opacity:0.55;
+}
+
+/* Chips row */
+.eg-seasonProCard__chips{
+  position:absolute;
+  left:18px;
+  right:18px;
+  top:16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  z-index:2;
+}
+
+.eg-seasonProCard__chip{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:11px 16px;
+  border-radius:999px;
+  color:rgba(255,255,255,0.92);
+  font-weight:800;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  font-size:13px;
+  background:rgba(10,8,18,0.34);
+  border:1px solid rgba(255,255,255,0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    0 10px 25px rgba(0,0,0,0.22);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+
+.eg-seasonProCard__chipRight{ opacity:0.92; letter-spacing:0.10em; }
+
+.eg-seasonProCard__dot{
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  background:rgba(255,210,130,0.95);
+  box-shadow:0 0 18px rgba(255,200,120,0.65);
+}
+
+/* Content */
+.eg-seasonProCard__content{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-end;
+  padding:20px 20px 16px;
+}
+
+/* ✅ logo higher */
+.eg-seasonProCard__logoWrap{
+  position:absolute;
+  top:52px;                 /* ✅ moved up (was 64) */
+  left:50%;
+  transform:translateX(-50%);
+  width:118px;
+  height:118px;
+  display:grid;
+  place-items:center;
+  filter:drop-shadow(0 16px 28px rgba(0,0,0,0.45));
+}
+
+.eg-seasonProCard__logo{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+
+/* Title */
+.eg-seasonProCard__title{
+  margin-top:124px;         /* ✅ slightly tighter because logo moved up */
+  font-size:44px;
+  line-height:1.03;
+  font-weight:900;
+  color:rgba(255,255,255,0.95);
+  text-shadow:
+    0 18px 40px rgba(0,0,0,0.45),
+    0 0 22px rgba(170,110,255,0.20);
+  text-align:center;
+  letter-spacing:-0.02em;
+}
+
+.eg-seasonProCard__subtitle{
+  margin-top:8px;
+  font-size:19px;
+  font-weight:850;
+  color:rgba(220,210,245,0.74);
+  text-align:center;
+}
+
+/* Divider */
+.eg-seasonProCard__divider{
+  width:70%;
+  height:1px;
+  margin:12px auto 0;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.16), transparent);
+  opacity:0.85;
+}
+
+/* ✅ REMOVE meta line entirely */
+.eg-seasonProCard__meta{
+  display:none;
+}
+
+/* CTA (now sits closer since meta removed) */
+.eg-seasonProCard__cta{
+  margin-top:14px;
+  width:92%;
+  height:60px;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 16px;
+  background:rgba(10,8,18,0.38);
+  border:1px solid rgba(255,255,255,0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    0 18px 45px rgba(0,0,0,0.35);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+}
+
+.eg-seasonProCard__ctaText{
+  font-size:22px;
+  font-weight:900;
+  color:rgba(255,255,255,0.93);
+  letter-spacing:0.01em;
+}
+
+.eg-seasonProCard__ctaIcon{
+  width:38px;
+  height:38px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  color:rgba(255,255,255,0.9);
+  background:radial-gradient(120% 120% at 30% 20%, rgba(200,140,255,0.35), rgba(0,0,0,0.22));
+  border:1px solid rgba(255,255,255,0.10);
+}
+
+/* Press feedback */
+.eg-seasonProCard:active{ transform:scale(0.985); }
+
+/* Small screens */
+@media (max-width:420px){
+  .eg-seasonProCard{ aspect-ratio:4/4.05; }
+  .eg-seasonProCard__logoWrap{ top:50px; width:112px; height:112px; }
+  .eg-seasonProCard__title{ font-size:40px; margin-top:120px; }
+  .eg-seasonProCard__subtitle{ font-size:18px; }
+  .eg-seasonProCard__ctaText{ font-size:20px; }
+}
