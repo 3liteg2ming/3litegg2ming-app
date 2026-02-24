@@ -1,0 +1,345 @@
+/* Match Centre Leaders Cards
+   ===========================
+   - Team color gradients
+   - Glass morphism with glow- Horizontal scroll rail
+   - Player photos with premium fallback
+   - Dramatic stat display
+*/
+
+.mcLeaders {
+  width: 100%;
+  padding: 24px 0;
+}
+
+.mcLeaders__header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 0 16px;
+}
+
+.mcLeaders__title {
+  font-size: 28px;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+  color: rgba(255,255,255,0.95);
+  margin: 0;
+}
+
+.mcLeaders__desc {
+  font-size: 13px;
+  font-weight: 550;
+  color: rgba(255,255,255,0.45);
+  margin: 6px 0 0 0;
+}
+
+.mcLeaders__empty {
+  padding: 40px 16px;
+  text-align: center;
+}
+
+.mcLeaders__emptyText {
+  font-size: 18px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.65);
+}
+
+.mcLeaders__emptyDesc {
+  font-size: 13px;
+  font-weight: 550;
+  color: rgba(255,255,255,0.35);
+  margin: 8px 0 0 0;
+}
+
+.mcLeaders__scroll {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  padding: 0 16px 16px 16px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mcLeaders__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.mcLeaders__dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+}
+
+.mcLeaders__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.20);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mcLeaders__dot--active {
+  width: 24px;
+  background: linear-gradient(135deg, #f5c400, #ffd54a);
+  box-shadow: 0 4px 12px rgba(245,196,0,0.3);
+}
+
+/* Leader Card */
+.mcLeaderCard {
+  flex: 0 0 auto;
+  width: 320px;
+  min-height: 420px;
+  border-radius: 24px;
+  overflow: hidden;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  background:
+    radial-gradient(70% 80% at 50% 30%, rgba(var(--mlR), var(--mlG), var(--mlB), 0.20) 0%, transparent 80%),
+    linear-gradient(135deg, rgba(20,24,40,0.9) 0%, rgba(12,14,24,0.95) 100%);
+  border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow:
+    0 16px 40px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 0 30px rgba(var(--mlR), var(--mlG), var(--mlB), 0.15);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.mcLeaderCard:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 24px 50px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    0 0 40px rgba(var(--mlR), var(--mlG), var(--mlB), 0.25);
+}
+
+/* Watermark logo background */
+.mcLeaderCard__watermark {
+  position: absolute;
+  top: 50%;
+  right: -20px;
+  width: 260px;
+  height: 260px;
+  transform: translateY(-50%);
+  opacity: 0.06;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.mcLeaderCard__watermarkImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.2));
+}
+
+/* Stat label bar */
+.mcLeaderCard__bar {
+  position: relative;
+  z-index: 3;
+  padding: 10px 16px;
+  background:
+    linear-gradient(90deg, 
+      rgba(var(--mlR), var(--mlG), var(--mlB), 0.85),
+      rgba(var(--mlR), var(--mlG), var(--mlB), 0.65)
+    );
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+}
+
+.mcLeaderCard__barText {
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.9);
+  display: block;
+}
+
+/* Main content */
+.mcLeaderCard__content {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 120px;
+  gap: 12px;
+  padding: 18px;
+  align-items: stretch;
+}
+
+/* Left side: text content */
+.mcLeaderCard__left {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+/* Match stat */
+.mcLeaderCard__stat {
+  margin-bottom: 8px;
+}
+
+.mcLeaderCard__statLabel {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.50);
+  margin: 0 0 4px 0;
+}
+
+.mcLeaderCard__statValue {
+  font-size: 48px;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+  color: rgba(255,255,255,0.98);
+  margin: 0;
+  text-shadow: 0 8px 16px rgba(0,0,0,0.35);
+}
+
+/* Season average */
+.mcLeaderCard__season {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.mcLeaderCard__seasonLabel {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.40);
+}
+
+.mcLeaderCard__seasonValue {
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.70);
+}
+
+/* Player name */
+.mcLeaderCard__player {
+  margin-top: auto;
+}
+
+.mcLeaderCard__firstName {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.60);
+  margin: 0 0 2px 0;
+}
+
+.mcLeaderCard__lastName {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.95);
+  margin: 0 0 4px 0;
+  border-bottom: 2px solid rgba(var(--mlR), var(--mlG), var(--mlB), 0.6);
+  padding-bottom: 2px;
+  display: inline-block;
+}
+
+.mcLeaderCard__role {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.40);
+  margin: 0;
+}
+
+/* Right side: player photo */
+.mcLeaderCard__right {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mcLeaderCard__photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.mcLeaderCard__placeholder {
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(135deg, 
+      rgba(var(--mlR), var(--mlG), var(--mlB), 0.25),
+      rgba(var(--mlR), var(--mlG), var(--mlB), 0.10)
+    );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mcLeaderCard__placeholderText {
+  font-size: 32px;
+  font-weight: 950;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+}
+
+/* Mobile optimizations */
+@media (max-width: 480px) {
+  .mcLeaderCard {
+    width: 280px;
+    min-height: 380px;
+  }
+
+  .mcLeaderCard__content {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .mcLeaderCard__statValue {
+    font-size: 40px;
+  }
+
+  .mcLeaderCard__lastName {
+    font-size: 16px;
+  }
+
+  .mcLeaders__title {
+    font-size: 24px;
+  }
+
+  .mcLeaders__scroll {
+    padding: 0 12px 12px 12px;
+    gap: 16px;
+  }
+
+  .mcLeaders__header {
+    padding: 0 12px;
+    margin-bottom: 16px;
+  }
+
+  .mcLeaders__dots {
+    padding: 0 12px;
+  }
+}

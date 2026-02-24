@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, SlidersHorizontal } from "lucide-react";
 import { mockPlayers, mockTeams } from "@/data/stats2MockData";
@@ -12,6 +12,7 @@ import {
   PlayerStatKey,
   TeamStatKey,
 } from "@/types/stats2";
+import { usePlayerPhotos } from "@/lib/usePlayerPhoto";
 import "@/styles/stat-leaders.css";
 
 const playerVal = (p: Player, key: string, scope: StatsScope) => {
@@ -37,6 +38,10 @@ const StatLeadersPage: React.FC = () => {
 
   const [stat, setStat] = useState(statParam);
   const [scope, setScope] = useState<StatsScope>(scopeParam);
+
+  // Preload all player photos from Supabase
+  const playerNames = useMemo(() => mockPlayers.map(p => p.name), []);
+  const { photos: supabasePhotos } = usePlayerPhotos(playerNames);
 
   const configs = modeParam === "players" ? PLAYER_STAT_CONFIGS : TEAM_STAT_CONFIGS;
   const currentConfig = configs.find((c) => c.key === stat) || configs[0];
@@ -104,7 +109,11 @@ const StatLeadersPage: React.FC = () => {
             <div key={idx} className={`eg-list-row ${idx < 3 ? "top-3" : ""}`}>
               <span className="eg-list-rank">{idx + 1}</span>
               <div className="eg-list-avatar">
-                <AvatarImg src={src} name={name} />
+                <AvatarImg
+                  src={src}
+                  name={name}
+                  supabaseUrl={modeParam === "players" ? supabasePhotos.get(name) : undefined}
+                />
               </div>
               <div className="eg-list-info">
                 <div className="eg-list-name">{name}</div>
@@ -119,10 +128,39 @@ const StatLeadersPage: React.FC = () => {
   );
 };
 
-const AvatarImg: React.FC<{ src: string; name: string }> = ({ src, name }) => {
-  const [failed, setFailed] = useState(false);
-  if (failed || !src) return <span className="list-initials">{getInitials(name)}</span>;
-  return <img src={src} alt={name} onError={() => setFailed(true)} />;
+const AvatarImg: React.FC<{ src: string; name: string; supabaseUrl?: string | null }> = ({
+  src,
+  name,
+  supabaseUrl
+}) => {
+  const [useFallback, setUseFallback] = useState(false);
+
+  // Fallback chain:
+  // 1. Supabase photo (if available) - primary
+  // 2. AFL fantasy API photo (src) - secondary fallback
+  // 3. Initials avatar - final fallback
+  const primarySrc = supabaseUrl || src;
+  const fallbackSrc = src;
+
+  // Determine which source to display
+  let displaySrc = useFallback && fallbackSrc ? fallbackSrc : primarySrc;
+
+  if (!displaySrc) {
+    return <span className="list-initials">{getInitials(name)}</span>;
+  }
+
+  return (
+    <img
+      src={displaySrc}
+      alt={name}
+      onError={() => {
+        // If primary failed and we haven't tried fallback yet, try fallback
+        if (!useFallback && primarySrc !== fallbackSrc && fallbackSrc) {
+          setUseFallback(true);
+        }
+      }}
+    />
+  );
 };
 
 export default StatLeadersPage;

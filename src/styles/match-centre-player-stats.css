@@ -1,0 +1,521 @@
+/* Player Stats Table
+   ==================
+   - Elite Gaming dark glass design
+   - Sticky header
+   - Player headshots with yellow badges
+   - No horizontal overflow on mobile
+   - Clean stat layout
+*/
+
+.mcPlayerStats {
+  width: 100%;
+  padding: 24px 0;
+}
+
+.mcPlayerStats__header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 0 16px;
+}
+
+.mcPlayerStats__title {
+  font-size: 28px;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+  color: rgba(255,255,255,0.95);
+  margin: 0;
+}
+
+.mcPlayerStats__desc {
+  font-size: 13px;
+  font-weight: 550;
+  color: rgba(255,255,255,0.45);
+  margin: 6px 0 0 0;
+}
+
+/* Controls */
+.mcPlayerStats__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 16px 20px 16px;
+  flex-wrap: wrap;
+}
+
+.mcPlayerStats__left {
+  display: flex;
+  gap: 12px;
+}
+
+.mcPlayerStats__filterDropdown {
+  position: relative;
+}
+
+.mcPlayerStats__label {
+  display: block;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 4px;
+}
+
+.mcPlayerStats__dropdownButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.75);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mcPlayerStats__dropdownButton:hover {
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.15);
+}
+
+.mcPlayerStats__dropdownIcon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  opacity: 0.6;
+}
+
+.mcPlayerStats__dropdownMenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  min-width: 160px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)),
+    linear-gradient(to bottom, rgba(20,24,40,0.95), rgba(12,14,24,0.95));
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  overflow: hidden;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 50;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.mcPlayerStats__dropdownItem {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.65);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.mcPlayerStats__dropdownItem:last-child {
+  border-bottom: none;
+}
+
+.mcPlayerStats__dropdownItem:hover {
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.85);
+}
+
+.mcPlayerStats__dropdownItem--active {
+  background: linear-gradient(135deg, #f5c400, #ffd54a);
+  color: #0c0e16;
+  font-weight: 900;
+}
+
+.mcPlayerStats__right {
+  display: flex;
+  gap: 8px;
+}
+
+.mcPlayerStats__toggle {
+  display: flex;
+  gap: 4px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 999px;
+  padding: 4px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.mcPlayerStats__toggleBtn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255,255,255,0.55);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.mcPlayerStats__toggleBtn:hover:not(.mcPlayerStats__toggleBtn--active) {
+  color: rgba(255,255,255,0.75);
+}
+
+.mcPlayerStats__toggleBtn--active {
+  background: linear-gradient(135deg, #f5c400, #ffd54a);
+  color: #0c0e16;
+  font-weight: 950;
+  box-shadow: 0 4px 12px rgba(245,196,0,0.25);
+}
+
+/* Table wrapper & scroll */
+.mcPlayerStats__tableWrapper {
+  margin: 0 16px;
+  border-radius: 24px;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)),
+    linear-gradient(to bottom, rgba(20,24,40,0.8), rgba(12,14,24,0.9));
+  border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 12px 32px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.mcPlayerStats__placeholder {
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.mcPlayerStats__placeholderText {
+  font-size: 18px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.65);
+}
+
+.mcPlayerStats__placeholderDesc {
+  font-size: 13px;
+  font-weight: 550;
+  color: rgba(255,255,255,0.35);
+  margin: 8px 0 0 0;
+}
+
+.mcPlayerStats__scroll {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.10) transparent;
+}
+
+.mcPlayerStats__scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.mcPlayerStats__scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mcPlayerStats__scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.10);
+  border-radius: 999px;
+}
+
+.mcPlayerStats__scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+/* Table */
+.mcPlayerStats__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.mcPlayerStats__head {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.mcPlayerStats__headerRow {
+  background:
+    linear-gradient(180deg, 
+      rgba(255,255,255,0.08),
+      rgba(255,255,255,0.04)
+    );
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+}
+
+.mcPlayerStats__headerCell {
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.60);
+  border-right: 1px solid rgba(255,255,255,0.05);
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+}
+
+.mcPlayerStats__headerCell:hover {
+  color: rgba(255,255,255,0.80);
+}
+
+.mcPlayerStats__headerCell:last-child {
+  border-right: none;
+}
+
+.mcPlayerStats__headerCell--number {
+  width: 48px;
+  padding: 12px 4px;
+}
+
+.mcPlayerStats__headerCell--player {
+  text-align: left;
+  min-width: 200px;
+  padding: 12px 12px;
+}
+
+.mcPlayerStats__headerCell--stat {
+  width: 52px;
+  padding: 12px 6px;
+}
+
+.mcPlayerStats__sortIndicator {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 9px;
+}
+
+/* Table body */
+.mcPlayerStats__body {
+  display: contents;
+}
+
+.mcPlayerStats__row {
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  transition: background 0.2s ease;
+}
+
+.mcPlayerStats__row:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.mcPlayerStats__row:last-child {
+  border-bottom: none;
+}
+
+.mcPlayerStats__cell {
+  padding: 10px 8px;
+  border-right: 1px solid rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.85);
+}
+
+.mcPlayerStats__cell:last-child {
+  border-right: none;
+}
+
+.mcPlayerStats__cell--number {
+  width: 48px;
+  text-align: center;
+  padding: 10px 4px;
+}
+
+.mcPlayerStats__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 950;
+  color: rgba(255,255,255,0.95);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  font-variant-numeric: tabular-nums;
+}
+
+.mcPlayerStats__cell--player {
+  width: auto;
+  min-width: 200px;
+  padding: 8px 12px;
+}
+
+.mcPlayerStats__playerInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.mcPlayerStats__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mcPlayerStats__avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.mcPlayerStats__avatarFallback {
+  font-size: 11px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.40);
+  text-transform: uppercase;
+}
+
+.mcPlayerStats__playerName {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mcPlayerStats__firstName {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.65);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.mcPlayerStats__lastName {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.95);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.mcPlayerStats__cell--stat {
+  width: 52px;
+  text-align: center;
+  padding: 10px 6px;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.mcPlayerStats__statValue {
+  display: block;
+}
+
+/* Mobile optimizations */
+@media (max-width: 480px) {
+  .mcPlayerStats {
+    padding: 16px 0;
+  }
+
+  .mcPlayerStats__header {
+    padding: 0 12px;
+    margin-bottom: 16px;
+  }
+
+  .mcPlayerStats__title {
+    font-size: 24px;
+  }
+
+  .mcPlayerStats__desc {
+    font-size: 12px;
+  }
+
+  .mcPlayerStats__controls {
+    padding: 0 12px 12px 12px;
+    gap: 12px;
+  }
+
+  .mcPlayerStats__tableWrapper {
+    margin: 0 12px;
+  }
+
+  .mcPlayerStats__headerCell--player {
+    min-width: 160px;
+  }
+
+  .mcPlayerStats__cell--player {
+    min-width: 160px;
+    padding: 8px 10px;
+  }
+
+  .mcPlayerStats__avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  .mcPlayerStats__firstName {
+    font-size: 11px;
+  }
+
+  .mcPlayerStats__lastName {
+    font-size: 12px;
+  }
+
+  .mcPlayerStats__badge {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+
+  .mcPlayerStats__cell--stat {
+    width: 44px;
+    font-size: 11px;
+    padding: 8px 4px;
+  }
+
+  .mcPlayerStats__headerCell--stat {
+    width: 44px;
+    padding: 10px 4px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .mcPlayerStats__controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .mcPlayerStats__dropdownButton {
+    width: 100%;
+  }
+
+  .mcPlayerStats__toggle {
+    width: 100%;
+  }
+
+  .mcPlayerStats__toggleBtn {
+    flex: 1;
+  }
+}

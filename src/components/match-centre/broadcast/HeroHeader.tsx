@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft } from 'lucide-react';
 import SmartImg from '@/components/SmartImg';
 import { assetUrl, TEAM_ASSETS, type TeamKey } from '@/lib/teamAssets';
 import type { MatchCentreModel } from '@/lib/matchCentreRepo';
+import '@/styles/match-centre-hero.css';
 
 type Props = {
   onBack?: () => void;
@@ -15,6 +17,31 @@ function slugToTeamKey(slug: string): TeamKey | null {
   return (Object.keys(TEAM_ASSETS) as TeamKey[]).includes(s as TeamKey) ? (s as TeamKey) : null;
 }
 
+function hexToRgb(hex: string) {
+  const h = String(hex || '').replace('#', '').trim();
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  return {
+    r: Number.isFinite(r) ? r : 11,
+    g: Number.isFinite(g) ? g : 58,
+    b: Number.isFinite(b) ? b : 141,
+  };
+}
+
+function pickTeamTint(key: TeamKey | undefined, asset: any): string {
+  if (!key) return '#0B3A8D';
+  if (String(key) === 'collingwood') return '#B88A00';
+  if (String(key) === 'adelaide') return '#C81E2A';
+
+  const candidates: any[] = [asset?.glow, asset?.accent, asset?.tint, asset?.primary];
+  for (const c of candidates) {
+    if (typeof c === 'string' && c.startsWith('#') && (c.length === 7 || c.length === 4)) return c;
+  }
+  return asset?.colour || '#0B3A8D';
+}
+
 export default function HeroHeader({ onBack, model, loading }: Props) {
   const home = model?.home;
   const away = model?.away;
@@ -22,183 +49,138 @@ export default function HeroHeader({ onBack, model, loading }: Props) {
   const homeKey = home ? slugToTeamKey(home.slug) : null;
   const awayKey = away ? slugToTeamKey(away.slug) : null;
 
+  const homeAsset = homeKey ? TEAM_ASSETS[homeKey] : null;
+  const awayAsset = awayKey ? TEAM_ASSETS[awayKey] : null;
+
   const homeLogo =
-    home?.logoUrl ||
-    (homeKey ? assetUrl(TEAM_ASSETS[homeKey].logoFile) : undefined);
+    home?.logoUrl || (homeKey ? assetUrl(TEAM_ASSETS[homeKey].logoFile) : undefined);
 
   const awayLogo =
-    away?.logoUrl ||
-    (awayKey ? assetUrl(TEAM_ASSETS[awayKey].logoFile) : undefined);
+    away?.logoUrl || (awayKey ? assetUrl(TEAM_ASSETS[awayKey].logoFile) : undefined);
 
-  const homeColor = home?.color || '#111111';
-  const awayColor = away?.color || '#b00020';
+  const homeTint = pickTeamTint(homeKey, homeAsset);
+  const awayTint = pickTeamTint(awayKey, awayAsset);
+
+  const homeRgb = hexToRgb(homeTint);
+  const awayRgb = hexToRgb(awayTint);
+
+  const cssVars: React.CSSProperties = useMemo(
+    () => ({
+      ['--mcHomeR' as any]: String(homeRgb.r),
+      ['--mcHomeG' as any]: String(homeRgb.g),
+      ['--mcHomeB' as any]: String(homeRgb.b),
+      ['--mcAwayR' as any]: String(awayRgb.r),
+      ['--mcAwayG' as any]: String(awayRgb.g),
+      ['--mcAwayB' as any]: String(awayRgb.b),
+    }),
+    [homeRgb, awayRgb]
+  );
 
   const round = model?.round ?? 0;
   const dateText = model?.dateText ?? 'TBC';
   const venue = model?.venue ?? 'TBC';
   const status = model?.statusLabel ?? '—';
-
   const margin = model?.margin ?? 0;
 
+  // Status pill styling
+  const statusDot =
+    status === 'FULL TIME'
+      ? 'mcHero__dot--final'
+      : status === 'LIVE'
+        ? 'mcHero__dot--live'
+        : 'mcHero__dot--upcoming';
+
   return (
-    <section className="relative w-full overflow-hidden" style={{ minHeight: 520 }}>
-      {/* Diagonal gradient split background */}
-      <div className="absolute inset-0">
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `linear-gradient(125deg, ${homeColor} 0%, ${homeColor} 35%, hsl(0 0% 6%) 46%, hsl(358 60% 20%) 54%, ${awayColor} 65%, ${awayColor} 100%)`,
-          }}
-        />
+    <section className="mcHero" style={cssVars}>
+      <div className="mcHero__halo" />
 
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              'radial-gradient(ellipse 60% 80% at 52% 50%, rgba(200,40,40,0.12) 0%, transparent 70%)',
-          }}
-        />
-
-        <div
-          className="absolute inset-0 opacity-[0.035]"
-          style={{
-            backgroundImage:
-              'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\' opacity=\'1\'/%3E%3C/svg%3E")',
-            backgroundSize: '128px 128px',
-          }}
-        />
-
-        <div
-          className="absolute inset-0"
-          style={{
-            background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.45) 100%)',
-          }}
-        />
-      </div>
-
-      {/* Watermark team abbreviations */}
-      <div className="absolute inset-0 flex items-center justify-between pointer-events-none overflow-hidden px-4">
-        <span className="text-[120px] sm:text-[160px] md:text-[220px] lg:text-[280px] font-black uppercase text-white/[0.045] leading-none tracking-[-0.05em] select-none -translate-x-4">
-          {home?.abbreviation || 'HOME'}
-        </span>
-        <span className="text-[120px] sm:text-[160px] md:text-[220px] lg:text-[280px] font-black uppercase text-white/[0.045] leading-none tracking-[-0.05em] select-none translate-x-4">
-          {away?.abbreviation || 'AWAY'}
-        </span>
-      </div>
-
+      {/* Back button */}
       {onBack && (
         <button
           type="button"
           onClick={onBack}
-          className="absolute z-20 left-4 top-4 w-10 h-10 rounded-full bg-black/25 backdrop-blur-md border border-white/[0.12] text-white flex items-center justify-center shadow-lg active:scale-95 transition"
+          className="mcHero__back"
           aria-label="Back"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
       )}
 
-      <div className="relative z-10 flex flex-col items-center justify-center px-4 py-14" style={{ minHeight: 520 }}>
+      <div className="mcHero__content">
+        {/* Round + Date */}
         <motion.div
-          initial={{ opacity: 0, y: -14 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55 }}
-          className="text-center mb-8"
+          transition={{ duration: 0.4 }}
+          className="mcHero__header"
         >
-          <p className="text-white/50 text-[11px] font-semibold tracking-[0.4em] uppercase mb-2">
-            ROUND {round || '—'}
-          </p>
-          <p className="text-white/70 text-sm font-medium tracking-wide">{dateText}</p>
+          <span className="mcHero__round">ROUND {round}</span>
+          <span className="mcHero__date">{dateText}</span>
         </motion.div>
 
+        {/* Team Logos + Scores */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
+          initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.65, delay: 0.08 }}
-          className="w-full max-w-[520px] mx-auto"
+          transition={{ duration: 0.5, delay: 0.08 }}
+          className="mcHero__main"
         >
-          <div className="grid grid-cols-3 items-center gap-3">
-            <div className="flex flex-col items-center gap-2 min-w-0">
-              <div className="w-16 h-16 rounded-2xl bg-white/[0.08] backdrop-blur-md flex items-center justify-center border border-white/[0.10] shadow-2xl">
-                <SmartImg
-                  src={homeLogo}
-                  alt={home?.fullName || 'Home'}
-                  className="w-10 h-10 object-contain drop-shadow"
-                  fallbackText={home?.abbreviation || 'H'}
-                />
-              </div>
-              <span className="text-white/85 text-[10px] font-black tracking-[0.18em] uppercase text-center truncate max-w-[140px]">
-                {home?.fullName || (loading ? 'Loading…' : '—')}
-              </span>
+          {/* HOME */}
+          <div className="mcHero__side">
+            <div className="mcHero__logoBox">
+              <SmartImg
+                src={homeLogo}
+                alt={home?.fullName || 'Home'}
+                className="mcHero__logo"
+                fallbackText={home?.abbreviation || 'H'}
+              />
             </div>
+            <span className="mcHero__teamName">{home?.fullName || (loading ? '—' : '—')}</span>
+          </div>
 
-            <div className="flex items-center justify-center">
-              <span className="text-white/20 text-[12px] font-semibold tracking-[0.35em] uppercase select-none">
-                VS
-              </span>
+          {/* SCORES */}
+          <div className="mcHero__scores">
+            <div className="mcHero__scoreLine">
+              <span className="mcHero__score">{home?.score || 0}</span>
+              <span className="mcHero__dash">–</span>
+              <span className="mcHero__score">{away?.score || 0}</span>
             </div>
-
-            <div className="flex flex-col items-center gap-2 min-w-0">
-              <div className="w-16 h-16 rounded-2xl bg-white/[0.08] backdrop-blur-md flex items-center justify-center border border-white/[0.10] shadow-2xl">
-                <SmartImg
-                  src={awayLogo}
-                  alt={away?.fullName || 'Away'}
-                  className="w-10 h-10 object-contain drop-shadow"
-                  fallbackText={away?.abbreviation || 'A'}
-                />
-              </div>
-              <span className="text-white/85 text-[10px] font-black tracking-[0.18em] uppercase text-center truncate max-w-[140px]">
-                {away?.fullName || (loading ? 'Loading…' : '—')}
-              </span>
+            <div className="mcHero__minors">
+              <span className="mcHero__minor">{home ? `${home.goals}.${home.behinds}` : '0.0'}</span>
+              <span className="mcHero__pipe">|</span>
+              <span className="mcHero__minor">{away ? `${away.goals}.${away.behinds}` : '0.0'}</span>
             </div>
           </div>
 
-          <div className="mt-5 flex items-end justify-center gap-4">
-            <span
-              className="text-white font-black tabular-nums tracking-[-0.02em] drop-shadow-lg"
-              style={{ fontSize: 'clamp(44px, 12vw, 78px)', lineHeight: 1 }}
-            >
-              {home ? home.score : 0}
-            </span>
-
-            <span className="text-white/28 font-extralight select-none" style={{ fontSize: 'clamp(24px, 6vw, 46px)' }}>
-              –
-            </span>
-
-            <span
-              className="text-white font-black tabular-nums tracking-[-0.02em] drop-shadow-lg"
-              style={{ fontSize: 'clamp(44px, 12vw, 78px)', lineHeight: 1 }}
-            >
-              {away ? away.score : 0}
-            </span>
+          {/* AWAY */}
+          <div className="mcHero__side">
+            <div className="mcHero__logoBox">
+              <SmartImg
+                src={awayLogo}
+                alt={away?.fullName || 'Away'}
+                className="mcHero__logo"
+                fallbackText={away?.abbreviation || 'A'}
+              />
+            </div>
+            <span className="mcHero__teamName">{away?.fullName || (loading ? '—' : '—')}</span>
           </div>
+        </motion.div>
 
-          <div className="mt-2 flex items-center justify-center gap-4">
-            <span className="text-white/45 text-sm font-medium tabular-nums">
-              {home ? `${home.goals}.${home.behinds}` : '0.0'}
-            </span>
-            <span className="text-white/15 text-sm">|</span>
-            <span className="text-white/45 text-sm font-medium tabular-nums">
-              {away ? `${away.goals}.${away.behinds}` : '0.0'}
-            </span>
+        {/* Status + Venue */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.16 }}
+          className="mcHero__footer"
+        >
+          <div className="mcHero__statusPill">
+            <span className={`mcHero__dot ${statusDot}`} />
+            <span className="mcHero__statusText">{status}</span>
           </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.22 }}
-            className="mt-6 flex flex-col items-center gap-3"
-          >
-            <span className="bg-white/[0.10] backdrop-blur-md text-white text-[11px] font-black tracking-[0.25em] uppercase px-7 py-2 rounded-full border border-white/[0.12] shadow-lg">
-              {status}
-            </span>
-
-            <p className="text-white/55 text-sm font-medium text-center">
-              {venue}
-              {status === 'FULL TIME' && home && away ? (
-                <> • {home.fullName} by {margin}</>
-              ) : null}
-            </p>
-          </motion.div>
+          <p className="mcHero__venueText">
+            {venue}
+            {status === 'FULL TIME' && home && away ? <> • {home.fullName} by {margin}</> : null}
+          </p>
         </motion.div>
       </div>
     </section>

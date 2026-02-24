@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, ArrowRight, User, Users, Shield } from "lucide-react";
 import { mockPlayers, mockTeams } from "@/data/stats2MockData";
@@ -14,6 +14,7 @@ import {
   TeamStatKey,
 } from "@/types/stats2";
 import { getTeamAssets } from "@/lib/teamAssets";
+import { usePlayerPhotos } from "@/lib/usePlayerPhoto";
 import "@/styles/stats-home.css";
 
 /* ── helpers ── */
@@ -44,6 +45,10 @@ const StatsHomePage: React.FC = () => {
   const [scope, setScope] = useState<StatsScope>("total");
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
+
+  // Preload all player photos from Supabase
+  const playerNames = useMemo(() => mockPlayers.map(p => p.name), []);
+  const { photos: supabasePhotos } = usePlayerPhotos(playerNames);
 
   const statConfigs = mode === "players" ? PLAYER_STAT_CONFIGS : TEAM_STAT_CONFIGS;
 
@@ -113,7 +118,7 @@ const StatsHomePage: React.FC = () => {
       <div className="mt-4">
         <div className="eg-carousel">
           {statConfigs.map((cfg) => (
-            <LeaderCard key={cfg.key} cfg={cfg} mode={mode} scope={scope} />
+            <LeaderCard key={cfg.key} cfg={cfg} mode={mode} scope={scope} supabasePhotos={supabasePhotos} />
           ))}
           {/* end spacer */}
           <div style={{ flexShrink: 0, width: 6 }} />
@@ -187,9 +192,10 @@ interface LeaderCardProps {
   cfg: StatConfig;
   mode: StatsMode;
   scope: StatsScope;
+  supabasePhotos?: Map<string, string | null>;
 }
 
-const LeaderCard: React.FC<LeaderCardProps> = ({ cfg, mode, scope }) => {
+const LeaderCard: React.FC<LeaderCardProps> = ({ cfg, mode, scope, supabasePhotos = new Map() }) => {
   const navigate = useNavigate();
 
   const sorted =
@@ -264,7 +270,12 @@ const LeaderCard: React.FC<LeaderCardProps> = ({ cfg, mode, scope }) => {
 
         {/* Headshot / Logo */}
         <div className="eg-leader-headshot">
-          <HeadshotImg src={imgSrc} name={leaderName} large />
+          <HeadshotImg
+            src={imgSrc}
+            name={leaderName}
+            large
+            supabaseUrl={mode === "players" ? supabasePhotos.get(leaderName) : undefined}
+          />
         </div>
       </div>
 
@@ -283,7 +294,11 @@ const LeaderCard: React.FC<LeaderCardProps> = ({ cfg, mode, scope }) => {
             <div key={idx} className="eg-runner-row">
               <span className="eg-runner-rank">{idx + 2}</span>
               <div className="eg-runner-avatar">
-                <HeadshotImg src={src} name={name} />
+                <HeadshotImg
+                  src={src}
+                  name={name}
+                  supabaseUrl={mode === "players" ? supabasePhotos.get(name) : undefined}
+                />
               </div>
               <div className="eg-runner-info">
                 <span className="eg-runner-name">{name}</span>
@@ -304,12 +319,41 @@ const LeaderCard: React.FC<LeaderCardProps> = ({ cfg, mode, scope }) => {
 };
 
 /* ── Headshot with initials fallback ── */
-const HeadshotImg: React.FC<{ src: string; name: string; large?: boolean }> = ({ src, name, large }) => {
-  const [failed, setFailed] = useState(false);
-  if (failed || !src) {
+const HeadshotImg: React.FC<{ src: string; name: string; large?: boolean; supabaseUrl?: string | null }> = ({
+  src,
+  name,
+  large,
+  supabaseUrl
+}) => {
+  const [useFallback, setUseFallback] = useState(false);
+
+  // Fallback chain:
+  // 1. Supabase photo (if available) - primary
+  // 2. AFL fantasy API photo (src) - secondary fallback
+  // 3. Initials avatar - final fallback
+  const primarySrc = supabaseUrl || src;
+  const fallbackSrc = src;
+
+  // Determine which source to display
+  let displaySrc = useFallback && fallbackSrc ? fallbackSrc : primarySrc;
+
+  if (!displaySrc) {
     return large ? <div className="initials-fallback">{getInitials(name)}</div> : <span className="mini-initials">{getInitials(name)}</span>;
   }
-  return <img src={src} alt={name} onError={() => setFailed(true)} />;
+
+  return (
+    <img
+      src={displaySrc}
+      alt={name}
+      onError={() => {
+        // If primary failed and we haven't tried fallback yet, try fallback
+        if (!useFallback && primarySrc !== fallbackSrc && fallbackSrc) {
+          setUseFallback(true);
+        }
+        // If fallback also fails, the CSS will show the initials
+      }}
+    />
+  );
 };
 
 export default StatsHomePage;

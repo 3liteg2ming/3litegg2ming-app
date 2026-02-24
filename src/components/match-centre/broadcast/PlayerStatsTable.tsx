@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
-import { ChevronDown, Star } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import SmartImg from '@/components/SmartImg';
 import type { MatchCentreModel, PlayerStatRow } from '@/lib/matchCentreRepo';
+import '@/styles/match-centre-player-stats.css';
 
 type SortKey = keyof PlayerStatRow;
 type SortDir = 'asc' | 'desc';
@@ -68,31 +69,24 @@ export default function PlayerStatsTable({ model, loading }: { model: MatchCentr
   };
 
   return (
-    <section className="w-full max-w-6xl mx-auto px-4 py-10">
-      <div className="text-center mb-6">
-        <h2 className="text-3xl md:text-4xl font-black tracking-tight text-foreground flex items-center justify-center gap-2">
-          <Star className="w-6 h-6" /> Player Stats
-        </h2>
-        <p className="text-muted-foreground text-sm mt-1">See how the players are performing...</p>
+    <section className="mcPlayerStats">
+      <div className="mcPlayerStats__header">
+        <h2 className="mcPlayerStats__title">Player Stats</h2>
+        <p className="mcPlayerStats__desc">Detailed match breakdown</p>
       </div>
 
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-        <div className="flex items-center gap-4">
-          <div className="text-sm">
-            <span className="text-primary font-bold text-xs uppercase tracking-wider">Stats</span>
-            <p className="font-bold text-foreground">Basic ▾</p>
-          </div>
-
-          <div className="relative">
-            <div className="text-sm cursor-pointer select-none" onClick={() => setShowTeamDropdown((s) => !s)}>
-              <span className="text-primary font-bold text-xs uppercase tracking-wider">Teams</span>
-              <p className="font-bold text-foreground flex items-center gap-1">
-                {teamFilter} <ChevronDown className="w-4 h-4 opacity-60" />
-              </p>
+      {/* Controls */}
+      <div className="mcPlayerStats__controls">
+        <div className="mcPlayerStats__left">
+          <div className="mcPlayerStats__filterDropdown">
+            <label className="mcPlayerStats__label">Teams</label>
+            <div className="mcPlayerStats__dropdownButton" onClick={() => setShowTeamDropdown((s) => !s)}>
+              <span>{teamFilter}</span>
+              <ChevronDown className="mcPlayerStats__dropdownIcon" />
             </div>
 
             {showTeamDropdown && (
-              <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-xl border border-border z-50 min-w-[180px] overflow-hidden">
+              <div className="mcPlayerStats__dropdownMenu">
                 {teamOptions.map((t) => (
                   <button
                     key={t}
@@ -100,12 +94,9 @@ export default function PlayerStatsTable({ model, loading }: { model: MatchCentr
                       setTeamFilter(t);
                       setShowTeamDropdown(false);
                     }}
-                    className={`w-full text-left px-4 py-3 text-sm font-semibold flex items-center justify-between transition-colors ${
-                      teamFilter === t ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'
-                    }`}
+                    className={`mcPlayerStats__dropdownItem ${teamFilter === t ? 'mcPlayerStats__dropdownItem--active' : ''}`}
                   >
                     {t}
-                    {teamFilter === t && <span>✓</span>}
                   </button>
                 ))}
               </div>
@@ -113,63 +104,66 @@ export default function PlayerStatsTable({ model, loading }: { model: MatchCentr
           </div>
         </div>
 
-        <div className="flex items-center rounded-full border border-border overflow-hidden">
-          <button
-            onClick={() => setViewMode('match')}
-            className={`px-5 py-2 text-sm font-bold transition-colors ${
-              viewMode === 'match' ? 'bg-primary text-primary-foreground' : 'bg-transparent text-foreground hover:bg-muted'
-            }`}
-          >
-            Match
-          </button>
-          <button
-            onClick={() => setViewMode('season')}
-            className={`px-5 py-2 text-sm font-bold transition-colors ${
-              viewMode === 'season' ? 'bg-primary text-primary-foreground' : 'bg-transparent text-foreground hover:bg-muted'
-            }`}
-          >
-            Season avg.
-          </button>
+        <div className="mcPlayerStats__right">
+          <div className="mcPlayerStats__toggle">
+            <button
+              onClick={() => setViewMode('match')}
+              className={`mcPlayerStats__toggleBtn ${viewMode === 'match' ? 'mcPlayerStats__toggleBtn--active' : ''}`}
+            >
+              Match
+            </button>
+            <button
+              onClick={() => setViewMode('season')}
+              className={`mcPlayerStats__toggleBtn ${viewMode === 'season' ? 'mcPlayerStats__toggleBtn--active' : ''}`}
+            >
+              Season
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-border/50 overflow-hidden">
+      {/* Table */}
+      <div className="mcPlayerStats__tableWrapper">
         {loading && !model ? (
-          <div className="p-8 text-center">
-            <div className="text-xl font-black text-foreground">Loading player stats…</div>
-            <div className="mt-2 text-sm text-muted-foreground">Fetching match centre data.</div>
+          <div className="mcPlayerStats__placeholder">
+            <div className="mcPlayerStats__placeholderText">Loading player stats…</div>
+            <p className="mcPlayerStats__placeholderDesc">Fetching match centre data.</p>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="p-8 text-center">
-            <div className="text-xl font-black text-foreground">No player stats yet</div>
-            <div className="mt-2 text-sm text-muted-foreground">
+          <div className="mcPlayerStats__placeholder">
+            <div className="mcPlayerStats__placeholderText">No player stats yet</div>
+            <p className="mcPlayerStats__placeholderDesc">
               This will populate after match submissions (goal kickers + OCR stats).
-            </div>
+            </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-[980px] w-full text-sm">
-              <thead className="bg-white sticky top-0 z-10">
-                <tr className="border-b border-border/50">
-                  <th className="text-center px-3 py-3 text-muted-foreground font-bold">#</th>
-                  <th className="text-left px-3 py-3 text-foreground font-black">Player</th>
+          <div className="mcPlayerStats__scroll">
+            <table className="mcPlayerStats__table">
+              <thead className="mcPlayerStats__head">
+                <tr className="mcPlayerStats__headerRow">
+                  <th className="mcPlayerStats__headerCell mcPlayerStats__headerCell--number">#</th>
+                  <th className="mcPlayerStats__headerCell mcPlayerStats__headerCell--player">Player</th>
                   {statColumns.map((col) => (
                     <th
                       key={col.key}
-                      className="text-center px-2 py-3 text-foreground font-black cursor-pointer select-none hover:text-primary transition-colors"
+                      className="mcPlayerStats__headerCell mcPlayerStats__headerCell--stat"
                       onClick={() => handleSort(col.key)}
                     >
-                      {col.label}
-                      {sortKey === col.key && <span className="ml-0.5">{sortDir === 'asc' ? '▲' : '▼'}</span>}
+                      <span>{col.label}</span>
+                      {sortKey === col.key && (
+                        <span className="mcPlayerStats__sortIndicator">
+                          {sortDir === 'asc' ? '▲' : '▼'}
+                        </span>
+                      )}
                     </th>
                   ))}
                 </tr>
               </thead>
 
-              <tbody>
+              <tbody className="mcPlayerStats__body">
                 {filtered.map((player) => {
                   const isHome = player.team === homeName;
-                  const badgeColor = isHome ? (model?.home?.color || '#111') : (model?.away?.color || '#b00020');
+                  const badgeColor = isHome ? (model?.home?.color || '#4a7fe1') : (model?.away?.color || '#e14a4a');
 
                   const first = player.name.split(' ')[0] ?? player.name;
                   const last = player.name.split(' ').slice(1).join(' ');
@@ -177,47 +171,41 @@ export default function PlayerStatsTable({ model, loading }: { model: MatchCentr
                   return (
                     <tr
                       key={`${player.name}-${player.team}`}
-                      className="border-b border-border/30 hover:bg-muted/30 transition-colors"
+                      className="mcPlayerStats__row"
                     >
-                      <td className="text-center px-3 py-3">
-                        <span
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-white text-xs font-bold"
-                          style={{ backgroundColor: badgeColor }}
-                        >
+                      <td className="mcPlayerStats__cell mcPlayerStats__cell--number">
+                        <span className="mcPlayerStats__badge" style={{ background: badgeColor }}>
                           {player.number || '—'}
                         </span>
                       </td>
 
-                      <td className="px-3 py-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-9 h-9 rounded-full overflow-hidden bg-muted flex items-center justify-center border border-border/60 flex-shrink-0">
+                      <td className="mcPlayerStats__cell mcPlayerStats__cell--player">
+                        <div className="mcPlayerStats__playerInfo">
+                          <div className="mcPlayerStats__avatar">
                             {player.photoUrl ? (
                               <SmartImg
                                 src={player.photoUrl}
                                 alt={player.name}
-                                className="w-full h-full object-cover"
+                                className="mcPlayerStats__avatarImg"
                                 fallbackText={initials(player.name)}
                               />
                             ) : (
-                              <span className="text-[11px] font-black text-foreground/70">{initials(player.name)}</span>
+                              <span className="mcPlayerStats__avatarFallback">{initials(player.name)}</span>
                             )}
                           </div>
 
-                          <div className="min-w-0">
-                            <p className="font-semibold text-foreground whitespace-nowrap truncate max-w-[260px]">
-                              <span className="font-normal">{first} </span>
-                              <span className="font-bold">{last}</span>
-                            </p>
-                            <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-wide">
-                              {player.team}
-                            </p>
+                          <div className="mcPlayerStats__playerName">
+                            <span className="mcPlayerStats__firstName">{first}</span>
+                            <span className="mcPlayerStats__lastName">{last}</span>
                           </div>
                         </div>
                       </td>
 
                       {statColumns.map((col) => (
-                        <td key={col.key} className="text-center px-2 py-3 tabular-nums text-foreground/80">
-                          {viewMode === 'match' ? (player[col.key] as number) : (player[col.key] as number)}
+                        <td key={col.key} className="mcPlayerStats__cell mcPlayerStats__cell--stat">
+                          <span className="mcPlayerStats__statValue">
+                            {viewMode === 'match' ? (player[col.key] as number) : (player[col.key] as number)}
+                          </span>
                         </td>
                       ))}
                     </tr>

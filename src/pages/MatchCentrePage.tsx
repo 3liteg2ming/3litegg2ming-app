@@ -4,14 +4,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import HeroHeader from '@/components/match-centre/broadcast/HeroHeader';
 import MatchTimeline from '@/components/match-centre/broadcast/MatchTimeline';
 import MatchLeaders from '@/components/match-centre/broadcast/MatchLeaders';
+import KeyMatchStats from '@/components/match-centre/broadcast/KeyMatchStats';
 import TeamStats from '@/components/match-centre/broadcast/TeamStats';
 import PlayerStatsTable from '@/components/match-centre/broadcast/PlayerStatsTable';
 import MatchCentreTabs, { type MatchCentreTabKey } from '@/components/match-centre/broadcast/MatchCentreTabs';
 
 import { fetchMatchCentre, type MatchCentreModel } from '@/lib/matchCentreRepo';
 
-import '@/styles/mc-tailwind.css';
-import '@/styles/mc-broadcast-theme.css';
+import '@/styles/match-centre-page.css';
 
 export default function MatchCentrePage() {
   const navigate = useNavigate();
@@ -63,23 +63,23 @@ export default function MatchCentrePage() {
   }, [matchId]);
 
   return (
-    <div className="mc-broadcast-root">
-      <div className="min-h-screen bg-background text-foreground">
+    <div className="mcPage">
+      <div className="mcPage__inner">
         <HeroHeader onBack={() => navigate(-1)} model={model} loading={loading} />
 
         <div ref={topRef} />
         <MatchCentreTabs active={tab} onChange={setTab} />
 
         {err ? (
-          <div className="w-full max-w-3xl mx-auto px-4 py-10">
-            <div className="bg-white rounded-2xl border border-border/60 shadow-sm p-6 text-center">
-              <div className="text-xl font-black text-foreground">Match Centre Unavailable</div>
-              <div className="mt-2 text-sm text-muted-foreground">{err}</div>
+          <div className="mcPage__error">
+            <div className="mcPage__errorBox">
+              <div className="mcPage__errorTitle">Match Centre Unavailable</div>
+              <div className="mcPage__errorMsg">{err}</div>
 
               <button
                 type="button"
                 onClick={() => navigate(-1)}
-                className="mt-5 inline-flex items-center justify-center px-5 py-2 rounded-full bg-primary text-primary-foreground font-bold"
+                className="mcPage__errorBtn"
               >
                 Go Back
               </button>
@@ -88,16 +88,26 @@ export default function MatchCentrePage() {
         ) : (
           <>
             {tab === 'summary' && (
-              <>
-                <MatchTimeline model={model} loading={loading} />
+              <div className="mcPage__content">
                 <MatchLeaders model={model} loading={loading} />
-              </>
+                <MatchTimeline model={model} loading={loading} />
+                <KeyMatchStats model={model} loading={loading} />
+              </div>
             )}
 
-            {tab === 'team' && <TeamStats model={model} loading={loading} />}
-            {tab === 'players' && <PlayerStatsTable model={model} loading={loading} />}
+            {tab === 'team' && (
+              <div className="mcPage__content">
+                <TeamStats model={model} loading={loading} />
+              </div>
+            )}
 
-            <div className="h-20" />
+            {tab === 'players' && (
+              <div className="mcPage__content">
+                <PlayerStatsTable model={model} loading={loading} />
+              </div>
+            )}
+
+            <div className="mcPage__footer" />
           </>
         )}
       </div>
