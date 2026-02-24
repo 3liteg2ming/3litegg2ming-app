@@ -1,0 +1,116 @@
+/* Match Centre Page
+   ==================
+   - Dark elite gaming base
+   - Page layout and spacing
+   - Error states
+*/
+
+.mcPage {
+  width: 100%;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(100,60,200,0.08), transparent 70%),
+    linear-gradient(180deg, rgba(8,10,16,0.95) 0%, rgba(6,8,14,0.98) 100%);
+  color: rgba(255,255,255,0.95);
+  overflow-x: hidden;
+}
+
+.mcPage__inner {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.mcPage__content {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.mcPage__footer {
+  height: 32px;
+}
+
+/* Error state */
+.mcPage__error {
+  width: 100%;
+  padding: 40px 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.mcPage__errorBox {
+  max-width: 480px;
+  border-radius: 24px;
+  padding: 32px;
+  text-align: center;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)),
+    linear-gradient(to bottom, rgba(30,35,55,0.85), rgba(15,18,28,0.95));
+  border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+}
+
+.mcPage__errorTitle {
+  font-size: 20px;
+  font-weight: 950;
+  color: rgba(255,255,255,0.95);
+  margin: 0 0 12px 0;
+}
+
+.mcPage__errorMsg {
+  font-size: 14px;
+  font-weight: 550;
+  color: rgba(255,255,255,0.55);
+  margin: 0 0 24px 0;
+}
+
+.mcPage__errorBtn {
+  padding: 12px 24px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #f5c400, #ffd54a, #f5c400);
+  color: #0c0e16;
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 20px rgba(245,196,0,0.25);
+}
+
+.mcPage__errorBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(245,196,0,0.35);
+}
+
+.mcPage__errorBtn:active {
+  transform: translateY(0);
+}
+
+/* Mobile optimizations */
+@media (max-width: 480px) {
+  .mcPage__footer {
+    height: 24px;
+  }
+
+  .mcPage__errorBox {
+    padding: 24px;
+    margin: 0 0;
+  }
+
+  .mcPage__errorTitle {
+    font-size: 18px;
+  }
+
+  .mcPage__errorMsg {
+    font-size: 13px;
+  }
+}
