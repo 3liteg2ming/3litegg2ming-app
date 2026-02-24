@@ -282,6 +282,10 @@ export default function LadderPage() {
           </div>
         </div>
 
+        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', marginTop: '8px', textAlign: 'center' }}>
+          ← Scroll horizontally to see all stats →
+        </div>
+
         <div className="safeBottom" />
       </div>
     </div>

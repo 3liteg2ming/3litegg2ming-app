@@ -109,9 +109,12 @@
 .aflTable {
   margin-top: 12px;
   border-radius: 18px;
-  background: rgba(10,12,16,0.34); /* lighter than before */
+  background: rgba(10,12,16,0.34);
   border: 1px solid rgba(255,255,255,0.10);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  min-width: 0;
 }
 
 .aflScroll {
@@ -127,12 +130,13 @@
 /* Head row */
 .aflHead {
   display: grid;
-  grid-template-columns: 64px 260px 1fr;
+  grid-template-columns: 64px 260px auto;
   align-items: center;
   gap: 0;
   padding: 10px 10px;
   border-bottom: 1px solid rgba(255,255,255,0.10);
   background: rgba(255,255,255,0.03);
+  min-width: min-content;
 }
 
 .hPos, .hClub {
@@ -151,15 +155,15 @@
 }
 
 .hCols[data-mode="SUMMARY"] {
-  grid-template-columns: repeat(3, minmax(56px, 1fr));
+  grid-template-columns: repeat(3, minmax(68px, 68px));
 }
 
 .hCols[data-mode="EXTENDED"] {
-  grid-template-columns: repeat(8, minmax(56px, 1fr));
+  grid-template-columns: repeat(8, minmax(68px, 68px));
 }
 
 .hCols[data-mode="FORM"] {
-  grid-template-columns: minmax(220px, 1fr) minmax(110px, 140px);
+  grid-template-columns: minmax(120px, 120px) minmax(100px, 100px);
 }
 
 .hCols .h {
@@ -185,12 +189,13 @@
 /* One row container */
 .egAflRow {
   display: grid;
-  grid-template-columns: 64px 260px 1fr;
+  grid-template-columns: 64px 260px auto;
   align-items: center;
   padding: 10px 10px;
   border-bottom: 1px solid rgba(255,255,255,0.09);
   position: relative;
   background: rgba(255,255,255,0.015);
+  min-width: min-content;
 }
 
 /* Make left two columns sticky inside horizontal scroll */
@@ -293,35 +298,41 @@
 }
 
 .cCols[data-mode="SUMMARY"] {
-  grid-template-columns: repeat(3, minmax(56px, 1fr));
+  grid-template-columns: repeat(3, minmax(68px, 68px));
 }
 
 .cCols[data-mode="EXTENDED"] {
-  grid-template-columns: repeat(8, minmax(56px, 1fr));
+  grid-template-columns: repeat(8, minmax(68px, 68px));
 }
 
 .cCols[data-mode="FORM"] {
-  grid-template-columns: minmax(220px, 1fr) minmax(110px, 140px);
+  grid-template-columns: minmax(120px, 120px) minmax(100px, 100px);
 }
 
 .cell {
   width: 100%;
-  display: grid;
-  justify-items: end;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
   gap: 2px;
+  padding: 4px 6px 0;
+  min-height: 50px;
 }
 
 .cell .k {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
-  letter-spacing: 1.2px;
-  color: rgba(255,255,255,0.45);
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.50);
+  text-transform: uppercase;
 }
 
 .cell .v {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 950;
-  color: rgba(255,255,255,0.92);
+  color: rgba(255,255,255,0.96);
+  line-height: 1.1;
 }
 
 .cell .vPts {
@@ -330,14 +341,25 @@
 }
 
 /* Form column */
+.formCol,
+.oddsCol {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
+  padding: 4px 6px 0;
+  min-height: 50px;
+}
+
 .formCol .k,
 .oddsCol .k {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
-  letter-spacing: 1.2px;
-  color: rgba(255,255,255,0.45);
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.50);
   text-align: right;
   margin-bottom: 6px;
+  text-transform: uppercase;
 }
 
 .dots {
@@ -384,10 +406,27 @@
 @media (max-width: 420px) {
   .ladderWrap { padding: 12px 12px 0; }
   .ladderHero .title { font-size: 44px; }
-  .aflHead { grid-template-columns: 56px 236px 1fr; }
-  .egAflRow { grid-template-columns: 56px 236px 1fr; }
+  .aflHead { grid-template-columns: 56px 200px auto; }
+  .egAflRow { grid-template-columns: 56px 200px auto; }
   .egAflRow .cClub, .aflHead .hClub { left: 56px; }
-  .clubName { font-size: 26px; max-width: 170px; }
-  .cell .v { font-size: 20px; }
-  .dot { width: 15px; height: 15px; }
+  .clubName { font-size: 26px; max-width: 140px; }
+  .cell .v { font-size: 18px; }
+  .dot { width: 14px; height: 14px; }
+
+  .hCols[data-mode="SUMMARY"],
+  .cCols[data-mode="SUMMARY"] {
+    grid-template-columns: repeat(3, minmax(56px, 56px));
+  }
+
+  .hCols[data-mode="EXTENDED"],
+  .cCols[data-mode="EXTENDED"] {
+    grid-template-columns: repeat(8, minmax(50px, 50px));
+  }
+
+  .hCols[data-mode="FORM"],
+  .cCols[data-mode="FORM"] {
+    grid-template-columns: minmax(90px, 90px) minmax(85px, 85px);
+  }
+
+  .cell .k { font-size: 10px; }
 }
