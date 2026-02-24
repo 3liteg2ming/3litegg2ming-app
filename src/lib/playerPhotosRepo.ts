@@ -95,6 +95,15 @@ export async function preloadPlayerPhotos(playerNames: string[]): Promise<Map<st
     const players = (data || []) as EGPlayer[];
     const photoMap = new Map(players.map(p => [p.name, p.headshot_url || null]));
 
+    // Debug: Log which players have photos
+    console.log('[PlayerPhotos] Loaded photos for:', players.map(p => ({ name: p.name, hasPhoto: !!p.headshot_url })));
+
+    // Log missing players
+    const missingPlayers = uncachedNames.filter(name => !photoMap.has(name));
+    if (missingPlayers.length > 0) {
+      console.warn('[PlayerPhotos] Players not found in database:', missingPlayers);
+    }
+
     // Cache and populate results
     playerNames.forEach(name => {
       const headshot = photoMap.get(name) ?? null;

@@ -325,15 +325,35 @@ const HeadshotImg: React.FC<{ src: string; name: string; large?: boolean; supaba
   large,
   supabaseUrl
 }) => {
-  const [failed, setFailed] = useState(false);
+  const [useFallback, setUseFallback] = useState(false);
 
-  // Prioritize Supabase URL if available, otherwise use fallback src
-  const displaySrc = supabaseUrl || src;
+  // Fallback chain:
+  // 1. Supabase photo (if available) - primary
+  // 2. AFL fantasy API photo (src) - secondary fallback
+  // 3. Initials avatar - final fallback
+  const primarySrc = supabaseUrl || src;
+  const fallbackSrc = src;
 
-  if (failed || !displaySrc) {
+  // Determine which source to display
+  let displaySrc = useFallback && fallbackSrc ? fallbackSrc : primarySrc;
+
+  if (!displaySrc) {
     return large ? <div className="initials-fallback">{getInitials(name)}</div> : <span className="mini-initials">{getInitials(name)}</span>;
   }
-  return <img src={displaySrc} alt={name} onError={() => setFailed(true)} />;
+
+  return (
+    <img
+      src={displaySrc}
+      alt={name}
+      onError={() => {
+        // If primary failed and we haven't tried fallback yet, try fallback
+        if (!useFallback && primarySrc !== fallbackSrc && fallbackSrc) {
+          setUseFallback(true);
+        }
+        // If fallback also fails, the CSS will show the initials
+      }}
+    />
+  );
 };
 
 export default StatsHomePage;
