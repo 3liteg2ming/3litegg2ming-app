@@ -74,7 +74,7 @@ function teamShort(asset: any) {
   return (n.slice(0, 3) || '—').toUpperCase();
 }
 
-export default function FixturePosterCard({ m }: { m: FixturePosterMatch }) {
+function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
   const home = TEAM_ASSETS[m.home];
   const away = TEAM_ASSETS[m.away];
   if (!home || !away) return null;
@@ -152,7 +152,7 @@ export default function FixturePosterCard({ m }: { m: FixturePosterMatch }) {
         <div className="fxPosterCard__side fxPosterCard__side--home">
           <div className="fxPosterCard__teamGlow" />
           <div className="fxPosterCard__teamBox">
-            <SmartImg className="fxPosterCard__logo" src={assetUrl(home.logoFile)} alt={home.name} fallbackText="EG" />
+            <SmartImg className="fxPosterCard__logo" src={assetUrl(home.logoFile)} alt={home.name} fallbackText="EG" loading="lazy" />
           </div>
           <div className="fxPosterCard__abbr">{teamShort(home)}</div>
         </div>
@@ -204,7 +204,7 @@ export default function FixturePosterCard({ m }: { m: FixturePosterMatch }) {
         <div className="fxPosterCard__side fxPosterCard__side--away">
           <div className="fxPosterCard__teamGlow" />
           <div className="fxPosterCard__teamBox">
-            <SmartImg className="fxPosterCard__logo" src={assetUrl(away.logoFile)} alt={away.name} fallbackText="EG" />
+            <SmartImg className="fxPosterCard__logo" src={assetUrl(away.logoFile)} alt={away.name} fallbackText="EG" loading="lazy" />
           </div>
           <div className="fxPosterCard__abbr">{teamShort(away)}</div>
         </div>
@@ -240,3 +240,8 @@ export default function FixturePosterCard({ m }: { m: FixturePosterMatch }) {
     </motion.section>
   );
 }
+
+// Memoize to prevent unnecessary re-renders when parent updates
+const FixturePosterCard = React.memo(FixturePosterCardComponent);
+
+export default FixturePosterCard;
