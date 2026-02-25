@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import HomePage from './pages/HomePage';
 import AFL26FixturesPage from './pages/AFL26FixturesPage';
@@ -11,10 +12,23 @@ import SubmitPage from './pages/SubmitPage';
 
 import SignInPage from './pages/auth/SignInPage';
 import SignUpPage from './pages/auth/SignUpPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 
 import { AuthProvider } from './state/auth/AuthProvider';
 import { ProtectedRoute } from './state/auth/ProtectedRoute';
 import { AdminRoute } from './state/auth/AdminRoute';
+
+// Create QueryClient instance with optimized settings
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 45_000, // 45 seconds
+      gcTime: 1_200_000, // 20 minutes (formerly cacheTime)
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 import AdminCreateFixturePage from './pages/admin/AdminCreateFixturePage';
 import AdminPanelPage from './pages/admin/AdminPanelPage';
@@ -123,9 +137,11 @@ export default function App() {
   return (
     <div className="eg-viewport">
       <div className="eg-device" role="application" aria-label="Elite Gaming App">
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </QueryClientProvider>
       </div>
     </div>
   );
