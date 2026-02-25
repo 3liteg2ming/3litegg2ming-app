@@ -368,6 +368,12 @@ export default function SubmitPage() {
 
         if (!alive) return;
 
+        // Get logo from database or fall back to TEAM_COLORS
+        const homeTeamName = homeTeamData?.name || 'Home Team';
+        const awayTeamName = awayTeamData?.name || 'Away Team';
+        const homeTeamLogo = homeTeamData?.logo_url || TEAM_COLORS[homeTeamName]?.logo;
+        const awayTeamLogo = awayTeamData?.logo_url || TEAM_COLORS[awayTeamName]?.logo;
+
         const nextPayload: NextFixturePayload = {
           fixture: {
             id: fixture.id,
@@ -377,16 +383,16 @@ export default function SubmitPage() {
           },
           homeTeam: {
             id: homeTeamData?.id || fixture.home_team_id,
-            name: homeTeamData?.name || 'Home Team',
+            name: homeTeamName,
             shortName: homeTeamData?.short_name,
-            logo: homeTeamData?.logo_url,
+            logo: homeTeamLogo,
             teamKey: homeTeamData?.team_key,
           },
           awayTeam: {
             id: awayTeamData?.id || fixture.away_team_id,
-            name: awayTeamData?.name || 'Away Team',
+            name: awayTeamName,
             shortName: awayTeamData?.short_name,
-            logo: awayTeamData?.logo_url,
+            logo: awayTeamLogo,
             teamKey: awayTeamData?.team_key,
           },
         };
