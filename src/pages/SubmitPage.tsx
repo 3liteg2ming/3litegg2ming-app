@@ -8,17 +8,19 @@ import {
   Minus,
   Plus,
   Search,
-  Shield,
   Trophy,
   Upload,
   User,
   X,
   Wand2,
   AlertTriangle,
+  Home,
+  Zap,
 } from 'lucide-react';
 
 import { supabase } from '../lib/supabaseClient';
 import { fetchAflPlayers, type AflPlayer } from '../data/aflPlayers';
+import { TEAM_COLORS, TEAM_SHORT_NAMES } from '../data/teamColors';
 import '../styles/submitPage.css';
 
 type NextFixturePayload = {
@@ -131,9 +133,6 @@ function parsePlayerLinesFromText(raw: string) {
   return out.slice(0, 50);
 }
 
-/**
- * Robust OCR runner with 20-second hard timeout
- */
 async function runTesseract(files: File[], onProgress: (step: string, progress01: number) => void) {
   const GLOBAL_TIMEOUT_MS = 20000;
 
@@ -234,15 +233,14 @@ export default function SubmitPage() {
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const [myTeamId, setMyTeamId] = useState<string | null>(null);
   const [myRole, setMyRole] = useState<string | null>(null);
+  const [myCoachName, setMyCoachName] = useState<string | null>(null);
 
   const [payload, setPayload] = useState<NextFixturePayload>(null);
 
-  // UI state
-  const [expandedMatch, setExpandedMatch] = useState(true);
-  const [expandedScore, setExpandedScore] = useState(true);
-  const [expandedGoalKickers, setExpandedGoalKickers] = useState(true);
-  const [expandedEvidence, setExpandedEvidence] = useState(true);
+  // Stepper
+  const [currentStep, setCurrentStep] = useState<Step>(1);
 
+  // UI state
   const [venue, setVenue] = useState('');
   const [venueEditable, setVenueEditable] = useState(false);
 
@@ -286,6 +284,23 @@ export default function SubmitPage() {
     return myTeamId === homeTeam.id;
   }, [myTeamId, homeTeam?.id]);
 
+  // Get team colors for CSS variables
+  const homeTeamColors = useMemo(() => {
+    if (!homeTeam?.name) return { r: '0', g: '0', b: '0' };
+    const colors = TEAM_COLORS[homeTeam.name];
+    if (!colors) return { r: '0', g: '0', b: '0' };
+    const match = colors.glow.match(/rgba\((\d+),\s*(\d+),\s*(\d+)/);
+    return match ? { r: match[1], g: match[2], b: match[3] } : { r: '0', g: '0', b: '0' };
+  }, [homeTeam?.name]);
+
+  const awayTeamColors = useMemo(() => {
+    if (!awayTeam?.name) return { r: '0', g: '0', b: '0' };
+    const colors = TEAM_COLORS[awayTeam.name];
+    if (!colors) return { r: '0', g: '0', b: '0' };
+    const match = colors.glow.match(/rgba\((\d+),\s*(\d+),\s*(\d+)/);
+    return match ? { r: match[1], g: match[2], b: match[3] } : { r: '0', g: '0', b: '0' };
+  }, [awayTeam?.name]);
+
   // Load session, profile, and next fixture
   useEffect(() => {
     let alive = true;
@@ -302,7 +317,6 @@ export default function SubmitPage() {
 
         setSessionUserId(uid);
 
-        // Query profiles with SELECT('*') to avoid missing column errors
         const { data: profile, error: pErr } = await supabase
           .from('profiles')
           .select('*')
@@ -314,9 +328,8 @@ export default function SubmitPage() {
 
         setMyTeamId(profile.team_id);
         setMyRole(profile.role || null);
+        setMyCoachName(profile.display_name || profile.psn || 'Coach');
 
-        // Robust next-fixture lookup: home-team-only
-        // 1. Query for next HOME fixture (not FINAL, not submitted)
         const { data: fixtures, error: fxErr } = await supabase
           .from('eg_fixtures')
           .select('id, round, status, venue, home_team_id, away_team_id, home_goals, home_behinds, away_goals, away_behinds')
@@ -328,7 +341,6 @@ export default function SubmitPage() {
         if (fxErr) throw fxErr;
 
         if (!fixtures || fixtures.length === 0) {
-          // No eligible home fixtures
           if (alive) {
             setPayload(null);
             setVenue('');
@@ -338,7 +350,6 @@ export default function SubmitPage() {
 
         const fixture = fixtures[0];
 
-        // 2. Fetch team info for home and away teams
         const { data: homeTeamData, error: homeErr } = await supabase
           .from('eg_teams')
           .select('*')
@@ -357,6 +368,12 @@ export default function SubmitPage() {
 
         if (!alive) return;
 
+        // Get logo from database or fall back to TEAM_COLORS
+        const homeTeamName = homeTeamData?.name || 'Home Team';
+        const awayTeamName = awayTeamData?.name || 'Away Team';
+        const homeTeamLogo = homeTeamData?.logo_url || TEAM_COLORS[homeTeamName]?.logo;
+        const awayTeamLogo = awayTeamData?.logo_url || TEAM_COLORS[awayTeamName]?.logo;
+
         const nextPayload: NextFixturePayload = {
           fixture: {
             id: fixture.id,
@@ -366,16 +383,16 @@ export default function SubmitPage() {
           },
           homeTeam: {
             id: homeTeamData?.id || fixture.home_team_id,
-            name: homeTeamData?.name || 'Home Team',
+            name: homeTeamName,
             shortName: homeTeamData?.short_name,
-            logo: homeTeamData?.logo_url,
+            logo: homeTeamLogo,
             teamKey: homeTeamData?.team_key,
           },
           awayTeam: {
             id: awayTeamData?.id || fixture.away_team_id,
-            name: awayTeamData?.name || 'Away Team',
+            name: awayTeamName,
             shortName: awayTeamData?.short_name,
-            logo: awayTeamData?.logo_url,
+            logo: awayTeamLogo,
             teamKey: awayTeamData?.team_key,
           },
         };
@@ -395,7 +412,7 @@ export default function SubmitPage() {
     };
   }, []);
 
-  // Fetch AFL players for goal kickers
+  // Fetch AFL players
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -417,7 +434,7 @@ export default function SubmitPage() {
     };
   }, []);
 
-  // Reset per-fixture state
+  // Reset state when fixture changes
   useEffect(() => {
     setVenue((fixture?.venue as any) || '');
     setVenueEditable(false);
@@ -435,7 +452,7 @@ export default function SubmitPage() {
     setOcrConfirm(false);
     setSubmitSuccess(false);
     setConflict(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setCurrentStep(1);
   }, [fixture?.id]);
 
   const canRunOcr = useMemo(() => {
@@ -454,7 +471,6 @@ export default function SubmitPage() {
     return true;
   }, [fixture, myTeamId, isSubmitting, ocr.status, ocrConfirm, uploaded.length, homeGoals, homeBehinds, awayGoals, awayBehinds]);
 
-  // Filter players by team and search
   const getTeamPlayers = (teamId: string | undefined, search: string) => {
     if (!teamId || !allPlayers.length) return [];
     return allPlayers
@@ -558,8 +574,6 @@ export default function SubmitPage() {
     setConflict(null);
 
     try {
-      // Call the new RPC: eg_submit_result_home_only
-      // This handles the full pipeline: validation, submission, fixture update, ladder/stats recompute
       const ocrPayload = ocr.status === 'done' ? {
         rawText: (ocr as any).rawText,
         teamStats: (ocr as any).teamStats,
@@ -580,13 +594,11 @@ export default function SubmitPage() {
       });
 
       if (rpcErr) {
-        // RPC failed, show error
         setConflict({ message: rpcErr.message || 'Submit failed.' });
         setIsSubmitting(false);
         return;
       }
 
-      // Success! Mark as submitted
       setSubmitSuccess(true);
     } catch (e: any) {
       console.error('[Submit] submit failed:', e);
@@ -596,24 +608,26 @@ export default function SubmitPage() {
     }
   };
 
-  const KickerRow = ({ k, side }: { k: GoalKicker; side: 'home' | 'away' }) => (
-    <div className="egSubmitKicker">
-      <div className="egSubmitKicker__left">
-        <div className="egSubmitKicker__avatar">{k.photoUrl ? <img src={k.photoUrl} alt={k.name} /> : <User />}</div>
-        <div className="egSubmitKicker__meta">
-          <div className="egSubmitKicker__name" title={k.name}>
+  const GoalKickerRow = ({ k, side }: { k: GoalKicker; side: 'home' | 'away' }) => (
+    <div className="goalKickerRow">
+      <div className="goalKickerRow__left">
+        <div className="goalKickerRow__avatar">
+          {k.photoUrl ? <img src={k.photoUrl} alt={k.name} /> : <User size={20} />}
+        </div>
+        <div className="goalKickerRow__meta">
+          <div className="goalKickerRow__name" title={k.name}>
             {k.name}
           </div>
-          <div className="egSubmitKicker__sub">Goals</div>
+          <div className="goalKickerRow__label">Goals</div>
         </div>
       </div>
-      <div className="egSubmitKicker__right">
-        <button type="button" className="egSubmitKickerBtn" onClick={() => decGoal(side, k.id)}>
-          <Minus />
+      <div className="goalKickerRow__right">
+        <button type="button" className="goalKickerBtn" onClick={() => decGoal(side, k.id)} title="Remove goal">
+          <Minus size={16} className="goalKickerBtn__icon" />
         </button>
-        <div className="egSubmitKicker__goals">{k.goals}</div>
-        <button type="button" className="egSubmitKickerBtn" onClick={() => incGoal(side, k.id)}>
-          <Plus />
+        <div className="goalKickerCount">{k.goals}</div>
+        <button type="button" className="goalKickerBtn" onClick={() => incGoal(side, k.id)} title="Add goal">
+          <Plus size={16} className="goalKickerBtn__icon" />
         </button>
       </div>
     </div>
@@ -624,39 +638,25 @@ export default function SubmitPage() {
       <div className="egSubmitPage">
         <main className="egSubmitPage__main">
           <div className="egSubmitPage__wrap">
-            <div className="egSubmitHeader">
-              <div>
-                <h1 className="egSubmitHeader__title">Submit Match Results</h1>
-                <p className="egSubmitHeader__sub">Loading…</p>
-              </div>
-              <div className="egSubmitHeader__pill">
-                <Shield className="egSubmitHeader__pillIcon" />
-                Coach Portal
-              </div>
+            <div style={{ padding: '20px 4px', textAlign: 'center' }}>
+              <div style={{ fontSize: '16px', fontWeight: '850', marginBottom: '10px' }}>Loading…</div>
+              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>Fetching your next fixture…</div>
             </div>
-            <div className="egSubmitStatus">Fetching your next fixture…</div>
           </div>
         </main>
       </div>
     );
   }
 
-  if (loadError) {
+  if (loadError || !payload || !fixture || !homeTeam || !awayTeam) {
     return (
       <div className="egSubmitPage">
         <main className="egSubmitPage__main">
           <div className="egSubmitPage__wrap">
-            <div className="egSubmitHeader">
-              <div>
-                <h1 className="egSubmitHeader__title">Submit Match Results</h1>
-                <p className="egSubmitHeader__sub">You must be signed in and linked to a team.</p>
-                <div className="egSubmitHeader__meta">
-                  <span className="egSubmitHeader__metaStrong">Error:</span> {loadError}
-                </div>
-              </div>
-              <div className="egSubmitHeader__pill">
-                <Shield className="egSubmitHeader__pillIcon" />
-                Coach Portal
+            <div style={{ padding: '20px 4px' }}>
+              <div style={{ fontSize: '16px', fontWeight: '850', marginBottom: '12px' }}>No eligible match</div>
+              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.65)', lineHeight: '1.5' }}>
+                {loadError || 'No upcoming fixtures available for submission. Check back when your next match is scheduled.'}
               </div>
             </div>
           </div>
@@ -664,567 +664,688 @@ export default function SubmitPage() {
       </div>
     );
   }
-
-  if (!payload || !fixture || !homeTeam || !awayTeam) {
-    return (
-      <div className="egSubmitPage">
-        <main className="egSubmitPage__main">
-          <div className="egSubmitPage__wrap">
-            <div className="egSubmitHeader">
-              <div>
-                <h1 className="egSubmitHeader__title">Submit Match Results</h1>
-                <p className="egSubmitHeader__sub">No eligible fixture found.</p>
-                <div className="egSubmitHeader__meta">
-                  This page only shows your <span className="egSubmitHeader__metaStrong">next scheduled fixture</span> that you
-                  haven't submitted yet.
-                </div>
-              </div>
-              <div className="egSubmitHeader__pill">
-                <Shield className="egSubmitHeader__pillIcon" />
-                Coach Portal
-              </div>
-            </div>
-            <div className="egSubmitEmpty">
-              <div className="egSubmitEmpty__title">Nothing to submit right now</div>
-              <div className="egSubmitEmpty__sub">If you think this is wrong, check your team assignment in profiles.</div>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
 
   return (
     <div className="egSubmitPage">
       <main className="egSubmitPage__main">
         <div className="egSubmitPage__wrap">
-          <div className="egSubmitHeader">
-            <div>
-              <h1 className="egSubmitHeader__title">Submit Match Results</h1>
-              <p className="egSubmitHeader__sub">Upload → OCR → confirm → submit.</p>
-              <div className="egSubmitHeader__meta">
-                Signed in as <span className="egSubmitHeader__metaStrong">{myRole || 'coach'}</span>
+          {/* Premium Fixture Header */}
+          <div
+            className="submitFixtureHeader"
+            style={{
+              '--homeR': homeTeamColors.r,
+              '--homeG': homeTeamColors.g,
+              '--homeB': homeTeamColors.b,
+              '--awayR': awayTeamColors.r,
+              '--awayG': awayTeamColors.g,
+              '--awayB': awayTeamColors.b,
+            } as any}
+          >
+            <div className="submitFixtureHeader__halo"></div>
+
+            <div className="submitFixtureHeader__top">
+              <div className="submitFixtureHeader__status">
+                <div className="submitFixtureHeader__dot submitFixtureHeader__dot--upcoming"></div>
+                <span>ROUND {fixture.round}</span>
+              </div>
+              <div className="submitFixtureHeader__coachBadge">
+                <span>Signed in as:</span>
+                <span className="submitFixtureHeader__coachName">{myCoachName}</span>
               </div>
             </div>
-            <div className="egSubmitHeader__pill">
-              <Shield className="egSubmitHeader__pillIcon" />
-              Coach Portal
+
+            <div className="submitFixtureHeader__main">
+              <div className="submitFixtureHeader__side">
+                <div className="submitFixtureHeader__teamBox">
+                  {homeTeam.logo ? (
+                    <img src={homeTeam.logo} alt={homeTeam.name} className="submitFixtureHeader__logo" />
+                  ) : (
+                    <span style={{ fontSize: '28px', fontWeight: '900', color: 'rgba(245,196,0,0.9)' }}>H</span>
+                  )}
+                </div>
+                <div className="submitFixtureHeader__abbr">{TEAM_SHORT_NAMES[homeTeam.name] || homeTeam.name}</div>
+              </div>
+
+              <div className="submitFixtureHeader__center">
+                <div className="submitFixtureHeader__vs">VS</div>
+                <div className="submitFixtureHeader__meta">
+                  {venue && (
+                    <>
+                      <span>{venue}</span>
+                      <div className="submitFixtureHeader__metaDivider"></div>
+                    </>
+                  )}
+                  <span>Ready to submit</span>
+                </div>
+              </div>
+
+              <div className="submitFixtureHeader__side">
+                <div className="submitFixtureHeader__teamBox">
+                  {awayTeam.logo ? (
+                    <img src={awayTeam.logo} alt={awayTeam.name} className="submitFixtureHeader__logo" />
+                  ) : (
+                    <span style={{ fontSize: '28px', fontWeight: '900', color: 'rgba(245,196,0,0.9)' }}>A</span>
+                  )}
+                </div>
+                <div className="submitFixtureHeader__abbr">{TEAM_SHORT_NAMES[awayTeam.name] || awayTeam.name}</div>
+              </div>
+            </div>
+
+            <div className="submitFixtureHeader__psnRow">
+              <div className="submitFixtureHeader__psn">
+                <Home size={16} className="submitFixtureHeader__psnIcon" />
+                <span className="submitFixtureHeader__psnText">{homeTeam.name}</span>
+              </div>
+              <div className="submitFixtureHeader__psn">
+                <Zap size={16} className="submitFixtureHeader__psnIcon" />
+                <span className="submitFixtureHeader__psnText">{awayTeam.name}</span>
+              </div>
             </div>
           </div>
 
-          {conflict?.message ? (
+          {/* Status bar */}
+          {conflict?.message && (
             <div className="egSubmitStatus egSubmitStatus--danger">
-              <div className="egSubmitStatus__left">
-                <AlertTriangle className="egSubmitStatus__warn" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <AlertTriangle size={16} />
                 {conflict.message}
-              </div>
-            </div>
-          ) : (
-            <div className="egSubmitStatus">
-              <div>
-                Next fixture auto-detected.{' '}
-                <span style={{ color: 'rgba(245,196,0,0.95)', fontWeight: 800 }}>
-                  {youAreHome ? 'You are HOME' : 'You are AWAY'}
-                </span>
-                .
               </div>
             </div>
           )}
 
-          {/* Match */}
-          <section className="egSubmitCard">
-            <button type="button" className="egSubmitCard__head" onClick={() => setExpandedMatch((v) => !v)}>
-              <div className="egSubmitCard__title">Match</div>
-              <ChevronDown className={`egSubmitCard__chev ${expandedMatch ? 'isOpen' : ''}`} />
-            </button>
+          {/* Stepper Navigation */}
+          <div className="submitStepper">
+            {[1, 2, 3, 4, 5].map((step) => (
+              <button
+                key={step}
+                type="button"
+                className={`submitStepperItem ${currentStep === step ? 'isActive' : ''} ${currentStep > step ? 'isCompleted' : ''}`}
+                onClick={() => setCurrentStep(step as Step)}
+              >
+                <div className="submitStepperItem__circle">
+                  {currentStep > step ? <Check size={20} className="submitStepperItem__check" /> : step}
+                </div>
+                <div className="submitStepperItem__label">
+                  {step === 1 && 'Fixture'}
+                  {step === 2 && 'Score'}
+                  {step === 3 && 'Kickers'}
+                  {step === 4 && 'Upload'}
+                  {step === 5 && 'Review'}
+                </div>
+              </button>
+            ))}
+          </div>
 
-            <AnimatePresence initial={false}>
-              {expandedMatch ? (
-                <motion.div
-                  key="match"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 8 }}
-                  className="egSubmitCard__body"
-                >
-                  <div className="egSubmitFixtureSummary">
-                    <div className="egSubmitFixtureSummary__row">
-                      <div className="egSubmitFixtureSummary__k">Round</div>
-                      <div className="egSubmitFixtureSummary__v">{fixture.round}</div>
-                    </div>
-                    <div className="egSubmitFixtureSummary__row">
-                      <div className="egSubmitFixtureSummary__k">Status</div>
-                      <div className="egSubmitFixtureSummary__v">{fixture.status}</div>
-                    </div>
+          {/* Step 1: Confirm Fixture */}
+          <AnimatePresence mode="wait">
+            {currentStep === 1 && (
+              <motion.div key="step1" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="submitStepContent">
+                <div className="submitGlassCard">
+                  <div className="submitGlassCard__head">
+                    <span>Confirm Match</span>
                   </div>
-
-                  <div className="egSubmitTeams">
-                    <div className="egSubmitTeam">
-                      <div className="egSubmitTeam__logo">
-                        {homeTeam.logo ? (
-                          <img src={homeTeam.logo} alt={homeTeam.name} />
-                        ) : (
-                          <span className="egSubmitTeam__logoFallback">H</span>
-                        )}
-                      </div>
-                      <div className="egSubmitTeam__info">
-                        <div className="egSubmitTeam__name">{homeTeam.name}</div>
-                        <div className="egSubmitTeam__tag">Home</div>
-                      </div>
+                  <div className="submitGlassCard__body">
+                    <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.75)', lineHeight: '1.5', marginBottom: '14px' }}>
+                      This is your next scheduled fixture. Once you submit results, this match will be marked as final and data will auto-update across the app.
                     </div>
-
-                    <div className="egSubmitVs">VS</div>
-
-                    <div className="egSubmitTeam egSubmitTeam--right">
-                      <div className="egSubmitTeam__info" style={{ textAlign: 'right' }}>
-                        <div className="egSubmitTeam__name">{awayTeam.name}</div>
-                        <div className="egSubmitTeam__tag">Away</div>
-                      </div>
-                      <div className="egSubmitTeam__logo">
-                        {awayTeam.logo ? (
-                          <img src={awayTeam.logo} alt={awayTeam.name} />
-                        ) : (
-                          <span className="egSubmitTeam__logoFallback">A</span>
-                        )}
-                      </div>
+                    <div className="egSubmitHint egSubmitHint--gold">
+                      <Trophy size={16} className="egSubmitHint__icon" />
+                      This is a home-team-only submission. Both teams' results must match before going live.
                     </div>
-                  </div>
-
-                  <div className="egSubmitVenue">
-                    <div className="egSubmitVenue__top">
-                      <div className="egSubmitVenue__label">Venue</div>
+                    <div style={{ marginTop: '14px' }}>
                       <button
                         type="button"
-                        className="egSubmitVenue__toggle"
-                        onClick={() => setVenueEditable((v) => !v)}
-                        aria-label={venueEditable ? 'Lock venue' : 'Edit venue'}
+                        className="reviewSubmitCTA"
+                        onClick={() => setCurrentStep(2)}
                       >
-                        {venueEditable ? (
-                          <>
-                            <EyeOff className="egSubmitVenue__toggleIcon" /> Lock
-                          </>
-                        ) : (
-                          <>
-                            <Eye className="egSubmitVenue__toggleIcon" /> Edit
-                          </>
-                        )}
+                        Continue to Score Entry →
                       </button>
                     </div>
-                    <input
-                      className={`egSubmitInput ${venueEditable ? '' : 'isLocked'}`}
-                      value={venue}
-                      onChange={(e) => setVenue(e.target.value)}
-                      disabled={!venueEditable}
-                      placeholder="Venue"
-                    />
                   </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-                  <div className="egSubmitHint egSubmitHint--gold">
-                    <Trophy className="egSubmitHint__icon" />
-                    Auto-detect shows only your next fixture. You can't submit old rounds or re-submit a match.
+          {/* Step 2: Score Entry */}
+          <AnimatePresence mode="wait">
+            {currentStep === 2 && (
+              <motion.div key="step2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="submitStepContent">
+                <div className="submitGlassCard">
+                  <div className="submitGlassCard__head">
+                    <span>Final Score</span>
                   </div>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-          </section>
-
-          {/* Evidence + OCR */}
-          <section className="egSubmitCard">
-            <button type="button" className="egSubmitCard__head" onClick={() => setExpandedEvidence((v) => !v)}>
-              <div className="egSubmitCard__title">Evidence</div>
-              <ChevronDown className={`egSubmitCard__chev ${expandedEvidence ? 'isOpen' : ''}`} />
-            </button>
-            <AnimatePresence initial={false}>
-              {expandedEvidence ? (
-                <motion.div
-                  key="evidence"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 8 }}
-                  className="egSubmitCard__body"
-                >
-                  <div className="egSubmitEvidenceTop">
-                    <div>
-                      <div className="egSubmitEvidenceTop__title">Upload screenshots *</div>
-                      <div className="egSubmitEvidenceTop__sub">Final score + team stats + player stats pages.</div>
-                    </div>
-                    <label className="egSubmitUploadBtn">
-                      <Upload className="egSubmitUploadBtn__icon" /> Add
-                      <input
-                        ref={fileInputRef}
-                        className="egSubmitUploadBtn__input"
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={onPickFiles}
-                      />
-                    </label>
-                  </div>
-
-                  {uploaded.length ? (
-                    <div className="egSubmitFiles">
-                      {uploaded.map((f) => (
-                        <div className="egSubmitFile" key={f.id}>
-                          <div className="egSubmitFile__meta">
-                            <div className="egSubmitFile__name">{f.name}</div>
-                            <div className="egSubmitFile__size">{bytesToKb(f.size)} KB</div>
+                  <div className="submitGlassCard__body">
+                    <div className="scoreEntryModule">
+                      <div className="scoreEntryBox">
+                        <div className="scoreEntryBox__title">{homeTeam.name} (Home)</div>
+                        <div className="scoreEntryGrid">
+                          <div className="scoreEntryField">
+                            <label className="scoreEntryLabel">Goals</label>
+                            <input
+                              className="scoreEntryInput"
+                              inputMode="numeric"
+                              value={homeGoals}
+                              onChange={(e) => setHomeGoals(e.target.value.replace(/[^\d]/g, ''))}
+                            />
                           </div>
-                          <button type="button" className="egSubmitFile__remove" onClick={() => removeFile(f.id)}>
-                            <X className="egSubmitFile__removeIcon" /> Remove
+                          <div className="scoreEntryField">
+                            <label className="scoreEntryLabel">Behinds</label>
+                            <input
+                              className="scoreEntryInput"
+                              inputMode="numeric"
+                              value={homeBehinds}
+                              onChange={(e) => setHomeBehinds(e.target.value.replace(/[^\d]/g, ''))}
+                            />
+                          </div>
+                        </div>
+                        <div className="scoreEntryTotal">
+                          <span className="scoreEntryTotal__label">Total Score</span>
+                          <span className="scoreEntryTotal__value">{homeScore}</span>
+                        </div>
+                      </div>
+
+                      <div className="scoreEntryBox">
+                        <div className="scoreEntryBox__title">{awayTeam.name} (Away)</div>
+                        <div className="scoreEntryGrid">
+                          <div className="scoreEntryField">
+                            <label className="scoreEntryLabel">Goals</label>
+                            <input
+                              className="scoreEntryInput"
+                              inputMode="numeric"
+                              value={awayGoals}
+                              onChange={(e) => setAwayGoals(e.target.value.replace(/[^\d]/g, ''))}
+                            />
+                          </div>
+                          <div className="scoreEntryField">
+                            <label className="scoreEntryLabel">Behinds</label>
+                            <input
+                              className="scoreEntryInput"
+                              inputMode="numeric"
+                              value={awayBehinds}
+                              onChange={(e) => setAwayBehinds(e.target.value.replace(/[^\d]/g, ''))}
+                            />
+                          </div>
+                        </div>
+                        <div className="scoreEntryTotal">
+                          <span className="scoreEntryTotal__label">Total Score</span>
+                          <span className="scoreEntryTotal__value">{awayScore}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {homeGoals && homeBehinds && awayGoals && awayBehinds && (
+                      <div className="scoreLivePreview">
+                        <div className="scoreLivePreview__teamScore">
+                          <div className="scoreLivePreview__score">{homeScore}</div>
+                          <div className="scoreLivePreview__team">{TEAM_SHORT_NAMES[homeTeam.name]}</div>
+                        </div>
+                        <div className="scoreLivePreview__dash">—</div>
+                        <div className="scoreLivePreview__teamScore">
+                          <div className="scoreLivePreview__score">{awayScore}</div>
+                          <div className="scoreLivePreview__team">{TEAM_SHORT_NAMES[awayTeam.name]}</div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div style={{ marginTop: '14px', display: 'flex', gap: '10px' }}>
+                      <button
+                        type="button"
+                        className="reviewSubmitCTA"
+                        style={{ flex: 1 }}
+                        onClick={() => setCurrentStep(1)}
+                      >
+                        ← Back
+                      </button>
+                      <button
+                        type="button"
+                        className="reviewSubmitCTA"
+                        style={{ flex: 1 }}
+                        onClick={() => setCurrentStep(3)}
+                        disabled={!homeGoals || !homeBehinds || !awayGoals || !awayBehinds}
+                      >
+                        Continue →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Step 3: Goal Kickers */}
+          <AnimatePresence mode="wait">
+            {currentStep === 3 && (
+              <motion.div key="step3" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="submitStepContent">
+                <div className="submitGlassCard">
+                  <div className="submitGlassCard__head">
+                    <span>Goal Kickers</span>
+                  </div>
+                  <div className="submitGlassCard__body">
+                    <div className="goalKickerModule">
+                      <div className="goalKickerBlock">
+                        <div className="goalKickerBlock__title">{homeTeam.name}</div>
+                        <div className="goalKickerSearch">
+                          <Search size={16} style={{ position: 'absolute', left: '12px', top: '12px', opacity: 0.5 }} />
+                          <input
+                            className="goalKickerSearch__input"
+                            value={homePlayerSearch}
+                            onChange={(e) => setHomePlayerSearch(e.target.value)}
+                            placeholder="Search players…"
+                            style={{ paddingLeft: '36px' }}
+                          />
+                          <button
+                            type="button"
+                            className="goalKickerSearch__btn"
+                            onClick={() => homePlayerSearch.trim() && ensureKicker('home', homePlayerSearch.trim())}
+                          >
+                            Add
                           </button>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="egSubmitMuted">No files yet. Upload your screenshots first.</div>
-                  )}
-
-                  <div className="egSubmitOcrBar">
-                    <button type="button" className="egSubmitOcrBtn" onClick={runOcr} disabled={!canRunOcr}>
-                      <Wand2 className="egSubmitOcrBtn__icon" />
-                      {ocr.status === 'ocr_running' ? 'Running OCR…' : 'Run OCR'}
-                    </button>
-                    <div className="egSubmitOcrBar__right">
-                      {ocr.status === 'ocr_running' ? (
-                        <>
-                          <div className="egSubmitOcrStep">{(ocr as any).step}</div>
-                          <div className="egSubmitOcrProg">
-                            <div className="egSubmitOcrProg__bar" style={{ width: `${Math.round((ocr as any).progress01 * 100)}%` }} />
+                        {homeTeamPlayers.length > 0 && (
+                          <div className="goalKickerList">
+                            {homeTeamPlayers.map((p) => (
+                              <button
+                                key={p.id}
+                                type="button"
+                                className="goalKickerChip"
+                                onClick={() => ensureKicker('home', p.name)}
+                              >
+                                {p.name}
+                              </button>
+                            ))}
                           </div>
-                        </>
-                      ) : ocr.status === 'done' ? (
-                        <div className="egSubmitOcrOk">
-                          <Check /> OCR ready
+                        )}
+                        <div className="goalKickerSelected">
+                          {homeGoalKickers.length > 0 ? (
+                            [...homeGoalKickers]
+                              .sort((a, b) => b.goals - a.goals)
+                              .map((k) => <GoalKickerRow key={k.id} k={k} side="home" />)
+                          ) : (
+                            <div className="egSubmitMuted">No goal kickers added yet</div>
+                          )}
                         </div>
-                      ) : ocr.status === 'timeout' ? (
-                        <div className="egSubmitOcrErr">
-                          <AlertTriangle /> {(ocr as any).error}
+                      </div>
+
+                      <div className="goalKickerBlock">
+                        <div className="goalKickerBlock__title">{awayTeam.name}</div>
+                        <div className="goalKickerSearch">
+                          <Search size={16} style={{ position: 'absolute', left: '12px', top: '12px', opacity: 0.5 }} />
+                          <input
+                            className="goalKickerSearch__input"
+                            value={awayPlayerSearch}
+                            onChange={(e) => setAwayPlayerSearch(e.target.value)}
+                            placeholder="Search players…"
+                            style={{ paddingLeft: '36px' }}
+                          />
+                          <button
+                            type="button"
+                            className="goalKickerSearch__btn"
+                            onClick={() => awayPlayerSearch.trim() && ensureKicker('away', awayPlayerSearch.trim())}
+                          >
+                            Add
+                          </button>
                         </div>
-                      ) : ocr.status === 'error' ? (
-                        <div className="egSubmitOcrErr">
-                          <AlertTriangle /> {(ocr as any).message}
+                        {awayTeamPlayers.length > 0 && (
+                          <div className="goalKickerList">
+                            {awayTeamPlayers.map((p) => (
+                              <button
+                                key={p.id}
+                                type="button"
+                                className="goalKickerChip"
+                                onClick={() => ensureKicker('away', p.name)}
+                              >
+                                {p.name}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        <div className="goalKickerSelected">
+                          {awayGoalKickers.length > 0 ? (
+                            [...awayGoalKickers]
+                              .sort((a, b) => b.goals - a.goals)
+                              .map((k) => <GoalKickerRow key={k.id} k={k} side="away" />)
+                          ) : (
+                            <div className="egSubmitMuted">No goal kickers added yet</div>
+                          )}
                         </div>
-                      ) : (
-                        <div className="egSubmitOcrMuted">Run OCR to auto-fill stats preview.</div>
-                      )}
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: '14px', display: 'flex', gap: '10px' }}>
+                      <button
+                        type="button"
+                        className="reviewSubmitCTA"
+                        style={{ flex: 1 }}
+                        onClick={() => setCurrentStep(2)}
+                      >
+                        ← Back
+                      </button>
+                      <button
+                        type="button"
+                        className="reviewSubmitCTA"
+                        style={{ flex: 1 }}
+                        onClick={() => setCurrentStep(4)}
+                      >
+                        Continue →
+                      </button>
                     </div>
                   </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-                  {/* Timeout handling */}
-                  {ocr.status === 'timeout' ? (
-                    <div className="egSubmitOcrTimeoutBox">
-                      <div className="egSubmitOcrTimeoutBox__title">OCR taking too long</div>
-                      <div className="egSubmitOcrTimeoutBox__msg">{(ocr as any).error}</div>
-                      <div className="egSubmitOcrTimeoutBox__actions">
-                        <button type="button" className="egSubmitOcrTimeoutBtn" onClick={runOcr}>
-                          Retry OCR
+          {/* Step 4: Upload Evidence / OCR */}
+          <AnimatePresence mode="wait">
+            {currentStep === 4 && (
+              <motion.div key="step4" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="submitStepContent">
+                <div className="submitGlassCard">
+                  <div className="submitGlassCard__head">
+                    <span>Match Evidence</span>
+                  </div>
+                  <div className="submitGlassCard__body">
+                    <div className="ocrUploadModule">
+                      <div>
+                        <div className="ocrUploadTitle">Upload Screenshots *</div>
+                        <div className="ocrUploadSub">Final score, team stats, and player stats screens</div>
+                        <label className="ocrUploadBtn" style={{ marginTop: '10px' }}>
+                          <Upload size={16} className="ocrUploadBtn__icon" />
+                          Add Files
+                          <input
+                            ref={fileInputRef}
+                            className="ocrUploadBtn__input"
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={onPickFiles}
+                          />
+                        </label>
+                      </div>
+
+                      {uploaded.length > 0 && (
+                        <div className="ocrFileList">
+                          {uploaded.map((f) => (
+                            <div className="ocrFile" key={f.id}>
+                              <div className="ocrFile__meta">
+                                <div className="ocrFile__name">{f.name}</div>
+                                <div className="ocrFile__size">{bytesToKb(f.size)} KB</div>
+                              </div>
+                              <button type="button" className="ocrFile__removeBtn" onClick={() => removeFile(f.id)}>
+                                <X size={12} className="ocrFile__removeIcon" /> Remove
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="ocrRunBar">
+                        <button type="button" className="ocrRunBtn" onClick={runOcr} disabled={!canRunOcr}>
+                          <Wand2 size={16} className="ocrRunBtn__icon" />
+                          {ocr.status === 'ocr_running' ? 'Running…' : 'Run OCR'}
                         </button>
+                        <div className="ocrStatusBar">
+                          {ocr.status === 'ocr_running' && (
+                            <>
+                              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.55)', maxWidth: '60vw', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {(ocr as any).step}
+                              </span>
+                              <div className="ocrProgress">
+                                <div className="ocrProgress__bar" style={{ width: `${Math.round((ocr as any).progress01 * 100)}%` }} />
+                              </div>
+                            </>
+                          )}
+                          {ocr.status === 'done' && (
+                            <span className="ocrStatus ocrStatus--done">
+                              <Check size={14} /> OCR ready
+                            </span>
+                          )}
+                          {ocr.status === 'timeout' && (
+                            <span className="ocrStatus ocrStatus--error">
+                              <AlertTriangle size={14} /> Timeout
+                            </span>
+                          )}
+                          {ocr.status === 'error' && (
+                            <span className="ocrStatus ocrStatus--error">
+                              <AlertTriangle size={14} /> Error
+                            </span>
+                          )}
+                          {ocr.status === 'idle' && uploaded.length > 0 && (
+                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.55)' }}>Ready to run</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {ocr.status === 'timeout' && (
+                        <div className="ocrTimeoutBox">
+                          <div className="ocrTimeoutBox__title">OCR Taking Too Long</div>
+                          <div className="ocrTimeoutBox__msg">{(ocr as any).error}</div>
+                          <div className="ocrTimeoutBox__actions">
+                            <button type="button" className="ocrTimeoutBtn" onClick={runOcr}>
+                              Retry OCR
+                            </button>
+                            <button type="button" className="ocrTimeoutBtn ocrTimeoutBtn--secondary" onClick={() => setOcr({ status: 'idle' })}>
+                              Skip to Review
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {ocr.status === 'error' && (
+                        <div className="ocrTimeoutBox">
+                          <div className="ocrTimeoutBox__title">OCR Error</div>
+                          <div className="ocrTimeoutBox__msg">{(ocr as any).message}</div>
+                          <div className="ocrTimeoutBox__actions">
+                            <button type="button" className="ocrTimeoutBtn" onClick={runOcr}>
+                              Retry
+                            </button>
+                            <button type="button" className="ocrTimeoutBtn ocrTimeoutBtn--secondary" onClick={() => setOcr({ status: 'idle' })}>
+                              Continue
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {ocr.status === 'done' && (
+                        <div style={{ marginTop: '14px', padding: '12px', borderRadius: '14px', border: '1px solid rgba(180,255,210,0.28)', background: 'rgba(180,255,210,0.08)' }}>
+                          <label style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', cursor: 'pointer', fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>
+                            <input
+                              type="checkbox"
+                              checked={ocrConfirm}
+                              onChange={(e) => setOcrConfirm(e.target.checked)}
+                              style={{ marginTop: '3px' }}
+                            />
+                            <span>I've reviewed the OCR results and confirmed the data is correct</span>
+                          </label>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ marginTop: '14px', display: 'flex', gap: '10px' }}>
+                      <button
+                        type="button"
+                        className="reviewSubmitCTA"
+                        style={{ flex: 1 }}
+                        onClick={() => setCurrentStep(3)}
+                      >
+                        ← Back
+                      </button>
+                      <button
+                        type="button"
+                        className="reviewSubmitCTA"
+                        style={{ flex: 1 }}
+                        onClick={() => setCurrentStep(5)}
+                        disabled={!uploaded.length}
+                      >
+                        Continue →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Step 5: Review & Submit */}
+          <AnimatePresence mode="wait">
+            {currentStep === 5 && (
+              <motion.div key="step5" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="submitStepContent">
+                <div className="submitGlassCard">
+                  <div className="submitGlassCard__head">
+                    <span>Review & Submit</span>
+                  </div>
+                  <div className="submitGlassCard__body">
+                    <div className="reviewSubmitCard">
+                      <div className="reviewSummaryBox">
+                        <div className="reviewSummaryBox__title">Final Score</div>
+                        <div className="reviewSummaryGrid">
+                          <div className="reviewSummaryItem">
+                            <div className="reviewSummaryItem__label">{homeTeam.name}</div>
+                            <div className="reviewSummaryItem__value">
+                              {homeGoalsN}G • {homeBehindsN}B = {homeScore}
+                            </div>
+                          </div>
+                          <div className="reviewSummaryItem">
+                            <div className="reviewSummaryItem__label">{awayTeam.name}</div>
+                            <div className="reviewSummaryItem__value">
+                              {awayGoalsN}G • {awayBehindsN}B = {awayScore}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {(homeGoalKickers.length > 0 || awayGoalKickers.length > 0) && (
+                        <div className="reviewSummaryBox">
+                          <div className="reviewSummaryBox__title">Goal Kickers</div>
+                          {homeGoalKickers.length > 0 && (
+                            <div style={{ marginBottom: '10px' }}>
+                              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', marginBottom: '6px' }}>{homeTeam.name}</div>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                {homeGoalKickers.map((k) => (
+                                  <div
+                                    key={k.id}
+                                    style={{
+                                      padding: '6px 10px',
+                                      borderRadius: '8px',
+                                      background: 'rgba(0,0,0,0.24)',
+                                      border: '1px solid rgba(245,196,0,0.18)',
+                                      fontSize: '11px',
+                                      color: 'rgba(255,255,255,0.8)',
+                                    }}
+                                  >
+                                    {k.name} ({k.goals})
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {awayGoalKickers.length > 0 && (
+                            <div>
+                              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', marginBottom: '6px' }}>{awayTeam.name}</div>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                {awayGoalKickers.map((k) => (
+                                  <div
+                                    key={k.id}
+                                    style={{
+                                      padding: '6px 10px',
+                                      borderRadius: '8px',
+                                      background: 'rgba(0,0,0,0.24)',
+                                      border: '1px solid rgba(245,196,0,0.18)',
+                                      fontSize: '11px',
+                                      color: 'rgba(255,255,255,0.8)',
+                                    }}
+                                  >
+                                    {k.name} ({k.goals})
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="reviewNotesBox">
+                        <div className="reviewNotesLabel">Notes (optional)</div>
+                        <textarea
+                          className="reviewNotesTextarea"
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
+                          placeholder="Any details for admins?"
+                        />
+                      </div>
+
+                      <button type="button" className="reviewSubmitCTA" onClick={submit} disabled={!canSubmit || isSubmitting}>
+                        {isSubmitting ? 'Submitting…' : 'Submit Match Results'}
+                      </button>
+
+                      <div style={{ marginTop: '8px', display: 'flex', gap: '10px' }}>
                         <button
                           type="button"
-                          className="egSubmitOcrTimeoutBtn egSubmitOcrTimeoutBtn--secondary"
-                          onClick={() => {
-                            setOcr({ status: 'idle' });
+                          className="reviewSubmitCTA"
+                          style={{
+                            flex: 1,
+                            background: 'rgba(0,0,0,0.25)',
+                            border: '1px solid rgba(255,255,255,0.12)',
+                            color: 'rgba(255,255,255,0.75)',
                           }}
+                          onClick={() => setCurrentStep(4)}
                         >
-                          Skip to Manual Entry
+                          ← Back
                         </button>
                       </div>
                     </div>
-                  ) : null}
-
-                  {/* OCR results */}
-                  <section className={`egSubmitOcrPanel ${ocr.status === 'done' ? '' : 'isDisabled'}`}>
-                    <button
-                      type="button"
-                      className="egSubmitOcrPanel__head"
-                      disabled={ocr.status !== 'done'}
-                    >
-                      <div className="egSubmitCard__title">OCR Results</div>
-                      <ChevronDown className={`egSubmitCard__chev isOpen`} />
-                    </button>
-                    <AnimatePresence initial={false}>
-                      {ocr.status === 'done' ? (
-                        <motion.div
-                          key="ocr"
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 8 }}
-                          className="egSubmitOcrPanel__body"
-                        >
-                          <div className="egSubmitOcrGrid">
-                            <div className="egSubmitOcrBox">
-                              <div className="egSubmitOcrBox__title">Team stats (detected)</div>
-                              {Object.keys((ocr as any).teamStats).length ? (
-                                <div className="egSubmitOcrStats">
-                                  {Object.entries((ocr as any).teamStats)
-                                    .slice(0, 12)
-                                    .map(([k, v]) => (
-                                      <div key={k} className="egSubmitOcrStat">
-                                        <div className="egSubmitOcrStat__k">{k}</div>
-                                        <div className="egSubmitOcrStat__v">{v}</div>
-                                      </div>
-                                    ))}
-                                </div>
-                              ) : (
-                                <div className="egSubmitOcrMuted">No team stats detected.</div>
-                              )}
-                            </div>
-
-                            <div className="egSubmitOcrBox">
-                              <div className="egSubmitOcrBox__title">Player lines (detected)</div>
-                              {(ocr as any).playerLines.length ? (
-                                <div className="egSubmitOcrLines">
-                                  {(ocr as any).playerLines.slice(0, 14).map((l: string, i: number) => (
-                                    <div key={`${l}-${i}`} className="egSubmitOcrLine">
-                                      {l}
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <div className="egSubmitOcrMuted">No player lines detected.</div>
-                              )}
-                            </div>
-                          </div>
-
-                          <details className="egSubmitOcrRaw">
-                            <summary>Show raw OCR text</summary>
-                            <pre>{(ocr as any).rawText}</pre>
-                          </details>
-
-                          <label className="egSubmitOcrConfirm">
-                            <input type="checkbox" checked={ocrConfirm} onChange={(e) => setOcrConfirm(e.target.checked)} />
-                            I've reviewed the OCR results and my screenshots are correct.
-                          </label>
-                        </motion.div>
-                      ) : null}
-                    </AnimatePresence>
-                  </section>
-
-                  <div className="egSubmitNotes">
-                    <div className="egSubmitLabel">Notes (optional)</div>
-                    <textarea
-                      className="egSubmitTextarea"
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Anything the admin should know?"
-                    />
                   </div>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-          </section>
-
-          {/* Score */}
-          <section className={`egSubmitCard ${!fixture ? 'isDisabled' : ''}`}>
-            <button type="button" className="egSubmitCard__head" onClick={() => setExpandedScore((v) => !v)}>
-              <div className="egSubmitCard__title">Score</div>
-              <ChevronDown className={`egSubmitCard__chev ${expandedScore ? 'isOpen' : ''}`} />
-            </button>
-            <AnimatePresence initial={false}>
-              {expandedScore ? (
-                <motion.div
-                  key="score"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 8 }}
-                  className="egSubmitCard__body"
-                >
-                  <div className="egSubmitGrid2">
-                    <div className="egSubmitScoreBox">
-                      <div className="egSubmitScoreBox__title">{homeTeam.name} (Home)</div>
-                      <div className="egSubmitScoreBox__grid">
-                        <div>
-                          <div className="egSubmitLabel">Goals</div>
-                          <input
-                            className="egSubmitInput"
-                            inputMode="numeric"
-                            value={homeGoals}
-                            onChange={(e) => setHomeGoals(e.target.value.replace(/[^\d]/g, ''))}
-                          />
-                        </div>
-                        <div>
-                          <div className="egSubmitLabel">Behinds</div>
-                          <input
-                            className="egSubmitInput"
-                            inputMode="numeric"
-                            value={homeBehinds}
-                            onChange={(e) => setHomeBehinds(e.target.value.replace(/[^\d]/g, ''))}
-                          />
-                        </div>
-                      </div>
-                      <div className="egSubmitTotal">
-                        <div className="egSubmitTotal__k">Total</div>
-                        <div className="egSubmitTotal__v">{homeScore}</div>
-                      </div>
-                    </div>
-
-                    <div className="egSubmitScoreBox">
-                      <div className="egSubmitScoreBox__title">{awayTeam.name} (Away)</div>
-                      <div className="egSubmitScoreBox__grid">
-                        <div>
-                          <div className="egSubmitLabel">Goals</div>
-                          <input
-                            className="egSubmitInput"
-                            inputMode="numeric"
-                            value={awayGoals}
-                            onChange={(e) => setAwayGoals(e.target.value.replace(/[^\d]/g, ''))}
-                          />
-                        </div>
-                        <div>
-                          <div className="egSubmitLabel">Behinds</div>
-                          <input
-                            className="egSubmitInput"
-                            inputMode="numeric"
-                            value={awayBehinds}
-                            onChange={(e) => setAwayBehinds(e.target.value.replace(/[^\d]/g, ''))}
-                          />
-                        </div>
-                      </div>
-                      <div className="egSubmitTotal">
-                        <div className="egSubmitTotal__k">Total</div>
-                        <div className="egSubmitTotal__v">{awayScore}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="egSubmitHint">
-                    <Shield className="egSubmitHint__icon" />
-                    Scores must match between home + away submissions before the match goes live.
-                  </div>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-          </section>
-
-          {/* Goal kickers */}
-          <section className="egSubmitCard">
-            <button type="button" className="egSubmitCard__head" onClick={() => setExpandedGoalKickers((v) => !v)}>
-              <div className="egSubmitCard__title">Goal Kickers</div>
-              <ChevronDown className={`egSubmitCard__chev ${expandedGoalKickers ? 'isOpen' : ''}`} />
-            </button>
-            <AnimatePresence initial={false}>
-              {expandedGoalKickers ? (
-                <motion.div
-                  key="kickers"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 8 }}
-                  className="egSubmitCard__body"
-                >
-                  <div className="egSubmitKickerBlock">
-                    <div className="egSubmitKickerBlock__title">{homeTeam.name} (Home)</div>
-                    <div className="egSubmitSearch">
-                      <Search />
-                      <input
-                        value={homePlayerSearch}
-                        onChange={(e) => setHomePlayerSearch(e.target.value)}
-                        placeholder="Search player…"
-                      />
-                      <button type="button" onClick={() => homePlayerSearch.trim() && ensureKicker('home', homePlayerSearch.trim())}>
-                        Add
-                      </button>
-                    </div>
-                    {homeTeamPlayers.length > 0 && (
-                      <div className="egSubmitChips">
-                        {homeTeamPlayers.map((p) => (
-                          <button type="button" key={p.id} onClick={() => ensureKicker('home', p.name)}>
-                            {p.name}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    <div className="egSubmitKickers">
-                      {homeGoalKickers.length ? (
-                        [...homeGoalKickers]
-                          .sort((a, b) => b.goals - a.goals)
-                          .map((k) => <KickerRow key={k.id} k={k} side="home" />)
-                      ) : (
-                        <div className="egSubmitMuted">No home goal kickers yet.</div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="egSubmitKickerBlock" style={{ marginTop: 12 }}>
-                    <div className="egSubmitKickerBlock__title">{awayTeam.name} (Away)</div>
-                    <div className="egSubmitSearch">
-                      <Search />
-                      <input
-                        value={awayPlayerSearch}
-                        onChange={(e) => setAwayPlayerSearch(e.target.value)}
-                        placeholder="Search player…"
-                      />
-                      <button type="button" onClick={() => awayPlayerSearch.trim() && ensureKicker('away', awayPlayerSearch.trim())}>
-                        Add
-                      </button>
-                    </div>
-                    {awayTeamPlayers.length > 0 && (
-                      <div className="egSubmitChips">
-                        {awayTeamPlayers.map((p) => (
-                          <button type="button" key={p.id} onClick={() => ensureKicker('away', p.name)}>
-                            {p.name}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    <div className="egSubmitKickers">
-                      {awayGoalKickers.length ? (
-                        [...awayGoalKickers]
-                          .sort((a, b) => b.goals - a.goals)
-                          .map((k) => <KickerRow key={k.id} k={k} side="away" />)
-                      ) : (
-                        <div className="egSubmitMuted">No away goal kickers yet.</div>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-          </section>
-
-          {/* Submit */}
-          <div className="egSubmitBottom" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 84px)' }}>
-            <button className="egSubmitBtn" type="button" onClick={submit} disabled={!canSubmit}>
-              {isSubmitting ? 'Submitting…' : 'Submit Result'}
-            </button>
-            <div className="egSubmitMuted" style={{ textAlign: 'center' }}>
-              Tip: Upload screenshots → Run OCR → tick confirm → then submit.
-            </div>
-          </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </main>
 
-      {/* Success overlay */}
+      {/* Success Overlay */}
       <AnimatePresence>
-        {submitSuccess ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="egSubmitSuccess">
-            <motion.div initial={{ scale: 0.98, y: 12 }} animate={{ scale: 1, y: 0 }} className="egSubmitSuccess__card">
-              <div className="egSubmitSuccess__icon">
-                <Check />
+        {submitSuccess && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="submitSuccessOverlay">
+            <motion.div initial={{ scale: 0.95, y: 12 }} animate={{ scale: 1, y: 0 }} className="submitSuccessCard">
+              <div className="submitSuccessIcon">
+                <Check size={28} />
               </div>
-              <div className="egSubmitSuccess__title">Submitted</div>
-              <div className="egSubmitSuccess__sub">If the other team submits matching scores, the match will go live automatically.</div>
-
-              <div className="egSubmitSuccess__box">
-                <div className="egSubmitSuccess__k">Final score</div>
-                <div className="egSubmitSuccess__v">
-                  {homeScore} — {awayScore}
-                </div>
+              <div className="submitSuccessTitle">Submitted Successfully!</div>
+              <div className="submitSuccessSub">
+                Your match results have been recorded. If the away team's submission matches, the match will go live.
               </div>
 
-              <button
-                type="button"
-                className="egSubmitSuccess__btn"
-                onClick={() => {
-                  setSubmitSuccess(false);
-                  window.location.reload();
-                }}
-              >
-                Done
-              </button>
+              <div className="submitSuccessScore">
+                <span className="submitSuccessScore__score">{homeScore}</span>
+                <span className="submitSuccessScore__dash">—</span>
+                <span className="submitSuccessScore__score">{awayScore}</span>
+              </div>
+
+              <div className="submitSuccessActions">
+                <button
+                  type="button"
+                  className="submitSuccessAction isPrimary"
+                  onClick={() => {
+                    setSubmitSuccess(false);
+                    window.location.href = '/';
+                  }}
+                >
+                  Back to Home
+                </button>
+                <button
+                  type="button"
+                  className="submitSuccessAction"
+                  onClick={() => {
+                    setSubmitSuccess(false);
+                    window.location.reload();
+                  }}
+                >
+                  View Updated Fixtures
+                </button>
+              </div>
             </motion.div>
           </motion.div>
-        ) : null}
+        )}
       </AnimatePresence>
     </div>
   );
