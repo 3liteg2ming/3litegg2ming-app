@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../../lib/supabaseClient";
 
 type Competition = { id: string; name: string; season: string; active: boolean };
 type Team = { id: string; competition_id: string; name: string; short_name: string; team_key: string };

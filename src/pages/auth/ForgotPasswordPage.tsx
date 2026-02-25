@@ -2,7 +2,7 @@ import { ChevronLeft, Mail, CheckCircle2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { getSupabaseClient } from '../../lib/supabaseClient';
+import { getSupabaseClient } from '../../state/auth/supabaseClient';
 
 export default function ForgotPasswordPage() {
   const nav = useNavigate();
@@ -10,6 +10,8 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  const isFormValid = email;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -19,7 +21,7 @@ export default function ForgotPasswordPage() {
     try {
       const supabase = getSupabaseClient();
       if (!supabase) {
-        throw new Error('Supabase not configured. Using local mode.');
+        throw new Error('Supabase not configured. Using local mode — password reset not available.');
       }
 
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
@@ -33,7 +35,8 @@ export default function ForgotPasswordPage() {
       setSuccess(true);
       setEmail('');
     } catch (err: any) {
-      setError(err?.message || 'Could not send reset email. Check your connection.');
+      const errMsg = err?.message || 'Could not send reset email. Check your connection.';
+      setError(errMsg);
     } finally {
       setLoading(false);
     }
@@ -100,11 +103,11 @@ export default function ForgotPasswordPage() {
             </motion.div>
 
             <motion.div 
-              className="auth-success"
+              className="auth-success-card"
               variants={itemVariants}
             >
-              <CheckCircle2 size={32} className="auth-success__icon" />
-              <p className="auth-success__text">Reset link has been sent to your email address.</p>
+              <CheckCircle2 size={40} className="auth-success-icon" />
+              <div className="auth-success-text">Reset link sent to your email</div>
             </motion.div>
 
             <motion.button 
@@ -154,6 +157,7 @@ export default function ForgotPasswordPage() {
                     placeholder="coach@email.com"
                     autoComplete="email"
                     required
+                    disabled={loading}
                   />
                 </motion.div>
               </motion.label>
@@ -172,12 +176,19 @@ export default function ForgotPasswordPage() {
               <motion.button 
                 type="submit" 
                 className="auth-primary" 
-                disabled={loading}
+                disabled={loading || !isFormValid}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 17 }}
               >
-                {loading ? 'Sending…' : 'Send Reset Link'}
+                {loading ? (
+                  <>
+                    <span className="auth-button-spinner" />
+                    <span style={{ marginLeft: 8 }}>Sending…</span>
+                  </>
+                ) : (
+                  'Send Reset Link'
+                )}
               </motion.button>
 
               <motion.div 

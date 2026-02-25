@@ -18,6 +18,9 @@ export default function SignInPage() {
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(location?.state?.message || null);
+
+  const isFormValid = email && password;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -26,7 +29,8 @@ export default function SignInPage() {
       await signIn({ email, password });
       nav(redirectTo, { replace: true });
     } catch (err: any) {
-      setError(err?.message || 'Could not sign in');
+      const errMsg = err?.message || 'Could not sign in. Check your email and password.';
+      setError(errMsg);
     }
   }
 
@@ -93,12 +97,25 @@ export default function SignInPage() {
           </div>
         </motion.div>
 
+        {successMessage && (
+          <motion.div 
+            className="auth-note"
+            variants={itemVariants}
+            style={{
+              background: 'rgba(34,197,94,0.10)',
+              borderColor: 'rgba(34,197,94,0.20)',
+            }}
+          >
+            ✓ {successMessage}
+          </motion.div>
+        )}
+
         {!isSupabase ? (
           <motion.div 
             className="auth-note"
             variants={itemVariants}
           >
-            <strong>Local mode:</strong> Supabase env vars aren't set, so sign-in is stored on this device only.
+            <strong>Local mode:</strong> Sign-in is stored on this device only.
           </motion.div>
         ) : null}
 
@@ -112,10 +129,7 @@ export default function SignInPage() {
             whileHover={{ scale: 1.01 }}
           >
             <span className="auth-label">Email</span>
-            <motion.div 
-              className="auth-inputWrap"
-              whileFocus={{ borderColor: 'rgba(245,196,0,0.4)' }}
-            >
+            <motion.div className="auth-inputWrap">
               <Mail size={16} className="auth-icon" />
               <input
                 className="auth-input"
@@ -125,6 +139,7 @@ export default function SignInPage() {
                 placeholder="coach@email.com"
                 autoComplete="email"
                 required
+                disabled={loading}
               />
             </motion.div>
           </motion.label>
@@ -134,10 +149,7 @@ export default function SignInPage() {
             whileHover={{ scale: 1.01 }}
           >
             <span className="auth-label">Password</span>
-            <motion.div 
-              className="auth-inputWrap"
-              whileFocus={{ borderColor: 'rgba(245,196,0,0.4)' }}
-            >
+            <motion.div className="auth-inputWrap">
               <Lock size={16} className="auth-icon" />
               <input
                 className="auth-input"
@@ -147,6 +159,7 @@ export default function SignInPage() {
                 placeholder="••••••••"
                 autoComplete="current-password"
                 required
+                disabled={loading}
               />
               <motion.button
                 type="button"
@@ -155,6 +168,7 @@ export default function SignInPage() {
                 aria-label={show ? 'Hide password' : 'Show password'}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
+                disabled={loading}
               >
                 {show ? <EyeOff size={16} /> : <Eye size={16} />}
               </motion.button>
@@ -175,12 +189,19 @@ export default function SignInPage() {
           <motion.button 
             type="submit" 
             className="auth-primary" 
-            disabled={loading}
+            disabled={loading || !isFormValid}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 400, damping: 17 }}
           >
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? (
+              <>
+                <span className="auth-button-spinner" />
+                <span style={{ marginLeft: 8 }}>Signing in…</span>
+              </>
+            ) : (
+              'Sign in'
+            )}
           </motion.button>
 
           <motion.div 
@@ -190,6 +211,17 @@ export default function SignInPage() {
             <span>New coach?</span>
             <Link className="auth-link" to="/auth/sign-up">
               Create account
+            </Link>
+          </motion.div>
+
+          <motion.div 
+            className="auth-footer"
+            variants={itemVariants}
+            style={{ marginTop: 12, gap: 4 }}
+          >
+            <span>Forgot your password?</span>
+            <Link className="auth-link" to="/auth/forgot-password">
+              Reset it
             </Link>
           </motion.div>
         </motion.form>
