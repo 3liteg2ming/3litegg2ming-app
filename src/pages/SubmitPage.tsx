@@ -302,9 +302,10 @@ export default function SubmitPage() {
 
         setSessionUserId(uid);
 
+        // Query profiles with SELECT('*') to avoid missing column errors
         const { data: profile, error: pErr } = await supabase
           .from('profiles')
-          .select('user_id, role, team_id')
+          .select('*')
           .eq('user_id', uid)
           .maybeSingle();
         if (pErr) throw pErr;
@@ -314,15 +315,73 @@ export default function SubmitPage() {
         setMyTeamId(profile.team_id);
         setMyRole(profile.role || null);
 
-        const { data: fxJson, error: fxErr } = await supabase.rpc('eg_next_fixture_with_teams_for_user', {
-          p_user_id: uid,
-        });
+        // Robust next-fixture lookup: home-team-only
+        // 1. Query for next HOME fixture (not FINAL, not submitted)
+        const { data: fixtures, error: fxErr } = await supabase
+          .from('eg_fixtures')
+          .select('id, round, status, venue, home_team_id, away_team_id, home_goals, home_behinds, away_goals, away_behinds')
+          .eq('home_team_id', profile.team_id)
+          .neq('status', 'FINAL')
+          .order('round', { ascending: true })
+          .limit(1);
 
         if (fxErr) throw fxErr;
+
+        if (!fixtures || fixtures.length === 0) {
+          // No eligible home fixtures
+          if (alive) {
+            setPayload(null);
+            setVenue('');
+          }
+          return;
+        }
+
+        const fixture = fixtures[0];
+
+        // 2. Fetch team info for home and away teams
+        const { data: homeTeamData, error: homeErr } = await supabase
+          .from('eg_teams')
+          .select('*')
+          .eq('id', fixture.home_team_id)
+          .maybeSingle();
+
+        const { data: awayTeamData, error: awayErr } = await supabase
+          .from('eg_teams')
+          .select('*')
+          .eq('id', fixture.away_team_id)
+          .maybeSingle();
+
+        if (homeErr || awayErr) {
+          throw new Error('Failed to load team info');
+        }
+
         if (!alive) return;
 
-        setPayload((fxJson as any) || null);
-        setVenue((fxJson as any)?.fixture?.venue || '');
+        const nextPayload: NextFixturePayload = {
+          fixture: {
+            id: fixture.id,
+            round: fixture.round,
+            venue: fixture.venue,
+            status: fixture.status,
+          },
+          homeTeam: {
+            id: homeTeamData?.id || fixture.home_team_id,
+            name: homeTeamData?.name || 'Home Team',
+            shortName: homeTeamData?.short_name,
+            logo: homeTeamData?.logo_url,
+            teamKey: homeTeamData?.team_key,
+          },
+          awayTeam: {
+            id: awayTeamData?.id || fixture.away_team_id,
+            name: awayTeamData?.name || 'Away Team',
+            shortName: awayTeamData?.short_name,
+            logo: awayTeamData?.logo_url,
+            teamKey: awayTeamData?.team_key,
+          },
+        };
+
+        setPayload(nextPayload);
+        setVenue(nextPayload.fixture.venue);
       } catch (e: any) {
         console.error('[Submit] load failed:', e);
         if (!alive) return;
@@ -499,108 +558,35 @@ export default function SubmitPage() {
     setConflict(null);
 
     try {
-      const submissionId = uuid();
-      const screenshotsMeta = uploaded.map((u) => ({ id: u.id, name: u.name, size: u.size }));
-      const ocrTeamStats = ocr.status === 'done' ? (ocr as any).teamStats : {};
-      const ocrPlayerStats = ocr.status === 'done' ? { lines: (ocr as any).playerLines } : {};
-      const ocrRawText = ocr.status === 'done' ? (ocr as any).rawText : null;
+      // Call the new RPC: eg_submit_result_home_only
+      // This handles the full pipeline: validation, submission, fixture update, ladder/stats recompute
+      const ocrPayload = ocr.status === 'done' ? {
+        rawText: (ocr as any).rawText,
+        teamStats: (ocr as any).teamStats,
+        playerLines: (ocr as any).playerLines,
+      } : null;
 
-      // Create submission with full audit trail
-      const { error: insErr } = await supabase.from('submissions').insert({
-        id: submissionId,
-        fixture_id: fixture.id,
-        team_id: myTeamId,
-        submitted_by: sessionUserId,
-        home_goals: homeGoalsN,
-        home_behinds: homeBehindsN,
-        away_goals: awayGoalsN,
-        away_behinds: awayBehindsN,
-        screenshots: screenshotsMeta,
-        ocr_raw_text: ocrRawText,
-        ocr_team_stats: ocrTeamStats,
-        ocr_player_stats: ocrPlayerStats,
-        goal_kickers_home: homeGoalKickers,
-        goal_kickers_away: awayGoalKickers,
-        notes: notes || null,
+      const { data: result, error: rpcErr } = await supabase.rpc('eg_submit_result_home_only', {
+        p_fixture_id: fixture.id,
+        p_home_goals: homeGoalsN,
+        p_home_behinds: homeBehindsN,
+        p_away_goals: awayGoalsN,
+        p_away_behinds: awayBehindsN,
+        p_venue: venue || null,
+        p_goal_kickers_home: homeGoalKickers.length > 0 ? JSON.stringify(homeGoalKickers) : null,
+        p_goal_kickers_away: awayGoalKickers.length > 0 ? JSON.stringify(awayGoalKickers) : null,
+        p_ocr: ocrPayload ? JSON.stringify(ocrPayload) : null,
+        p_notes: notes || null,
       });
-      if (insErr) throw insErr;
 
-      // Check if other team has submitted
-      const { data: allSubs, error: sErr } = await supabase.from('submissions').select('*').eq('fixture_id', fixture.id);
-      if (sErr) throw sErr;
-
-      const homeSub = (allSubs || []).find((s: any) => s.team_id === homeTeam?.id) || null;
-      const awaySub = (allSubs || []).find((s: any) => s.team_id === awayTeam?.id) || null;
-
-      if (homeSub && awaySub) {
-        const match =
-          safeNum(homeSub.home_goals) === safeNum(awaySub.home_goals) &&
-          safeNum(homeSub.home_behinds) === safeNum(awaySub.home_behinds) &&
-          safeNum(homeSub.away_goals) === safeNum(awaySub.away_goals) &&
-          safeNum(homeSub.away_behinds) === safeNum(awaySub.away_behinds);
-
-        if (match) {
-          const hGoals = safeNum(homeSub.home_goals);
-          const hBeh = safeNum(homeSub.home_behinds);
-          const aGoals = safeNum(homeSub.away_goals);
-          const aBeh = safeNum(homeSub.away_behinds);
-          const hTotal = hGoals * 6 + hBeh;
-          const aTotal = aGoals * 6 + aBeh;
-
-          // Update fixture with final scores
-          const { error: uErr } = await supabase
-            .from('eg_fixtures')
-            .update({
-              home_goals: hGoals,
-              home_behinds: hBeh,
-              away_goals: aGoals,
-              away_behinds: aBeh,
-              home_total: hTotal,
-              away_total: aTotal,
-              status: 'FINAL',
-            })
-            .eq('id', fixture.id);
-          if (uErr) throw uErr;
-
-          // Trigger automatic cascading updates
-          // Update goal kicker totals
-          for (const kicker of homeSub.goal_kickers_home || []) {
-            if (kicker.id && kicker.goals > 0) {
-              await supabase
-                .from('eg_players')
-                .update({ goals: (safeNum(kicker.goals) || 0) })
-                .eq('id', kicker.id)
-                .then(() => {})
-                .catch(() => {});
-            }
-          }
-
-          for (const kicker of awaySub.goal_kickers_away || []) {
-            if (kicker.id && kicker.goals > 0) {
-              await supabase
-                .from('eg_players')
-                .update({ goals: (safeNum(kicker.goals) || 0) })
-                .eq('id', kicker.id)
-                .then(() => {})
-                .catch(() => {});
-            }
-          }
-        } else {
-          // Conflict detected
-          const { error: uErr } = await supabase.from('eg_fixtures').update({ status: 'CONFLICT' }).eq('id', fixture.id);
-          if (uErr) throw uErr;
-          setConflict({
-            message: 'Conflict detected: home and away submissions do not match. Admin review needed.',
-            other: youAreHome ? awaySub : homeSub,
-          });
-        }
-      } else {
-        // One team hasn't submitted yet
-        const pending = youAreHome ? 'PENDING_AWAY' : 'PENDING_HOME';
-        const { error: uErr } = await supabase.from('eg_fixtures').update({ status: pending }).eq('id', fixture.id);
-        if (uErr) throw uErr;
+      if (rpcErr) {
+        // RPC failed, show error
+        setConflict({ message: rpcErr.message || 'Submit failed.' });
+        setIsSubmitting(false);
+        return;
       }
 
+      // Success! Mark as submitted
       setSubmitSuccess(true);
     } catch (e: any) {
       console.error('[Submit] submit failed:', e);

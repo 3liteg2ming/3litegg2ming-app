@@ -13,8 +13,10 @@ import SignInPage from './pages/auth/SignInPage';
 import SignUpPage from './pages/auth/SignUpPage';
 
 import { ProtectedRoute } from './state/auth/ProtectedRoute';
+import { AdminRoute } from './state/auth/AdminRoute';
 
 import AdminCreateFixturePage from './pages/admin/AdminCreateFixturePage';
+import AdminPanelPage from './pages/admin/AdminPanelPage';
 
 import BottomNav from './components/BottomNav';
 import TopHeader from './components/TopHeader';
@@ -85,6 +87,14 @@ export default function App() {
           <Route path="/pro-team" element={<ComingSoonPage />} />
 
           {/* Admin (protected) */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminPanelPage />
+              </AdminRoute>
+            }
+          />
           <Route
             path="/admin/create-fixture"
             element={
