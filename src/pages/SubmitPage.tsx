@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 
 import { supabase } from '../lib/supabaseClient';
+import { fetchAflPlayers, type AflPlayer } from '../data/aflPlayers';
 import '../styles/submitPage.css';
 
 type NextFixturePayload = {
@@ -50,9 +51,15 @@ type Uploaded = {
 
 type OcrState =
   | { status: 'idle' }
-  | { status: 'running'; step: string; progress01: number }
-  | { status: 'ready'; rawText: string; teamStats: Record<string, number>; playerLines: string[] }
+  | { status: 'uploading'; progress01: number }
+  | { status: 'preprocessing'; progress01: number }
+  | { status: 'ocr_running'; step: string; progress01: number }
+  | { status: 'parsing'; progress01: number }
+  | { status: 'done'; rawText: string; teamStats: Record<string, number>; playerLines: string[] }
+  | { status: 'timeout'; error: string }
   | { status: 'error'; message: string };
+
+type Step = 1 | 2 | 3 | 4 | 5;
 
 function uuid() {
   try {
@@ -80,7 +87,6 @@ function normLine(s: string) {
 }
 
 function parseTeamStatsFromText(raw: string) {
-  // Simple, AFL-style keywords (we can expand later).
   const keys = [
     'DISPOSALS',
     'KICKS',
@@ -100,8 +106,6 @@ function parseTeamStatsFromText(raw: string) {
   const text = raw.toUpperCase();
 
   for (const k of keys) {
-    // looks for: KEY .... number
-    // e.g. "TACKLES 65" or "INSIDE 50: 54"
     const re = new RegExp(`${k.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\s*[:\\-]?\\s*(\\d{1,3})`, 'i');
     const m = text.match(re);
     if (m?.[1]) out[k] = safeNum(m[1]);
@@ -111,8 +115,6 @@ function parseTeamStatsFromText(raw: string) {
 }
 
 function parsePlayerLinesFromText(raw: string) {
-  // We don't try to fully map players yet (that’s later). For now:
-  // return lines that look like: "NAME 23" or "NAME ... 31".
   const lines = (raw || '')
     .split(/\r?\n/)
     .map((l) => l.trim())
@@ -122,26 +124,22 @@ function parsePlayerLinesFromText(raw: string) {
 
   for (const l of lines) {
     const ll = normLine(l);
-    // crude heuristic: contains letters and ends with a number.
     if (/^[A-Z][A-Z '\-\.]{2,}\s+\d{1,3}$/i.test(ll)) out.push(ll);
     else if (/^[A-Z][A-Z '\-\.]{2,}.*\s\d{1,3}$/i.test(ll) && /\d{1,3}$/.test(ll)) out.push(ll);
   }
 
-  // keep it readable
   return out.slice(0, 50);
 }
 
 /**
- * ✅ Robust OCR runner for Vite + different tesseract.js versions.
- * - Forces worker/core/lang paths (prevents "hang forever")
- * - Shows progress for all stages
- * - Uses timeouts so it never stalls indefinitely
- * - Always terminates worker
+ * Robust OCR runner with 20-second hard timeout
  */
 async function runTesseract(files: File[], onProgress: (step: string, progress01: number) => void) {
+  const GLOBAL_TIMEOUT_MS = 20000;
+
   const withTimeout = async <T,>(p: Promise<T>, ms: number, label: string) => {
     return await new Promise<T>((resolve, reject) => {
-      const t = window.setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+      const t = window.setTimeout(() => reject(new Error(`${label} timed out`)), ms);
       p.then(
         (v) => {
           window.clearTimeout(t);
@@ -155,77 +153,76 @@ async function runTesseract(files: File[], onProgress: (step: string, progress01
     });
   };
 
-  // Dynamic import so the rest of the app loads fast.
-  const mod: any = await import('tesseract.js');
-  const createWorker = mod?.createWorker ?? mod?.default?.createWorker;
+  return await withTimeout(
+    (async () => {
+      const mod: any = await import('tesseract.js');
+      const createWorker = mod?.createWorker ?? mod?.default?.createWorker;
 
-  if (!createWorker) {
-    throw new Error('tesseract.js createWorker not found (install/version mismatch).');
-  }
+      if (!createWorker) {
+        throw new Error('tesseract.js not available');
+      }
 
-  // ✅ Known-good hosted assets (avoid Vite local worker resolution issues)
-  const workerPath = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js';
-  const corePath = 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core.wasm.js';
-  const langPath = 'https://tessdata.projectnaptha.com/4.0.0';
+      const workerPath = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js';
+      const corePath = 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core.wasm.js';
+      const langPath = 'https://tessdata.projectnaptha.com/4.0.0';
 
-  const logger = (m: any) => {
-    if (!m?.status) return;
-    const status = String(m.status);
-    const p = typeof m.progress === 'number' ? clamp(m.progress, 0, 1) : 0;
+      const logger = (m: any) => {
+        if (!m?.status) return;
+        const status = String(m.status);
+        const p = typeof m.progress === 'number' ? clamp(m.progress, 0, 1) : 0;
 
-    // Surface more states so you can see where it is, not just "Starting…"
-    if (status.includes('loading')) onProgress('Loading OCR…', Math.max(0.05, p));
-    else if (status.includes('initializ')) onProgress('Initialising OCR…', Math.max(0.1, p));
-    else if (status.includes('recogniz')) onProgress('Recognising text…', Math.max(0.2, p));
-    else onProgress(status, p);
-  };
+        if (status.includes('loading')) onProgress('Loading OCR…', Math.max(0.05, p));
+        else if (status.includes('initializ')) onProgress('Initialising OCR…', Math.max(0.1, p));
+        else if (status.includes('recogniz')) onProgress('Recognising text…', Math.max(0.2, p));
+        else onProgress(status, p);
+      };
 
-  onProgress('Starting…', 0.01);
+      onProgress('Starting…', 0.01);
 
-  // Support both common signatures:
-  // - v4: createWorker(options)
-  // - v5+: createWorker(lang, oem, options)
-  let worker: any;
-  try {
-    worker = await createWorker({ logger, workerPath, corePath, langPath });
-  } catch {
-    worker = await createWorker('eng', 1, { logger, workerPath, corePath, langPath });
-  }
+      let worker: any;
+      try {
+        worker = await createWorker({ logger, workerPath, corePath, langPath });
+      } catch {
+        worker = await createWorker('eng', 1, { logger, workerPath, corePath, langPath });
+      }
 
-  try {
-    // Some versions require explicit language load/initialize. Some do it internally.
-    if (worker?.loadLanguage) {
-      onProgress('Loading language…', 0.06);
-      await withTimeout(worker.loadLanguage('eng'), 60000, 'loadLanguage');
-    }
+      try {
+        if (worker?.loadLanguage) {
+          onProgress('Loading language…', 0.06);
+          await withTimeout(worker.loadLanguage('eng'), 60000, 'loadLanguage');
+        }
 
-    if (worker?.initialize) {
-      onProgress('Initialising…', 0.12);
-      await withTimeout(worker.initialize('eng'), 60000, 'initialize');
-    }
+        if (worker?.initialize) {
+          onProgress('Initialising…', 0.12);
+          await withTimeout(worker.initialize('eng'), 60000, 'initialize');
+        }
 
-    let combined = '';
-    for (let i = 0; i < files.length; i++) {
-      const f = files[i];
-      const base = i / Math.max(1, files.length);
-      onProgress(`Reading image ${i + 1} of ${files.length}…`, clamp(base, 0.15, 0.9));
+        let combined = '';
+        for (let i = 0; i < files.length; i++) {
+          const f = files[i];
+          const base = i / Math.max(1, files.length);
+          onProgress(`Reading image ${i + 1} of ${files.length}…`, clamp(base, 0.15, 0.9));
 
-      const res = await withTimeout(worker.recognize(f), 120000, `recognize(${f.name})`);
-      const text = res?.data?.text ?? '';
+          const res = await withTimeout(worker.recognize(f), 120000, `recognize(${f.name})`);
+          const text = res?.data?.text ?? '';
 
-      combined += `\n\n--- ${f.name} ---\n`;
-      combined += text;
-    }
+          combined += `\n\n--- ${f.name} ---\n`;
+          combined += text;
+        }
 
-    onProgress('Finishing…', 0.98);
-    return combined.trim();
-  } finally {
-    try {
-      await worker.terminate();
-    } catch {
-      // ignore
-    }
-  }
+        onProgress('Finishing…', 0.98);
+        return combined.trim();
+      } finally {
+        try {
+          await worker.terminate();
+        } catch {
+          // ignore
+        }
+      }
+    })(),
+    GLOBAL_TIMEOUT_MS,
+    'Overall OCR processing',
+  );
 }
 
 export default function SubmitPage() {
@@ -240,11 +237,11 @@ export default function SubmitPage() {
 
   const [payload, setPayload] = useState<NextFixturePayload>(null);
 
+  // UI state
   const [expandedMatch, setExpandedMatch] = useState(true);
   const [expandedScore, setExpandedScore] = useState(true);
   const [expandedGoalKickers, setExpandedGoalKickers] = useState(true);
   const [expandedEvidence, setExpandedEvidence] = useState(true);
-  const [expandedOcr, setExpandedOcr] = useState(true);
 
   const [venue, setVenue] = useState('');
   const [venueEditable, setVenueEditable] = useState(false);
@@ -269,6 +266,9 @@ export default function SubmitPage() {
   const [awayPlayerSearch, setAwayPlayerSearch] = useState('');
   const [notes, setNotes] = useState('');
 
+  const [allPlayers, setAllPlayers] = useState<AflPlayer[]>([]);
+  const [playerLoadErr, setPlayerLoadErr] = useState<string | null>(null);
+
   const [uploaded, setUploaded] = useState<Uploaded[]>([]);
   const [ocr, setOcr] = useState<OcrState>({ status: 'idle' });
   const [ocrConfirm, setOcrConfirm] = useState(false);
@@ -286,7 +286,7 @@ export default function SubmitPage() {
     return myTeamId === homeTeam.id;
   }, [myTeamId, homeTeam?.id]);
 
-  // 1) Load session, profile, and next fixture.
+  // Load session, profile, and next fixture
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -302,7 +302,6 @@ export default function SubmitPage() {
 
         setSessionUserId(uid);
 
-        // Profile -> team
         const { data: profile, error: pErr } = await supabase
           .from('profiles')
           .select('user_id, role, team_id')
@@ -315,7 +314,6 @@ export default function SubmitPage() {
         setMyTeamId(profile.team_id);
         setMyRole(profile.role || null);
 
-        // Next fixture (RPC)
         const { data: fxJson, error: fxErr } = await supabase.rpc('eg_next_fixture_with_teams_for_user', {
           p_user_id: uid,
         });
@@ -338,7 +336,29 @@ export default function SubmitPage() {
     };
   }, []);
 
-  // Reset per-fixture state.
+  // Fetch AFL players for goal kickers
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const players = await fetchAflPlayers();
+        if (alive) {
+          setAllPlayers(players);
+          setPlayerLoadErr(null);
+        }
+      } catch (e: any) {
+        console.error('[Submit] failed to load players:', e);
+        if (alive) {
+          setPlayerLoadErr(e?.message || 'Failed to load player data');
+        }
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Reset per-fixture state
   useEffect(() => {
     setVenue((fixture?.venue as any) || '');
     setVenueEditable(false);
@@ -361,18 +381,37 @@ export default function SubmitPage() {
 
   const canRunOcr = useMemo(() => {
     if (!fixture) return false;
-    if (ocr.status === 'running') return false;
+    if (ocr.status === 'ocr_running') return false;
     return uploaded.length > 0;
   }, [fixture, ocr.status, uploaded.length]);
 
   const canSubmit = useMemo(() => {
     if (!fixture || !myTeamId) return false;
     if (isSubmitting) return false;
-    if (!ocrConfirm) return false;
+    if (ocr.status !== 'done' && ocr.status !== 'idle') return false;
+    if (ocr.status === 'done' && !ocrConfirm) return false;
     if (!uploaded.length) return false;
     if (!homeGoals || !homeBehinds || !awayGoals || !awayBehinds) return false;
     return true;
-  }, [fixture, myTeamId, isSubmitting, ocrConfirm, uploaded.length, homeGoals, homeBehinds, awayGoals, awayBehinds]);
+  }, [fixture, myTeamId, isSubmitting, ocr.status, ocrConfirm, uploaded.length, homeGoals, homeBehinds, awayGoals, awayBehinds]);
+
+  // Filter players by team and search
+  const getTeamPlayers = (teamId: string | undefined, search: string) => {
+    if (!teamId || !allPlayers.length) return [];
+    return allPlayers
+      .filter((p) => {
+        const teamMatch = p.teamId === teamId;
+        const searchMatch =
+          !search ||
+          p.name.toLowerCase().includes(search.toLowerCase()) ||
+          p.teamName?.toLowerCase().includes(search.toLowerCase());
+        return teamMatch && searchMatch;
+      })
+      .slice(0, 20);
+  };
+
+  const homeTeamPlayers = useMemo(() => getTeamPlayers(homeTeam?.id, homePlayerSearch), [homeTeam?.id, homePlayerSearch, allPlayers]);
+  const awayTeamPlayers = useMemo(() => getTeamPlayers(awayTeam?.id, awayPlayerSearch), [awayTeam?.id, awayPlayerSearch, allPlayers]);
 
   const onPickFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -428,23 +467,28 @@ export default function SubmitPage() {
   const runOcr = async () => {
     if (!canRunOcr) return;
 
-    setOcr({ status: 'running', step: 'Starting…', progress01: 0.02 });
+    setOcr({ status: 'ocr_running', step: 'Starting…', progress01: 0.02 });
     setConflict(null);
 
     try {
       const rawText = await runTesseract(
         uploaded.map((u) => u.file),
-        (step, p) => setOcr({ status: 'running', step, progress01: p }),
+        (step, p) => setOcr({ status: 'ocr_running', step, progress01: p }),
       );
 
       const teamStats = parseTeamStatsFromText(rawText);
       const playerLines = parsePlayerLinesFromText(rawText);
 
-      setOcr({ status: 'ready', rawText, teamStats, playerLines });
-      setExpandedOcr(true);
+      setOcr({ status: 'done', rawText, teamStats, playerLines });
+      setOcrConfirm(false);
     } catch (e: any) {
       console.error('[Submit] OCR failed:', e);
-      setOcr({ status: 'error', message: e?.message || 'OCR failed.' });
+      const msg = e?.message || 'OCR failed';
+      if (msg.includes('timed out')) {
+        setOcr({ status: 'timeout', error: 'OCR took too long (exceeded 20 seconds). You can retry or skip to manual entry.' });
+      } else {
+        setOcr({ status: 'error', message: msg });
+      }
     }
   };
 
@@ -455,36 +499,39 @@ export default function SubmitPage() {
     setConflict(null);
 
     try {
-      // 1) Save submission
       const submissionId = uuid();
       const screenshotsMeta = uploaded.map((u) => ({ id: u.id, name: u.name, size: u.size }));
-      const ocrTeamStats = ocr.status === 'ready' ? ocr.teamStats : {};
-      const ocrPlayerStats = ocr.status === 'ready' ? { lines: ocr.playerLines } : {};
+      const ocrTeamStats = ocr.status === 'done' ? (ocr as any).teamStats : {};
+      const ocrPlayerStats = ocr.status === 'done' ? { lines: (ocr as any).playerLines } : {};
+      const ocrRawText = ocr.status === 'done' ? (ocr as any).rawText : null;
 
+      // Create submission with full audit trail
       const { error: insErr } = await supabase.from('submissions').insert({
         id: submissionId,
         fixture_id: fixture.id,
         team_id: myTeamId,
+        submitted_by: sessionUserId,
         home_goals: homeGoalsN,
         home_behinds: homeBehindsN,
         away_goals: awayGoalsN,
         away_behinds: awayBehindsN,
         screenshots: screenshotsMeta,
+        ocr_raw_text: ocrRawText,
         ocr_team_stats: ocrTeamStats,
         ocr_player_stats: ocrPlayerStats,
         goal_kickers_home: homeGoalKickers,
         goal_kickers_away: awayGoalKickers,
+        notes: notes || null,
       });
       if (insErr) throw insErr;
 
-      // 2) Check if the other team has already submitted
+      // Check if other team has submitted
       const { data: allSubs, error: sErr } = await supabase.from('submissions').select('*').eq('fixture_id', fixture.id);
       if (sErr) throw sErr;
 
       const homeSub = (allSubs || []).find((s: any) => s.team_id === homeTeam?.id) || null;
       const awaySub = (allSubs || []).find((s: any) => s.team_id === awayTeam?.id) || null;
 
-      // 3) Update fixture status depending on what we have.
       if (homeSub && awaySub) {
         const match =
           safeNum(homeSub.home_goals) === safeNum(awaySub.home_goals) &&
@@ -497,7 +544,10 @@ export default function SubmitPage() {
           const hBeh = safeNum(homeSub.home_behinds);
           const aGoals = safeNum(homeSub.away_goals);
           const aBeh = safeNum(homeSub.away_behinds);
+          const hTotal = hGoals * 6 + hBeh;
+          const aTotal = aGoals * 6 + aBeh;
 
+          // Update fixture with final scores
           const { error: uErr } = await supabase
             .from('eg_fixtures')
             .update({
@@ -505,13 +555,38 @@ export default function SubmitPage() {
               home_behinds: hBeh,
               away_goals: aGoals,
               away_behinds: aBeh,
-              home_total: hGoals * 6 + hBeh,
-              away_total: aGoals * 6 + aBeh,
+              home_total: hTotal,
+              away_total: aTotal,
               status: 'FINAL',
             })
             .eq('id', fixture.id);
           if (uErr) throw uErr;
+
+          // Trigger automatic cascading updates
+          // Update goal kicker totals
+          for (const kicker of homeSub.goal_kickers_home || []) {
+            if (kicker.id && kicker.goals > 0) {
+              await supabase
+                .from('eg_players')
+                .update({ goals: (safeNum(kicker.goals) || 0) })
+                .eq('id', kicker.id)
+                .then(() => {})
+                .catch(() => {});
+            }
+          }
+
+          for (const kicker of awaySub.goal_kickers_away || []) {
+            if (kicker.id && kicker.goals > 0) {
+              await supabase
+                .from('eg_players')
+                .update({ goals: (safeNum(kicker.goals) || 0) })
+                .eq('id', kicker.id)
+                .then(() => {})
+                .catch(() => {});
+            }
+          }
         } else {
+          // Conflict detected
           const { error: uErr } = await supabase.from('eg_fixtures').update({ status: 'CONFLICT' }).eq('id', fixture.id);
           if (uErr) throw uErr;
           setConflict({
@@ -520,12 +595,12 @@ export default function SubmitPage() {
           });
         }
       } else {
+        // One team hasn't submitted yet
         const pending = youAreHome ? 'PENDING_AWAY' : 'PENDING_HOME';
         const { error: uErr } = await supabase.from('eg_fixtures').update({ status: pending }).eq('id', fixture.id);
         if (uErr) throw uErr;
       }
 
-      // 4) Success UI
       setSubmitSuccess(true);
     } catch (e: any) {
       console.error('[Submit] submit failed:', e);
@@ -615,7 +690,7 @@ export default function SubmitPage() {
                 <p className="egSubmitHeader__sub">No eligible fixture found.</p>
                 <div className="egSubmitHeader__meta">
                   This page only shows your <span className="egSubmitHeader__metaStrong">next scheduled fixture</span> that you
-                  haven’t submitted yet.
+                  haven't submitted yet.
                 </div>
               </div>
               <div className="egSubmitHeader__pill">
@@ -633,13 +708,6 @@ export default function SubmitPage() {
     );
   }
 
-  // Small, local “player picker” until we wire real player lists.
-  const homeKickerSuggestions = ['Player 1', 'Player 2', 'Player 3']
-    .filter((n) => n.toLowerCase().includes(homePlayerSearch.toLowerCase()))
-    .slice(0, 12);
-  const awayKickerSuggestions = ['Player 1', 'Player 2', 'Player 3']
-    .filter((n) => n.toLowerCase().includes(awayPlayerSearch.toLowerCase()))
-    .slice(0, 12);
 
   return (
     <div className="egSubmitPage">
@@ -768,7 +836,7 @@ export default function SubmitPage() {
 
                   <div className="egSubmitHint egSubmitHint--gold">
                     <Trophy className="egSubmitHint__icon" />
-                    Auto-detect shows only your next fixture. You can’t submit old rounds or re-submit a match.
+                    Auto-detect shows only your next fixture. You can't submit old rounds or re-submit a match.
                   </div>
                 </motion.div>
               ) : null}
@@ -829,23 +897,27 @@ export default function SubmitPage() {
                   <div className="egSubmitOcrBar">
                     <button type="button" className="egSubmitOcrBtn" onClick={runOcr} disabled={!canRunOcr}>
                       <Wand2 className="egSubmitOcrBtn__icon" />
-                      {ocr.status === 'running' ? 'Running OCR…' : 'Run OCR'}
+                      {ocr.status === 'ocr_running' ? 'Running OCR…' : 'Run OCR'}
                     </button>
                     <div className="egSubmitOcrBar__right">
-                      {ocr.status === 'running' ? (
+                      {ocr.status === 'ocr_running' ? (
                         <>
-                          <div className="egSubmitOcrStep">{ocr.step}</div>
+                          <div className="egSubmitOcrStep">{(ocr as any).step}</div>
                           <div className="egSubmitOcrProg">
-                            <div className="egSubmitOcrProg__bar" style={{ width: `${Math.round(ocr.progress01 * 100)}%` }} />
+                            <div className="egSubmitOcrProg__bar" style={{ width: `${Math.round((ocr as any).progress01 * 100)}%` }} />
                           </div>
                         </>
-                      ) : ocr.status === 'ready' ? (
+                      ) : ocr.status === 'done' ? (
                         <div className="egSubmitOcrOk">
                           <Check /> OCR ready
                         </div>
+                      ) : ocr.status === 'timeout' ? (
+                        <div className="egSubmitOcrErr">
+                          <AlertTriangle /> {(ocr as any).error}
+                        </div>
                       ) : ocr.status === 'error' ? (
                         <div className="egSubmitOcrErr">
-                          <AlertTriangle /> {ocr.message}
+                          <AlertTriangle /> {(ocr as any).message}
                         </div>
                       ) : (
                         <div className="egSubmitOcrMuted">Run OCR to auto-fill stats preview.</div>
@@ -853,19 +925,40 @@ export default function SubmitPage() {
                     </div>
                   </div>
 
+                  {/* Timeout handling */}
+                  {ocr.status === 'timeout' ? (
+                    <div className="egSubmitOcrTimeoutBox">
+                      <div className="egSubmitOcrTimeoutBox__title">OCR taking too long</div>
+                      <div className="egSubmitOcrTimeoutBox__msg">{(ocr as any).error}</div>
+                      <div className="egSubmitOcrTimeoutBox__actions">
+                        <button type="button" className="egSubmitOcrTimeoutBtn" onClick={runOcr}>
+                          Retry OCR
+                        </button>
+                        <button
+                          type="button"
+                          className="egSubmitOcrTimeoutBtn egSubmitOcrTimeoutBtn--secondary"
+                          onClick={() => {
+                            setOcr({ status: 'idle' });
+                          }}
+                        >
+                          Skip to Manual Entry
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+
                   {/* OCR results */}
-                  <section className={`egSubmitOcrPanel ${ocr.status === 'ready' ? '' : 'isDisabled'}`}>
+                  <section className={`egSubmitOcrPanel ${ocr.status === 'done' ? '' : 'isDisabled'}`}>
                     <button
                       type="button"
                       className="egSubmitOcrPanel__head"
-                      onClick={() => setExpandedOcr((v) => !v)}
-                      disabled={ocr.status !== 'ready'}
+                      disabled={ocr.status !== 'done'}
                     >
                       <div className="egSubmitCard__title">OCR Results</div>
-                      <ChevronDown className={`egSubmitCard__chev ${expandedOcr ? 'isOpen' : ''}`} />
+                      <ChevronDown className={`egSubmitCard__chev isOpen`} />
                     </button>
                     <AnimatePresence initial={false}>
-                      {expandedOcr && ocr.status === 'ready' ? (
+                      {ocr.status === 'done' ? (
                         <motion.div
                           key="ocr"
                           initial={{ opacity: 0, y: 8 }}
@@ -876,9 +969,9 @@ export default function SubmitPage() {
                           <div className="egSubmitOcrGrid">
                             <div className="egSubmitOcrBox">
                               <div className="egSubmitOcrBox__title">Team stats (detected)</div>
-                              {Object.keys(ocr.teamStats).length ? (
+                              {Object.keys((ocr as any).teamStats).length ? (
                                 <div className="egSubmitOcrStats">
-                                  {Object.entries(ocr.teamStats)
+                                  {Object.entries((ocr as any).teamStats)
                                     .slice(0, 12)
                                     .map(([k, v]) => (
                                       <div key={k} className="egSubmitOcrStat">
@@ -888,34 +981,34 @@ export default function SubmitPage() {
                                     ))}
                                 </div>
                               ) : (
-                                <div className="egSubmitOcrMuted">No team stats detected yet (we’ll improve parsing next).</div>
+                                <div className="egSubmitOcrMuted">No team stats detected.</div>
                               )}
                             </div>
 
                             <div className="egSubmitOcrBox">
                               <div className="egSubmitOcrBox__title">Player lines (detected)</div>
-                              {ocr.playerLines.length ? (
+                              {(ocr as any).playerLines.length ? (
                                 <div className="egSubmitOcrLines">
-                                  {ocr.playerLines.slice(0, 14).map((l, i) => (
+                                  {(ocr as any).playerLines.slice(0, 14).map((l: string, i: number) => (
                                     <div key={`${l}-${i}`} className="egSubmitOcrLine">
                                       {l}
                                     </div>
                                   ))}
                                 </div>
                               ) : (
-                                <div className="egSubmitOcrMuted">No player lines detected yet.</div>
+                                <div className="egSubmitOcrMuted">No player lines detected.</div>
                               )}
                             </div>
                           </div>
 
                           <details className="egSubmitOcrRaw">
                             <summary>Show raw OCR text</summary>
-                            <pre>{ocr.rawText}</pre>
+                            <pre>{(ocr as any).rawText}</pre>
                           </details>
 
                           <label className="egSubmitOcrConfirm">
                             <input type="checkbox" checked={ocrConfirm} onChange={(e) => setOcrConfirm(e.target.checked)} />
-                            I’ve reviewed the OCR preview and my screenshots are correct.
+                            I've reviewed the OCR results and my screenshots are correct.
                           </label>
                         </motion.div>
                       ) : null}
@@ -1040,19 +1133,21 @@ export default function SubmitPage() {
                       <input
                         value={homePlayerSearch}
                         onChange={(e) => setHomePlayerSearch(e.target.value)}
-                        placeholder="Search / type name…"
+                        placeholder="Search player…"
                       />
                       <button type="button" onClick={() => homePlayerSearch.trim() && ensureKicker('home', homePlayerSearch.trim())}>
                         Add
                       </button>
                     </div>
-                    <div className="egSubmitChips">
-                      {homeKickerSuggestions.map((n) => (
-                        <button type="button" key={n} onClick={() => ensureKicker('home', n)}>
-                          {n}
-                        </button>
-                      ))}
-                    </div>
+                    {homeTeamPlayers.length > 0 && (
+                      <div className="egSubmitChips">
+                        {homeTeamPlayers.map((p) => (
+                          <button type="button" key={p.id} onClick={() => ensureKicker('home', p.name)}>
+                            {p.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     <div className="egSubmitKickers">
                       {homeGoalKickers.length ? (
                         [...homeGoalKickers]
@@ -1071,19 +1166,21 @@ export default function SubmitPage() {
                       <input
                         value={awayPlayerSearch}
                         onChange={(e) => setAwayPlayerSearch(e.target.value)}
-                        placeholder="Search / type name…"
+                        placeholder="Search player…"
                       />
                       <button type="button" onClick={() => awayPlayerSearch.trim() && ensureKicker('away', awayPlayerSearch.trim())}>
                         Add
                       </button>
                     </div>
-                    <div className="egSubmitChips">
-                      {awayKickerSuggestions.map((n) => (
-                        <button type="button" key={n} onClick={() => ensureKicker('away', n)}>
-                          {n}
-                        </button>
-                      ))}
-                    </div>
+                    {awayTeamPlayers.length > 0 && (
+                      <div className="egSubmitChips">
+                        {awayTeamPlayers.map((p) => (
+                          <button type="button" key={p.id} onClick={() => ensureKicker('away', p.name)}>
+                            {p.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     <div className="egSubmitKickers">
                       {awayGoalKickers.length ? (
                         [...awayGoalKickers]
