@@ -1,0 +1,436 @@
+.preseasonPage {
+  width: 100%;
+  min-height: 100%;
+  color: rgba(255,255,255,0.94);
+}
+
+.preseasonWrap {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 14px 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.preseasonHero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid rgba(61,255,122,0.18);
+  background:
+    radial-gradient(70% 85% at 10% 15%, rgba(61,255,122,0.12), transparent 70%),
+    radial-gradient(65% 90% at 100% 0%, rgba(245,196,0,0.08), transparent 70%),
+    linear-gradient(155deg, rgba(11,15,20,0.96), rgba(7,10,14,0.98));
+  box-shadow: 0 18px 40px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.06);
+  padding: 16px;
+}
+
+.preseasonHero__glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(45% 70% at 18% 20%, rgba(61,255,122,0.18), transparent 70%),
+    radial-gradient(35% 55% at 80% 18%, rgba(255,214,61,0.12), transparent 75%);
+}
+
+.preseasonHero > * { position: relative; z-index: 1; }
+
+.preseasonHero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(61,255,122,0.22);
+  background: rgba(61,255,122,0.08);
+  color: rgba(227,255,236,0.96);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.preseasonHero__titleRow {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.preseasonHero__cup {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: rgba(61,255,122,0.95);
+  border: 1px solid rgba(61,255,122,0.18);
+  background: rgba(61,255,122,0.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.preseasonHero__title {
+  font-size: 24px;
+  line-height: 1.05;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.preseasonHero__sub {
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(61,255,122,0.9);
+}
+
+.preseasonHero__desc {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: rgba(255,255,255,0.68);
+  max-width: 50ch;
+}
+
+.preseasonHero__note {
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: rgba(255,255,255,0.52);
+}
+
+.preseasonBtn {
+  appearance: none;
+  border-radius: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.preseasonBtn--primary {
+  margin-top: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  background: linear-gradient(180deg, rgba(61,255,122,0.22), rgba(61,255,122,0.12));
+  border-color: rgba(61,255,122,0.24);
+  color: rgba(237,255,242,0.98);
+  box-shadow: 0 10px 24px rgba(61,255,122,0.08), inset 0 1px 0 rgba(255,255,255,0.12);
+  text-decoration: none;
+}
+
+.preseasonBtn--secondary {
+  padding: 11px 14px;
+  min-width: 144px;
+  background: linear-gradient(180deg, rgba(255,214,61,0.95), rgba(245,196,0,0.92));
+  color: rgba(0,0,0,0.9);
+  border-color: rgba(255,255,255,0.12);
+  box-shadow: 0 10px 24px rgba(245,196,0,0.16), inset 0 1px 0 rgba(255,255,255,0.28);
+}
+
+.preseasonCard,
+.preseasonCtaCard {
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+  box-shadow: 0 12px 28px rgba(0,0,0,0.22);
+}
+
+.preseasonCard {
+  padding: 14px;
+}
+
+.preseasonCard__head {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.78);
+}
+
+.preseasonFormatGrid {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.preseasonStep {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 10px;
+  align-items: start;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.02);
+  padding: 10px;
+}
+
+.preseasonStep__num {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.94);
+  background: rgba(61,255,122,0.08);
+  border: 1px solid rgba(61,255,122,0.16);
+}
+
+.preseasonStep__title {
+  font-size: 14px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.92);
+}
+
+.preseasonStep__text {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: rgba(255,255,255,0.58);
+}
+
+.preseasonCtaCard {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.preseasonCtaCard__title {
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.preseasonCtaCard__text {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: rgba(255,255,255,0.6);
+}
+
+.preseasonRegister {
+  border-radius: 24px;
+  border: 1px solid rgba(61,255,122,0.14);
+  background:
+    radial-gradient(60% 90% at 8% 10%, rgba(61,255,122,0.08), transparent 72%),
+    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+  box-shadow:
+    0 16px 34px rgba(0,0,0,0.24),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+  padding: 14px;
+}
+
+.preseasonRegister__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.preseasonRegister__kicker {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(61,255,122,0.9);
+}
+
+.preseasonRegister__title {
+  margin-top: 2px;
+  font-size: 22px;
+  line-height: 1.05;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.preseasonRegister__sub {
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.58);
+  line-height: 1.35;
+}
+
+.preseasonRegister__status {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(61,255,122,0.2);
+  background: rgba(61,255,122,0.08);
+  color: rgba(227,255,236,0.95);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.preseasonForm {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.preseasonForm__grid {
+  display: grid;
+  gap: 10px;
+}
+
+.preseasonForm__grid--two {
+  grid-template-columns: 1fr;
+}
+
+.preseasonField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.preseasonField > span {
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.68);
+  letter-spacing: 0.03em;
+}
+
+.preseasonField input,
+.preseasonField select {
+  appearance: none;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+  color: rgba(255,255,255,0.94);
+  padding: 11px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+.preseasonField select {
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(255,255,255,0.55) 50%),
+    linear-gradient(135deg, rgba(255,255,255,0.55) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 2px),
+    calc(100% - 12px) calc(50% - 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 34px;
+}
+
+.preseasonField input:focus,
+.preseasonField select:focus {
+  border-color: rgba(61,255,122,0.26);
+  box-shadow:
+    0 0 0 3px rgba(61,255,122,0.1),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.preseasonForm__prefsHead {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.75);
+}
+
+.preseasonForm__message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.preseasonForm__message.is-success {
+  border-color: rgba(61,255,122,0.2);
+  background: rgba(61,255,122,0.07);
+  color: rgba(226,255,236,0.95);
+}
+
+.preseasonForm__message.is-error {
+  border-color: rgba(255,120,120,0.2);
+  background: rgba(255,120,120,0.07);
+  color: rgba(255,225,225,0.94);
+}
+
+.preseasonForm__message.is-saving {
+  border-color: rgba(255,214,61,0.16);
+  background: rgba(255,214,61,0.06);
+  color: rgba(255,240,194,0.95);
+}
+
+.preseasonForm__actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.preseasonForm__actions .preseasonBtn--secondary {
+  width: 100%;
+}
+
+.preseasonBottom {
+  height: 104px;
+}
+
+@media (min-width: 640px) {
+  .preseasonWrap {
+    padding: 14px 14px 0;
+  }
+
+  .preseasonHero {
+    padding: 18px;
+  }
+
+  .preseasonHero__title {
+    font-size: 28px;
+  }
+
+  .preseasonBtn--primary {
+    width: auto;
+    min-width: 220px;
+  }
+
+  .preseasonFormatGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .preseasonStep {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .preseasonCtaCard {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .preseasonForm__grid--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .preseasonForm__actions .preseasonBtn--secondary {
+    width: auto;
+    min-width: 180px;
+  }
+}

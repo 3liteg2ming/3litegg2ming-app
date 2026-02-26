@@ -27,6 +27,53 @@ const NAV_BASE: NavItem[] = [
 
 const NAV_SUBMIT: NavItem = { label: 'Submit', href: '/submit', Icon: Upload };
 
+const routePrefetchers: Record<string, () => Promise<any>> = {
+  '/': () => import('../pages/HomePage'),
+  '/fixtures': () => import('../pages/AFL26FixturesPage'),
+  '/ladder': () => import('../pages/LadderPage'),
+  '/stats3': () => import('../pages/AFL2026StatsPage'),
+  '/submit': () => import('../pages/SubmitPage'),
+};
+
+const warmedRoutes = new Set<string>();
+
+async function prefetchRouteAndData(href: string) {
+  if (warmedRoutes.has(href)) return;
+  warmedRoutes.add(href);
+
+  try {
+    await routePrefetchers[href]?.();
+  } catch {
+    // ignore route prefetch failures
+  }
+
+  try {
+    if (href === '/' || href === '/fixtures') {
+      const mod = await import('../data/afl26Supabase');
+      await mod.getAfl26RoundsFromSupabase();
+    }
+
+    if (href === '/stats3') {
+      const [leadersMod, rosterMod] = await Promise.all([
+        import('../lib/stats-leaders-cache'),
+        import('../lib/stats-cache'),
+      ]);
+      await Promise.all([
+        leadersMod.fetchStatLeaders(),
+        leadersMod.fetchLeaderCategories('players'),
+        rosterMod.fetchRosterData(),
+      ]);
+    }
+
+    if (href === '/submit') {
+      const rosterMod = await import('../lib/stats-cache');
+      await rosterMod.fetchRosterData();
+    }
+  } catch {
+    // ignore data prewarm failures
+  }
+}
+
 export default function BottomNav() {
   const [session, setSession] = useState<Session | null>(null);
 
@@ -58,6 +105,15 @@ export default function BottomNav() {
     return isAuthed ? [...NAV_BASE, NAV_SUBMIT] : NAV_BASE;
   }, [isAuthed]);
 
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      void prefetchRouteAndData('/fixtures');
+      void prefetchRouteAndData('/ladder');
+      void prefetchRouteAndData('/stats3');
+    }, 120);
+    return () => window.clearTimeout(id);
+  }, []);
+
   return (
     <nav className="egBottomNav" role="navigation" aria-label="Bottom navigation">
       <div className="egBottomNav__bar" role="menubar" aria-label="Primary navigation">
@@ -69,6 +125,15 @@ export default function BottomNav() {
             className={({ isActive }) => `egBottomNav__item ${isActive ? 'egBottomNav__item--active' : ''}`}
             aria-label={label}
             role="menuitem"
+            onMouseEnter={() => {
+              void prefetchRouteAndData(href);
+            }}
+            onFocus={() => {
+              void prefetchRouteAndData(href);
+            }}
+            onTouchStart={() => {
+              void prefetchRouteAndData(href);
+            }}
           >
             <Icon className="egBottomNav__icon" />
             <span className="egBottomNav__label">{label}</span>

@@ -47,6 +47,12 @@ export function invalidateAfl26Cache() {
   cache = null;
 }
 
+export function peekAfl26RoundsCache(): AflRound[] | null {
+  if (!cache) return null;
+  if (Date.now() - cache.at >= TTL_MS) return null;
+  return cache.rounds;
+}
+
 export async function getAfl26RoundsFromSupabase(opts?: { force?: boolean }): Promise<AflRound[]> {
   const now = Date.now();
   if (!opts?.force && cache && now - cache.at < TTL_MS) return cache.rounds;

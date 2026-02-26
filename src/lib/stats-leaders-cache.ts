@@ -41,6 +41,7 @@ export type StatLeaderPerson = {
   name: string;
   teamName: string;
   teamKey: TeamKey;
+  teamResolved?: boolean;
   photoUrl?: string;
   valueTotal: number;
   valueAvg: number;
@@ -64,6 +65,40 @@ const LABELS: Record<StatKey, string> = {
   fantasyPoints: 'Fantasy Points',
 };
 
+const PLAYER_TEAM_OVERRIDES: Record<string, { teamName: string; teamKey: TeamKey }> = {
+  'aaron cadman': { teamName: 'GWS Giants', teamKey: 'gws' },
+};
+
+type LeadersCacheEntry = { at: number; value: any };
+const leadersCache = new Map<string, LeadersCacheEntry>();
+const LEADERS_TTL_MS = 60_000;
+
+function leadersCacheGet<T>(key: string): T | null {
+  const hit = leadersCache.get(key);
+  if (!hit) return null;
+  if (Date.now() - hit.at > LEADERS_TTL_MS) {
+    leadersCache.delete(key);
+    return null;
+  }
+  return hit.value as T;
+}
+
+function leadersCacheSet<T>(key: string, value: T): T {
+  leadersCache.set(key, { at: Date.now(), value });
+  return value;
+}
+
+export function clearStatLeadersCache() {
+  leadersCache.clear();
+}
+
+export function peekLeaderCategoriesCache(mode: Mode): StatLeaderCategory[] | null {
+  return (
+    leadersCacheGet<StatLeaderCategory[]>(`categories:${mode}`) ||
+    (mode === 'players' ? leadersCacheGet<StatLeaderCategory[]>('rail:players') : null)
+  );
+}
+
 function norm(s: string) {
   return (s || '')
     .toLowerCase()
@@ -73,8 +108,37 @@ function norm(s: string) {
 }
 
 function clampTeamKey(k?: string): TeamKey {
-  const key = (k || '').toLowerCase() as TeamKey;
-  return (TEAM_ASSETS as any)[key] ? key : 'adelaide';
+  const raw = String(k || '').trim().toLowerCase();
+  const compact = raw.replace(/[^a-z0-9]/g, '');
+
+  const aliases: Record<string, TeamKey> = {
+    adelaidecrows: 'adelaide',
+    brisbanelions: 'brisbane',
+    carltonblues: 'carlton',
+    collingwoodmagpies: 'collingwood',
+    essendonbombers: 'essendon',
+    fremantledockers: 'fremantle',
+    geelongcats: 'geelong',
+    goldcoastsuns: 'goldcoast',
+    gwsgiants: 'gws',
+    giants: 'gws',
+    hawthornhawks: 'hawthorn',
+    melbournedemons: 'melbourne',
+    northmelbournekangaroos: 'northmelbourne',
+    northmelbourne: 'northmelbourne',
+    portadelaidepower: 'portadelaide',
+    richmondtigers: 'richmond',
+    stkildasaints: 'stkilda',
+    stkilda: 'stkilda',
+    sydneyswans: 'sydney',
+    westcoasteagles: 'westcoast',
+    westernbulldogs: 'westernbulldogs',
+  };
+
+  const direct = raw as TeamKey;
+  if ((TEAM_ASSETS as any)[direct]) return direct;
+  if (aliases[compact]) return aliases[compact];
+  return teamKeyFromName(raw);
 }
 
 function teamKeyFromName(teamName: string): TeamKey {
@@ -131,14 +195,24 @@ async function buildPlayers(statKey: StatKey) {
       const gp = gamesPlayed(p);
       const total = playerTotal(p, statKey);
       const avg = perGame(total, gp);
-      const teamName = String((p as any).teamName || '');
-      const key = (p as any).teamKey ? clampTeamKey((p as any).teamKey) : teamKeyFromName(teamName);
+      const rawName = String(p.name || '');
+      const override = PLAYER_TEAM_OVERRIDES[norm(rawName)];
+      const rawTeamName = String((p as any).teamName || '');
+      const rawTeamKey = String((p as any).teamKey || '');
+      const teamName = rawTeamName || override?.teamName || '';
+      const hasSourceTeam = Boolean(rawTeamName || rawTeamKey || override);
+      const key = rawTeamKey
+        ? clampTeamKey(rawTeamKey)
+        : teamName
+          ? teamKeyFromName(teamName)
+          : (override?.teamKey || 'adelaide');
 
       return {
         id: String(p.id),
-        name: String(p.name),
+        name: rawName,
         teamName,
         teamKey: key,
+        teamResolved: hasSourceTeam,
         photoUrl: (p as any).headshotUrl ? String((p as any).headshotUrl) : undefined,
         valueTotal: total,
         valueAvg: avg,
@@ -187,9 +261,13 @@ async function buildTeams(statKey: StatKey) {
 // ---- Convenience: Season leader categories (players OR teams) ----------------
 
 export async function fetchLeaderCategories(mode: Mode): Promise<StatLeaderCategory[]> {
+  const cacheKey = `categories:${mode}`;
+  const cached = leadersCacheGet<StatLeaderCategory[]>(cacheKey);
+  if (cached) return cached;
+
   const wanted: StatKey[] = ['goals', 'disposals', 'marks', 'tackles', 'fantasyPoints'];
 
-  return Promise.all(
+  const value = await Promise.all(
     wanted.map(async (k) => {
       const rows = mode === 'teams' ? await buildTeams(k) : await buildPlayers(k);
       return {
@@ -200,6 +278,7 @@ export async function fetchLeaderCategories(mode: Mode): Promise<StatLeaderCateg
       } as StatLeaderCategory;
     })
   );
+  return leadersCacheSet(cacheKey, value);
 }
 // ---- Public API (overloads) -------------------------------------------------
 
@@ -210,9 +289,12 @@ export async function fetchStatLeaders(mode: Mode, statKey: StatKey): Promise<St
 
 export async function fetchStatLeaders(mode?: Mode, statKey?: StatKey): Promise<any> {
   if (!mode || !statKey) {
+    const cacheKey = 'rail:players';
+    const cached = leadersCacheGet<StatLeaderCategory[]>(cacheKey);
+    if (cached) return cached;
     const wanted: StatKey[] = ['goals', 'disposals', 'marks', 'tackles', 'fantasyPoints'];
 
-    return Promise.all(
+    const value = await Promise.all(
       wanted.map(async (k) => {
         const rows = await buildPlayers(k);
         return {
@@ -223,9 +305,13 @@ export async function fetchStatLeaders(mode?: Mode, statKey?: StatKey): Promise<
         } as StatLeaderCategory;
       })
     );
+    return leadersCacheSet(cacheKey, value);
   }
 
   if (mode === 'players') {
+    const cacheKey = `table:${mode}:${statKey}`;
+    const cached = leadersCacheGet<StatLeaders>(cacheKey);
+    if (cached) return cached;
     const rows = (await buildPlayers(statKey))
       .map((r, i) => ({
         rank: i + 1,
@@ -237,14 +323,17 @@ export async function fetchStatLeaders(mode?: Mode, statKey?: StatKey): Promise<
       }))
       .slice(0, 300);
 
-    return {
+    return leadersCacheSet(cacheKey, {
       mode,
       statKey,
       label: LABELS[statKey],
       rows,
-    } as StatLeaders;
+    } as StatLeaders);
   }
 
+  const cacheKey = `table:${mode}:${statKey}`;
+  const cached = leadersCacheGet<StatLeaders>(cacheKey);
+  if (cached) return cached;
   const rows = (await buildTeams(statKey))
     .map((r, i) => ({
       rank: i + 1,
@@ -255,10 +344,10 @@ export async function fetchStatLeaders(mode?: Mode, statKey?: StatKey): Promise<
     }))
     .slice(0, 60);
 
-  return {
+  return leadersCacheSet(cacheKey, {
     mode,
     statKey,
     label: LABELS[statKey],
     rows,
-  } as StatLeaders;
+  } as StatLeaders);
 }

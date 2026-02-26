@@ -1,6 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+// Backwards-compat wrapper.
+// Some parts of the app import from "../lib/supabase".
+// We re-export the safe client here to avoid white-screen crashes when env vars are missing/invalid.
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL!;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY!;
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export { supabase, hasSupabaseEnv, supabaseInitError } from './supabaseClient';

@@ -9,7 +9,7 @@ import TeamStats from '@/components/match-centre/broadcast/TeamStats';
 import PlayerStatsTable from '@/components/match-centre/broadcast/PlayerStatsTable';
 import MatchCentreTabs, { type MatchCentreTabKey } from '@/components/match-centre/broadcast/MatchCentreTabs';
 
-import { fetchMatchCentre, type MatchCentreModel } from '@/lib/matchCentreRepo';
+import { fetchLatestMatchCentre, fetchMatchCentre, type MatchCentreModel } from '@/lib/matchCentreRepo';
 
 import '@/styles/match-centre-page.css';
 
@@ -45,8 +45,7 @@ export default function MatchCentrePage() {
       setModel(null);
 
       try {
-        if (!matchId) throw new Error('Missing match id.');
-        const data = await fetchMatchCentre(matchId);
+        const data = matchId ? await fetchMatchCentre(matchId) : await fetchLatestMatchCentre();
         if (!alive) return;
         setModel(data);
       } catch (e: any) {

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import FixturePosterCard, { type FixturePosterMatch } from '../components/FixturePosterCard';
-import { getAfl26RoundsFromSupabase, type AflRound } from '../data/afl26Supabase';
+import { getAfl26RoundsFromSupabase, peekAfl26RoundsCache, type AflRound } from '../data/afl26Supabase';
 import { afl26LocalRounds } from '../data/afl26LocalRounds';
 
 import '../styles/Fixtures.css';
@@ -18,9 +18,11 @@ const FILTERS: { key: StatusFilter; label: string }[] = [
 
 export default function AFL26FixturesPage() {
   const navigate = useNavigate();
+  const cachedRounds = peekAfl26RoundsCache();
+  const initialRounds = cachedRounds && cachedRounds.length ? cachedRounds : afl26LocalRounds;
 
-  const [rounds, setRounds] = useState<AflRound[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [rounds, setRounds] = useState<AflRound[]>(initialRounds);
+  const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [activeRound, setActiveRound] = useState(1);
@@ -31,7 +33,7 @@ export default function AFL26FixturesPage() {
 
     (async () => {
       try {
-        setLoading(true);
+        if (!cachedRounds?.length && !rounds.length) setLoading(true);
         setLoadError(null);
 
         const r = await getAfl26RoundsFromSupabase();
@@ -62,8 +64,7 @@ export default function AFL26FixturesPage() {
     return () => {
       mounted = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [cachedRounds]);
 
   const currentRound = rounds.find((r) => r.round === activeRound) || rounds[0];
   const totalMatches = currentRound?.matches?.length || 0;
@@ -142,7 +143,7 @@ export default function AFL26FixturesPage() {
           </div>
 
           {loadError ? <div className="fxAflNotice">{loadError}</div> : null}
-          {loading ? <div className="fxAflLoading">Loading fixtures…</div> : null}
+          {loading && !uiMatches.length ? <div className="fxAflLoading">Loading fixtures…</div> : null}
 
           {!loading && uiMatches.length === 0 ? (
             <div className="fxAflEmpty">No matches found for this filter.</div>

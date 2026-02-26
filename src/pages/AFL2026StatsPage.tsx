@@ -1,20 +1,16 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, ArrowRight, User, Users, Shield } from "lucide-react";
-import { mockPlayers, mockTeams } from "@/data/stats2MockData";
 import {
   PLAYER_STAT_CONFIGS,
   TEAM_STAT_CONFIGS,
   StatConfig,
   StatsMode,
   StatsScope,
-  Player,
-  Team,
-  PlayerStatKey,
-  TeamStatKey,
 } from "@/types/stats2";
 import { getTeamAssets } from "@/lib/teamAssets";
 import { usePlayerPhotos } from "@/lib/usePlayerPhoto";
+import { fetchLeaderCategories, peekLeaderCategoriesCache, type StatLeaderCategory } from "@/lib/stats-leaders-cache";
 import "@/styles/stats-home.css";
 
 /* ── helpers ── */
@@ -26,17 +22,6 @@ const getInitials = (name: string) =>
     .toUpperCase()
     .slice(0, 2);
 
-const playerVal = (p: Player, key: string, scope: StatsScope) => {
-  const raw = p.stats[key as PlayerStatKey];
-  return scope === "average" ? +(raw / p.gamesPlayed).toFixed(1) : raw;
-};
-
-const teamVal = (t: Team, key: string, scope: StatsScope) => {
-  const raw = t.stats[key as TeamStatKey];
-  if (key === "goalEfficiency") return raw;
-  return scope === "average" ? +(raw / t.gamesPlayed).toFixed(1) : raw;
-};
-
 /* ═══════════════════════════════════════════ */
 /*                STATS HOME                  */
 /* ═══════════════════════════════════════════ */
@@ -44,13 +29,45 @@ const StatsHomePage: React.FC = () => {
   const [mode, setMode] = useState<StatsMode>("players");
   const [scope, setScope] = useState<StatsScope>("total");
   const [search, setSearch] = useState("");
+  const [remoteCategories, setRemoteCategories] = useState<StatLeaderCategory[]>(() => peekLeaderCategoriesCache("players") || []);
+  const [leadersLoading, setLeadersLoading] = useState<boolean>(() => !peekLeaderCategoriesCache("players"));
   const navigate = useNavigate();
 
   // Preload all player photos from Supabase
-  const playerNames = useMemo(() => mockPlayers.map(p => p.name), []);
+  const playerNames = useMemo(
+    () =>
+      mode === "players" && remoteCategories.length
+        ? remoteCategories.flatMap((c) => [c.top?.name, ...c.others.map((o) => o.name)].filter(Boolean) as string[])
+        : [],
+    [mode, remoteCategories]
+  );
   const { photos: supabasePhotos } = usePlayerPhotos(playerNames);
 
   const statConfigs = mode === "players" ? PLAYER_STAT_CONFIGS : TEAM_STAT_CONFIGS;
+
+  useEffect(() => {
+    let cancelled = false;
+    setLeadersLoading(true);
+    fetchLeaderCategories(mode)
+      .then((rows) => {
+        if (cancelled) return;
+        if (Array.isArray(rows) && rows.length > 0) {
+          setRemoteCategories(rows);
+          return;
+        }
+        // Keep existing live data instead of dropping back to mock on empty response.
+        if (remoteCategories.length === 0) setRemoteCategories([]);
+      })
+      .catch(() => {
+        // Preserve last good data on transient fetch errors.
+      })
+      .finally(() => {
+        if (!cancelled) setLeadersLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [mode]); // preserve current categories on transient errors
 
   return (
     <div className="eg-stats-page pb-28">
@@ -117,9 +134,46 @@ const StatsHomePage: React.FC = () => {
       {/* ── Carousel ── */}
       <div className="mt-4">
         <div className="eg-carousel">
-          {statConfigs.map((cfg) => (
-            <LeaderCard key={cfg.key} cfg={cfg} mode={mode} scope={scope} supabasePhotos={supabasePhotos} />
-          ))}
+          {leadersLoading && remoteCategories.length === 0 ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={`leader-skeleton-${i}`}
+                className="eg-leader-card"
+                aria-hidden="true"
+                style={{ opacity: 0.9 }}
+              >
+                <div
+                  className="eg-leader-hero"
+                  style={{ background: "linear-gradient(180deg, #1a1a1f 0%, #0f1015 100%)" }}
+                >
+                  <div className="eg-leader-hero-overlay" />
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      background:
+                        "linear-gradient(110deg, rgba(255,255,255,0) 25%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0) 75%)",
+                      animation: "egShimmer 1.3s ease-in-out infinite",
+                    }}
+                  />
+                </div>
+                <div className="eg-runners" style={{ minHeight: 176 }} />
+                <div className="eg-card-cta" style={{ opacity: 0.55 }}>Loading…</div>
+              </div>
+            ))
+          ) : (
+            statConfigs.map((cfg) => (
+              <LeaderCard
+                key={cfg.key}
+                cfg={cfg}
+                mode={mode}
+                scope={scope}
+                supabasePhotos={supabasePhotos}
+                remoteCategory={remoteCategories.find((c) => c.statKey === (cfg.key as any))}
+                deferFallback={leadersLoading && remoteCategories.length === 0}
+              />
+            ))
+          )}
           {/* end spacer */}
           <div style={{ flexShrink: 0, width: 6 }} />
         </div>
@@ -193,32 +247,90 @@ interface LeaderCardProps {
   mode: StatsMode;
   scope: StatsScope;
   supabasePhotos?: Map<string, string | null>;
+  remoteCategory?: StatLeaderCategory;
+  deferFallback?: boolean;
 }
 
-const LeaderCard: React.FC<LeaderCardProps> = ({ cfg, mode, scope, supabasePhotos = new Map() }) => {
+const LeaderCard: React.FC<LeaderCardProps> = ({
+  cfg,
+  mode,
+  scope,
+  supabasePhotos = new Map(),
+  remoteCategory,
+  deferFallback = false,
+}) => {
   const navigate = useNavigate();
 
-  const sorted =
-    mode === "players"
-      ? [...mockPlayers]
-          .sort((a, b) => playerVal(b, cfg.key, scope) - playerVal(a, cfg.key, scope))
-          .slice(0, 5)
-      : [...mockTeams]
-          .sort((a, b) => teamVal(b, cfg.key, scope) - teamVal(a, cfg.key, scope))
-          .slice(0, 5);
+  const sorted = useMemo(() => {
+    if (deferFallback && !remoteCategory?.top) return [];
+    if (!remoteCategory?.top) return [];
+
+    const rows = [remoteCategory.top, ...remoteCategory.others].slice(0, 5);
+    return rows.map((r) => ({
+      name: r.name,
+      teamName: r.teamName,
+      teamKey: r.teamKey,
+      teamResolved: (r as any).teamResolved !== false,
+      headshotUrl: r.photoUrl || '',
+      logoUrl: r.photoUrl || '',
+      total: r.valueTotal,
+      average: r.valueAvg,
+    }));
+  }, [deferFallback, remoteCategory]);
 
   const leader = sorted[0];
+  if (!leader) {
+    return (
+      <div className="eg-leader-card" aria-label={`${cfg.label} unavailable`}>
+        <div
+          className="eg-leader-hero"
+          style={{ background: "linear-gradient(180deg, #171b22 0%, #0d1117 100%)" }}
+        >
+          <div className="eg-leader-hero-overlay" />
+          <div className="eg-leader-stat-chip">{cfg.label}</div>
+          <div className="eg-leader-value">
+            <span className="big-num">—</span>
+          </div>
+          <div className="eg-leader-name">
+            <div className="first">No live data</div>
+            <div className="last">yet</div>
+            <div className="team-sub">Showing Supabase players only</div>
+          </div>
+        </div>
+        <div className="eg-runners" style={{ minHeight: 180 }} />
+        <button className="eg-card-cta" onClick={() => navigate(`/stats3/leaders?mode=${mode}&stat=${cfg.key}&scope=${scope}`)}>
+          Full Table <ArrowRight size={13} />
+        </button>
+      </div>
+    );
+  }
   const runners = sorted.slice(1);
   const leaderValue =
-    mode === "players" ? playerVal(leader as Player, cfg.key, scope) : teamVal(leader as Team, cfg.key, scope);
+    remoteCategory?.top
+      ? (scope === "average" ? (leader as any).average : (leader as any).total)
+      : 0;
 
-  const leaderTeamName = mode === "players" ? (leader as Player).teamName : (leader as Team).name;
-  const teamAsset = getTeamAssets(leaderTeamName);
+  const leaderTeamResolved = (leader as any)?.teamResolved !== false;
+  const leaderTeamRef =
+    mode === "players"
+      ? (leaderTeamResolved ? ((leader as any).teamKey || (leader as any).teamName || '') : '')
+      : ((leader as any).name || '');
+  const leaderTeamName = mode === "players" ? ((leader as any).teamName || '') : (leader as any).name;
+  const teamAsset = leaderTeamRef
+    ? getTeamAssets(leaderTeamRef)
+    : {
+        key: 'unknown',
+        name: leaderTeamName || 'Unknown Team',
+        primary: '#1f2937',
+        primaryHex: '#1f2937',
+        dark: '#111827',
+        logo: '',
+      };
 
-  const firstName = mode === "players" ? (leader as Player).name.split(" ")[0] : "";
-  const lastName = mode === "players" ? (leader as Player).name.split(" ").slice(1).join(" ") : "";
-  const imgSrc = mode === "players" ? (leader as Player).headshotUrl : (leader as Team).logoUrl;
-  const leaderName = mode === "players" ? (leader as Player).name : (leader as Team).name;
+  const firstName = mode === "players" ? String((leader as any).name || '').split(" ")[0] : "";
+  const lastName = mode === "players" ? String((leader as any).name || '').split(" ").slice(1).join(" ") : "";
+  const imgSrc = mode === "players" ? ((leader as any).headshotUrl || (leader as any).photoUrl || '') : ((leader as any).logoUrl || (leader as any).photoUrl || '');
+  const leaderName = String((leader as any).name || '');
 
   const handleFull = () => navigate(`/stats3/leaders?mode=${mode}&stat=${cfg.key}&scope=${scope}`);
 
@@ -283,12 +395,12 @@ const LeaderCard: React.FC<LeaderCardProps> = ({ cfg, mode, scope, supabasePhoto
       <div className="eg-runners">
         {runners.map((entry, idx) => {
           const val =
-            mode === "players"
-              ? playerVal(entry as Player, cfg.key, scope)
-              : teamVal(entry as Team, cfg.key, scope);
-          const name = mode === "players" ? (entry as Player).name : (entry as Team).name;
-          const src = mode === "players" ? (entry as Player).headshotUrl : (entry as Team).logoUrl;
-          const runnerTeam = mode === "players" ? (entry as Player).teamName : "";
+            remoteCategory?.top
+              ? (scope === "average" ? (entry as any).average : (entry as any).total)
+              : 0;
+          const name = String((entry as any).name || '');
+          const src = mode === "players" ? ((entry as any).headshotUrl || (entry as any).photoUrl || '') : ((entry as any).logoUrl || (entry as any).photoUrl || '');
+          const runnerTeam = mode === "players" ? ((entry as any).teamName || "") : "";
 
           return (
             <div key={idx} className="eg-runner-row">
@@ -326,6 +438,7 @@ const HeadshotImg: React.FC<{ src: string; name: string; large?: boolean; supaba
   supabaseUrl
 }) => {
   const [useFallback, setUseFallback] = useState(false);
+  const [hardFailed, setHardFailed] = useState(false);
 
   // Fallback chain:
   // 1. Supabase photo (if available) - primary
@@ -337,7 +450,7 @@ const HeadshotImg: React.FC<{ src: string; name: string; large?: boolean; supaba
   // Determine which source to display
   let displaySrc = useFallback && fallbackSrc ? fallbackSrc : primarySrc;
 
-  if (!displaySrc) {
+  if (!displaySrc || hardFailed) {
     return large ? <div className="initials-fallback">{getInitials(name)}</div> : <span className="mini-initials">{getInitials(name)}</span>;
   }
 
@@ -349,8 +462,10 @@ const HeadshotImg: React.FC<{ src: string; name: string; large?: boolean; supaba
         // If primary failed and we haven't tried fallback yet, try fallback
         if (!useFallback && primarySrc !== fallbackSrc && fallbackSrc) {
           setUseFallback(true);
+          return;
         }
-        // If fallback also fails, the CSS will show the initials
+        // Final failure: render initials instead of browser broken-image icon/alt text
+        setHardFailed(true);
       }}
     />
   );

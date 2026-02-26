@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 
 import SmartImg from '../components/SmartImg';
@@ -211,14 +211,8 @@ const LadderRow = memo(function LadderRow({ entry, mode }: { entry: LadderEntry;
 
 export default function LadderPage() {
   const [mode, setMode] = useState<Mode>('SUMMARY');
-  const [loading, setLoading] = useState(true);
 
   const rows = useMemo(() => enrichWinChance(makeRows()), []);
-
-  useEffect(() => {
-    const t = window.setTimeout(() => setLoading(false), 120);
-    return () => window.clearTimeout(t);
-  }, []);
 
   const headerCols = useMemo(() => {
     if (mode === 'SUMMARY') return ['P', 'Pts', '%'];
@@ -269,11 +263,7 @@ export default function LadderPage() {
           </div>
 
           <div className="aflList">
-            {loading ? (
-              <div className="loading">Loading ladder…</div>
-            ) : (
-              rows.map((r) => <LadderRow key={r.id} entry={r} mode={mode} />)
-            )}
+            {rows.map((r) => <LadderRow key={r.id} entry={r} mode={mode} />)}
           </div>
         </div>
 
