@@ -31,3 +31,9 @@ pnpm-debug.log*
 
 # misc
 coverage
+
+# Python / exports
+afl-2026-export/.venv/
+*.pyc
+__pycache__/
+.DS_Store
