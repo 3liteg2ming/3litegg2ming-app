@@ -1,361 +1,946 @@
-/* styles/home.css - Fix header spacing and match card overflow */
 :root {
-  --eg-yellow: #F5C400;
-  --eg-yellow-dark: #D4A800;
-  --bg-dark: #000000;
-  --surface: #0A0A0A;
-  --surface-elevated: #141414;
-  --border: rgba(255, 255, 255, 0.08);
-  --text-primary: #FFFFFF;
-  --text-secondary: rgba(255, 255, 255, 0.6);
-  --text-tertiary: rgba(255, 255, 255, 0.4);
+  --home-gold: #f5c400;
+  --home-gold-2: #ffd84d;
+  --home-text: rgba(255, 255, 255, 0.94);
+  --home-subtle: rgba(255, 255, 255, 0.62);
+  --home-dim: rgba(255, 255, 255, 0.44);
+  --home-border: rgba(255, 255, 255, 0.1);
+  --home-surface: rgba(255, 255, 255, 0.035);
+  --home-surface-2: rgba(255, 255, 255, 0.05);
+  --preseason-accent: #3dff7a;
+  --preseason-accent-wash: rgba(61, 255, 122, 0.18);
 }
 
-* {
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
-  margin: 0;
-  padding: 0;
-}
-
-.app {
-  min-height: 100vh;
-  background: var(--bg-dark);
-  color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+.homePage {
   width: 100%;
-  max-width: 100vw;
-  padding: 0 12px; /* Reduced from 16px */
-  position: relative;
-  overflow-x: hidden;
+  min-height: 100%;
+  color: var(--home-text);
 }
 
-/* HEADER - Better spacing for login area */
-.header {
+.homeShell {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 12px 10px 0;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.homeSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.homeSection__head {
+  display: flex;
+  align-items: end;
   justify-content: space-between;
-  padding: 16px 0 20px;
-  width: 100%;
+  gap: 12px;
+  padding: 2px 4px;
 }
 
-.headerLeft {
+.homeSection__kicker {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.56);
+}
+
+.homeSection__title {
+  margin-top: 2px;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.homeNotice,
+.homeEmpty,
+.homeHero__placeholder {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+  color: rgba(255, 255, 255, 0.72);
+  padding: 14px;
+  font-weight: 700;
+}
+
+.homeHero {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid var(--home-border);
+  background:
+    radial-gradient(110% 120% at 0% 0%, rgba(245, 196, 0, 0.08), transparent 50%),
+    radial-gradient(100% 120% at 100% 10%, rgba(78, 164, 255, 0.12), transparent 60%),
+    linear-gradient(160deg, rgba(18, 20, 31, 0.95), rgba(8, 10, 16, 0.95));
+  box-shadow:
+    0 16px 44px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.homeHero__bgGlow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(55% 65% at 22% 36%, rgba(245, 196, 0, 0.12), transparent 70%),
+    radial-gradient(60% 80% at 76% 28%, rgba(61, 151, 255, 0.16), transparent 75%);
+  opacity: 0.85;
+}
+
+.homeHero__content {
+  position: relative;
+  z-index: 1;
+  padding: 14px;
   display: flex;
-  align-items: center;
-  gap: 12px; /* Reduced from 16px */
-  flex: 1;
-  min-width: 0; /* Allow shrinking */
+  flex-direction: column;
+  gap: 10px;
 }
 
-/* Glass EG Logo Box - Filled properly */
-.logoGlassBox {
-  width: 64px; /* Slightly smaller */
-  height: 64px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.12) 0%, 
-    rgba(255, 255, 255, 0.04) 100%
-  );
-  border: 1px solid rgba(255, 255, 255, 0.12);
+.homeHero__eyebrow {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.homeHero__title {
+  font-size: 22px;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.98);
+}
+
+.homeHero__meta {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.homeHero__fixtureWrap {
+  margin-top: 2px;
+}
+
+.homeHero__fixtureWrap > * {
+  margin: 0;
+}
+
+.homeCoachCard {
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background:
+    radial-gradient(70% 90% at 15% 35%, rgba(245,196,0,0.08), transparent 70%),
+    radial-gradient(75% 95% at 85% 40%, rgba(72,116,255,0.12), transparent 72%),
+    linear-gradient(145deg, rgba(14,16,24,0.94), rgba(8,10,16,0.96));
+  box-shadow: 0 12px 30px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+
+.homeCoachCard__top {
+  padding: 10px 10px 0;
+}
+
+.homeCoachCard__chips {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  flex-shrink: 0; /* Don't shrink */
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
-.egLogoBig {
-  width: 44px;
-  height: 44px;
+.homeCoachChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.03);
+  color: rgba(255,255,255,0.8);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.homeCoachChip--status.is-scheduled {
+  color: rgba(245,196,0,0.95);
+  border-color: rgba(245,196,0,0.2);
+  background: rgba(245,196,0,0.07);
+}
+
+.homeCoachChip--status.is-live {
+  color: rgba(255,184,64,0.98);
+  border-color: rgba(255,184,64,0.22);
+  background: rgba(255,184,64,0.08);
+}
+
+.homeCoachChip--status.is-final {
+  color: rgba(255,112,112,0.98);
+  border-color: rgba(255,112,112,0.2);
+  background: rgba(255,112,112,0.08);
+}
+
+.homeCoachChip--role {
+  color: rgba(255,255,255,0.9);
+}
+
+.homeCoachCard__matchup {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+}
+
+.homeCoachTeam {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.homeCoachTeam__logoWrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.homeCoachTeam__logo {
+  width: 64%;
+  height: 64%;
   object-fit: contain;
 }
 
-.brandText {
+.homeCoachTeam__name {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: rgba(255,255,255,0.95);
+  text-align: center;
+  line-height: 1.05;
+}
+
+.homeCoachTeam__sub {
+  font-size: 10px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.homeCoachMid {
+  min-width: 74px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  min-width: 0; /* Allow text truncation */
-  flex: 1;
-}
-
-.brandTitle {
-  font-size: 22px; /* Slightly smaller */
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.brandSub {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--eg-yellow);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-/* Space for login/signup - bigger area */
-.headerRight {
-  width: 60px; /* Increased from 48px */
-  height: 60px;
-  flex-shrink: 0;
-  display: flex;
   align-items: center;
-  justify-content: flex-end;
+  gap: 4px;
+  text-align: center;
 }
 
-/* Section Headers */
-.rowHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  margin-top: 24px;
-}
-
-.rowTitle {
+.homeCoachMid__vs {
   font-size: 20px;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.92);
 }
 
-.rowHint {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-tertiary);
+.homeCoachMid__venue {
+  font-size: 10px;
+  color: rgba(255,255,255,0.52);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.homeCoachMid__coachLine {
+  font-size: 9px;
+  color: rgba(245,196,0,0.9);
+  font-weight: 800;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  line-height: 1.2;
 }
 
-/* Toggle - Yellow */
-.toggle {
+.homeCoachCard__bottom {
+  padding: 0 10px 10px;
+}
+
+.homeCoachCard__coachTag {
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02);
+  padding: 8px 10px;
+  color: rgba(255,255,255,0.66);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.homeHero__actions {
   display: flex;
-  background: var(--surface-elevated);
-  border-radius: 10px;
-  padding: 3px;
-  border: 1px solid var(--border);
+  flex-direction: column;
+  gap: 8px;
 }
 
-.toggleBtn {
-  border: none;
-  background: transparent;
-  color: var(--text-tertiary);
+.homeBtn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  padding: 10px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 800;
   font-size: 13px;
-  font-weight: 600;
-  padding: 6px 14px;
-  border-radius: 8px;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.16s ease, opacity 0.16s ease, border-color 0.16s ease;
 }
 
-.toggleBtn.active {
-  background: var(--eg-yellow);
-  color: #000;
-  font-weight: 700;
-  box-shadow: 0 4px 16px rgba(245, 196, 0, 0.3);
+.homeBtn:active {
+  transform: scale(0.985);
 }
 
-/* Season Rail */
-.seasonRail {
+.homeBtn--primary {
+  background: linear-gradient(180deg, var(--home-gold-2), var(--home-gold));
+  color: rgba(0, 0, 0, 0.9);
+  box-shadow: 0 10px 26px rgba(245, 196, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.42);
+}
+
+.homeBtn--ghost {
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.82);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.homeFeaturedCard > * {
+  margin: 0;
+}
+
+.homePreviewGrid {
   display: flex;
-  gap: 12px;
   overflow-x: auto;
+  overflow-y: hidden;
   scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  -ms-overflow-style: none;
-  padding: 4px 0;
-  margin: 0 -4px;
-  width: 100%;
+  gap: 12px;
+  align-items: start;
+  padding: 2px 14px 4px 2px;
+  margin: 0 -2px;
+  position: relative;
 }
 
-.seasonRail::-webkit-scrollbar {
+.homePreviewGrid::-webkit-scrollbar {
   display: none;
 }
 
-/* Season Cards */
-.seasonTile {
-  flex: 0 0 auto;
-  width: calc(100vw - 40px); /* Responsive width */
-  max-width: 320px;
-  scroll-snap-align: start;
-  border-radius: 20px;
-  border: 1px solid var(--border);
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
-  text-align: left;
-  cursor: pointer;
-  background: var(--surface);
-}
-
-.seasonTile::before {
+.homePreviewGrid::before,
+.homePreviewGrid::after {
   content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url('https://ftgejkaokqjmwbjorihs.supabase.co/storage/v1/object/public/Public/mcg-stadium.jpg');
-  background-size: cover;
-  background-position: center;
-  opacity: 0.6;
-  z-index: 0;
-}
-
-.seasonTile.pro::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, 
-    rgba(124, 58, 237, 0.45) 0%, 
-    rgba(76, 29, 149, 0.55) 50%,
-    rgba(0, 0, 0, 0.6) 100%
-  );
-  z-index: 1;
-}
-
-.seasonTile.afl::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, 
-    rgba(30, 64, 175, 0.45) 0%, 
-    rgba(15, 23, 42, 0.55) 50%,
-    rgba(0, 0, 0, 0.6) 100%
-  );
-  z-index: 1;
-}
-
-.seasonTileContent {
-  position: relative;
+  position: sticky;
+  top: 0;
+  width: 18px;
+  height: auto;
+  align-self: stretch;
+  flex: 0 0 18px;
+  pointer-events: none;
   z-index: 2;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
 }
 
-.seasonTileTop {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+.homePreviewGrid::before {
+  left: 0;
+  margin-left: -2px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.9), rgba(0,0,0,0));
 }
 
-.seasonTileTag {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 5px 10px;
+.homePreviewGrid::after {
+  right: 0;
+  margin-right: -14px;
+  background: linear-gradient(270deg, rgba(0,0,0,0.92), rgba(0,0,0,0));
+}
+
+.homePanel {
+  flex: 0 0 min(92vw, 460px);
   border-radius: 20px;
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+  box-shadow: 0 12px 30px rgba(0,0,0,0.24);
+  overflow: hidden;
+  scroll-snap-align: start;
 }
 
-.seasonTileAction {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--eg-yellow);
+.homePanel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 10px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.02);
+}
+
+.homePanel__title {
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: rgba(255,255,255,0.92);
+}
+
+.homePanel__link {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: rgba(245,196,0,0.95);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  cursor: pointer;
 }
 
-.seasonTileMid {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 16px 0;
+/* Ladder preview fits home cards while using Ladder page classes */
+.homePanel--ladder .aflTable {
+  margin-top: 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
 }
 
-.seasonTileLogoWrap {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px;
-  backdrop-filter: blur(10px);
+.homePanel--ladder .aflHead {
+  padding: 8px 10px 7px;
+  grid-template-columns: 30px 1fr auto;
+  gap: 8px;
 }
 
-.seasonTileLogo {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+.homePanel--ladder .aflList {
+  padding: 8px 0 4px;
 }
 
-.seasonTileText {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+.homePanel--ladder .egAflRow {
+  margin: 0 8px 7px;
+  padding: 3px 8px;
+  min-height: 62px;
+  gap: 8px;
+  grid-template-columns: 28px 1fr auto;
+}
+
+.homePanel--ladder .cPos {
+  font-size: 14px;
+}
+
+.homePanel--ladder .cClub {
+  height: 48px;
+  border-radius: 12px;
+  gap: 8px;
+  padding: 2px 7px;
+}
+
+.homePanel--ladder .clubLogo {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+}
+
+.homePanel--ladder .logoImg {
+  width: 28px;
+  height: 28px;
+}
+
+.homePanel--ladder .hCols--homePreview,
+.homePanel--ladder .cCols--homePreview {
+  grid-template-columns: 28px 34px;
+  gap: 6px;
+}
+
+.homePanel--ladder .cell .k {
+  font-size: 8px;
+  letter-spacing: 0.35px;
+}
+
+.homePanel--ladder .cell .v {
+  font-size: 13px;
+}
+
+.homePanel--ladder .hCols .h {
+  min-width: 0;
+  font-size: 9px;
+  letter-spacing: 0.35px;
+}
+
+.homePanel--ladder .cCols {
+  padding-left: 2px;
+}
+
+.homePanel--ladder .cell {
   min-width: 0;
 }
 
-.seasonTileTitle {
-  font-size: 22px;
-  font-weight: 800;
-  color: white;
-  letter-spacing: -0.02em;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.homePanel--ladder .clubName {
+  display: none;
 }
 
-.seasonTileSub {
+.homePanel--leaders .homePanel__head {
+  border-bottom: none;
+}
+
+.homeLeadersCard {
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.homePanel--leaders .eg-leader-card {
+  margin: 0;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+}
+
+.homePanel--leaders .eg-leader-hero {
+  border-radius: 0;
+  min-height: 172px;
+  padding: 12px 14px 14px;
+}
+
+.homePanel--leaders .eg-runners .eg-runner-row {
+  padding: 8px 10px;
+  gap: 8px;
+}
+
+.homePanel--leaders .eg-runner-name {
+  font-size: 11px;
+  line-height: 1.15;
+}
+
+.homePanel--leaders .eg-runner-val {
   font-size: 13px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.seasonTileBottom {
+.homePanel--leaders .eg-card-cta {
+  padding: 10px;
+  font-size: 11px;
+}
+
+.homePanel--leaders .eg-leader-stat-chip {
+  transform: scale(0.92);
+  transform-origin: left top;
+}
+
+.homePanel--leaders .eg-leader-value .big-num { font-size: 42px; }
+.homePanel--leaders .eg-leader-value { margin-top: 8px; }
+
+.homePanel--leaders .eg-leader-name .first {
+  font-size: 11px;
+}
+
+.homePanel--leaders .eg-leader-name .last { font-size: 16px; }
+
+.homePanel--leaders .eg-leader-name .team-sub {
+  font-size: 9px;
+}
+
+.homePanel--leaders .eg-leader-team-logo {
+  width: 36px;
+  height: 36px;
+  top: 8px;
+  right: 8px;
+}
+
+.homePanel--leaders .eg-leader-headshot {
+  width: 88px;
+  height: 120px;
+}
+
+.homePanel--leaders .eg-runners {
+  overflow: hidden;
+}
+
+.homePanel--leaders .eg-runner-rank {
+  width: 14px;
+}
+
+.homePanel--leaders .eg-runner-avatar {
+  width: 28px;
+  height: 28px;
+}
+
+.homePanel--leaders .eg-leader-headshot {
+  width: 92px;
+  height: 126px;
+}
+
+.homePanel--leaders .eg-runner-info {
+  min-width: 0;
+}
+
+.homePanel--leaders .eg-leader-team-logo {
+  width: 36px;
+  height: 36px;
+  top: 8px;
+  right: 8px;
+}
+
+.homePanel--leaders .eg-runners {
+  overflow: hidden;
+}
+
+.homePanel--leaders .eg-runner-rank {
+  width: 14px;
+}
+
+.homePanel--leaders .eg-runners .eg-runner-row:last-child {
+  border-bottom: none;
+}
+
+.homePanel--leaders .eg-card-cta {
+  letter-spacing: 0.02em;
+}
+
+.preseasonPromo {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid rgba(61, 255, 122, 0.18);
+  background:
+    radial-gradient(65% 120% at 10% 20%, rgba(61,255,122,0.09), transparent 75%),
+    radial-gradient(70% 90% at 100% 100%, rgba(245,196,0,0.08), transparent 70%),
+    linear-gradient(145deg, rgba(10,14,16,0.96), rgba(7,9,12,0.96));
+  box-shadow:
+    0 14px 34px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 0 0 1px rgba(61,255,122,0.04);
+}
+
+.preseasonPromo__glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(50% 80% at 15% 18%, rgba(61,255,122,0.18), transparent 70%),
+    radial-gradient(45% 65% at 80% 20%, rgba(255,214,61,0.11), transparent 72%);
+}
+
+.preseasonPromo__content {
+  position: relative;
+  z-index: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preseasonPromo__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(61, 255, 122, 0.25);
+  background: rgba(61,255,122,0.08);
+  color: rgba(221,255,233,0.95);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.preseasonPromo__title {
+  font-size: 22px;
+  line-height: 1.05;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.preseasonPromo__meta {
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(61,255,122,0.92);
+}
+
+.preseasonPromo__desc {
+  font-size: 13px;
+  line-height: 1.35;
+  color: rgba(255,255,255,0.66);
+  max-width: 48ch;
+}
+
+.preseasonPromo__cta {
+  margin-top: 4px;
+  appearance: none;
+  border: 1px solid rgba(61, 255, 122, 0.22);
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: linear-gradient(180deg, rgba(61,255,122,0.2), rgba(61,255,122,0.1));
+  color: rgba(235,255,242,0.98);
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  box-shadow: 0 10px 24px rgba(61,255,122,0.08), inset 0 1px 0 rgba(255,255,255,0.12);
+  cursor: pointer;
+}
+
+.homeSeasonRail {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 0 4px;
+}
+
+.homeSeasonRail::-webkit-scrollbar {
+  display: none;
+}
+
+.homeSeasonCard {
+  flex: 0 0 min(84vw, 260px);
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 14px;
+  text-align: left;
+  color: rgba(255,255,255,0.95);
+  background: rgba(255,255,255,0.03);
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.06);
+  scroll-snap-align: start;
+}
+
+.homeSeasonCard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('https://ftgejkaokqjmwbjorihs.supabase.co/storage/v1/object/public/Assets/mcg-stadium.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.22;
+}
+
+.homeSeasonCard::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.homeSeasonCard--afl::after {
+  background: linear-gradient(135deg, rgba(16,55,120,0.38), rgba(5,8,14,0.84));
+}
+
+.homeSeasonCard--preseason::after {
+  background: linear-gradient(135deg, rgba(18,42,25,0.44), rgba(5,8,14,0.86));
+}
+
+.homeSeasonCard--preseason {
+  border-color: rgba(61,255,122,0.22);
+  box-shadow:
+    0 12px 28px rgba(0,0,0,0.26),
+    0 0 0 1px rgba(61,255,122,0.06),
+    0 0 28px rgba(61,255,122,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.homeSeasonCard--preseason .homeSeasonCard__tag--green {
+  box-shadow: 0 0 0 1px rgba(61,255,122,0.05), 0 0 16px rgba(61,255,122,0.12);
+  animation: homePreseasonPulse 2.4s ease-in-out infinite;
+}
+
+.homeSeasonCard--preseason .homeSeasonCard__iconWrap {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 0 18px rgba(61,255,122,0.1);
+}
+
+@keyframes homePreseasonPulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(61,255,122,0.05), 0 0 12px rgba(61,255,122,0.08); }
+  50% { box-shadow: 0 0 0 1px rgba(61,255,122,0.08), 0 0 22px rgba(61,255,122,0.16); }
+}
+
+.homeSeasonCard > * {
+  position: relative;
+  z-index: 1;
+}
+
+.homeSeasonCard__row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 8px;
 }
 
-.seasonTileHint {
-  font-size: 12px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.6);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.homeSeasonCard__tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.28);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
-/* Quick Previews - Ensure no overflow */
-.previewsSection {
+.homeSeasonCard__tag--green {
+  border-color: rgba(61,255,122,0.2);
+  background: rgba(61,255,122,0.08);
+  color: rgba(224,255,235,0.96);
+}
+
+.homeSeasonCard__state {
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.62);
+}
+
+.homeSeasonCard__body {
+  margin-top: 12px;
   display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding-bottom: 40px;
-  width: 100%;
+  align-items: center;
+  gap: 12px;
 }
 
-/* Empty State */
-.emptyState {
-  width: 100%;
-  padding: 40px;
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 15px;
+.homeSeasonCard__logo {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
 }
 
-.safeBottom {
-  height: 20px;
+.homeSeasonCard__iconWrap {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: rgba(61,255,122,0.08);
+  border: 1px solid rgba(61,255,122,0.14);
+  color: rgba(61,255,122,0.95);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.homeSeasonCard__title {
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.homeSeasonCard__sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.62);
+  font-weight: 700;
+}
+
+.homeSeasonCard__foot {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.78);
+}
+
+.homeBottomSpace {
+  height: 132px;
+}
+
+@media (min-width: 1380px) {
+  .homeHero__actions {
+    flex-direction: row;
+  }
+
+  .homeBtn--primary {
+    flex: 1;
+  }
+
+  .homeBtn--ghost {
+    width: auto;
+    min-width: 170px;
+  }
+
+  .homePreviewGrid {
+    display: grid;
+    overflow: visible;
+    scroll-snap-type: none;
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+    gap: 14px;
+    padding: 0;
+    margin: 0;
+  }
+
+  .homePreviewGrid::before,
+  .homePreviewGrid::after {
+    display: none;
+  }
+
+  .homePanel {
+    flex: initial;
+  }
+  
+  .homeSeasonCard {
+    flex-basis: min(46vw, 300px);
+  }
+
+  .homePanel--ladder .hCols--homePreview,
+  .homePanel--ladder .cCols--homePreview {
+    grid-template-columns: 30px 38px;
+    gap: 8px;
+  }
+}
+
+@media (min-width: 768px) {
+  .homeShell {
+    padding: 14px 14px 0;
+    gap: 16px;
+  }
+
+  .homeHero__content {
+    padding: 16px;
+  }
+
+  .homeHero__title {
+    font-size: 24px;
+  }
+
+  .homeCoachTeam__logoWrap {
+    width: 78px;
+    height: 78px;
+  }
+
+  .homeSection__title {
+    font-size: 22px;
+  }
+
+  .homePanel--ladder .egAflRow {
+    min-height: 76px;
+  }
+
+  .homePanel--leaders .eg-leader-hero {
+    min-height: 220px;
+  }
 }

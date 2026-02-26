@@ -7,6 +7,9 @@ export default function SmartImg({
   fallbackText,
   style,
   loading,
+  fetchPriority,
+  sizes,
+  decoding,
 }: {
   src: string;
   alt: string;
@@ -14,6 +17,9 @@ export default function SmartImg({
   fallbackText?: string;
   style?: React.CSSProperties;
   loading?: 'eager' | 'lazy';
+  fetchPriority?: 'high' | 'low' | 'auto';
+  sizes?: string;
+  decoding?: 'async' | 'sync' | 'auto';
 }) {
   const [ok, setOk] = useState(true);
 
@@ -37,7 +43,11 @@ export default function SmartImg({
       src={src}
       alt={alt}
       style={style}
-      loading={loading}
+      loading={loading ?? 'lazy'}
+      decoding={decoding ?? 'async'}
+      fetchPriority={fetchPriority}
+      sizes={sizes}
+      draggable={false}
       onError={() => setOk(false)}
     />
   );

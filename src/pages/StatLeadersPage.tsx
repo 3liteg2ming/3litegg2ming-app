@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, SlidersHorizontal } from "lucide-react";
 import { mockPlayers, mockTeams } from "@/data/stats2MockData";
@@ -13,6 +13,7 @@ import {
   TeamStatKey,
 } from "@/types/stats2";
 import { usePlayerPhotos } from "@/lib/usePlayerPhoto";
+import { fetchStatLeaders, type Mode as LeadersMode, type StatKey as LeadersStatKey, type StatLeaders } from "@/lib/stats-leaders-cache";
 import "@/styles/stat-leaders.css";
 
 const playerVal = (p: Player, key: string, scope: StatsScope) => {
@@ -38,18 +39,71 @@ const StatLeadersPage: React.FC = () => {
 
   const [stat, setStat] = useState(statParam);
   const [scope, setScope] = useState<StatsScope>(scopeParam);
+  const [remoteLeaders, setRemoteLeaders] = useState<StatLeaders | null>(null);
+  const [remoteLoading, setRemoteLoading] = useState(false);
 
   // Preload all player photos from Supabase
-  const playerNames = useMemo(() => mockPlayers.map(p => p.name), []);
+  const playerNames = useMemo(
+    () =>
+      modeParam === "players"
+        ? (remoteLeaders?.rows?.map((r) => r.name) || mockPlayers.map((p) => p.name))
+        : [],
+    [modeParam, remoteLeaders]
+  );
   const { photos: supabasePhotos } = usePlayerPhotos(playerNames);
 
   const configs = modeParam === "players" ? PLAYER_STAT_CONFIGS : TEAM_STAT_CONFIGS;
   const currentConfig = configs.find((c) => c.key === stat) || configs[0];
 
-  const sorted =
+  useEffect(() => {
+    let cancelled = false;
+    const mode = modeParam as LeadersMode;
+    const statKey = stat as LeadersStatKey;
+
+    const supported = ['goals', 'disposals', 'kicks', 'handballs', 'marks', 'tackles', 'hitOuts', 'fantasyPoints'].includes(statKey)
+      || (mode === 'teams' && ['goals', 'disposals', 'marks', 'tackles'].includes(statKey));
+
+    if (!supported) {
+      setRemoteLeaders(null);
+      return;
+    }
+
+    setRemoteLoading(true);
+    fetchStatLeaders(mode, statKey)
+      .then((data) => {
+        if (!cancelled) setRemoteLeaders(data);
+      })
+      .catch(() => {
+        if (!cancelled) setRemoteLeaders(null);
+      })
+      .finally(() => {
+        if (!cancelled) setRemoteLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [modeParam, stat]);
+
+  const sortedFallback =
     modeParam === "players"
       ? [...mockPlayers].sort((a, b) => playerVal(b, stat, scope) - playerVal(a, stat, scope))
       : [...mockTeams].sort((a, b) => teamVal(b, stat, scope) - teamVal(a, stat, scope));
+
+  const sorted = useMemo(() => {
+    if (!remoteLeaders?.rows?.length) return sortedFallback;
+
+    const mapped = remoteLeaders.rows.map((r) => ({
+      rank: r.rank,
+      name: r.name,
+      teamName: r.sub || '',
+      headshotUrl: r.imgUrl || '',
+      logoUrl: r.imgUrl || '',
+      total: r.total,
+      average: r.average,
+    }));
+    return mapped;
+  }, [remoteLeaders, sortedFallback]);
 
   return (
     <div className="eg-leaders-page pb-28">
@@ -96,14 +150,16 @@ const StatLeadersPage: React.FC = () => {
 
       {/* Rows */}
       <div>
-        {sorted.map((entry, idx) => {
-          const val =
-            modeParam === "players"
+        {sorted.map((entry: any, idx) => {
+          const usingRemote = !!remoteLeaders?.rows?.length;
+          const val = usingRemote
+            ? (scope === "average" ? entry.average : entry.total)
+            : modeParam === "players"
               ? playerVal(entry as Player, stat, scope)
               : teamVal(entry as Team, stat, scope);
-          const name = modeParam === "players" ? (entry as Player).name : (entry as Team).name;
-          const teamName = modeParam === "players" ? (entry as Player).teamName : undefined;
-          const src = modeParam === "players" ? (entry as Player).headshotUrl : (entry as Team).logoUrl;
+          const name = entry.name;
+          const teamName = modeParam === "players" ? (entry.teamName || undefined) : undefined;
+          const src = modeParam === "players" ? (entry.headshotUrl || '') : (entry.logoUrl || '');
 
           return (
             <div key={idx} className={`eg-list-row ${idx < 3 ? "top-3" : ""}`}>
@@ -124,6 +180,7 @@ const StatLeadersPage: React.FC = () => {
           );
         })}
       </div>
+      {remoteLoading ? null : null}
     </div>
   );
 };

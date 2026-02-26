@@ -14,7 +14,30 @@ type Props = {
 
 function slugToTeamKey(slug: string): TeamKey | null {
   const s = String(slug || '').toLowerCase().trim();
-  return (Object.keys(TEAM_ASSETS) as TeamKey[]).includes(s as TeamKey) ? (s as TeamKey) : null;
+  const keys = Object.keys(TEAM_ASSETS) as TeamKey[];
+  if (keys.includes(s as TeamKey)) return s as TeamKey;
+  const compact = s.replace(/[^a-z0-9]/g, '');
+  const aliases: Record<string, TeamKey> = {
+    collingwoodmagpies: 'collingwood',
+    carltonblues: 'carlton',
+    adelaidecrows: 'adelaide',
+    brisbanelions: 'brisbane',
+    gwsgiants: 'gws',
+    stkildasaints: 'stkilda',
+    westernbulldogs: 'westernbulldogs',
+    westcoasteagles: 'westcoast',
+    portadelaidepower: 'portadelaide',
+    northmelbournekangaroos: 'northmelbourne',
+    goldcoastsuns: 'goldcoast',
+    geelongcats: 'geelong',
+    hawthornhawks: 'hawthorn',
+    richmondtigers: 'richmond',
+    sydneyswans: 'sydney',
+    melbournedemons: 'melbourne',
+    essendonbombers: 'essendon',
+    fremantledockers: 'fremantle',
+  };
+  return aliases[compact] || null;
 }
 
 function hexToRgb(hex: string) {
@@ -81,6 +104,8 @@ export default function HeroHeader({ onBack, model, loading }: Props) {
   const venue = model?.venue ?? 'TBC';
   const status = model?.statusLabel ?? '—';
   const margin = model?.margin ?? 0;
+  const hasTripleDigitScore = Math.max(home?.score ?? 0, away?.score ?? 0) >= 100;
+  const hasBothTripleDigitScores = (home?.score ?? 0) >= 100 && (away?.score ?? 0) >= 100;
 
   // Status pill styling
   const statusDot =
@@ -139,7 +164,9 @@ export default function HeroHeader({ onBack, model, loading }: Props) {
           </div>
 
           {/* SCORES */}
-          <div className="mcHero__scores">
+          <div
+            className={`mcHero__scores${hasTripleDigitScore ? ' mcHero__scores--compact' : ''}${hasBothTripleDigitScores ? ' mcHero__scores--compactBoth' : ''}`}
+          >
             <div className="mcHero__scoreLine">
               <span className="mcHero__score">{home?.score || 0}</span>
               <span className="mcHero__dash">–</span>

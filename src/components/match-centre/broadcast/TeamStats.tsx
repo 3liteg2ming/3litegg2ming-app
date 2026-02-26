@@ -6,7 +6,30 @@ import '@/styles/match-centre-team-stats.css';
 
 function slugToTeamKey(slug: string): TeamKey | null {
   const s = String(slug || '').toLowerCase().trim();
-  return (Object.keys(TEAM_ASSETS) as TeamKey[]).includes(s as TeamKey) ? (s as TeamKey) : null;
+  const keys = Object.keys(TEAM_ASSETS) as TeamKey[];
+  if (keys.includes(s as TeamKey)) return s as TeamKey;
+  const compact = s.replace(/[^a-z0-9]/g, '');
+  const aliases: Record<string, TeamKey> = {
+    collingwoodmagpies: 'collingwood',
+    carltonblues: 'carlton',
+    adelaidecrows: 'adelaide',
+    brisbanelions: 'brisbane',
+    gwsgiants: 'gws',
+    stkildasaints: 'stkilda',
+    westernbulldogs: 'westernbulldogs',
+    westcoasteagles: 'westcoast',
+    portadelaidepower: 'portadelaide',
+    northmelbournekangaroos: 'northmelbourne',
+    goldcoastsuns: 'goldcoast',
+    geelongcats: 'geelong',
+    hawthornhawks: 'hawthorn',
+    richmondtigers: 'richmond',
+    sydneyswans: 'sydney',
+    melbournedemons: 'melbourne',
+    essendonbombers: 'essendon',
+    fremantledockers: 'fremantle',
+  };
+  return aliases[compact] || null;
 }
 
 function StatRow({ stat, homeColor, awayColor }: { stat: TeamStatRow; homeColor: string; awayColor: string }) {

@@ -1,0 +1,781 @@
+afl_player_id,team_name,player_name,jumper,position
+1080,Adelaide Crows,Captain Jordan Dawson label.squad.captain.profile,,
+1782,Adelaide Crows,Chayce Jones,1,Midfielder
+886,Adelaide Crows,Ben Keays,2,Forward
+2465,Adelaide Crows,Sam Berry,3,Midfielder
+850,Adelaide Crows,Callum Ah Chee,4,Forward
+10256,Adelaide Crows,Sid Draper,5,Midfielder
+7336,Adelaide Crows,Daniel Curtin,6,Midfielder
+4046,Adelaide Crows,Riley Thilthorpe,7,Key Forward
+3232,Adelaide Crows,Josh Rachele,8,Forward
+2474,Adelaide Crows,Nick Murray,9,Key Defender
+4049,Adelaide Crows,Luke Pedlar,10,Forward
+8381,Adelaide Crows,Charlie Edwards,11,Defender
+35,Adelaide Crows,Taylor Walker,13,Key Forward
+2770,Adelaide Crows,Jake Soligo,14,Midfielder
+4048,Adelaide Crows,Brayden Cook,15,Midfielder
+8620,Adelaide Crows,Max Michalanney,16,Defender
+10575,Adelaide Crows,Tyler Welsh,17,Key Forward
+2378,Adelaide Crows,Zac Taylor,19,Forward
+1292,Adelaide Crows,Mitchell Hinge,20,Defender
+5404,Adelaide Crows,Hugh Bond,21,Defender
+6623,Adelaide Crows,Oscar Ryan,22,Defender
+1815,Adelaide Crows,Izak Rankine,23,Midfielder
+2696,Adelaide Crows,Josh Worrell,24,Defender
+2541,Adelaide Crows,James Peatling,25,Midfielder
+11176,Adelaide Crows,Mitchell Marsh,26,Key Forward
+5304,Adelaide Crows,Luke Nankervis,27,Midfielder
+893,Adelaide Crows,Alex Neal-Bullen,28,Forward
+193,Adelaide Crows,Rory Laird,29,Defender
+830,Adelaide Crows,Wayne Milera,30,Defender
+8619,Adelaide Crows,Billy Dowling,31,Midfielder
+1555,Adelaide Crows,Darcy Fogarty,32,Key Forward
+15852,Adelaide Crows,Indy Cotton,33,Forward
+12451,Adelaide Crows,Archie Ludowyke,34,Key Forward
+4050,Adelaide Crows,James Borlase,35,Key Defender
+8920,Adelaide Crows,Finnbar Maley,36,Key Forward
+1761,Adelaide Crows,Lachlan Sholl,38,Midfielder
+5185,Adelaide Crows,Toby Murray,39,Ruck
+1824,Adelaide Crows,Jordon Butts,41,Key Defender
+4951,Adelaide Crows,Lachlan McAndrew,42,Ruck
+763,Adelaide Crows,Reilly O'Brien,43,Ruck
+1386,Adelaide Crows,Isaac Cumming,44,Midfielder
+1901,Adelaide Crows,Mark Keane,48,Key Defender
+1301,Brisbane Lions,Captain Hugh McCluggage label.squad.captain.profile,,
+1083,Brisbane Lions,Captain Josh Dunkley label.squad.captain.profile,,
+822,Brisbane Lions,Captain Harris Andrews label.squad.captain.profile,,
+5146,Brisbane Lions,Kai Lohmann,1,Forward
+1296,Brisbane Lions,Sam Draper,2,Ruck
+5372,Brisbane Lions,Jaspa Fletcher,3,Defender
+1718,Brisbane Lions,Oscar Allen,4,Key Forward
+1343,Brisbane Lions,Jarrod Berry,7,Midfielder
+5518,Brisbane Lions,Will Ashcroft,8,Midfielder
+355,Brisbane Lions,Lachie Neale,9,Midfielder
+8422,Brisbane Lions,Levi Ashcroft,10,Midfielder
+294,Brisbane Lions,Lincoln McCarthy,11,Forward
+813,Brisbane Lions,Tom Doedee,12,Defender
+6773,Brisbane Lions,Logan Morris,13,Key Forward
+9055,Brisbane Lions,Daniel Annable,14,Midfielder
+8,Brisbane Lions,Dayne Zorko,15,Defender
+1665,Brisbane Lions,Cam Rayner,16,Forward
+10205,Brisbane Lions,Luke Beecken,17,Midfielder
+2203,Brisbane Lions,Keidean Coleman,18,Defender
+6741,Brisbane Lions,Luke Lloyd,19,Key Defender
+9042,Brisbane Lions,Sam Marshall,20,Midfielder
+11333,Brisbane Lions,Zane Zakostelsky,21,Ruck
+12141,Brisbane Lions,Ty Gallop,22,Key Forward
+152,Brisbane Lions,Charlie Cameron,23,Forward
+13425,Brisbane Lions,Koby Evans,24,Midfielder
+4053,Brisbane Lions,Henry Smith,25,Key Forward
+982,Brisbane Lions,Conor McKenna,26,Forward
+132,Brisbane Lions,Darcy Gardiner,27,Key Defender
+8472,Brisbane Lions,Will McLachlan,28,Forward
+5673,Brisbane Lions,James Tunstill,29,Midfielder
+864,Brisbane Lions,Eric Hipwood,30,Key Forward
+1940,Brisbane Lions,Darcy Fort,32,Ruck
+1577,Brisbane Lions,Zac Bailey,33,Midfielder
+6783,Brisbane Lions,Shadeau Brain,34,Defender
+124,Brisbane Lions,Ryan Lester,35,Defender
+7482,Brisbane Lions,Reece Torrent,36,Midfielder
+12978,Brisbane Lions,Cody Curtin,37,Key Forward
+2218,Brisbane Lions,Bruce Reville,38,Midfielder
+15850,Brisbane Lions,Ben Murphy,39,Defender
+1661,Brisbane Lions,Jack Payne,40,Key Defender
+1368,Brisbane Lions,Darragh Joyce,41,Key Defender
+13986,Brisbane Lions,Tai Hayes,42,Midfielder
+1774,Brisbane Lions,Noah Answerth,43,Defender
+2786,Brisbane Lions,Darcy Wilmot,44,Defender
+270,Carlton,Captain Patrick Cripps label.squad.captain.profile,,
+5277,Carlton,Lachlan Cowan,2,Defender
+5674,Carlton,Jesse Motlop,3,Forward
+5569,Carlton,Oliver Hollands,4,Defender
+1562,Carlton,Adam Cerra,5,Midfielder
+483,Carlton,Zac Williams,6,Forward
+9351,Carlton,Jagga Smith,7,Midfielder
+1732,Carlton,Lachie Fogarty,8,Forward
+692,Carlton,Harry McKay,10,Key Forward
+738,Carlton,Mitch McGovern,11,Defender
+1402,Carlton,Ben Ainsworth,12,Forward
+683,Carlton,Blake Acres,13,Midfielder
+1363,Carlton,Oliver Florent,14,Midfielder
+6442,Carlton,Billy Wilson,15,Defender
+9932,Carlton,Ben Camporeale,16,Midfielder
+2209,Carlton,Brodie Kemp,17,Key Forward
+1896,Carlton,Sam Walsh,18,Midfielder
+1413,Carlton,Will Hayward,19,Forward
+9674,Carlton,Lucas Camporeale,21,Midfielder
+9083,Carlton,Harry O'Farrell,22,Key Defender
+774,Carlton,Jacob Weitering,23,Key Defender
+950,Carlton,Nic Newman,24,Defender
+4806,Carlton,Liam Reidy,25,Ruck
+577,Carlton,Nick Haynes,26,Defender
+892,Carlton,Marc Pittonet,27,Ruck
+9199,Carlton,Harry Charleson,28,Defender
+690,Carlton,George Hewett,29,Midfielder
+12431,Carlton,Jack Ison,30,Midfielder
+3356,Carlton,Campbell Chesser,31,Midfielder
+6702,Carlton,Matthew Carroll,32,Defender
+1335,Carlton,Lewis Young,33,Key Defender
+12079,Carlton,Rob Monahan,34,Defender
+12390,Carlton,Harry Dean,35,Key Defender
+9437,Carlton,Cooper Lord,36,Midfielder
+4803,Carlton,Jordan Boyd,37,Defender
+12384,Carlton,Talor Byrne,39,Forward
+5529,Carlton,Hudson O'Keeffe,40,Key Forward
+13966,Carlton,Matt Duffy,41,Key Defender
+913,Carlton,Adam Saad,42,Defender
+9627,Carlton,Ashton Moir,43,Forward
+2582,Carlton,Francis Evans,44,Forward
+5141,Carlton,Flynn Young,45,Forward
+1895,Carlton,Matthew Cottrell,46,Midfielder
+895,Collingwood,Captain Darcy Moore label.squad.captain.profile,,
+1353,Collingwood,Patrick Lipinski,1,Midfielder
+782,Collingwood,Jordan De Goey,2,Midfielder
+1772,Collingwood,Isaac Quaynor,3,Defender
+862,Collingwood,Brayden Maynard,4,Defender
+112,Collingwood,Jamie Elliott,5,Forward
+1321,Collingwood,Josh Daicos,7,Defender
+1803,Collingwood,Lachie Schultz,8,Forward
+1043,Collingwood,Dan Houston,9,Defender
+118,Collingwood,Scott Pendlebury,10,Midfielder
+249,Collingwood,Daniel McStay,11,Key Forward
+1394,Collingwood,Harry Perryman,12,Defender
+6453,Collingwood,Harry DeMattia,13,Midfielder
+1330,Collingwood,Darcy Cameron,14,Ruck
+2479,Collingwood,Wil Parker,15,Defender
+7853,Collingwood,Edward Allan,16,Midfielder
+1037,Collingwood,Billy Frampton,17,Key Defender
+15324,Collingwood,Tyan Prindable,18,Midfielder
+9264,Collingwood,Tew Jiath,19,Defender
+6467,Collingwood,Iliro Smit,20,Ruck
+8638,Collingwood,Oscar Steene,21,Ruck
+154,Collingwood,Steele Sidebottom,22,Midfielder
+1835,Collingwood,Bobby Hill,23,Forward
+8623,Collingwood,Jakob Ryan,24,Defender
+212,Collingwood,Jack Crisp,25,Midfielder
+2922,Collingwood,Reef McInnes,26,Key Defender
+9376,Collingwood,Joel Cochran,27,Defender
+836,Collingwood,Tim Membrey,28,Key Forward
+10794,Collingwood,Charlie West,29,Key Forward
+4056,Collingwood,Beau McCreery,31,Forward
+13207,Collingwood,Sam Swadling,32,Midfielder
+4851,Collingwood,Lachlan Sullivan,33,Forward
+6858,Collingwood,Jack Buller,34,Key Forward
+5257,Collingwood,Nick Daicos,35,Midfielder
+5677,Collingwood,Harvey Harrison,36,Forward
+12472,Collingwood,Zac McCarthy,37,Ruck
+504,Collingwood,Jeremy Howe,38,Defender
+11327,Collingwood,William Hayes,39,Forward
+10243,Collingwood,Noah Howes,40,Key Forward
+5507,Collingwood,Angus Anderson,41,Midfielder
+14557,Collingwood,Jai Saxena,43,Forward
+2880,Collingwood,Ned Long,44,Midfielder
+6220,Collingwood,Roan Steele,45,Midfielder
+1331,Essendon,Captain Andrew McGrath label.squad.captain.profile,,
+11965,Essendon,Jacob Farrow,2,Defender
+852,Essendon,Darcy Parish,3,Midfielder
+945,Essendon,Kyle Langford,4,Key Forward
+5528,Essendon,Elijah Tsatas,5,Midfielder
+1834,Essendon,Jye Caldwell,6,Midfielder
+170,Essendon,Zach Merrett,7,Midfielder
+988,Essendon,Brayden Fiorini,8,Midfielder
+15673,Essendon,Sullivan Robey,9,Midfielder
+8522,Essendon,Isaac Kako,10,Forward
+1127,Essendon,Jade Gresham,11,Forward
+1359,Essendon,Will Setterfield,12,Midfielder
+2843,Essendon,Nik Cox,13,Midfielder
+1288,Essendon,Jordan Ridley,14,Defender
+9891,Essendon,Dyson Sharp,15,Midfielder
+3299,Essendon,Archie Perkins,16,Forward
+6698,Essendon,Vigo Visentini,17,Ruck
+5392,Essendon,Lewis Hayes,18,Defender
+11568,Essendon,Kayle Gerreyn,19,Key Forward
+903,Essendon,Peter Wright,20,Key Forward
+6645,Essendon,Archie Roberts,21,Defender
+3075,Essendon,Sam Durham,22,Midfielder
+2242,Essendon,Harrison Jones,23,Midfielder
+2692,Essendon,Nick Bryan,24,Ruck
+3714,Essendon,Jaxon Prior,25,Defender
+8423,Essendon,Archer May,26,Key Forward
+944,Essendon,Mason Redman,27,Defender
+1852,Essendon,Xavier Duursma,28,Midfielder
+12453,Essendon,Max Kondogiannis,29,Defender
+6608,Essendon,Nate Caddy,30,Key Forward
+2612,Essendon,Zach Reid,31,Key Defender
+874,Essendon,Ben McKay,32,Key Defender
+12117,Essendon,Hussien El Achkar,33,Forward
+1737,Essendon,Matt Guelfi,35,Forward
+9950,Essendon,Angus Clarke,36,Defender
+6178,Essendon,Nic Martin,37,Midfielder
+9202,Essendon,Rhys Unwin,38,Forward
+15853,Essendon,Cillian Bourke,39,Defender
+8418,Essendon,Zak Johnson,40,Defender
+3440,Essendon,Saad El-Hawli,41,Midfielder
+8521,Essendon,Jayden Nguyen,42,Defender
+8454,Essendon,Archer Day-Wicks,44,Forward
+7531,Essendon,Thomas Edwards,45,Key Forward
+7157,Essendon,Lachlan Blakiston,46,Key Defender
+2678,Essendon,Liam McMahon,48,Key Forward
+465,Fremantle,Captain Alex Pearce label.squad.captain.profile,,
+1806,Fremantle,Sam Sturt,1,Forward
+614,Fremantle,Jaeger O'Meara,2,Midfielder
+2304,Fremantle,Caleb Serong,3,Midfielder
+1392,Fremantle,Sean Darcy,4,Ruck
+4061,Fremantle,Heath Chapman,5,Defender
+1929,Fremantle,Jordan Clark,6,Defender
+1684,Fremantle,Andrew Brayshaw,8,Midfielder
+3728,Fremantle,Luke Jackson,9,Ruck
+1407,Fremantle,Shai Bolton,10,Midfielder
+6479,Fremantle,Tobyn Murray,11,Forward
+7313,Fremantle,Hugh Davies,12,Key Defender
+1311,Fremantle,Luke Ryan,13,Defender
+3721,Fremantle,Jeremy Sharp,14,Midfielder
+12115,Fremantle,Adam Sweid,15,Midfielder
+9363,Fremantle,Murphy Reid,16,Forward
+5688,Fremantle,Judd McVee,17,Defender
+809,Fremantle,Mason Cox,18,Key Forward
+11566,Fremantle,Leon Kickett,19,Midfielder
+5232,Fremantle,Patrick Voss,20,Key Forward
+926,Fremantle,Oscar McDonald,21,Key Defender
+9905,Fremantle,Charlie Nicholls,22,Key Forward
+4905,Fremantle,Karl Worner,23,Defender
+5680,Fremantle,Jye Amiss,24,Key Forward
+2284,Fremantle,Hayden Young,26,Midfielder
+11933,Fremantle,Toby Whan,27,Midfielder
+5681,Fremantle,Neil Erasmus,28,Midfielder
+6403,Fremantle,Cooper Simpson,29,Defender
+4059,Fremantle,Nathan O'Driscoll,30,Midfielder
+4060,Fremantle,Brandon Walker,31,Defender
+3718,Fremantle,Michael Frederick,32,Forward
+6768,Fremantle,Ollie Murphy,33,Key Defender
+1089,Fremantle,Corey Wagner,34,Midfielder
+2362,Fremantle,Josh Treacy,35,Key Forward
+1390,Fremantle,Brennan Cox,36,Key Defender
+7400,Fremantle,Joshua Draper,37,Key Defender
+7505,Fremantle,Jaren Carr,38,Defender
+1699,Fremantle,Sam Switkowski,39,Forward
+13661,Fremantle,Ryda Luke,40,Forward
+1594,Fremantle,Bailey Banfield,41,Defender
+7357,Fremantle,Aiden Riddle,42,Key Forward
+9530,Fremantle,Isaiah Dudley,43,Forward
+5679,Fremantle,Matthew Johnson,44,Midfielder
+10,Geelong,Captain Patrick Dangerfield label.squad.captain.profile,,
+668,Geelong,Rhys Stanley,1,Ruck
+10405,Geelong,Jay Polkinghorne,2,Key Forward
+1913,Geelong,Bailey Smith,3,Midfielder
+2542,Geelong,Tanner Bruhn,4,Midfielder
+223,Geelong,Jeremy Cameron,5,Key Forward
+5112,Geelong,Toby Conway,6,Ruck
+5018,Geelong,Shaun Mannagh,7,Forward
+373,Geelong,Jake Kolodjashnij,8,Key Defender
+3250,Geelong,Max Holmes,9,Midfielder
+5176,Geelong,Mitch Knevitt,10,Midfielder
+7501,Geelong,Mitchell Edwards,11,Ruck
+1401,Geelong,Jack Bowes,12,Midfielder
+5543,Geelong,Jhye Clark,13,Midfielder
+6576,Geelong,Connor O'Sullivan,14,Key Defender
+5421,Geelong,George Stevens,15,Midfielder
+2248,Geelong,Sam De Koning,16,Key Defender
+7508,Geelong,Lawson Humphries,17,Defender
+1376,Geelong,Tyson Stengle,18,Forward
+222,Geelong,Jack Martin,19,Forward
+10640,Geelong,Jacob Molier,20,Key Forward
+5134,Geelong,Oliver Wiltshire,21,Forward
+14567,Geelong,Hunter Holmes,22,Midfielder
+9457,Geelong,Lennox Hofmann,23,Defender
+464,Geelong,Jed Bews,24,Defender
+12157,Geelong,Jesse Mellor,25,Forward
+10541,Geelong,Harley Barker,26,Midfielder
+12199,Geelong,Nicholas Driscoll,27,Midfielder
+5685,Geelong,Oliver Dempsey,28,Midfielder
+1713,Geelong,James Worpel,29,Midfielder
+1846,Geelong,Tom Atkins,30,Midfielder
+9486,Geelong,Keighton Matofai-Forbes,31,Defender
+1563,Geelong,Gryan Miers,32,Forward
+4063,Geelong,Shannon Neale,33,Key Forward
+5684,Geelong,Oisin Mullin,34,Defender
+2591,Geelong,Oliver Henry,36,Key Forward
+6503,Geelong,Joe Pike,37,Ruck
+1339,Geelong,Jack Henry,38,Key Defender
+1342,Geelong,Zach Guthrie,39,Defender
+13963,Geelong,Cillian Burke,41,Forward
+1344,Geelong,Mark O'Connor,42,Defender
+1322,Geelong,Tom Stewart,44,Defender
+3720,Geelong,Brad Close,45,Forward
+296,Geelong,Mark Blicavs,46,Ruck
+2783,Gold Coast SUNS,Captain Noah Anderson label.squad.captain.profile,,
+5063,Gold Coast SUNS,Mac Andrew,1,Key Defender
+1768,Gold Coast SUNS,John Noble,2,Defender
+1001,Gold Coast SUNS,Christian Petracca,3,Midfielder
+5440,Gold Coast SUNS,Jed Walter,4,Key Forward
+2558,Gold Coast SUNS,Alex Davies,5,Midfielder
+4868,Gold Coast SUNS,Bodhi Uwland,6,Defender
+128,Gold Coast SUNS,Nick Holman,7,Midfielder
+9246,Gold Coast SUNS,Leonardo Lombard,8,Forward
+2693,Gold Coast SUNS,Jamarra Ugle-Hagan,9,Key Forward
+1475,Gold Coast SUNS,Charlie Ballard,10,Key Defender
+990,Gold Coast SUNS,Touk Miller,11,Midfielder
+1357,Gold Coast SUNS,Elliott Himmelberg,12,Key Forward
+823,Gold Coast SUNS,Lachie Weller,14,Midfielder
+919,Gold Coast SUNS,Daniel Rioli,17,Defender
+2790,Gold Coast SUNS,Matt Rowell,18,Midfielder
+5434,Gold Coast SUNS,Bailey Humphrey,19,Midfielder
+6525,Gold Coast SUNS,Ethan Read,20,Key Forward
+1408,Gold Coast SUNS,Ben Long,22,Forward
+5311,Gold Coast SUNS,Ned Moyle,23,Ruck
+824,Gold Coast SUNS,Sam Collins,25,Key Defender
+6512,Gold Coast SUNS,Will Graham,26,Forward
+1474,Gold Coast SUNS,Wil Powell,27,Defender
+161,Gold Coast SUNS,Jarrod Witts,28,Ruck
+6485,Gold Coast SUNS,Jake Rogers,29,Forward
+12421,Gold Coast SUNS,Dylan Patterson,30,Defender
+9198,Gold Coast SUNS,Cooper Bell,31,Key Defender
+9224,Gold Coast SUNS,Zeke Uwland,32,Midfielder
+4320,Gold Coast SUNS,Sam Clohesy,33,Midfielder
+1810,Gold Coast SUNS,Ben King,34,Key Forward
+9257,Gold Coast SUNS,Jai Murray,35,Midfielder
+13856,Gold Coast SUNS,Zak Evans,36,Defender
+6531,Gold Coast SUNS,Max Knobel,37,Ruck
+9293,Gold Coast SUNS,Beau Addinsall,38,Midfielder
+9266,Gold Coast SUNS,Lachlan Gulbin,39,Forward
+2568,Gold Coast SUNS,Joel Jeffrey,40,Defender
+12196,Gold Coast SUNS,Avery Thomas,41,Defender
+9218,Gold Coast SUNS,Asher Eastham,42,Defender
+12387,Gold Coast SUNS,Koby Coulson,43,Midfielder
+2691,Gold Coast SUNS,Ben Jepson,44,Midfielder
+5267,Gold Coast SUNS,Caleb Lewis,45,Key Forward
+1911,Gold Coast SUNS,Caleb Graham,46,Key Defender
+5695,Gold Coast SUNS,Oscar Adams,48,Key Defender
+3722,Gold Coast SUNS,Jy Farrar,50,Forward
+657,GWS GIANTS,Captain Toby Greene label.squad.captain.profile,,
+6641,GWS GIANTS,Harvey Thomas,1,Forward
+7595,GWS GIANTS,Darcy Jones,2,Forward
+215,GWS GIANTS,Stephen Coniglio,3,Midfielder
+5435,GWS GIANTS,Aaron Cadman,5,Key Forward
+306,GWS GIANTS,Lachie Whitfield,6,Defender
+2524,GWS GIANTS,Lachie Ash,7,Defender
+2724,GWS GIANTS,Ryan Angwin,9,Midfielder
+899,GWS GIANTS,Clayton Oliver,10,Midfielder
+9299,GWS GIANTS,Phoenix Gothard,11,Forward
+2617,GWS GIANTS,Tom Green,12,Midfielder
+8575,GWS GIANTS,Oliver Hannaford,13,Forward
+1839,GWS GIANTS,Toby Bedford,14,Midfielder
+1698,GWS GIANTS,Sam Taylor,15,Key Defender
+1740,GWS GIANTS,Brent Daniels,16,Forward
+5321,GWS GIANTS,Finn Callaghan,17,Midfielder
+3030,GWS GIANTS,Conor Stone,18,Defender
+8430,GWS GIANTS,Harrison Oliver,19,Defender
+792,GWS GIANTS,Jake Stringer,20,Forward
+5686,GWS GIANTS,Leek Aleer,21,Key Defender
+528,GWS GIANTS,Josh Kelly,22,Midfielder
+391,GWS GIANTS,Jesse Hogan,23,Key Forward
+5550,GWS GIANTS,Harry Rowston,24,Midfielder
+870,GWS GIANTS,Jayden Laverde,25,Key Defender
+3723,GWS GIANTS,Jake Riccardi,26,Key Forward
+915,GWS GIANTS,Harry Himmelberg,27,Defender
+8429,GWS GIANTS,Jack Ough,28,Midfielder
+11287,GWS GIANTS,Cody Angove,29,Forward
+9439,GWS GIANTS,James Leake,30,Defender
+6703,GWS GIANTS,Toby McMullin,31,Midfielder
+1811,GWS GIANTS,Kieren Briggs,32,Ruck
+1821,GWS GIANTS,Xavier O'Halloran,33,Midfielder
+12361,GWS GIANTS,Oskar Taylor,34,Defender
+6638,GWS GIANTS,Max Gruzewski,35,Key Forward
+9221,GWS GIANTS,Logan Smith,36,Ruck
+11301,GWS GIANTS,Joe Fonti,37,Defender
+9175,GWS GIANTS,Josaia Delana,38,Forward
+1812,GWS GIANTS,Connor Idun,39,Defender
+5466,GWS GIANTS,Nicholas Madden,41,Ruck
+11935,GWS GIANTS,Nathan Wardius,42,Forward
+9177,GWS GIANTS,Riley Hamilton,43,Midfielder
+1591,GWS GIANTS,Jack Buckley,44,Key Defender
+12536,GWS GIANTS,Finnegan Davis,45,Defender
+1809,GWS GIANTS,Callum Brown,46,Forward
+4712,Hawthorn,Captain Jai Newcombe label.squad.captain.profile,,
+514,Hawthorn,Captain James Sicily label.squad.captain.profile,,
+1341,Hawthorn,Harry Morrison,1,Midfielder
+1333,Hawthorn,Mitch Lewis,2,Key Forward
+703,Hawthorn,Jarman Impey,4,Defender
+5592,Hawthorn,Nick Watson,5,Forward
+1822,Hawthorn,Ned Reeves,7,Ruck
+1595,Hawthorn,Dylan Moore,8,Forward
+2722,Hawthorn,Connor Macdonald,9,Forward
+801,Hawthorn,Karl Amon,10,Defender
+1302,Hawthorn,Conor Nash,11,Midfielder
+3726,Hawthorn,Will Day,12,Midfielder
+9423,Hawthorn,Calsher Dear,13,Key Forward
+1336,Hawthorn,Jack Scrimshaw,14,Defender
+924,Hawthorn,Blake Hardwick,15,Defender
+4349,Hawthorn,Massimo D'Ambrosio,16,Midfielder
+1560,Hawthorn,Lloyd Meek,17,Ruck
+1125,Hawthorn,Mabior Chol,18,Key Forward
+500,Hawthorn,Jack Gunston,19,Key Forward
+2812,Hawthorn,Finn Maginness,20,Forward
+8506,Hawthorn,Noah Mraz,21,Key Defender
+10898,Hawthorn,Cameron Nairn,22,Midfielder
+6669,Hawthorn,Josh Weddle,23,Defender
+1412,Hawthorn,Josh Battle,24,Key Defender
+5252,Hawthorn,Josh Ward,25,Midfielder
+9721,Hawthorn,Bodie Ryan,26,Defender
+9672,Hawthorn,William McCabe,27,Key Forward
+5630,Hawthorn,Cam Mackenzie,28,Midfielder
+10887,Hawthorn,Aidan Schubert,29,Key Forward
+5124,Hawthorn,Sam Butler,30,Midfielder
+9824,Hawthorn,Matthew LeRay,31,Midfielder
+8416,Hawthorn,Cody Anderson,32,Midfielder
+2238,Hawthorn,Jack Ginnivan,33,Forward
+12018,Hawthorn,Jack Dalton,34,Midfielder
+12317,Hawthorn,Oliver Greeves,35,Midfielder
+2447,Hawthorn,James Blanck,36,Key Defender
+789,Hawthorn,Tom Barrass,37,Key Defender
+6683,Hawthorn,Max Ramsden,38,Key Forward
+13965,Hawthorn,Matt Hill,41,Forward
+8448,Hawthorn,Bailey Macdonald,42,Defender
+13964,Hawthorn,Jaime Uhr-Henry,43,Ruck
+5410,Hawthorn,Henry Hustwaite,44,Midfielder
+412,Melbourne,Captain Max Gawn label.squad.captain.profile,,
+287,Melbourne,Steven May,1,Key Defender
+5689,Melbourne,Jacob van Rooyen,2,Key Forward
+735,Melbourne,Christian Salem,3,Defender
+8503,Melbourne,Harvey Langford,4,Midfielder
+8524,Melbourne,Xavier Lindsay,5,Midfielder
+6443,Melbourne,Caleb Windsor,6,Defender
+608,Melbourne,Jack Viney,7,Midfielder
+856,Melbourne,Jake Lever,8,Defender
+868,Melbourne,Jack Steele,9,Midfielder
+5217,Melbourne,Daniel Turner,10,Key Defender
+7635,Melbourne,Koltyn Tholstrup,12,Forward
+5064,Melbourne,Jai Culley,13,Midfielder
+1574,Melbourne,Changkuoth Jiath,14,Defender
+810,Melbourne,Ed Langdon,15,Midfielder
+2805,Melbourne,Bailey Laurie,16,Forward
+3132,Melbourne,Jake Bowey,17,Defender
+137,Melbourne,Jake Melksham,18,Key Forward
+12344,Melbourne,Xavier Taylor,19,Defender
+11956,Melbourne,Thomas Matthews,20,Forward
+5498,Melbourne,Matthew Jefferson,21,Key Forward
+5236,Melbourne,Blake Howes,22,Defender
+1924,Melbourne,Shane McAdam,23,Forward
+3729,Melbourne,Trent Rivers,24,Defender
+663,Melbourne,Tom McDonald,25,Key Defender
+7414,Melbourne,Jed Adams,26,Key Defender
+3033,Melbourne,Max Heath,27,Key Forward
+1685,Melbourne,Brody Mihocek,28,Key Forward
+693,Melbourne,Tom Campbell,29,Ruck
+2670,Melbourne,Harry Sharp,30,Forward
+1520,Melbourne,Bayley Fritsch,31,Forward
+1947,Melbourne,Tom Sparrow,32,Forward
+10179,Melbourne,Latrelle Pickett,33,Forward
+12422,Melbourne,Kalani White,34,Ruck
+1590,Melbourne,Harrison Petty,35,Key Forward
+3727,Melbourne,Kysaiah Pickett,36,Midfielder
+1808,Melbourne,Kade Chandler,37,Forward
+15851,Melbourne,Oscar Berry,38,Defender
+11741,Melbourne,Ricky Mentha,39,Forward
+11962,Melbourne,Riley Onley,40,Midfielder
+5627,Melbourne,Aidan Johnson,42,Key Forward
+5007,Melbourne,Jack Henderson,43,Forward
+7630,Melbourne,Luker Kentfield,44,Key Defender
+5472,Melbourne,Andy Moniz-Wakefield,45,Defender
+1355,North Melbourne,Captain Nick Larkey label.squad.captain.profile,,
+12318,North Melbourne,Lachy Dovaston,1,Forward
+9338,North Melbourne,Finn O'Sullivan,2,Defender
+5522,North Melbourne,Harry Sheezel,3,Midfielder
+437,North Melbourne,Aidan Corr,4,Key Defender
+952,North Melbourne,Caleb Daniel,5,Defender
+5508,North Melbourne,George Wardlaw,6,Midfielder
+5423,North Melbourne,Zane Duursma,7,Forward
+1837,North Melbourne,Bailey Scott,8,Midfielder
+1607,North Melbourne,Luke Davies-Uniacke,9,Midfielder
+6706,North Melbourne,Colby McKercher,10,Defender
+424,North Melbourne,Luke McDonald,11,Defender
+1405,North Melbourne,Jy Simpkin,12,Midfielder
+1742,North Melbourne,Charlie Spargo,13,Forward
+8434,North Melbourne,Luke Urquhart,14,Midfielder
+3734,North Melbourne,Dylan Stephens,15,Midfielder
+1291,North Melbourne,Zac Fisher,16,Forward
+7751,North Melbourne,Riley Hardeman,17,Defender
+8466,North Melbourne,Wil Dawson,18,Key Defender
+1312,North Melbourne,Griffin Logue,19,Key Defender
+1754,North Melbourne,Callum Coleman-Jones,21,Ruck
+11031,North Melbourne,Taylor Goad,22,Ruck
+11228,North Melbourne,Blake Thredgold,23,Key Defender
+4068,North Melbourne,Tom Powell,24,Midfielder
+4350,North Melbourne,Paul Curtis,25,Forward
+816,North Melbourne,Luke Parker,26,Midfielder
+842,North Melbourne,Jack Darling,27,Key Forward
+12173,North Melbourne,Hugo Mikunda,28,Midfielder
+2398,North Melbourne,Charlie Comben,30,Key Defender
+2487,North Melbourne,Josh Goater,31,Defender
+1338,North Melbourne,Toby Pink,32,Key Defender
+5470,North Melbourne,Brayden George,33,Forward
+5206,North Melbourne,Jackson Archer,34,Defender
+9273,North Melbourne,Matt Whitlock,35,Key Defender
+9237,North Melbourne,River Stevens,36,Forward
+6581,North Melbourne,Cooper Harvey,37,Forward
+1694,North Melbourne,Tristan Xerri,38,Ruck
+5417,North Melbourne,Jacob Konstanty,41,Forward
+1404,North Melbourne,Cameron Zurhaar,44,Forward
+11960,North Melbourne,Zac Banch,45,Forward
+7536,North Melbourne,Robert Hansen Jr,46,Midfielder
+9159,North Melbourne,Cooper Trembath,47,Key Forward
+1848,Port Adelaide,Captain Connor Rozee label.squad.captain.profile,,
+1406,Port Adelaide,Sam Powell-Pepper,2,Forward
+3732,Port Adelaide,Jackson Mead,3,Midfielder
+1356,Port Adelaide,Todd Marshall,4,Key Forward
+9296,Port Adelaide,Joe Berry,5,Forward
+1758,Port Adelaide,Kane Farrell,6,Defender
+5692,Port Adelaide,Jase Burgoyne,7,Midfielder
+5295,Port Adelaide,Josh Sinn,8,Defender
+1856,Port Adelaide,Zak Butters,9,Midfielder
+9103,Port Adelaide,Christian Moraes,11,Midfielder
+1831,Port Adelaide,Jack Lukosius,12,Key Forward
+949,Port Adelaide,Ivan Soldo,13,Ruck
+2848,Port Adelaide,Miles Bergman,14,Defender
+4064,Port Adelaide,Jacob Wehr,15,Midfielder
+678,Port Adelaide,Ollie Wines,16,Midfielder
+9320,Port Adelaide,Jack Whitlock,17,Key Forward
+5691,Port Adelaide,Jason Horne-Francis,18,Midfielder
+3733,Port Adelaide,Mitch Georgiades,19,Key Forward
+695,Port Adelaide,Aliir Aliir,21,Key Defender
+9923,Port Adelaide,Logan Evans,22,Defender
+1397,Port Adelaide,Will Brodie,23,Midfielder
+1943,Port Adelaide,Jordon Sweet,24,Ruck
+1469,Port Adelaide,Brandon Zerk-Thatcher,25,Key Defender
+9611,Port Adelaide,Tom Cochrane,26,Forward
+1375,Port Adelaide,Esava Ratugolea,27,Key Defender
+1400,Port Adelaide,Willem Drew,28,Midfielder
+6560,Port Adelaide,Tom Anastasopoulos,29,Midfielder
+2983,Port Adelaide,Ollie Lord,30,Key Forward
+6597,Port Adelaide,Ewan Mackinlay,31,Midfielder
+10080,Port Adelaide,Harrison Ramm,32,Key Defender
+652,Port Adelaide,Darcy Byrne-Jones,33,Forward
+4071,Port Adelaide,Lachie Jones,34,Defender
+8622,Port Adelaide,Joe Richards,35,Forward
+8447,Port Adelaide,Will Lorenz,36,Midfielder
+4860,Port Adelaide,Jack Watkins,37,Midfielder
+5229,Port Adelaide,Dante Visentini,38,Ruck
+10185,Port Adelaide,Benny Barrett,40,Midfielder
+13923,Port Adelaide,Jacob Moss,42,Key Defender
+13968,Port Adelaide,Josh Lai,43,Defender
+4054,Port Adelaide,Corey Durdin,44,Forward
+11321,Port Adelaide,Xavier Walsh,45,Key Defender
+9993,Port Adelaide,Mani Liddy,50,Midfielder
+790,Richmond,Captain Toby Nankervis label.squad.captain.profile,,
+444,Richmond,Nick Vlastuin,1,Defender
+918,Richmond,Jacob Hopper,2,Midfielder
+460,Richmond,Dion Prestia,3,Midfielder
+8525,Richmond,Sam Lalor,4,Forward
+1849,Richmond,Jack Ross,5,Midfielder
+3427,Richmond,Sam Banks,6,Defender
+2855,Richmond,Rhyan Mansell,7,Forward
+9187,Richmond,Jonty Faull,8,Key Forward
+9427,Richmond,Taj Hotton,10,Forward
+9375,Richmond,Luke Trainor,11,Defender
+1572,Richmond,Ben Miller,12,Key Defender
+2764,Richmond,Hugo Ralphsmith,13,Midfielder
+1395,Richmond,Tim Taranto,14,Midfielder
+964,Richmond,Jayden Short,15,Defender
+8507,Richmond,Josh Smillie,16,Midfielder
+2778,Richmond,Maurice Rioli,17,Forward
+5157,Richmond,Josh Gibcus,18,Key Defender
+472,Richmond,Tom Lynch,19,Key Forward
+1755,Richmond,Noah Balta,21,Key Defender
+10116,Richmond,Sam Cumming,22,Midfielder
+5068,Richmond,Judson Clarke,23,Defender
+12494,Richmond,Sam Grlj,24,Midfielder
+10777,Richmond,Zane Peucker,26,Forward
+10521,Richmond,Noah Roberts-Thomson,27,Midfielder
+9749,Richmond,Kane McAuliffe,28,Midfielder
+8588,Richmond,Jasper Alger,29,Forward
+2877,Richmond,Tom Brown,30,Defender
+2245,Richmond,Samson Ryan,32,Ruck
+9366,Richmond,Patrick Retschko,33,Midfielder
+9371,Richmond,Harry Armstrong,34,Key Forward
+1032,Richmond,Nathan Broad,35,Defender
+8945,Richmond,James Trezise,36,Midfielder
+9279,Richmond,Tom Sims,38,Key Forward
+2717,Richmond,Tyler Sonsie,40,Midfielder
+6284,Richmond,Mykelti Lefau,42,Key Forward
+9613,Richmond,Liam Fawcett,43,Key Forward
+5275,Richmond,Seth Campbell,44,Forward
+12081,Richmond,Oliver Hayes-Brown,47,Ruck
+7489,Richmond,Steely Green,48,Forward
+7321,Richmond,Kaleb Smith,49,Defender
+12567,Richmond,Campbell Gray,50,Key Defender
+1855,St Kilda,Captain Callum Wilkie label.squad.captain.profile,,
+1072,St Kilda,Captain Jack Sinclair label.squad.captain.profile,,
+1573,St Kilda,Jack Higgins,1,Forward
+5282,St Kilda,Marcus Windhager,2,Midfielder
+766,St Kilda,Jack Silvagni,3,Key Defender
+7451,St Kilda,Lance Collard,4,Forward
+8498,St Kilda,Tobie Travaglia,5,Defender
+748,St Kilda,Jack Macrae,6,Midfielder
+5694,St Kilda,Nasiah Wanganeen-Milera,7,Defender
+482,St Kilda,Bradley Hill,8,Midfielder
+2341,St Kilda,Sam Flanders,9,Forward
+5305,St Kilda,Mitch Owens,10,Key Forward
+1716,St Kilda,Hunter Clark,11,Midfielder
+1950,St Kilda,Max King,12,Key Forward
+2986,St Kilda,Ryan Byrnes,13,Defender
+1897,St Kilda,Liam Stocker,14,Defender
+1554,St Kilda,Paddy Dow,15,Midfielder
+1036,St Kilda,Dan Butler,16,Forward
+8634,St Kilda,Isaac Keeler,17,Key Forward
+4055,St Kilda,Jack Carroll,18,Midfielder
+1410,St Kilda,Rowan Marshall,19,Ruck
+998,St Kilda,Dougal Howard,20,Key Defender
+1544,St Kilda,Tom De Koning,21,Ruck
+6573,St Kilda,Darcy Wilson,22,Midfielder
+3716,St Kilda,Liam Henry,23,Forward
+6541,St Kilda,Angus Hastie,24,Defender
+8635,St Kilda,Mattaes Phillipou,25,Forward
+9230,St Kilda,Alix Tauru,26,Key Defender
+9037,St Kilda,James Barrat,28,Key Defender
+10708,St Kilda,Alex Dodson,30,Key Forward
+1787,St Kilda,Liam Ryan,31,Forward
+547,St Kilda,Mason Wood,32,Midfielder
+9080,St Kilda,Patrick Said,33,Forward
+6395,St Kilda,Hugo Garcia,34,Midfielder
+12935,St Kilda,Charlie Banfield,36,Midfielder
+12523,St Kilda,Kye Fincher,37,Midfielder
+11281,St Kilda,Hugh Boxshall,38,Midfielder
+5088,St Kilda,Max Hall,40,Forward
+15854,St Kilda,Kobe McDonald,42,Defender
+3028,St Kilda,Cooper Sharman,43,Key Forward
+12082,St Kilda,Liam O'Connell,45,Defender
+13967,St Kilda,Eamonn Armstrong,46,Defender
+5467,St Kilda,Anthony Caminiti,47,Key Defender
+1133,Sydney Swans,Captain Callum Mills label.squad.captain.profile,,
+3735,Sydney Swans,Chad Warner,1,Midfielder
+1956,Sydney Swans,Hayden McLean,2,Key Forward
+145,Sydney Swans,Taylor Adams,3,Forward
+113,Sydney Swans,Brodie Grundy,4,Ruck
+966,Sydney Swans,Isaac Heeney,5,Midfielder
+4074,Sydney Swans,Logan McDonald,6,Key Forward
+559,Sydney Swans,Harry Cunningham,7,Defender
+1908,Sydney Swans,James Rowbottom,8,Midfielder
+8509,Sydney Swans,Jesse Dattoli,9,Forward
+2602,Sydney Swans,Malcolm Rosas,10,Forward
+1135,Sydney Swans,Tom Papley,11,Forward
+5698,Sydney Swans,Angus Sheldrick,12,Midfielder
+5107,Sydney Swans,Jai Serong,13,Key Defender
+1903,Sydney Swans,Sam Wicks,15,Defender
+2941,Sydney Swans,Braeden Campbell,16,Forward
+1813,Sydney Swans,James Jordon,17,Midfielder
+11238,Sydney Swans,Jevan Phillipou,18,Midfielder
+1371,Sydney Swans,Peter Ladhams,19,Ruck
+6426,Sydney Swans,Riak Andrew,20,Key Defender
+3336,Sydney Swans,Errol Gulden,21,Midfielder
+1948,Sydney Swans,Nick Blakey,22,Defender
+10298,Sydney Swans,Ned Bowman,23,Forward
+727,Sydney Swans,Dane Rampe,24,Defender
+2879,Sydney Swans,Billy Cootee,25,Midfielder
+8470,Sydney Swans,Riley Bice,26,Defender
+1864,Sydney Swans,Justin McInerney,27,Midfielder
+5488,Sydney Swans,William Edwards,28,Key Defender
+458,Sydney Swans,Joel Hamling,29,Key Defender
+1786,Sydney Swans,Tom McCartin,30,Key Defender
+12441,Sydney Swans,Max King,31,Key Forward
+13552,Sydney Swans,Harry Kyle,32,Defender
+6816,Sydney Swans,Caiden Cleary,33,Forward
+5696,Sydney Swans,Matt Roberts,34,Defender
+776,Sydney Swans,Charlie Curnow,35,Key Forward
+1598,Sydney Swans,Joel Amartey,36,Key Forward
+5697,Sydney Swans,Corey Warner,37,Midfielder
+12402,Sydney Swans,Liam Hetherton,39,Key Forward
+6489,Sydney Swans,Tom Hanily,40,Forward
+9038,Sydney Swans,Patrick Snell,41,Key Defender
+11653,Sydney Swans,Noah Chamberlain,42,Key Forward
+1040,Sydney Swans,Lewis Melican,43,Key Defender
+844,Sydney Swans,Jake Lloyd,44,Midfielder
+6600,Sydney Swans,William Green,45,Ruck
+956,West Coast Eagles,Captain Liam Duggan label.squad.captain.profile,,
+11955,West Coast Eagles,Willem Duursma,1,Midfielder
+1381,West Coast Eagles,Jake Waterman,2,Key Forward
+1756,West Coast Eagles,Liam Baker,3,Defender
+1609,West Coast Eagles,Brandon Starcevich,4,Defender
+11789,West Coast Eagles,Josh Lindsay,5,Defender
+584,West Coast Eagles,Elliot Yeo,6,Midfielder
+7975,West Coast Eagles,Reuben Ginbey,7,Defender
+7596,West Coast Eagles,Elijah Hewett,8,Midfielder
+5377,West Coast Eagles,Harley Reid,9,Midfielder
+4066,West Coast Eagles,Tyler Brockman,10,Forward
+1741,West Coast Eagles,Tim Kelly,11,Midfielder
+11938,West Coast Eagles,Sam Allen,12,Midfielder
+5375,West Coast Eagles,Noah Long,13,Forward
+751,West Coast Eagles,Jamie Cripps,15,Forward
+1776,West Coast Eagles,Matthew Owies,16,Forward
+1325,West Coast Eagles,Jack Graham,17,Midfielder
+12571,West Coast Eagles,Tom McCarthy,18,Defender
+5701,West Coast Eagles,Brady Hough,19,Midfielder
+4777,West Coast Eagles,Tylar Young,20,Key Defender
+12113,West Coast Eagles,Cooper Duff-Tytler,21,Ruck
+6500,West Coast Eagles,Archer Reid,22,Key Forward
+8467,West Coast Eagles,Ryan Maric,23,Defender
+6701,West Coast Eagles,Harvey Johnston,24,Defender
+866,West Coast Eagles,Matt Flynn,25,Ruck
+8325,West Coast Eagles,Bo Allan,26,Defender
+8579,West Coast Eagles,Tom Gross,27,Midfielder
+1146,West Coast Eagles,Tom Cole,28,Defender
+7519,West Coast Eagles,Clay Hall,29,Midfielder
+8637,West Coast Eagles,Harry Barnett,30,Ruck
+8511,West Coast Eagles,Lucca Grego,31,Defender
+1904,West Coast Eagles,Bailey J. Williams,32,Ruck
+5699,West Coast Eagles,Rhett Bazzo,33,Key Defender
+5700,West Coast Eagles,Jack Williams,34,Key Forward
+9050,West Coast Eagles,Jobe Shanahan,35,Key Forward
+13382,West Coast Eagles,Tylah Williams,36,Forward
+8496,West Coast Eagles,Malakai Champion,37,Forward
+11298,West Coast Eagles,Hamish Davis,38,Midfielder
+11953,West Coast Eagles,Fred Rodriguez,39,Midfielder
+3713,West Coast Eagles,Deven Robertson,40,Forward
+2875,West Coast Eagles,Sandy Brock,41,Key Defender
+1854,West Coast Eagles,Harry Edwards,42,Key Defender
+7576,West Coast Eagles,Tyrell Dewar,43,Midfielder
+12565,West Coast Eagles,Jack Hutchinson,44,Midfielder
+2695,West Coast Eagles,Finlay Macrae,45,Midfielder
+10103,West Coast Eagles,Jacob Newton,46,Forward
+3711,West Coast Eagles,Harry Schoenberg,48,Midfielder
+857,Western Bulldogs,Captain Marcus Bontempelli label.squad.captain.profile,,
+492,Western Bulldogs,Adam Treloar,1,Midfielder
+12455,Western Bulldogs,Lachlan Carmichael,2,Defender
+2401,Western Bulldogs,Cody Weightman,3,Forward
+7959,Western Bulldogs,Jedd Busslinger,5,Key Defender
+8502,Western Bulldogs,Cooper Hynes,6,Forward
+604,Western Bulldogs,Rory Lobb,7,Key Defender
+922,Western Bulldogs,Matthew Kennedy,8,Midfielder
+5296,Western Bulldogs,Ryley Sanders,9,Midfielder
+5292,Western Bulldogs,Sam Darcy,10,Key Forward
+9248,Western Bulldogs,Lachie Jaques,11,Defender
+5036,Western Bulldogs,Harvey Gallagher,12,Defender
+1739,Western Bulldogs,Oskar Baker,13,Midfielder
+1912,Western Bulldogs,Rhylee West,14,Forward
+15533,Western Bulldogs,Will Darcy,15,Key Defender
+6385,Western Bulldogs,Jordan Croft,16,Key Forward
+1707,Western Bulldogs,Nick Coffield,17,Defender
+11626,Western Bulldogs,James O'Donnell,18,Key Defender
+2389,Western Bulldogs,Connor Budarick,19,Forward
+1722,Western Bulldogs,Ed Richards,20,Midfielder
+848,Western Bulldogs,Tom Liberatore,21,Midfielder
+742,Western Bulldogs,James Harmes,22,Midfielder
+1931,Western Bulldogs,Laitham Vandermeer,23,Forward
+1959,Western Bulldogs,Buku Khamis,24,Key Forward
+12017,Western Bulldogs,Louis Emmett,25,Ruck
+11957,Western Bulldogs,Josh Dolan,26,Forward
+6564,Western Bulldogs,Joel Freijah,27,Midfielder
+4313,Western Bulldogs,Lachlan Bramble,29,Defender
+4079,Western Bulldogs,Lachlan McNeil,30,Forward
+1053,Western Bulldogs,Bailey Dale,31,Defender
+5703,Western Bulldogs,Arthur Jones,32,Midfielder
+1621,Western Bulldogs,Aaron Naughton,33,Key Forward
+969,Western Bulldogs,Bailey Williams,34,Midfielder
+9475,Western Bulldogs,Luke Kennedy,35,Midfielder
+3187,Western Bulldogs,Luke Cleary,36,Defender
+7394,Western Bulldogs,Michael Sellwood,37,Defender
+3741,Western Bulldogs,Riley Garcia,38,Midfielder
+6524,Western Bulldogs,Lachlan Smith,40,Ruck
+14554,Western Bulldogs,Zac Walker,41,Key Defender
+12580,Western Bulldogs,Sam Davidson,42,Midfielder
+900,Western Bulldogs,Ryan Gardner,43,Key Defender
+1409,Western Bulldogs,Tim English,44,Ruck
