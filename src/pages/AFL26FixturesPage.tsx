@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import FixturePosterCard, { type FixturePosterMatch } from '../components/FixturePosterCard';
-import { getAfl26RoundsFromSupabase, peekAfl26RoundsCache, type AflRound } from '../data/afl26Supabase';
+import { FixtureSkeletons } from '../components/FixtureSkeleton';
+import { useNextFixtures, useAllFixtures } from '../hooks/useFixtures';
 import { afl26LocalRounds } from '../data/afl26LocalRounds';
 
 import '../styles/Fixtures.css';
@@ -18,99 +19,111 @@ const FILTERS: { key: StatusFilter; label: string }[] = [
 
 export default function AFL26FixturesPage() {
   const navigate = useNavigate();
-  const cachedRounds = peekAfl26RoundsCache();
-  const initialRounds = cachedRounds && cachedRounds.length ? cachedRounds : afl26LocalRounds;
-
-  const [rounds, setRounds] = useState<AflRound[]>(initialRounds);
-  const [loading, setLoading] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [activeRound, setActiveRound] = useState(1);
   const [activeFilter, setActiveFilter] = useState<StatusFilter>('ALL');
 
+  // Load next fixtures immediately, all fixtures in background
+  const nextFixturesQuery = useNextFixtures('afl26', 3);
+  const allFixturesQuery = useAllFixtures('afl26', nextFixturesQuery.isSuccess);
+
+  // Extract fixtures - combine next + all for complete list
+  const allFixtures = useMemo(() => {
+    // Prefer all fixtures if loaded, fallback to next fixtures
+    const fixtures = allFixturesQuery.data ?? nextFixturesQuery.data ?? [];
+
+    // Group by round
+    const rounds = new Map<number, any[]>();
+    fixtures.forEach((f: any) => {
+      const roundNum = f.round || 1;
+      if (!rounds.has(roundNum)) rounds.set(roundNum, []);
+      rounds.get(roundNum)!.push(f);
+    });
+
+    return Array.from(rounds.entries())
+      .sort((a, b) => b[0] - a[0]) // Descending round order
+      .map(([roundNum, fixtures]) => ({
+        round: roundNum,
+        matches: fixtures.sort((a: any, b: any) => {
+          // Sort by start_time ascending within round
+          const aTime = new Date(a.start_time || 0).getTime();
+          const bTime = new Date(b.start_time || 0).getTime();
+          return aTime - bTime;
+        }),
+      }));
+  }, [nextFixturesQuery.data, allFixturesQuery.data]);
+
+  // Set initial active round
   useEffect(() => {
-    let mounted = true;
+    if (allFixtures.length && !allFixtures.find((x) => x.round === activeRound)) {
+      setActiveRound(allFixtures[0].round);
+    }
+  }, [allFixtures, activeRound]);
 
-    (async () => {
-      try {
-        if (!cachedRounds?.length && !rounds.length) setLoading(true);
-        setLoadError(null);
-
-        const r = await getAfl26RoundsFromSupabase();
-        if (!mounted) return;
-
-        const nextRounds = r && r.length ? r : afl26LocalRounds;
-
-        setRounds(nextRounds);
-
-        if (nextRounds.length && !nextRounds.find((x) => x.round === activeRound)) {
-          setActiveRound(nextRounds[0].round);
-        }
-      } catch (e: any) {
-        if (!mounted) return;
-
-        setRounds(afl26LocalRounds);
-        setLoadError(e?.message || 'Using local fixtures (Supabase unavailable).');
-
-        if (afl26LocalRounds.length && !afl26LocalRounds.find((x) => x.round === activeRound)) {
-          setActiveRound(afl26LocalRounds[0].round);
-        }
-      } finally {
-        if (!mounted) return;
-        setLoading(false);
-      }
-    })();
-
-    return () => {
-      mounted = false;
-    };
-  }, [cachedRounds]);
-
-  const currentRound = rounds.find((r) => r.round === activeRound) || rounds[0];
+  const currentRound = allFixtures.find((r) => r.round === activeRound) || allFixtures[0];
   const totalMatches = currentRound?.matches?.length || 0;
 
   const filteredMatches = useMemo(() => {
     const list = currentRound?.matches || [];
     if (activeFilter === 'ALL') return list;
 
-    return list.filter((m) => {
-      if (activeFilter === 'SCHEDULED') return m.status === 'SCHEDULED';
-      if (activeFilter === 'LIVE') return m.status === 'LIVE';
-      if (activeFilter === 'FINAL') return m.status === 'FINAL';
+    return list.filter((f: any) => {
+      const status = f.status || 'SCHEDULED';
+      if (activeFilter === 'SCHEDULED') return status === 'SCHEDULED';
+      if (activeFilter === 'LIVE') return status === 'LIVE';
+      if (activeFilter === 'FINAL') return status === 'FINAL';
       return true;
     });
   }, [currentRound, activeFilter]);
 
   const uiMatches: FixturePosterMatch[] = useMemo(
     () =>
-      (filteredMatches || []).map((m) => ({
-        id: m.id,
-        round: activeRound,
-        venue: m.venue,
-        status: m.status,
-        home: m.home as any,
-        away: m.away as any,
+      (filteredMatches || []).map((f: any) => {
+        // Use team slug as the key (matches TEAM_ASSETS structure)
+        const homeTeamKey = (f.home_team_slug || f.home_team_key || '') as any;
+        const awayTeamKey = (f.away_team_slug || f.away_team_key || '') as any;
 
-        // ✅ pass coach names + psn to the card
-        homeCoachName: (m as any).homeCoachName,
-        awayCoachName: (m as any).awayCoachName,
-        homePsn: m.homePsn,
-        awayPsn: m.awayPsn,
+        // Build score objects
+        const homeScore = f.home_goals !== null && f.home_goals !== undefined
+          ? {
+              goals: f.home_goals,
+              behinds: f.home_behinds || 0,
+              total: f.home_total || (f.home_goals * 6) + (f.home_behinds || 0),
+            }
+          : undefined;
 
-        homeScore: m.homeScore,
-        awayScore: m.awayScore,
+        const awayScore = f.away_goals !== null && f.away_goals !== undefined
+          ? {
+              goals: f.away_goals,
+              behinds: f.away_behinds || 0,
+              total: f.away_total || (f.away_goals * 6) + (f.away_behinds || 0),
+            }
+          : undefined;
 
-        onMatchCentreClick: () => navigate(`/match-centre/${m.id}`),
-      })),
+        return {
+          id: f.id,
+          round: activeRound,
+          venue: f.venue || 'TBA',
+          status: f.status || 'SCHEDULED',
+          home: homeTeamKey,
+          away: awayTeamKey,
+          homeScore,
+          awayScore,
+          onMatchCentreClick: () => navigate(`/match-centre/${f.id}`),
+        };
+      }),
     [filteredMatches, navigate, activeRound]
   );
+
+  const isLoading = nextFixturesQuery.isLoading;
+  const isError = nextFixturesQuery.isError;
 
   return (
     <div className="fxAflPage">
       <div className="fxAflInner">
         <div className="fxAflStickyNav">
           <div className="fxAflRounds" aria-label="Rounds">
-            {(rounds || []).map((r) => (
+            {(allFixtures || []).map((r) => (
               <button
                 key={r.round}
                 type="button"
@@ -142,18 +155,23 @@ export default function AFL26FixturesPage() {
             ))}
           </div>
 
-          {loadError ? <div className="fxAflNotice">{loadError}</div> : null}
-          {loading && !uiMatches.length ? <div className="fxAflLoading">Loading fixtures…</div> : null}
-
-          {!loading && uiMatches.length === 0 ? (
-            <div className="fxAflEmpty">No matches found for this filter.</div>
+          {isError ? (
+            <div className="fxAflNotice">
+              Unable to load fixtures. Please check your connection.
+            </div>
           ) : null}
 
-          <div className="fxAflList">
-            {uiMatches.map((m) => (
-              <FixturePosterCard key={m.id} m={m} />
-            ))}
-          </div>
+          {isLoading ? (
+            <FixtureSkeletons count={3} />
+          ) : uiMatches.length === 0 ? (
+            <div className="fxAflEmpty">No matches found for this filter.</div>
+          ) : (
+            <div className="fxAflList">
+              {uiMatches.map((m) => (
+                <FixturePosterCard key={m.id} m={m} />
+              ))}
+            </div>
+          )}
         </div>
 
         <div style={{ height: 18 }} />

@@ -1,6 +1,7 @@
 import { Eye, EyeOff, Lock, Mail, ChevronLeft } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../../state/auth/AuthProvider';
 
 function cn(...a: Array<string | false | undefined | null>) {
@@ -17,6 +18,9 @@ export default function SignInPage() {
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(location?.state?.message || null);
+
+  const isFormValid = email && password;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,7 +29,8 @@ export default function SignInPage() {
       await signIn({ email, password });
       nav(redirectTo, { replace: true });
     } catch (err: any) {
-      setError(err?.message || 'Could not sign in');
+      const errMsg = err?.message || 'Could not sign in. Check your email and password.';
+      setError(errMsg);
     }
   }
 
@@ -34,33 +39,97 @@ export default function SignInPage() {
     return <Navigate to="/members" replace />;
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+  };
+
   return (
     <div className="auth-screen">
-      <div className="auth-top">
-        <button type="button" className="auth-back" onClick={() => nav('/')}
-          aria-label="Back to home">
+      <motion.div 
+        className="auth-top"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <motion.button 
+          type="button" 
+          className="auth-back" 
+          onClick={() => nav('/')}
+          aria-label="Back to home"
+          whileHover={{ scale: 1.05, x: -4 }}
+          whileTap={{ scale: 0.95 }}
+        >
           <ChevronLeft size={18} />
           <span>Home</span>
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
 
-      <div className="auth-card">
-        <div className="auth-badge">COACH ACCESS</div>
-        <div className="auth-title">Sign in</div>
-        <div className="auth-sub">
-          Coaches only — this links your account to your team so only you can submit results.
-        </div>
+      <motion.div 
+        className="auth-card"
+        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        variants={containerVariants}
+      >
+        <motion.div 
+          className="auth-badge"
+          variants={itemVariants}
+        >
+          COACH ACCESS
+        </motion.div>
+        
+        <motion.div variants={itemVariants}>
+          <div className="auth-title">Sign in</div>
+          <div className="auth-sub">
+            Coaches only — this links your account to your team so only you can submit results.
+          </div>
+        </motion.div>
+
+        {successMessage && (
+          <motion.div 
+            className="auth-note"
+            variants={itemVariants}
+            style={{
+              background: 'rgba(34,197,94,0.10)',
+              borderColor: 'rgba(34,197,94,0.20)',
+            }}
+          >
+            ✓ {successMessage}
+          </motion.div>
+        )}
 
         {!isSupabase ? (
-          <div className="auth-note">
-            <strong>Local mode:</strong> Supabase env vars aren’t set, so sign-in is stored on this device only.
-          </div>
+          <motion.div 
+            className="auth-note"
+            variants={itemVariants}
+          >
+            <strong>Local mode:</strong> Sign-in is stored on this device only.
+          </motion.div>
         ) : null}
 
-        <form onSubmit={onSubmit} className="auth-form">
-          <label className="auth-field">
+        <motion.form 
+          onSubmit={onSubmit} 
+          className="auth-form"
+          variants={itemVariants}
+        >
+          <motion.label 
+            className="auth-field"
+            whileHover={{ scale: 1.01 }}
+          >
             <span className="auth-label">Email</span>
-            <div className="auth-inputWrap">
+            <motion.div className="auth-inputWrap">
               <Mail size={16} className="auth-icon" />
               <input
                 className="auth-input"
@@ -70,13 +139,17 @@ export default function SignInPage() {
                 placeholder="coach@email.com"
                 autoComplete="email"
                 required
+                disabled={loading}
               />
-            </div>
-          </label>
+            </motion.div>
+          </motion.label>
 
-          <label className="auth-field">
+          <motion.label 
+            className="auth-field"
+            whileHover={{ scale: 1.01 }}
+          >
             <span className="auth-label">Password</span>
-            <div className="auth-inputWrap">
+            <motion.div className="auth-inputWrap">
               <Lock size={16} className="auth-icon" />
               <input
                 className="auth-input"
@@ -86,32 +159,73 @@ export default function SignInPage() {
                 placeholder="••••••••"
                 autoComplete="current-password"
                 required
+                disabled={loading}
               />
-              <button
+              <motion.button
                 type="button"
                 className={cn('auth-eye', show && 'active')}
                 onClick={() => setShow((s) => !s)}
                 aria-label={show ? 'Hide password' : 'Show password'}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                disabled={loading}
               >
                 {show ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-          </label>
+              </motion.button>
+            </motion.div>
+          </motion.label>
 
-          {error ? <div className="auth-error">{error}</div> : null}
+          {error ? (
+            <motion.div 
+              className="auth-error"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {error}
+            </motion.div>
+          ) : null}
 
-          <button type="submit" className="auth-primary" disabled={loading}>
-            {loading ? 'Signing in…' : 'Sign in'}
-          </button>
+          <motion.button 
+            type="submit" 
+            className="auth-primary" 
+            disabled={loading || !isFormValid}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+          >
+            {loading ? (
+              <>
+                <span className="auth-button-spinner" />
+                <span style={{ marginLeft: 8 }}>Signing in…</span>
+              </>
+            ) : (
+              'Sign in'
+            )}
+          </motion.button>
 
-          <div className="auth-footer">
+          <motion.div 
+            className="auth-footer"
+            variants={itemVariants}
+          >
             <span>New coach?</span>
             <Link className="auth-link" to="/auth/sign-up">
               Create account
             </Link>
-          </div>
-        </form>
-      </div>
+          </motion.div>
+
+          <motion.div 
+            className="auth-footer"
+            variants={itemVariants}
+            style={{ marginTop: 12, gap: 4 }}
+          >
+            <span>Forgot your password?</span>
+            <Link className="auth-link" to="/auth/forgot-password">
+              Reset it
+            </Link>
+          </motion.div>
+        </motion.form>
+      </motion.div>
     </div>
   );
 }

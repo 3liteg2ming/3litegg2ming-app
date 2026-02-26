@@ -6,7 +6,7 @@ import FixturePosterCard, { type FixturePosterMatch } from '../components/Fixtur
 import SmartImg from '../components/SmartImg';
 import { getAfl26RoundsFromSupabase, peekAfl26RoundsCache, type AflMatch, type AflRound } from '../data/afl26Supabase';
 import { afl26LocalRounds } from '../data/afl26LocalRounds';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabaseClient';
 import { TEAM_ASSETS, assetUrl, getTeamAssets, type TeamKey } from '../lib/teamAssets';
 import { fetchLeaderCategories, peekLeaderCategoriesCache, type StatLeaderCategory } from '../lib/stats-leaders-cache';
 
