@@ -7,7 +7,7 @@
 
 .mcPage {
   width: 100%;
-  min-height: 100vh;
+  min-height: 100dvh;
   background:
     radial-gradient(ellipse at 50% 0%, rgba(100,60,200,0.08), transparent 70%),
     linear-gradient(180deg, rgba(8,10,16,0.95) 0%, rgba(6,8,14,0.98) 100%);
@@ -17,12 +17,15 @@
 
 .mcPage__inner {
   width: 100%;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   max-width: 980px;
   margin: 0 auto;
   position: relative;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .mcPage__content {
@@ -32,7 +35,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding-bottom: 8px;
+  padding-bottom: calc(140px + env(safe-area-inset-bottom));
 }
 
 .mcPage__footer {

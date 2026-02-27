@@ -90,14 +90,26 @@
   left: 0;
   width: 250px;
   border-radius: 18px;
-  padding: 8px;
+  padding: 10px 8px 8px;
 
-  background: rgba(10, 12, 16, 0.78);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  background: rgba(8, 10, 14, 0.985);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 22px 60px rgba(0, 0, 0, 0.45);
+}
+
+.egTopHeader__menu::before {
+  content: 'Competitions';
+  display: block;
+  padding: 0 8px 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.46);
+  pointer-events: none;
 }
 
 .egTopHeader__menuItem {
@@ -174,7 +186,7 @@
   background: transparent;
   cursor: pointer;
 
-  transform: translateY(-4px); /* ✅ this is the alignment fix */
+  transform: translateY(-1px);
 }
 
 .egTopHeader__brandCrop {
@@ -231,7 +243,7 @@
   }
 
   .egTopHeader__brand {
-    transform: translateY(-4px);
+    transform: translateY(-1px);
   }
 
   .egTopHeader__brandCrop {
@@ -243,4 +255,20 @@
     height: 118px;
     transform: translateY(-16px) scale(1.06);
   }
+}
+
+/* Preseason accent overrides (logic-only visual hook usage) */
+.egTopHeader__switch--preseason {
+  border-color: rgba(34, 197, 94, 0.52);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(34, 197, 94, 0.30),
+    0 0 22px rgba(34, 197, 94, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+
+.egTopHeader__menuItem--preseason.isActive {
+  background: rgba(34, 197, 94, 0.14);
+  border: 1px solid rgba(34, 197, 94, 0.34);
+  box-shadow: inset 0 0 14px rgba(34, 197, 94, 0.12);
 }

@@ -195,7 +195,7 @@ export default function FixtureSpotlightCard({ m }: { m: FixtureMatch }) {
         <div className="fxMC__team fxMC__team--home">
           <div className="fxMC__teamGlow fxMC__teamGlow--home" aria-hidden />
           <div className="fxMC__logoBox fxMC__logoBox--home">
-            <SmartImg className="fxMC__logo" src={assetUrl(home.logoFile)} alt={home.name} fallbackText="EG" />
+            <SmartImg className="fxMC__logo" src={assetUrl(home.logoFile ?? '')} alt={home.name} fallbackText="EG" />
           </div>
           <div className="fxMC__abbr">{(home.short || home.name).toUpperCase()}</div>
         </div>
@@ -223,7 +223,7 @@ export default function FixtureSpotlightCard({ m }: { m: FixtureMatch }) {
         <div className="fxMC__team fxMC__team--away">
           <div className="fxMC__teamGlow fxMC__teamGlow--away" aria-hidden />
           <div className="fxMC__logoBox fxMC__logoBox--away">
-            <SmartImg className="fxMC__logo" src={assetUrl(away.logoFile)} alt={away.name} fallbackText="EG" />
+            <SmartImg className="fxMC__logo" src={assetUrl(away.logoFile ?? '')} alt={away.name} fallbackText="EG" />
           </div>
           <div className="fxMC__abbr">{(away.short || away.name).toUpperCase()}</div>
         </div>

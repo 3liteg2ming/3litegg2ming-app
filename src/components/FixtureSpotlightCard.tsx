@@ -147,7 +147,7 @@ export default function FixtureSpotlightCard({ m }: { m: FixtureMatch }) {
             <div className="fxPoster__logoWrap">
               <SmartImg
                 className="fxPoster__logo"
-                src={assetUrl(home.logoFile)}
+                src={assetUrl(home.logoFile ?? '')}
                 alt={home.name}
                 fallbackText="EG"
               />
@@ -185,7 +185,7 @@ export default function FixtureSpotlightCard({ m }: { m: FixtureMatch }) {
             <div className="fxPoster__logoWrap">
               <SmartImg
                 className="fxPoster__logo"
-                src={assetUrl(away.logoFile)}
+                src={assetUrl(away.logoFile ?? '')}
                 alt={away.name}
                 fallbackText="EG"
               />

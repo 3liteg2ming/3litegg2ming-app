@@ -1,42 +1,48 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown, User } from 'lucide-react';
 import { assetUrl } from '../lib/teamAssets';
+import {
+  COMPETITIONS,
+  type CompetitionKey,
+  getDefaultCompetitionKey,
+  getStoredCompetitionKey,
+  isSelectable,
+  setStoredCompetitionKey,
+} from '../lib/competitionRegistry';
 
 import '../styles/topHeader.css';
 
-type CompKey = 'AFL26' | 'PROTEAM';
-
-type Competition = {
-  key: CompKey;
+type HeaderCompetition = {
+  key: CompetitionKey;
   label: string;
+  status: 'OPEN' | 'COMING_SOON';
   logoSrc: string;
-  basePath: string;
 };
 
-const COMPETITIONS: Competition[] = [
-  { key: 'AFL26', label: 'AFL 26', logoSrc: assetUrl('afl26-logo.png'), basePath: '/' },
-  { key: 'PROTEAM', label: 'Pro Team', logoSrc: assetUrl('proteam-logo.png'), basePath: '/pro-team' },
-];
-
-function inferCompetition(pathname: string): CompKey {
-  if (pathname.startsWith('/pro-team')) return 'PROTEAM';
-  return 'AFL26';
-}
+const HEADER_COMPETITIONS: HeaderCompetition[] = COMPETITIONS.map((c) => ({
+  key: c.key,
+  label: c.label,
+  status: c.status,
+  logoSrc: assetUrl('afl26-logo.png'),
+}));
 
 export default function TopHeader() {
   const nav = useNavigate();
-  const location = useLocation();
 
   const [open, setOpen] = useState(false);
+  const [activeKey, setActiveKey] = useState<CompetitionKey>(getDefaultCompetitionKey());
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
-  const activeKey = useMemo(() => inferCompetition(location.pathname), [location.pathname]);
   const activeComp = useMemo(
-    () => COMPETITIONS.find((c) => c.key === activeKey) || COMPETITIONS[0],
+    () => HEADER_COMPETITIONS.find((c) => c.key === activeKey) || HEADER_COMPETITIONS[0],
     [activeKey]
   );
+
+  useEffect(() => {
+    setActiveKey(getStoredCompetitionKey());
+  }, []);
 
   useEffect(() => {
     const onMouseDown = (e: MouseEvent) => {
@@ -58,11 +64,12 @@ export default function TopHeader() {
 
   const goAuth = () => nav('/auth/sign-in');
 
-  const selectCompetition = (key: CompKey) => {
-    const next = COMPETITIONS.find((c) => c.key === key);
-    if (!next) return;
+  const selectCompetition = (key: CompetitionKey) => {
+    if (!isSelectable(key)) return;
+    const stored = setStoredCompetitionKey(key);
+    setActiveKey(stored);
     setOpen(false);
-    nav(next.basePath);
+    nav('/');
   };
 
   return (
@@ -72,7 +79,7 @@ export default function TopHeader() {
         <div className="egTopHeader__left" ref={wrapRef}>
           <button
             type="button"
-            className="egTopHeader__switch"
+            className={`egTopHeader__switch ${activeKey === 'preseason' ? 'egTopHeader__switch--preseason' : ''}`}
             onClick={() => setOpen((v) => !v)}
             aria-haspopup="menu"
             aria-expanded={open}
@@ -94,20 +101,28 @@ export default function TopHeader() {
                 exit={{ opacity: 0, y: -6, scale: 0.98 }}
                 transition={{ duration: 0.16 }}
               >
-                {COMPETITIONS.map((c) => (
+                {HEADER_COMPETITIONS.map((c) => (
                   <button
                     key={c.key}
                     type="button"
                     role="menuitem"
-                    className={`egTopHeader__menuItem ${c.key === activeComp.key ? 'isActive' : ''}`}
+                    className={`egTopHeader__menuItem ${c.key === 'preseason' ? 'egTopHeader__menuItem--preseason' : ''} ${c.key === activeComp.key ? 'isActive' : ''}`}
                     onClick={() => selectCompetition(c.key)}
+                    disabled={!isSelectable(c.key)}
+                    aria-disabled={!isSelectable(c.key)}
                   >
                     <span className="egTopHeader__menuItemIcon" aria-hidden="true">
                       <img className="egTopHeader__menuLogo" src={c.logoSrc} alt="" loading="lazy" />
                     </span>
                     <span className="egTopHeader__menuText">
                       <span className="egTopHeader__menuTitle">{c.label}</span>
-                      <span className="egTopHeader__menuSub">{c.key === 'AFL26' ? 'Season hub' : 'Pro division'}</span>
+                      <span className="egTopHeader__menuSub">
+                        {c.key === 'afl26' && c.status === 'COMING_SOON'
+                          ? 'Season Two • Coming Soon'
+                          : c.status === 'COMING_SOON'
+                          ? 'Coming Soon'
+                          : 'Season hub'}
+                      </span>
                     </span>
                   </button>
                 ))}
@@ -116,7 +131,7 @@ export default function TopHeader() {
           </AnimatePresence>
         </div>
 
-        {/* CENTER: CROPPED + SCALED LOGO (fixes your padded PNG) */}
+        {/* CENTER */}
         <div className="egTopHeader__center" aria-label="Elite Gaming">
           <button type="button" className="egTopHeader__brand" onClick={() => nav('/')} aria-label="Go to home">
             <span className="egTopHeader__brandCrop" aria-hidden="true">

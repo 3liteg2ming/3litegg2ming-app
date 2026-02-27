@@ -196,7 +196,7 @@ export function OcrUploadCard({
                   .map(([k, v]) => (
                     <div key={k} className="ocrCard__resultsStat">
                       <span>{k}</span>
-                      <span className="ocrCard__resultsValue">{v}</span>
+                      <span className="ocrCard__resultsValue">{String(v ?? '')}</span>
                     </div>
                   ))}
               </div>

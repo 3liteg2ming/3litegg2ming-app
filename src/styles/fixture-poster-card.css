@@ -230,6 +230,12 @@
   color: rgba(255,255,255,0.40);
 }
 
+/* High-score fixtures (100+) get a slightly tighter score scale */
+.fxPosterCard--compactScore{
+  --score: clamp(18px, 2.7vw, 30px);
+  --dash: clamp(12px, 1.7vw, 16px);
+}
+
 .fxPosterCard__dash{
   font-size: var(--dash);
   font-weight: 500;
@@ -474,6 +480,11 @@
 
     --statusW: 214px;
     --coachH: 58px;
+  }
+
+  .fxPosterCard--compactScore{
+    --score: clamp(20px, 6.8vw, 32px);
+    --dash: clamp(12px, 4.2vw, 16px);
   }
 
   .fxPosterCard__coachPsn{

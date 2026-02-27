@@ -41,11 +41,11 @@ export default function MatchTimeline({ model, loading }: { model: MatchCentreMo
 
   const homeLogo =
     home?.logoUrl ||
-    (homeKey ? assetUrl(TEAM_ASSETS[homeKey].logoFile) : undefined);
+    (homeKey ? assetUrl(TEAM_ASSETS[homeKey].logoFile ?? '') : '');
 
   const awayLogo =
     away?.logoUrl ||
-    (awayKey ? assetUrl(TEAM_ASSETS[awayKey].logoFile) : undefined);
+    (awayKey ? assetUrl(TEAM_ASSETS[awayKey].logoFile ?? '') : '');
 
   const progression = model?.quarterProgression || [];
   const wormData = useMemo(() => {

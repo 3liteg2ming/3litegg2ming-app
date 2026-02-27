@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import SmartImg from '../components/SmartImg';
 import { assetUrl, TEAM_ASSETS, type TeamKey } from '../lib/teamAssets';
-import { fetchLeaderCategories, type StatLeaderCategory } from '../lib/stats-leaders-cache';
+import type { StatLeaderCategory } from '../lib/stats-leaders-cache';
 
 import '../styles/stats-home.css';
 
@@ -38,13 +38,13 @@ function teamKeyFromName(teamName?: string): TeamKey | null {
 function teamLogoFor(teamName?: string): string | null {
   const k = teamKeyFromName(teamName);
   if (!k) return null;
-  return assetUrl(TEAM_ASSETS[k].logo);
+  return assetUrl(TEAM_ASSETS[k].logoFile ?? '');
 }
 
 function teamColorFor(teamName?: string): string {
   const k = teamKeyFromName(teamName);
   if (!k) return 'rgba(245,196,0,0.28)'; // fallback gold haze
-  const c = TEAM_ASSETS[k].color || '#F5C400';
+  const c = TEAM_ASSETS[k].colour || '#F5C400';
   return `${c}`;
 }
 
@@ -60,7 +60,8 @@ export default function StatsPage() {
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    fetchLeaderCategories(mode)
+    import('../lib/stats-leaders-cache')
+      .then((mod) => mod.fetchLeaderCategories(mode))
       .then((rows) => {
         if (!alive) return;
         setCats(rows || []);
@@ -156,11 +157,11 @@ export default function StatsPage() {
             if (loading) return <div key={`sk-${i}`} className="egLeaderCard egLeaderSkeleton" />;
             return (
               <LeaderCard
-                key={cfg.key}
+                key={cfg.statKey}
                 cfg={cfg}
                 mode={mode}
                 scope={scope}
-                onFullTable={() => navigate(`/stats3/leaders?mode=${mode}&stat=${cfg.key}&scope=${scope}`)}
+                onFullTable={() => navigate(`/stats3/leaders?mode=${mode}&stat=${cfg.statKey}&scope=${scope}`)}
               />
             );
           })}
@@ -219,13 +220,13 @@ function LeaderCard({
   scope: Scope;
   onFullTable: () => void;
 }) {
-  const leader = cfg.leader;
-  const runners = (cfg.runners || []).slice(0, 4);
+  const leader = cfg.top;
+  const runners = (cfg.others || []).slice(0, 4);
 
   const leaderName = leader?.name || '—';
-  const leaderSub = leader?.sub || '';
-  const leaderValue = valueText(leader?.value ?? NaN);
-  const imgUrl = leader?.imgUrl || '';
+  const leaderSub = leader?.teamName || '';
+  const leaderValue = valueText(scope === 'average' ? leader?.valueAvg ?? NaN : leader?.valueTotal ?? NaN);
+  const imgUrl = leader?.photoUrl || '';
 
   const glow = mode === 'players' ? teamColorFor(leaderSub) : teamColorFor(leaderName);
   const teamLogo = mode === 'players' ? teamLogoFor(leaderSub) : teamLogoFor(leaderName);
@@ -295,14 +296,14 @@ function LeaderCard({
           }
 
           const nm = r?.name || '—';
-          const sub = r?.sub || '';
-          const val = valueText(r?.value ?? NaN);
-          const img = r?.imgUrl || '';
+          const sub = r?.teamName || '';
+          const val = valueText(scope === 'average' ? r?.valueAvg ?? NaN : r?.valueTotal ?? NaN);
+          const img = r?.photoUrl || '';
 
           const tLogo = mode === 'players' ? teamLogoFor(sub) : teamLogoFor(nm);
 
           return (
-            <div key={`${cfg.key}-${idx}-${nm}`} className="egLeaderRow">
+            <div key={`${cfg.statKey}-${idx}-${nm}`} className="egLeaderRow">
               <div className="egLeaderRank">{idx + 2}</div>
 
               <div className="egLeaderMiniAvatar">

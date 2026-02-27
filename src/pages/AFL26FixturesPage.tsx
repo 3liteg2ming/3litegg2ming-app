@@ -4,16 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import FixturePosterCard, { type FixturePosterMatch } from '../components/FixturePosterCard';
 import { FixtureSkeletons } from '../components/FixtureSkeleton';
 import { useNextFixtures, useAllFixtures } from '../hooks/useFixtures';
-import { afl26LocalRounds } from '../data/afl26LocalRounds';
+import { getDataSeasonSlugForCompetition, getStoredCompetitionKey } from '../lib/competitionRegistry';
 
 import '../styles/Fixtures.css';
 
-type StatusFilter = 'ALL' | 'SCHEDULED' | 'LIVE' | 'FINAL';
+type StatusFilter = 'ALL' | 'SCHEDULED' | 'FINAL';
 
 const FILTERS: { key: StatusFilter; label: string }[] = [
   { key: 'ALL', label: 'All' },
   { key: 'SCHEDULED', label: 'Upcoming' },
-  { key: 'LIVE', label: 'Live' },
   { key: 'FINAL', label: 'Full Time' },
 ];
 
@@ -22,17 +21,16 @@ export default function AFL26FixturesPage() {
 
   const [activeRound, setActiveRound] = useState(1);
   const [activeFilter, setActiveFilter] = useState<StatusFilter>('ALL');
+  const seasonSlug = getDataSeasonSlugForCompetition(getStoredCompetitionKey());
 
   // Load next fixtures immediately, all fixtures in background
-  const nextFixturesQuery = useNextFixtures('afl26', 3);
-  const allFixturesQuery = useAllFixtures('afl26', nextFixturesQuery.isSuccess);
+  const nextFixturesQuery = useNextFixtures(seasonSlug, 3);
+  const allFixturesQuery = useAllFixtures(seasonSlug, nextFixturesQuery.isSuccess);
 
   // Extract fixtures - combine next + all for complete list
   const allFixtures = useMemo(() => {
-    // Prefer all fixtures if loaded, fallback to next fixtures
-    const fixtures = allFixturesQuery.data ?? nextFixturesQuery.data ?? [];
+    const fixtures = (allFixturesQuery.data ?? nextFixturesQuery.data ?? []) as any[];
 
-    // Group by round
     const rounds = new Map<number, any[]>();
     fixtures.forEach((f: any) => {
       const roundNum = f.round || 1;
@@ -41,11 +39,10 @@ export default function AFL26FixturesPage() {
     });
 
     return Array.from(rounds.entries())
-      .sort((a, b) => b[0] - a[0]) // Descending round order
-      .map(([roundNum, fixtures]) => ({
+      .sort((a, b) => a[0] - b[0])
+      .map(([roundNum, roundFixtures]) => ({
         round: roundNum,
-        matches: fixtures.sort((a: any, b: any) => {
-          // Sort by start_time ascending within round
+        matches: roundFixtures.sort((a: any, b: any) => {
           const aTime = new Date(a.start_time || 0).getTime();
           const bTime = new Date(b.start_time || 0).getTime();
           return aTime - bTime;
@@ -53,7 +50,6 @@ export default function AFL26FixturesPage() {
       }));
   }, [nextFixturesQuery.data, allFixturesQuery.data]);
 
-  // Set initial active round
   useEffect(() => {
     if (allFixtures.length && !allFixtures.find((x) => x.round === activeRound)) {
       setActiveRound(allFixtures[0].round);
@@ -68,9 +64,8 @@ export default function AFL26FixturesPage() {
     if (activeFilter === 'ALL') return list;
 
     return list.filter((f: any) => {
-      const status = f.status || 'SCHEDULED';
+      const status = String(f.status || 'SCHEDULED').toUpperCase();
       if (activeFilter === 'SCHEDULED') return status === 'SCHEDULED';
-      if (activeFilter === 'LIVE') return status === 'LIVE';
       if (activeFilter === 'FINAL') return status === 'FINAL';
       return true;
     });
@@ -79,11 +74,9 @@ export default function AFL26FixturesPage() {
   const uiMatches: FixturePosterMatch[] = useMemo(
     () =>
       (filteredMatches || []).map((f: any) => {
-        // Use team slug as the key (matches TEAM_ASSETS structure)
         const homeTeamKey = (f.home_team_slug || f.home_team_key || '') as any;
         const awayTeamKey = (f.away_team_slug || f.away_team_key || '') as any;
 
-        // Build score objects
         const homeScore = f.home_goals !== null && f.home_goals !== undefined
           ? {
               goals: f.home_goals,
@@ -100,11 +93,13 @@ export default function AFL26FixturesPage() {
             }
           : undefined;
 
+        const status = String(f.status || 'SCHEDULED').toUpperCase() as FixturePosterMatch['status'];
+
         return {
           id: f.id,
           round: activeRound,
           venue: f.venue || 'TBA',
-          status: f.status || 'SCHEDULED',
+          status,
           home: homeTeamKey,
           away: awayTeamKey,
           homeScore,

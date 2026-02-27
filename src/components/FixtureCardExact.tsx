@@ -116,7 +116,7 @@ export default function FixtureCardExact({
             <div className="fcLogoBox fcLogoBox--home">
               <SmartImg
                 className="fcLogo"
-                src={assetUrl(homeTeam.logoFile)}
+                src={assetUrl(homeTeam.logoFile ?? '')}
                 alt={homeTeam.name}
                 fallbackText="H"
               />
@@ -152,7 +152,7 @@ export default function FixtureCardExact({
             <div className="fcLogoBox fcLogoBox--away">
               <SmartImg
                 className="fcLogo"
-                src={assetUrl(awayTeam.logoFile)}
+                src={assetUrl(awayTeam.logoFile ?? '')}
                 alt={awayTeam.name}
                 fallbackText="A"
               />

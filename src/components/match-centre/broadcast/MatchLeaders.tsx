@@ -85,7 +85,7 @@ export default function MatchLeaders({ model, loading }: { model: MatchCentreMod
             className="mcLeaders__scroll"
           >
             {(loading && !model ? Array.from({ length: 3 }) : leaders).map((leader: any, i: number) => (
-              <LeaderCard key={i} leader={leader} model={model} isLoading={loading && !model} />
+              <LeaderCard key={i} leader={leader} model={model} isLoading={!!loading && !model} />
             ))}
           </div>
 
@@ -124,7 +124,7 @@ function LeaderCard({ leader, model, isLoading }: { leader: any; model: MatchCen
     [rgbColor]
   );
 
-  const logoUrl = team?.logoUrl || (teamAsset ? assetUrl(teamAsset.logoFile) : undefined);
+  const logoUrl = team?.logoUrl || (teamAsset ? assetUrl(teamAsset.logoFile ?? '') : '');
   const statValue = isLoading ? '—' : leader?.matchTotal ?? 0;
   const playerName = isLoading ? 'Loading…' : leader?.player || '—';
   const [firstName, ...lastNameParts] = String(playerName).split(' ');

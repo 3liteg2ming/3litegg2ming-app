@@ -37,24 +37,20 @@ export async function egRunOcrOnImage(
   onProgress?: (p: EgOcrProgress) => void,
   timeoutMs = 90_000,
 ): Promise<EgOcrResult> {
-  const worker = await createWorker({
-    logger: (m: any) => {
-      if (!onProgress) return;
-      const status = String(m?.status || 'working');
-      const progress = typeof m?.progress === 'number' ? m.progress : 0;
-      onProgress({ status, progress });
-    },
+  const workerFactory = createWorker as any;
+  const worker = await workerFactory({
     workerPath: WORKER_PATH,
     corePath: CORE_PATH,
     langPath: LANG_PATH,
   });
 
   try {
-    // load+init is where "Starting..." usually hangs if paths are wrong
-    await withTimeout(worker.loadLanguage('eng'), timeoutMs, 'loadLanguage');
-    await withTimeout(worker.initialize('eng'), timeoutMs, 'initialize');
+    if (onProgress) onProgress({ status: 'initializing', progress: 0.1 });
+    await withTimeout(worker.reinitialize('eng'), timeoutMs, 'reinitialize');
+    if (onProgress) onProgress({ status: 'recognizing', progress: 0.2 });
 
-    const { data } = await withTimeout(worker.recognize(image), timeoutMs, 'recognize');
+    const res = (await withTimeout(worker.recognize(image), timeoutMs, 'recognize')) as any;
+const data = res?.data;
     return { text: String(data?.text || '') };
   } finally {
     // Always terminate, otherwise future runs can hang / leak workers

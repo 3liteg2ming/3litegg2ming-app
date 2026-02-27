@@ -1,14 +1,10 @@
+import { Suspense, lazy } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-
-import HomePage from './pages/HomePage';
-import AFL26FixturesPage from './pages/AFL26FixturesPage';
-import LadderPage from './pages/LadderPage';
 
 import ComingSoonPage from './pages/ComingSoonPage';
 import MatchCentrePage from './pages/MatchCentrePage';
 import MembersPage from './pages/MembersPage';
-import SubmitPage from './pages/SubmitPage';
 
 import SignInPage from './pages/auth/SignInPage';
 import SignUpPage from './pages/auth/SignUpPage';
@@ -37,11 +33,16 @@ import BottomNav from './components/BottomNav';
 import TopHeader from './components/TopHeader';
 
 // Lovable-styled Stats pages (wired to /stats3)
-import AFL2026StatsPage from './pages/AFL2026StatsPage';
 import StatLeadersPage from './pages/StatLeadersPage';
 
 import './styles/appFrame.css';
 import './styles/auth.css';
+
+const HomePage = lazy(() => import('./pages/HomePage'));
+const AFL26FixturesPage = lazy(() => import('./pages/AFL26FixturesPage'));
+const LadderPage = lazy(() => import('./pages/LadderPage'));
+const SubmitPage = lazy(() => import('./pages/SubmitPage'));
+const AFL2026StatsPage = lazy(() => import('./pages/AFL2026StatsPage'));
 
 function AppRoutes() {
   const location = useLocation();
@@ -54,79 +55,81 @@ function AppRoutes() {
     <>
       <TopHeader />
 
-      <Routes>
-        <Route path="/" element={<HomePage />} />
+      <Suspense fallback={<div />}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
 
-        {/* Core */}
-        <Route path="/fixtures" element={<AFL26FixturesPage />} />
-        <Route path="/ladder" element={<LadderPage />} />
+          {/* Core */}
+          <Route path="/fixtures" element={<AFL26FixturesPage />} />
+          <Route path="/ladder" element={<LadderPage />} />
 
-        {/* ✅ Stats v3 */}
-        <Route path="/stats3" element={<AFL2026StatsPage />} />
-        <Route path="/stats3/leaders" element={<StatLeadersPage />} />
-        <Route path="/stats3/compare" element={<ComingSoonPage />} />
+          {/* ✅ Stats v3 */}
+          <Route path="/stats3" element={<AFL2026StatsPage />} />
+          <Route path="/stats3/leaders" element={<StatLeadersPage />} />
+          <Route path="/stats3/compare" element={<ComingSoonPage />} />
 
-        {/* Lovable compare route (older link in the design) */}
-        <Route path="/stats2/compare" element={<ComingSoonPage />} />
+          {/* Lovable compare route (older link in the design) */}
+          <Route path="/stats2/compare" element={<ComingSoonPage />} />
 
-        {/* Backward compatibility */}
-        <Route path="/stats" element={<Navigate to="/stats3" replace />} />
-        <Route path="/stats/leaders" element={<Navigate to="/stats3/leaders" replace />} />
+          {/* Backward compatibility */}
+          <Route path="/stats" element={<Navigate to="/stats3" replace />} />
+          <Route path="/stats/leaders" element={<Navigate to="/stats3/leaders" replace />} />
 
-        {/* Submit Results (protected) */}
-        <Route
-          path="/submit"
-          element={
-            <ProtectedRoute>
-              <SubmitPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Submit Results (protected) */}
+          <Route
+            path="/submit"
+            element={
+              <ProtectedRoute>
+                <SubmitPage />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Auth */}
-        <Route path="/auth/sign-in" element={<SignInPage />} />
-        <Route path="/auth/sign-up" element={<SignUpPage />} />
+          {/* Auth */}
+          <Route path="/auth/sign-in" element={<SignInPage />} />
+          <Route path="/auth/sign-up" element={<SignUpPage />} />
 
-        {/* Members (protected) */}
-        <Route
-          path="/members"
-          element={
-            <ProtectedRoute>
-              <MembersPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Members (protected) */}
+          <Route
+            path="/members"
+            element={
+              <ProtectedRoute>
+                <MembersPage />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Pro Team placeholder */}
-        <Route path="/pro-team" element={<ComingSoonPage />} />
+          {/* Pro Team placeholder */}
+          <Route path="/pro-team" element={<ComingSoonPage />} />
 
-        {/* Admin (protected) */}
-        <Route
-          path="/admin"
-          element={
-            <AdminRoute>
-              <AdminPanelPage />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/create-fixture"
-          element={
-            <ProtectedRoute>
-              <AdminCreateFixturePage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Admin (protected) */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminPanelPage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/create-fixture"
+            element={
+              <ProtectedRoute>
+                <AdminCreateFixturePage />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Match Centre */}
-        <Route path="/match-centre" element={<MatchCentrePage />} />
-        <Route path="/match-centre/:matchId" element={<MatchCentrePage />} />
+          {/* Match Centre */}
+          <Route path="/match-centre" element={<MatchCentrePage />} />
+          <Route path="/match-centre/:fixtureId" element={<MatchCentrePage />} />
 
-        <Route path="/coming-soon" element={<ComingSoonPage />} />
+          <Route path="/coming-soon" element={<ComingSoonPage />} />
 
-        {/* fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          {/* fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
 
       {!hideNav ? <BottomNav /> : null}
     </>

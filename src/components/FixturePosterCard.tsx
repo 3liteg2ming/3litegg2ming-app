@@ -83,6 +83,8 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
 
   const hasScores = !!m.homeScore && !!m.awayScore;
   const showScore = !isUpcoming && (m.status === 'LIVE' || m.status === 'FINAL') && hasScores;
+  const compactScore =
+    showScore && Math.max(Number(m.homeScore?.total || 0), Number(m.awayScore?.total || 0)) >= 100;
 
   const homeTint = pickTeamTint(m.home, home);
   const awayTint = pickTeamTint(m.away, away);
@@ -133,7 +135,7 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
 
   return (
     <motion.section
-      className={`fxPosterCard fxPosterCard--${statusClass}`}
+      className={`fxPosterCard fxPosterCard--${statusClass} ${compactScore ? 'fxPosterCard--compactScore' : ''}`}
       style={cssVars}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -152,7 +154,7 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
         <div className="fxPosterCard__side fxPosterCard__side--home">
           <div className="fxPosterCard__teamGlow" />
           <div className="fxPosterCard__teamBox">
-            <SmartImg className="fxPosterCard__logo" src={assetUrl(home.logoFile)} alt={home.name} fallbackText="EG" loading="lazy" />
+            <SmartImg className="fxPosterCard__logo" src={assetUrl(home.logoFile ?? '')} alt={home.name} fallbackText="EG" loading="lazy" />
           </div>
           <div className="fxPosterCard__abbr">{teamShort(home)}</div>
         </div>
@@ -204,7 +206,7 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
         <div className="fxPosterCard__side fxPosterCard__side--away">
           <div className="fxPosterCard__teamGlow" />
           <div className="fxPosterCard__teamBox">
-            <SmartImg className="fxPosterCard__logo" src={assetUrl(away.logoFile)} alt={away.name} fallbackText="EG" loading="lazy" />
+            <SmartImg className="fxPosterCard__logo" src={assetUrl(away.logoFile ?? '')} alt={away.name} fallbackText="EG" loading="lazy" />
           </div>
           <div className="fxPosterCard__abbr">{teamShort(away)}</div>
         </div>

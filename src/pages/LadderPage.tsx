@@ -123,7 +123,7 @@ function oddsFromWinChance(winChance: number) {
 
 const LadderRow = memo(function LadderRow({ entry, mode }: { entry: LadderEntry; mode: Mode }) {
   const t = TEAM_ASSETS[entry.teamKey] || TEAM_ASSETS.adelaide;
-  const logo = assetUrl(t.logoFile);
+  const logo = assetUrl(t.logoFile ?? '');
 
   const cssVars = useMemo(() => {
     const team = t.primary || '#F5C400';

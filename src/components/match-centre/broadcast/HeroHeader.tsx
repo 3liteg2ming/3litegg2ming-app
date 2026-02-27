@@ -76,13 +76,13 @@ export default function HeroHeader({ onBack, model, loading }: Props) {
   const awayAsset = awayKey ? TEAM_ASSETS[awayKey] : null;
 
   const homeLogo =
-    home?.logoUrl || (homeKey ? assetUrl(TEAM_ASSETS[homeKey].logoFile) : undefined);
+    home?.logoUrl || (homeKey ? assetUrl(TEAM_ASSETS[homeKey].logoFile ?? '') : '');
 
   const awayLogo =
-    away?.logoUrl || (awayKey ? assetUrl(TEAM_ASSETS[awayKey].logoFile) : undefined);
+    away?.logoUrl || (awayKey ? assetUrl(TEAM_ASSETS[awayKey].logoFile ?? '') : '');
 
-  const homeTint = pickTeamTint(homeKey, homeAsset);
-  const awayTint = pickTeamTint(awayKey, awayAsset);
+  const homeTint = pickTeamTint(homeKey ?? undefined, homeAsset);
+  const awayTint = pickTeamTint(awayKey ?? undefined, awayAsset);
 
   const homeRgb = hexToRgb(homeTint);
   const awayRgb = hexToRgb(awayTint);

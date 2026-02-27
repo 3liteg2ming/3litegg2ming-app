@@ -13,6 +13,7 @@ type FormState = {
   pref3: string;
   pref4: string;
 };
+type PrefKey = keyof FormState;
 
 const INITIAL_FORM: FormState = {
   firstName: '',
@@ -176,14 +177,15 @@ export default function PreseasonPage() {
             <div className="preseasonForm__prefsHead">Preferred Teams (1–4)</div>
             <div className="preseasonForm__grid preseasonForm__grid--two">
               {[1, 2, 3, 4].map((n) => {
-                const key = `pref${n}` as const;
+                const key = `pref${n}`;
+                const k = key as PrefKey;
                 return (
-                  <label className="preseasonField" key={key}>
+                  <label className="preseasonField" key={k}>
                     <span>{`Preference ${n}`}{n === 1 ? ' *' : ''}</span>
-                    <select value={form[key]} onChange={(e) => update(key, e.target.value)}>
+                    <select value={form[k]} onChange={(e) => update(k, e.target.value)}>
                       <option value="">Select team</option>
                       {teams.map((t) => (
-                        <option key={`${key}-${t.value}`} value={t.value}>{t.label}</option>
+                        <option key={`${k}-${t.value}`} value={t.value}>{t.label}</option>
                       ))}
                     </select>
                   </label>

@@ -78,7 +78,7 @@ export default function LadderPreviewCard({
 
               <div className="lp-team">
                 <div className="lp-logoRing">
-                  <SmartImg className="lp-logo" src={assetUrl(t.logoFile)} alt={t.name} fallbackText={t.short[0]} />
+                  <SmartImg className="lp-logo" src={assetUrl(t.logoFile ?? '')} alt={t.name} fallbackText={(t.short ?? t.shortName ?? t.name ?? 'T')[0] || 'T'} />
                 </div>
                 <div className="lp-name">{t.short}</div>
               </div>

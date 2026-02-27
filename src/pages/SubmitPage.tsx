@@ -203,7 +203,7 @@ async function runTesseract(files: File[], onProgress: (step: string, progress01
           onProgress(`Reading image ${i + 1} of ${files.length}…`, clamp(base, 0.15, 0.9));
 
           const res = await withTimeout(worker.recognize(f), 120000, `recognize(${f.name})`);
-          const text = res?.data?.text ?? '';
+          const text = (res as any)?.data?.text ?? '';
 
           combined += `\n\n--- ${f.name} ---\n`;
           combined += text;

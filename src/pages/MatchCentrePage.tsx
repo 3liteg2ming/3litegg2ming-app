@@ -12,12 +12,11 @@ import MatchCentreTabs, { type MatchCentreTabKey } from '@/components/match-cent
 import { fetchLatestMatchCentre, fetchMatchCentre, type MatchCentreModel } from '@/lib/matchCentreRepo';
 
 import '@/styles/match-centre-page.css';
-import { motion } from 'framer-motion';
-import { Share2, Home } from 'lucide-react';
 
 export default function MatchCentrePage() {
   const navigate = useNavigate();
-  const { matchId } = useParams();
+  const { fixtureId } = useParams();
+  const resolvedFixtureId = fixtureId;
 
   const [tab, setTab] = useState<MatchCentreTabKey>('summary');
   const [model, setModel] = useState<MatchCentreModel | null>(null);
@@ -50,7 +49,9 @@ export default function MatchCentrePage() {
       setModel(null);
 
       try {
-        const data = matchId ? await fetchMatchCentre(matchId) : await fetchLatestMatchCentre();
+        const data = resolvedFixtureId
+          ? await fetchMatchCentre(resolvedFixtureId)
+          : await fetchLatestMatchCentre();
         if (!alive) return;
         setModel(data);
         setTabDataLoaded(new Set(['summary']));
@@ -65,7 +66,7 @@ export default function MatchCentrePage() {
     return () => {
       alive = false;
     };
-  }, [matchId]);
+  }, [resolvedFixtureId]);
 
   // Lazy-load tab data when switching tabs
   const handleTabChange = (newTab: MatchCentreTabKey) => {
@@ -81,53 +82,12 @@ export default function MatchCentrePage() {
     setTabDataLoaded((prev) => new Set(prev).add(newTab));
   };
 
-  const handleShare = () => {
-    const url = window.location.href;
-    if (navigator.share) {
-      navigator.share({
-        title: `Match Centre - ${model?.home?.fullName} vs ${model?.away?.fullName}`,
-        url,
-      });
-    } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(url);
-      alert('Match Centre link copied to clipboard!');
-    }
-  };
-
   return (
     <div className="mcPage">
       <div className="mcPage__inner">
         <HeroHeader onBack={() => navigate(-1)} model={model} loading={loading} />
 
         <div ref={topRef} />
-
-        {/* Action Bar */}
-        <motion.div
-          className="mcPage__actions"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <button
-            type="button"
-            className="mcPage__actionBtn mcPage__actionBtn--secondary"
-            onClick={() => navigate('/fixtures')}
-            title="Back to Fixtures"
-          >
-            <Home className="w-4 h-4" />
-            <span>Fixtures</span>
-          </button>
-          <button
-            type="button"
-            className="mcPage__actionBtn mcPage__actionBtn--primary"
-            onClick={handleShare}
-            title="Share this match"
-          >
-            <Share2 className="w-4 h-4" />
-            <span>Share</span>
-          </button>
-        </motion.div>
 
         <MatchCentreTabs active={tab} onChange={handleTabChange} />
 

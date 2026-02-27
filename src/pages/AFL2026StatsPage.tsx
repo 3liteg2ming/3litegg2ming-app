@@ -10,7 +10,7 @@ import {
 } from "@/types/stats2";
 import { getTeamAssets } from "@/lib/teamAssets";
 import { usePlayerPhotos } from "@/lib/usePlayerPhoto";
-import { fetchLeaderCategories, peekLeaderCategoriesCache, type StatLeaderCategory } from "@/lib/stats-leaders-cache";
+import type { StatLeaderCategory } from "@/lib/stats-leaders-cache";
 import "@/styles/stats-home.css";
 
 /* ── helpers ── */
@@ -29,8 +29,8 @@ const StatsHomePage: React.FC = () => {
   const [mode, setMode] = useState<StatsMode>("players");
   const [scope, setScope] = useState<StatsScope>("total");
   const [search, setSearch] = useState("");
-  const [remoteCategories, setRemoteCategories] = useState<StatLeaderCategory[]>(() => peekLeaderCategoriesCache("players") || []);
-  const [leadersLoading, setLeadersLoading] = useState<boolean>(() => !peekLeaderCategoriesCache("players"));
+  const [remoteCategories, setRemoteCategories] = useState<StatLeaderCategory[]>([]);
+  const [leadersLoading, setLeadersLoading] = useState<boolean>(true);
   const navigate = useNavigate();
 
   // Preload all player photos from Supabase
@@ -48,7 +48,15 @@ const StatsHomePage: React.FC = () => {
   useEffect(() => {
     let cancelled = false;
     setLeadersLoading(true);
-    fetchLeaderCategories(mode)
+    import("@/lib/stats-leaders-cache")
+      .then(async (mod) => {
+        const cached = mod.peekLeaderCategoriesCache(mode) || [];
+        if (!cancelled && cached.length > 0) {
+          setRemoteCategories(cached);
+          setLeadersLoading(false);
+        }
+        return mod.fetchLeaderCategories(mode);
+      })
       .then((rows) => {
         if (cancelled) return;
         if (Array.isArray(rows) && rows.length > 0) {

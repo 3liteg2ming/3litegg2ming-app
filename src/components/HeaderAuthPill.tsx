@@ -50,9 +50,9 @@ export function HeaderAuthPill() {
           {team ? (
             <SmartImg
               className="authPillTeamLogo"
-              src={assetUrl(team.logoFile)}
-              alt={team.short}
-              fallbackText={team.short.slice(0, 2).toUpperCase()}
+              src={assetUrl(team.logoFile ?? '')}
+              alt={team.short ?? team.name ?? 'Team'}
+              fallbackText={(team.short ?? team.shortName ?? team.name ?? 'EG').slice(0, 2).toUpperCase()}
             />
           ) : (
             <span className="authPillInitials">{initials(user.displayName || user.email)}</span>

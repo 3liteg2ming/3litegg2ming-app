@@ -179,11 +179,15 @@ function _teamKeyFromNameOrKey(team: string): TeamKey {
   const entries = Object.entries(TEAM_ASSETS) as Array<[TeamKey, TeamAsset]>;
 
   for (const [k, v] of entries) {
-    const candidates = [v.name, v.shortName, v.short, k].filter(Boolean).map(_normName);
+    const candidates = [v.name, v.shortName, v.short, k]
+      .filter((x): x is string => typeof x === 'string' && x.length > 0)
+      .map(_normName);
     if (candidates.includes(n)) return k;
   }
   for (const [k, v] of entries) {
-    const candidates = [v.name, v.shortName, v.short, k].filter(Boolean).map(_normName);
+    const candidates = [v.name, v.shortName, v.short, k]
+      .filter((x): x is string => typeof x === 'string' && x.length > 0)
+      .map(_normName);
     if (candidates.some((c) => c && (n.includes(c) || c.includes(n)))) return k;
   }
   return 'adelaide';

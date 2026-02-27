@@ -54,7 +54,7 @@ export default function MembersPage() {
                 {team ? (
                   <SmartImg
                     className="teamBadgeImg"
-                    src={assetUrl(team.logoFile)}
+                    src={assetUrl(team.logoFile ?? '')}
                     alt={team.name}
                     fallbackText={team.short}
                   />

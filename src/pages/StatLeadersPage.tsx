@@ -13,7 +13,7 @@ import {
   TeamStatKey,
 } from "@/types/stats2";
 import { usePlayerPhotos } from "@/lib/usePlayerPhoto";
-import { fetchStatLeaders, type Mode as LeadersMode, type StatKey as LeadersStatKey, type StatLeaders } from "@/lib/stats-leaders-cache";
+import type { Mode as LeadersMode, StatKey as LeadersStatKey, StatLeaders } from "@/lib/stats-leaders-cache";
 import "@/styles/stat-leaders.css";
 
 const playerVal = (p: Player, key: string, scope: StatsScope) => {
@@ -69,7 +69,8 @@ const StatLeadersPage: React.FC = () => {
     }
 
     setRemoteLoading(true);
-    fetchStatLeaders(mode, statKey)
+    import("@/lib/stats-leaders-cache")
+      .then((mod) => mod.fetchStatLeaders(mode, statKey))
       .then((data) => {
         if (!cancelled) setRemoteLeaders(data);
       })

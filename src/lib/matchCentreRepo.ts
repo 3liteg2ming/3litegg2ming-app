@@ -1,13 +1,15 @@
 import { supabase } from '@/lib/supabaseClient';
-import { TEAM_ASSETS, type TeamKey } from '@/lib/teamAssets';
+import { TEAM_ASSETS, assetUrl, type TeamKey } from '@/lib/teamAssets';
 import { afl26LocalRounds } from '@/data/afl26LocalRounds';
 
 type FixtureRow = {
   id: string;
   round: number;
 
-  home_team_slug: string;
-  away_team_slug: string;
+  home_team_id?: string | null;
+  away_team_id?: string | null;
+  home_team_slug?: string | null;
+  away_team_slug?: string | null;
 
   venue: string;
   start_time: string | null;
@@ -24,12 +26,14 @@ type FixtureRow = {
 
 type TeamRow = {
   id?: string;
+  team_key?: string;
   slug?: string;
   name?: string;
   short_name?: string;
   abbreviation?: string;
   logo_url?: string;
   primary_color?: string;
+  colour?: string;
 };
 
 export type MatchCentreTeam = {
@@ -153,23 +157,41 @@ function mapSlugToTeamKey(slug: string): TeamKey | null {
   const compact = s.replace(/[^a-z0-9]/g, '');
   const keys = Object.keys(TEAM_ASSETS) as TeamKey[];
   if (keys.includes(s as TeamKey)) return s as TeamKey;
+  if (keys.includes(compact as TeamKey)) return compact as TeamKey;
   const aliases: Record<string, TeamKey> = {
+    adelaide: 'adelaide',
     adelaidecrows: 'adelaide',
+    brisbane: 'brisbane',
     brisbanelions: 'brisbane',
+    carlton: 'carlton',
     carltonblues: 'carlton',
+    collingwood: 'collingwood',
     collingwoodmagpies: 'collingwood',
+    essendon: 'essendon',
     essendonbombers: 'essendon',
+    fremantle: 'fremantle',
     fremantledockers: 'fremantle',
+    geelong: 'geelong',
     geelongcats: 'geelong',
+    goldcoast: 'goldcoast',
     goldcoastsuns: 'goldcoast',
+    gws: 'gws',
     gwsgiants: 'gws',
+    hawthorn: 'hawthorn',
     hawthornhawks: 'hawthorn',
+    melbourne: 'melbourne',
     melbournedemons: 'melbourne',
+    northmelbourne: 'northmelbourne',
     northmelbournekangaroos: 'northmelbourne',
+    portadelaide: 'portadelaide',
     portadelaidepower: 'portadelaide',
+    richmond: 'richmond',
     richmondtigers: 'richmond',
+    stkilda: 'stkilda',
     stkildasaints: 'stkilda',
+    sydney: 'sydney',
     sydneyswans: 'sydney',
+    westcoast: 'westcoast',
     westcoasteagles: 'westcoast',
     westernbulldogs: 'westernbulldogs',
   };
@@ -186,22 +208,29 @@ function statusToLabel(status: string) {
   return s || '—';
 }
 
-function buildTeam(teamRow: TeamRow | null, slug: string, score: { g: number; b: number; t: number }): MatchCentreTeam {
-  const key = mapSlugToTeamKey(slug);
+function buildTeam(
+  teamRow: TeamRow | null,
+  teamRef: { slug?: string | null; teamKey?: string | null },
+  score: { g: number; b: number; t: number }
+): MatchCentreTeam {
+  const rawSlug = String(teamRef.slug || teamRow?.slug || '').trim();
+  const slug = rawSlug || String(teamRef.teamKey || teamRow?.team_key || 'team').trim().toLowerCase();
+  const key = mapSlugToTeamKey(slug) || mapSlugToTeamKey(String(teamRef.teamKey || teamRow?.team_key || ''));
   const fallback = key ? TEAM_ASSETS[key] : null;
 
   const fullName = teamRow?.name || (fallback ? fallback.name : titleCase(slug));
   const shortName = teamRow?.short_name || (fallback ? fallback.short : fullName);
-  const abbreviation = teamRow?.abbreviation || toAbbrev(shortName);
-  const color = teamRow?.primary_color || (fallback ? fallback.primary : '#111111');
+  const abbreviation = teamRow?.abbreviation || toAbbrev(shortName ?? teamRow?.name ?? '');
+  const color = teamRow?.primary_color ?? (teamRow as any)?.colour ?? (fallback ? fallback.primary : '#F5C400');
+  const fallbackLogoUrl = fallback?.logoFile ? assetUrl(fallback.logoFile) : assetUrl('elite-gaming-logo.png');
 
   return {
     slug,
-    name: shortName,
+    name: shortName ?? teamRow?.name ?? 'Team',
     fullName,
     abbreviation,
     color,
-    logoUrl: teamRow?.logo_url,
+    logoUrl: teamRow?.logo_url || fallbackLogoUrl,
     goals: score.g,
     behinds: score.b,
     score: score.t,
@@ -224,7 +253,7 @@ function buildLocalMatchCentre(matchId: string): MatchCentreModel | null {
         slug: m.home,
         name: titleCase(m.home),
       },
-      m.home,
+      { slug: m.home },
       { g: safeNum(h.goals), b: safeNum(h.behinds), t: safeNum(h.total) },
     );
     const away = buildTeam(
@@ -232,7 +261,7 @@ function buildLocalMatchCentre(matchId: string): MatchCentreModel | null {
         slug: m.away,
         name: titleCase(m.away),
       },
-      m.away,
+      { slug: m.away },
       { g: safeNum(a.goals), b: safeNum(a.behinds), t: safeNum(a.total) },
     );
 
@@ -314,24 +343,70 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
   // 1) Fixture
   const { data: fx, error: fxErr } = await supabase
     .from('eg_fixtures')
-    .select('*')
+    .select(
+      [
+        'id',
+        'round',
+        'status',
+        'start_time',
+        'venue',
+        'home_team_id',
+        'away_team_id',
+        'home_team_slug',
+        'away_team_slug',
+        'home_total',
+        'away_total',
+        'home_goals',
+        'home_behinds',
+        'away_goals',
+        'away_behinds',
+      ].join(',')
+    )
     .eq('id', matchId)
     .maybeSingle();
 
   if (fxErr) throw new Error(fxErr.message);
   if (!fx) throw new Error('Match not found.');
 
-  const fixture = fx as FixtureRow;
+  const fixture = fx as unknown as FixtureRow;
 
-  // 2) Teams (by slug)
-  const [homeTeamRes, awayTeamRes] = await Promise.all([
-    supabase.from('eg_teams').select('*').eq('slug', fixture.home_team_slug).maybeSingle(),
-    supabase.from('eg_teams').select('*').eq('slug', fixture.away_team_slug).maybeSingle(),
-  ]);
-
-  // If eg_teams doesn’t exist yet, or fields differ, we still continue with TEAM_ASSETS fallback.
-  const homeTeamRow = (homeTeamRes as any)?.data as TeamRow | null;
-  const awayTeamRow = (awayTeamRes as any)?.data as TeamRow | null;
+  // 2) Teams (by id first, then slug fallback)
+  let homeTeamRow: TeamRow | null = null;
+  let awayTeamRow: TeamRow | null = null;
+  const teamIds = [fixture.home_team_id, fixture.away_team_id].filter(Boolean) as string[];
+  if (teamIds.length > 0) {
+    const { data: teamsById, error: teamsByIdErr } = await supabase
+      .from('eg_teams')
+      .select('id,team_key,slug,name,short_name,abbreviation,logo_url,primary_color,colour')
+      .in('id', teamIds);
+    if (teamsByIdErr) {
+      console.warn('[matchCentreRepo] eg_teams by id failed, continuing with fallback:', teamsByIdErr.message);
+    } else {
+      const list = (teamsById || []) as TeamRow[];
+      homeTeamRow = list.find((t) => String(t.id || '') === String(fixture.home_team_id || '')) || null;
+      awayTeamRow = list.find((t) => String(t.id || '') === String(fixture.away_team_id || '')) || null;
+    }
+  }
+  if (!homeTeamRow || !awayTeamRow) {
+    const slugs = [fixture.home_team_slug, fixture.away_team_slug].filter(Boolean) as string[];
+    if (slugs.length > 0) {
+      const { data: teamsBySlug, error: teamsBySlugErr } = await supabase
+        .from('eg_teams')
+        .select('id,team_key,slug,name,short_name,abbreviation,logo_url,primary_color,colour')
+        .in('slug', slugs);
+      if (teamsBySlugErr) {
+        console.warn('[matchCentreRepo] eg_teams by slug failed, continuing with fallback:', teamsBySlugErr.message);
+      } else {
+        const list = (teamsBySlug || []) as TeamRow[];
+        if (!homeTeamRow) {
+          homeTeamRow = list.find((t) => String(t.slug || '') === String(fixture.home_team_slug || '')) || null;
+        }
+        if (!awayTeamRow) {
+          awayTeamRow = list.find((t) => String(t.slug || '') === String(fixture.away_team_slug || '')) || null;
+        }
+      }
+    }
+  }
 
   // 3) Submissions (for leaders + OCR)
   const { data: subs, error: subErr } = await supabase
@@ -339,9 +414,82 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
     .select('*')
     .eq('fixture_id', fixture.id);
 
-  if (subErr) throw new Error(subErr.message);
+  if (subErr) {
+    console.warn('[matchCentreRepo] submissions fetch failed, continuing without submissions:', subErr.message);
+  }
 
-  const submissions = (subs || []) as any[];
+  const submissions = ((subErr ? [] : subs) || []) as any[];
+
+  // 3b) Players (non-fatal, used for pre-submission full squads)
+  let resolvedHomeTeamId = fixture.home_team_id || homeTeamRow?.id || null;
+  let resolvedAwayTeamId = fixture.away_team_id || awayTeamRow?.id || null;
+
+  if ((!resolvedHomeTeamId || !resolvedAwayTeamId) && (fixture.home_team_slug || fixture.away_team_slug)) {
+    const slugLookups = [fixture.home_team_slug, fixture.away_team_slug].filter(Boolean) as string[];
+    if (slugLookups.length > 0) {
+      const { data: teamsBySlugForIds, error: teamsBySlugForIdsErr } = await supabase
+        .from('eg_teams')
+        .select('id,slug')
+        .in('slug', slugLookups);
+      if (teamsBySlugForIdsErr) {
+        console.warn('[matchCentreRepo] eg_teams slug->id fallback failed:', teamsBySlugForIdsErr.message);
+      } else {
+        const slugRows = (teamsBySlugForIds || []) as Array<{ id?: string; slug?: string }>;
+        if (!resolvedHomeTeamId) {
+          resolvedHomeTeamId =
+            slugRows.find((t) => String(t.slug || '') === String(fixture.home_team_slug || ''))?.id || null;
+        }
+        if (!resolvedAwayTeamId) {
+          resolvedAwayTeamId =
+            slugRows.find((t) => String(t.slug || '') === String(fixture.away_team_slug || ''))?.id || null;
+        }
+      }
+    }
+  }
+
+  const fixtureTeamIds = [resolvedHomeTeamId, resolvedAwayTeamId].filter(Boolean) as string[];
+  let squadPlayers: any[] = [];
+  if (fixtureTeamIds.length > 0) {
+    const { data: squadRows, error: squadErr } = await supabase
+      .from('eg_players')
+      .select('*')
+      .in('team_id', fixtureTeamIds);
+    if (squadErr) {
+      console.warn('[matchCentreRepo] eg_players fetch failed, continuing without squad seed:', squadErr.message);
+    } else {
+      squadPlayers = (squadRows || []) as any[];
+    }
+  }
+  if (squadPlayers.length === 0 && fixtureTeamIds.length === 0) {
+    const homeKey = mapSlugToTeamKey(String(fixture.home_team_slug || ''));
+    const awayKey = mapSlugToTeamKey(String(fixture.away_team_slug || ''));
+    const keyFilters = [homeKey, awayKey].filter(Boolean) as string[];
+    if (keyFilters.length > 0) {
+      const { data: byKeyRows, error: byKeyErr } = await supabase
+        .from('eg_players')
+        .select('*')
+        .in('team_key', keyFilters);
+      if (byKeyErr) {
+        console.warn('[matchCentreRepo] eg_players team_key fallback failed:', byKeyErr.message);
+      } else {
+        squadPlayers = (byKeyRows || []) as any[];
+      }
+    }
+  }
+  if (squadPlayers.length === 0 && fixtureTeamIds.length === 0) {
+    const nameFilters = [homeTeamRow?.name, awayTeamRow?.name].filter(Boolean) as string[];
+    if (nameFilters.length > 0) {
+      const { data: byNameRows, error: byNameErr } = await supabase
+        .from('eg_players')
+        .select('*')
+        .in('team_name', nameFilters);
+      if (byNameErr) {
+        console.warn('[matchCentreRepo] eg_players team_name fallback failed:', byNameErr.message);
+      } else {
+        squadPlayers = (byNameRows || []) as any[];
+      }
+    }
+  }
 
   // Prefer fixture totals when FINAL, otherwise show 0/0 until submitted.
   const hG = safeNum(fixture.home_goals);
@@ -352,8 +500,16 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
   const hT = safeNum(fixture.home_total) || (hG * 6 + hB);
   const aT = safeNum(fixture.away_total) || (aG * 6 + aB);
 
-  const home = buildTeam(homeTeamRow, fixture.home_team_slug, { g: hG, b: hB, t: hT });
-  const away = buildTeam(awayTeamRow, fixture.away_team_slug, { g: aG, b: aB, t: aT });
+  const home = buildTeam(
+    homeTeamRow,
+    { slug: fixture.home_team_slug },
+    { g: hG, b: hB, t: hT }
+  );
+  const away = buildTeam(
+    awayTeamRow,
+    { slug: fixture.away_team_slug },
+    { g: aG, b: aB, t: aT }
+  );
 
   const margin = Math.abs(hT - aT);
 
@@ -436,9 +592,6 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
       const homeMatch = safeNum(mergedTeamStats[`home_${p.key}`]);
       const awayMatch = safeNum(mergedTeamStats[`away_${p.key}`]);
 
-      // If both 0, assume not available
-      if (homeMatch === 0 && awayMatch === 0) return null;
-
       return {
         label: p.label,
         isPercentage: p.isPercentage,
@@ -449,8 +602,7 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
         homeSeasonTotal: 0,
         awaySeasonTotal: 0,
       } as TeamStatRow;
-    })
-    .filter(Boolean) as TeamStatRow[];
+    });
 
   const teamLeaderCards: MatchLeaderCard[] = ['Disposals', 'Clearances', 'Tackles']
     .map((label) => teamStats.find((s) => s.label === label))
@@ -486,6 +638,17 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
 
   // --- Player stats: build richer fallback from goal kickers + OCR player lines if present ---
   const playerByName = new Map<string, PlayerStatRow>();
+  const teamSortOrder = new Map<string, number>([
+    [home.fullName, 0],
+    [away.fullName, 1],
+  ]);
+  const teamNameFromId = (teamId: string | null | undefined) =>
+    String(teamId || '') === String(resolvedHomeTeamId || '')
+      ? home.fullName
+      : String(teamId || '') === String(resolvedAwayTeamId || '')
+      ? away.fullName
+      : '';
+
   const ensurePlayerRow = (name: string, teamName: string, photoUrl?: string) => {
     const key = `${String(name).trim().toLowerCase()}|${String(teamName).trim().toLowerCase()}`;
     const existing = playerByName.get(key);
@@ -504,6 +667,16 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
     playerByName.set(key, row);
     return row;
   };
+
+  for (const p of squadPlayers) {
+    const firstName = String(p?.first_name || '').trim();
+    const lastName = String(p?.last_name || '').trim();
+    const fullName = `${firstName} ${lastName}`.trim() || String(p?.name || '').trim() || 'Unknown';
+    const teamName = teamNameFromId(p?.team_id) || home.fullName;
+    const row = ensurePlayerRow(fullName, teamName, String(p?.headshot_url || p?.photo_url || '').trim() || undefined);
+    row.number = safeNum(p?.number);
+    row.position = String(p?.position || '').trim();
+  }
 
   for (const p of goalsLeaders) {
     const row = ensurePlayerRow(p.name, p.teamName, p.photoUrl);
@@ -529,7 +702,13 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
   const playerStats: PlayerStatRow[] =
     playerByName.size > 0
       ? Array.from(playerByName.values())
-          .sort((a, b) => (b.G - a.G) || (b.AF - a.AF) || a.name.localeCompare(b.name))
+          .sort((a, b) => {
+            const teamCmp = safeNum(teamSortOrder.get(a.team)) - safeNum(teamSortOrder.get(b.team));
+            if (teamCmp !== 0) return teamCmp;
+            const numCmp = safeNum(a.number) - safeNum(b.number);
+            if (numCmp !== 0) return numCmp;
+            return a.name.localeCompare(b.name);
+          })
       : goalsLeaders.length > 0
       ? goalsLeaders.map((p) => ({
           name: p.name,

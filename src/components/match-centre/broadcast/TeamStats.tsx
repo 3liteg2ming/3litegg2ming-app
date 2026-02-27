@@ -82,9 +82,9 @@ export default function TeamStats({ model, loading }: { model: MatchCentreModel 
   const awayKey = away ? slugToTeamKey(away.slug) : null;
 
   const homeLogo =
-    home?.logoUrl || (homeKey ? assetUrl(TEAM_ASSETS[homeKey].logoFile) : undefined);
+    home?.logoUrl || (homeKey ? assetUrl(TEAM_ASSETS[homeKey].logoFile ?? '') : '');
   const awayLogo =
-    away?.logoUrl || (awayKey ? assetUrl(TEAM_ASSETS[awayKey].logoFile) : undefined);
+    away?.logoUrl || (awayKey ? assetUrl(TEAM_ASSETS[awayKey].logoFile ?? '') : '');
 
   const stats = model?.teamStats || [];
   const isEmpty = !loading && stats.length === 0;

@@ -4,11 +4,11 @@ import { ArrowRight, Shield, Trophy } from 'lucide-react';
 
 import FixturePosterCard, { type FixturePosterMatch } from '../components/FixturePosterCard';
 import SmartImg from '../components/SmartImg';
-import { getAfl26RoundsFromSupabase, peekAfl26RoundsCache, type AflMatch, type AflRound } from '../data/afl26Supabase';
 import { afl26LocalRounds } from '../data/afl26LocalRounds';
 import { supabase } from '../lib/supabaseClient';
 import { TEAM_ASSETS, assetUrl, getTeamAssets, type TeamKey } from '../lib/teamAssets';
-import { fetchLeaderCategories, peekLeaderCategoriesCache, type StatLeaderCategory } from '../lib/stats-leaders-cache';
+import type { AflMatch, AflRound } from '../data/afl26Supabase';
+import type { StatLeaderCategory } from '../lib/stats-leaders-cache';
 
 import '../styles/ladder.css';
 import '../styles/stats-home.css';
@@ -531,25 +531,26 @@ function HomeGoalsPreview({ category, onOpen }: { category: StatLeaderCategory |
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const cachedRounds = peekAfl26RoundsCache();
 
   const [state, setState] = useState<HomeState>({
-    rounds: cachedRounds && cachedRounds.length ? cachedRounds : afl26LocalRounds,
+    rounds: afl26LocalRounds,
     hero: null,
-    featured: pickRoundOneTop(cachedRounds && cachedRounds.length ? cachedRounds : afl26LocalRounds),
+    featured: pickRoundOneTop(afl26LocalRounds),
     loadError: null,
   });
   const [loadingHero, setLoadingHero] = useState(true);
-  const [goalsCategory, setGoalsCategory] = useState<StatLeaderCategory | null>(
-    () => (peekLeaderCategoriesCache('players') || []).find((c) => c.statKey === 'goals') || null
-  );
+  const [goalsCategory, setGoalsCategory] = useState<StatLeaderCategory | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadHome() {
       try {
-        const roundsFetched = await getAfl26RoundsFromSupabase();
+        const supabaseRoundsMod = await import('../data/afl26Supabase');
+        const cachedRounds = supabaseRoundsMod.peekAfl26RoundsCache();
+        const roundsFetched = cachedRounds && cachedRounds.length
+          ? cachedRounds
+          : await supabaseRoundsMod.getAfl26RoundsFromSupabase();
         const rounds = roundsFetched && roundsFetched.length ? roundsFetched : afl26LocalRounds;
 
         let source: HeroSource = 'fallback';
@@ -669,7 +670,13 @@ export default function HomePage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchLeaderCategories('players')
+    (async () => {
+      const leadersMod = await import('../lib/stats-leaders-cache');
+      const cached = leadersMod.peekLeaderCategoriesCache('players') || [];
+      const cachedGoals = cached.find((c) => c.statKey === 'goals') || null;
+      if (!cancelled && cachedGoals) setGoalsCategory(cachedGoals);
+      return leadersMod.fetchLeaderCategories('players');
+    })()
       .then((categories) => {
         if (cancelled) return;
         const next = categories.find((c) => c.statKey === 'goals') || null;
