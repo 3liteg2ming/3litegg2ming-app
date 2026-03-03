@@ -1,46 +1,7 @@
-# dependencies
 node_modules
-
-# builds
 dist
-build
-out
-
-# env
 .env
 .env.local
 .env.*.local
-
-# logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-*.log
-
-# OS / editor
 .DS_Store
-.idea
 .vscode
-*.swp
-
-# archives
-*.zip
-*.7z
-*.rar
-
-# misc
-coverage
-
-# Python / exports
-afl-2026-export/.venv/
-*.pyc
-__pycache__/
-.DS_Store
-
-# Local junk
-.DS_Store
-afl-2026-export/.venv/
-**/.venv/
-__pycache__/
-*.pyc
