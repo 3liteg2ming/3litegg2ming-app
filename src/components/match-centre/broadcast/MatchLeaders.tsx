@@ -4,11 +4,26 @@ import SmartImg from '@/components/SmartImg';
 import type { MatchCentreModel } from '@/lib/matchCentreRepo';
 import '@/styles/match-centre-leaders.css';
 
+function stableHash(input: string) {
+  let h = 2166136261;
+  for (let i = 0; i < input.length; i += 1) {
+    h ^= input.charCodeAt(i);
+    h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+  }
+  return Math.abs(h >>> 0);
+}
+
+function pickSeeded<T>(rows: T[], seed: string): T | null {
+  if (!rows.length) return null;
+  return rows[stableHash(seed) % rows.length] || rows[0] || null;
+}
+
 function slugToTeamKey(slug: string): TeamKey | null {
   const s = String(slug || '').toLowerCase().trim();
   const keys = Object.keys(TEAM_ASSETS) as TeamKey[];
   if (keys.includes(s as TeamKey)) return s as TeamKey;
   const compact = s.replace(/[^a-z0-9]/g, '');
+  if (keys.includes(compact as TeamKey)) return compact as TeamKey;
   const aliases: Record<string, TeamKey> = {
     collingwoodmagpies: 'collingwood',
     carltonblues: 'carlton',
@@ -49,7 +64,37 @@ export default function MatchLeaders({ model, loading }: { model: MatchCentreMod
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIdx, setActiveIdx] = useState(0);
 
-  const leaders = model?.leaders || [];
+  const fallbackLeaders = useMemo(() => {
+    if (!model) return [];
+    const rows = Array.isArray(model.playerStats) ? model.playerStats : [];
+    const homeRows = rows.filter((p) => p.team === model.home.fullName);
+    const awayRows = rows.filter((p) => p.team === model.away.fullName);
+    const categories = ['GOALS', 'DISPOSALS', 'TACKLES'];
+    return categories.map((cat) => {
+      const homePick = pickSeeded(homeRows, `${model.fixtureId}:${cat}:home`) || homeRows[0] || null;
+      const awayPick = pickSeeded(awayRows, `${model.fixtureId}:${cat}:away`) || awayRows[0] || null;
+      return {
+        stat: cat,
+        home: {
+          value: 0,
+          player: homePick?.name || 'Awaiting coach submission',
+          team: model.home.fullName,
+          photoUrl: homePick?.photoUrl,
+          seasonAvg: null,
+        },
+        away: {
+          value: 0,
+          player: awayPick?.name || 'Awaiting coach submission',
+          team: model.away.fullName,
+          photoUrl: awayPick?.photoUrl,
+          seasonAvg: null,
+        },
+      };
+    });
+  }, [model]);
+
+  const leaders = (model?.leaders && model.leaders.length > 0) ? model.leaders : fallbackLeaders;
+  const awaitingSubmission = !!model && !model.hasSubmissionData;
   const isEmpty = !loading && leaders.length === 0;
 
   const handleScroll = () => {
@@ -69,7 +114,9 @@ export default function MatchLeaders({ model, loading }: { model: MatchCentreMod
     <section className="mcLeaders">
       <div className="mcLeaders__header">
         <h2 className="mcLeaders__title">Match Leaders</h2>
-        <p className="mcLeaders__desc">Top performers this match</p>
+        <p className="mcLeaders__desc">
+          {awaitingSubmission ? 'Awaiting coach submission' : 'Top performers this match'}
+        </p>
       </div>
 
       {isEmpty ? (
@@ -105,15 +152,18 @@ export default function MatchLeaders({ model, loading }: { model: MatchCentreMod
 }
 
 function LeaderCard({ leader, model, isLoading }: { leader: any; model: MatchCentreModel | null; isLoading: boolean }) {
-  const teamName = leader?.team || '';
-  const isHome = teamName && model?.home?.fullName ? teamName === model.home.fullName : true;
+  const homeTeam = model?.home;
+  const awayTeam = model?.away;
+  const awaitingSubmission = !!model && !model.hasSubmissionData;
 
-  const team = isHome ? model?.home : model?.away;
-  const teamKey = team ? slugToTeamKey(team.slug) : null;
-  const teamAsset = teamKey ? TEAM_ASSETS[teamKey] : null;
+  const homeKey = homeTeam ? slugToTeamKey(homeTeam.slug) : null;
+  const awayKey = awayTeam ? slugToTeamKey(awayTeam.slug) : null;
+  const homeAsset = homeKey ? TEAM_ASSETS[homeKey] : null;
+  const awayAsset = awayKey ? TEAM_ASSETS[awayKey] : null;
 
-  const teamColor = team?.color || '#0B3A8D';
-  const rgbColor = hexToRgb(teamColor);
+  const homeColor = homeTeam?.color || '#0B3A8D';
+  const awayColor = awayTeam?.color || '#8A1C2B';
+  const rgbColor = hexToRgb(homeColor);
 
   const cssVars: React.CSSProperties = useMemo(
     () => ({
@@ -124,70 +174,102 @@ function LeaderCard({ leader, model, isLoading }: { leader: any; model: MatchCen
     [rgbColor]
   );
 
-  const logoUrl = team?.logoUrl || (teamAsset ? assetUrl(teamAsset.logoFile ?? '') : '');
-  const statValue = isLoading ? '—' : leader?.matchTotal ?? 0;
-  const playerName = isLoading ? 'Loading…' : leader?.player || '—';
-  const [firstName, ...lastNameParts] = String(playerName).split(' ');
-  const lastName = lastNameParts.join(' ').toUpperCase();
+  const homeLogo =
+    homeTeam?.logoUrl || (homeAsset ? assetUrl(homeAsset.logoFile ?? '') : assetUrl('elite-gaming-logo.png'));
+  const awayLogo =
+    awayTeam?.logoUrl || (awayAsset ? assetUrl(awayAsset.logoFile ?? '') : assetUrl('elite-gaming-logo.png'));
+  const badge = String(leader?.stat || 'STAT').toUpperCase();
+
+  const homeValue = isLoading || awaitingSubmission ? '—' : leader?.home?.value ?? 0;
+  const awayValue = isLoading || awaitingSubmission ? '—' : leader?.away?.value ?? 0;
+  const homeName = isLoading ? 'Loading…' : leader?.home?.player || 'Awaiting coach submission';
+  const awayName = isLoading ? 'Loading…' : leader?.away?.player || 'Awaiting coach submission';
+  const homeSub = isLoading ? '—' : leader?.home?.team || homeTeam?.fullName || '';
+  const awaySub = isLoading ? '—' : leader?.away?.team || awayTeam?.fullName || '';
+  const homePhoto = leader?.home?.photoUrl;
+  const awayPhoto = leader?.away?.photoUrl;
 
   return (
     <div className="mcLeaderCard" style={cssVars}>
       {/* Watermark logo background */}
       <div className="mcLeaderCard__watermark">
-        {logoUrl && (
-          <SmartImg
-            src={logoUrl}
-            alt={team?.fullName || ''}
-            className="mcLeaderCard__watermarkImg"
-            fallbackText={team?.abbreviation || ''}
-          />
-        )}
+        <SmartImg
+          key={`leaders-mark-${homeLogo}`}
+          src={homeLogo}
+          alt={homeTeam?.fullName || ''}
+          className="mcLeaderCard__watermarkImg"
+          fallbackText={homeTeam?.abbreviation || ''}
+        />
       </div>
 
       {/* Stat label bar */}
       <div className="mcLeaderCard__bar">
-        <span className="mcLeaderCard__barText">{isLoading ? '—' : leader?.stat || 'STAT'}</span>
+        <span className="mcLeaderCard__barText">{badge}</span>
+        <div className="mcLeaderCard__barLogos">
+          <SmartImg
+            key={`leaders-bar-home-${homeLogo}`}
+            src={homeLogo}
+            alt={homeTeam?.fullName || ''}
+            className="mcLeaderCard__crest"
+            fallbackText={homeTeam?.abbreviation || ''}
+          />
+          <SmartImg
+            key={`leaders-bar-away-${awayLogo}`}
+            src={awayLogo}
+            alt={awayTeam?.fullName || ''}
+            className="mcLeaderCard__crest"
+            fallbackText={awayTeam?.abbreviation || ''}
+          />
+        </div>
       </div>
 
-      {/* Content grid: left (text) + right (photo) */}
-      <div className="mcLeaderCard__content">
-        <div className="mcLeaderCard__left">
-          {/* Match total */}
-          <div className="mcLeaderCard__stat">
-            <p className="mcLeaderCard__statLabel">Match Total</p>
-            <p className="mcLeaderCard__statValue">{statValue}</p>
+      <div className="mcLeaderCard__content mcLeaderCard__content--split">
+        <div className="mcLeaderSide" style={{ ['--lsR' as any]: String(hexToRgb(homeColor).r), ['--lsG' as any]: String(hexToRgb(homeColor).g), ['--lsB' as any]: String(hexToRgb(homeColor).b) }}>
+          <div className="mcLeaderSide__head">
+            <span className="mcLeaderSide__label">{homeTeam?.name || 'Home'}</span>
+            <span className="mcLeaderSide__value">{homeValue}</span>
           </div>
-
-          {/* Season average */}
-          <div className="mcLeaderCard__season">
-            <span className="mcLeaderCard__seasonLabel">Season Avg</span>
-            <span className="mcLeaderCard__seasonValue">{isLoading ? '—' : leader?.seasonAvg ?? '—'}</span>
-          </div>
-
-          {/* Player name */}
-          <div className="mcLeaderCard__player">
-            <p className="mcLeaderCard__firstName">{firstName}</p>
-            <p className="mcLeaderCard__lastName">{lastName}</p>
-            {leader?.position && <p className="mcLeaderCard__role">{leader.position}</p>}
+          <div className="mcLeaderSide__body">
+            {homePhoto ? (
+              <img src={homePhoto} alt={homeName} className="mcLeaderSide__photo" />
+            ) : (
+              <SmartImg
+                key={`leaders-ph-home-${homeLogo}`}
+                src={homeLogo}
+                alt={homeTeam?.fullName || ''}
+                className="mcLeaderSide__photoFallback"
+                fallbackText={(homeName[0] || 'H').toUpperCase()}
+              />
+            )}
+            <div className="mcLeaderSide__meta">
+              <p className="mcLeaderSide__name">{homeName}</p>
+              <p className="mcLeaderSide__sub">{homeSub}</p>
+            </div>
           </div>
         </div>
 
-        {/* Right: player photo */}
-        <div className="mcLeaderCard__right">
-          {leader?.photoUrl ? (
-            <img
-              src={leader.photoUrl}
-              alt={playerName}
-              className="mcLeaderCard__photo"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
-          ) : (
-            <div className="mcLeaderCard__placeholder">
-              <span className="mcLeaderCard__placeholderText">{firstName.slice(0, 1)}{lastName.slice(0, 1)}</span>
+        <div className="mcLeaderSide mcLeaderSide--away" style={{ ['--lsR' as any]: String(hexToRgb(awayColor).r), ['--lsG' as any]: String(hexToRgb(awayColor).g), ['--lsB' as any]: String(hexToRgb(awayColor).b) }}>
+          <div className="mcLeaderSide__head">
+            <span className="mcLeaderSide__label">{awayTeam?.name || 'Away'}</span>
+            <span className="mcLeaderSide__value">{awayValue}</span>
+          </div>
+          <div className="mcLeaderSide__body">
+            {awayPhoto ? (
+              <img src={awayPhoto} alt={awayName} className="mcLeaderSide__photo" />
+            ) : (
+              <SmartImg
+                key={`leaders-ph-away-${awayLogo}`}
+                src={awayLogo}
+                alt={awayTeam?.fullName || ''}
+                className="mcLeaderSide__photoFallback"
+                fallbackText={(awayName[0] || 'A').toUpperCase()}
+              />
+            )}
+            <div className="mcLeaderSide__meta">
+              <p className="mcLeaderSide__name">{awayName}</p>
+              <p className="mcLeaderSide__sub">{awaySub}</p>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

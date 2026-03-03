@@ -1,28 +1,37 @@
-/* styles/appFrame.css - Remove white border, full bleed */
 :root {
   --eg-device-w: 100vw;
   --eg-device-h: 100vh;
+  --eg-header-h: 72px;
+  --eg-header-height: 72px;
+  --bottom-nav-h: 108px;
+  --eg-bottom-nav-height: 108px;
 }
 
 .eg-viewport {
   min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: stretch;
-  background: #000;
+  background: transparent;
   margin: 0;
   padding: 0;
 }
 
-/* Mobile: full width, no border */
 .eg-device {
   width: 100vw;
+  height: 100vh;
+  height: 100svh;
   height: 100dvh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  background: #000;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: radial-gradient(900px 700px at 50% -10%, rgba(245, 200, 75, 0.12), transparent 55%),
+    radial-gradient(900px 700px at 0% 30%, rgba(154, 92, 255, 0.14), transparent 60%),
+    radial-gradient(900px 700px at 100% 40%, rgba(46, 141, 255, 0.14), transparent 60%),
+    linear-gradient(180deg, var(--eg-bg-1), var(--eg-bg-2));
   margin: 0;
   padding: 0;
   border: none;
@@ -30,7 +39,54 @@
   box-shadow: none;
 }
 
-/* Desktop: still full bleed but centered */
+.eg-device::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 140px;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.68), rgba(0, 0, 0, 0.08), transparent);
+  z-index: 1;
+}
+
+.eg-device::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 160px;
+  pointer-events: none;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.1), transparent);
+  z-index: 1;
+}
+
+.eg-content-scroll {
+  position: relative;
+  z-index: 2;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
+}
+
+.eg-content-scroll > * {
+  padding-left: max(12px, env(safe-area-inset-left, 0px));
+  padding-right: max(12px, env(safe-area-inset-right, 0px));
+}
+
+.eg-app-loading {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--eg-text-dim);
+}
+
 @media (min-width: 520px) {
   .eg-viewport {
     padding: 0;
@@ -40,8 +96,24 @@
   .eg-device {
     width: 430px;
     height: 100vh;
+    height: 100svh;
+    height: 100dvh;
     border-radius: 0;
     border: none;
     box-shadow: none;
   }
+
+  .eg-device.eg-device--admin {
+    width: 100vw;
+    max-width: 100vw;
+  }
+}
+
+.eg-device.eg-device--admin::before,
+.eg-device.eg-device--admin::after {
+  opacity: 0.45;
+}
+
+.eg-device.eg-device--admin .eg-content-scroll {
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
 }

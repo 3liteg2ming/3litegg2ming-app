@@ -24,6 +24,8 @@ export async function mockSignUp(opts: {
   password: string;
   displayName?: string;
   psn?: string;
+  firstName?: string;
+  lastName?: string;
   teamKey?: TeamKey;
 }): Promise<StoredUser> {
   const user: StoredUser = {
@@ -31,6 +33,8 @@ export async function mockSignUp(opts: {
     email: opts.email,
     displayName: opts.displayName,
     psn: opts.psn,
+    firstName: opts.firstName,
+    lastName: opts.lastName,
     teamKey: opts.teamKey,
   };
 
@@ -54,5 +58,4 @@ export async function mockSignIn(opts: {
 
 export async function mockSignOut(): Promise<void> {
   localStorage.removeItem(LS_USER);
-  // Keep password to allow re-sign-in in local mode if user wants.
 }

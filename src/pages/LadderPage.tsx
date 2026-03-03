@@ -2,7 +2,10 @@ import React, { memo, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 
 import SmartImg from '../components/SmartImg';
-import { assetUrl, TEAM_ASSETS, type TeamKey } from '../lib/teamAssets';
+import { TEAM_ASSETS, assetUrl, type TeamKey } from '../lib/teamAssets';
+import { getDataSeasonSlugForCompetition, getStoredCompetitionKey } from '../lib/competitionRegistry';
+import { resolveTeamKey } from '../lib/entityResolvers';
+import { useLadder } from '../hooks/useLadder';
 
 import '../styles/ladder.css';
 
@@ -58,6 +61,17 @@ function hash01(input: string) {
   return ((h >>> 0) % 1_000_000) / 1_000_000;
 }
 
+function normalizeForm(input: unknown): Array<'W' | 'L' | 'D'> {
+  const raw = Array.isArray(input) ? input : typeof input === 'string' ? input.replace(/[{}]/g, '').split(',') : [];
+  const out: Array<'W' | 'L' | 'D'> = [];
+  for (const item of raw) {
+    const token = String(item || '').trim().toUpperCase();
+    if (token === 'W' || token === 'L' || token === 'D') out.push(token);
+    if (out.length >= 5) break;
+  }
+  return out;
+}
+
 function makeRows(): LadderEntry[] {
   const mk = (
     id: string,
@@ -92,19 +106,24 @@ function makeRows(): LadderEntry[] {
     };
   };
 
-  // TEMP demo rows (swap to Supabase later)
+      // TEMP demo rows (swap to Supabase later)
   return [
-    mk('adelaide', 1, 'adelaide', 'Crows', 0, 0, 0, 0, 0, 0, ['W', 'W', 'W', 'W', 'W']),
-    mk('brisbane', 2, 'brisbane', 'Lions', 0, 0, 0, 0, 0, 0, ['W', 'W', 'W', 'L', 'W']),
-    mk('carlton', 3, 'carlton', 'Blues', 0, 0, 0, 0, 0, 0, ['W', 'W', 'L', 'W', 'W']),
-    mk('collingwood', 4, 'collingwood', 'Magpies', 0, 0, 0, 0, 0, 0, ['W', 'L', 'W', 'W', 'W']),
-    mk('essendon', 5, 'essendon', 'Bombers', 0, 0, 0, 0, 0, 0, ['L', 'W', 'W', 'L', 'W']),
-    mk('fremantle', 6, 'fremantle', 'Dockers', 0, 0, 0, 0, 0, 0, ['W', 'L', 'L', 'W', 'W']),
-    mk('geelong', 7, 'geelong', 'Cats', 0, 0, 0, 0, 0, 0, ['L', 'L', 'W', 'L', 'W']),
-    mk('goldcoast', 8, 'goldcoast', 'Suns', 0, 0, 0, 0, 0, 0, ['W', 'W', 'L', 'L', 'W']),
-    mk('gws', 9, 'gws', 'Giants', 0, 0, 0, 0, 0, 0, ['W', 'W', 'W', 'W', 'L']),
-    mk('hawthorn', 10, 'hawthorn', 'Hawks', 0, 0, 0, 0, 0, 0, ['L', 'W', 'L', 'L', 'W']),
+    mk('adelaide', 1, 'adelaide', 'Crows', 0, 0, 0, 0, 0, 0, []),
+    mk('brisbane', 2, 'brisbane', 'Lions', 0, 0, 0, 0, 0, 0, []),
+    mk('carlton', 3, 'carlton', 'Blues', 0, 0, 0, 0, 0, 0, []),
+    mk('collingwood', 4, 'collingwood', 'Magpies', 0, 0, 0, 0, 0, 0, []),
+    mk('essendon', 5, 'essendon', 'Bombers', 0, 0, 0, 0, 0, 0, []),
+    mk('fremantle', 6, 'fremantle', 'Dockers', 0, 0, 0, 0, 0, 0, []),
+    mk('geelong', 7, 'geelong', 'Cats', 0, 0, 0, 0, 0, 0, []),
+    mk('goldcoast', 8, 'goldcoast', 'Suns', 0, 0, 0, 0, 0, 0, []),
+    mk('gws', 9, 'gws', 'Giants', 0, 0, 0, 0, 0, 0, []),
+    mk('hawthorn', 10, 'hawthorn', 'Hawks', 0, 0, 0, 0, 0, 0, []),
   ];
+}
+
+function toTeamKeyFromSlug(slug: string, name: string): TeamKey {
+  const key = resolveTeamKey({ slug, name });
+  return (key in TEAM_ASSETS ? (key as TeamKey) : 'adelaide') as TeamKey;
 }
 
 function enrichWinChance(rows: LadderEntry[]): LadderEntry[] {
@@ -122,7 +141,14 @@ function oddsFromWinChance(winChance: number) {
 }
 
 const LadderRow = memo(function LadderRow({ entry, mode }: { entry: LadderEntry; mode: Mode }) {
-  const t = TEAM_ASSETS[entry.teamKey] || TEAM_ASSETS.adelaide;
+  const t = TEAM_ASSETS[entry.teamKey] || {
+    name: 'Unassigned',
+    shortName: 'EG',
+    colour: '#2a2f38',
+    primary: '#2a2f38',
+    logoPath: '',
+    logoFile: '',
+  };
   const logo = assetUrl(t.logoFile ?? '');
 
   const cssVars = useMemo(() => {
@@ -212,7 +238,37 @@ const LadderRow = memo(function LadderRow({ entry, mode }: { entry: LadderEntry;
 export default function LadderPage() {
   const [mode, setMode] = useState<Mode>('SUMMARY');
 
-  const rows = useMemo(() => enrichWinChance(makeRows()), []);
+  const competitionKey = getStoredCompetitionKey();
+  const seasonSlug = getDataSeasonSlugForCompetition(competitionKey);
+  const { data: ladderRows, isLoading, isError } = useLadder(seasonSlug);
+
+  const rows = useMemo(() => {
+    // Fallback to a nice “demo ladder” if the DB isn't ready yet.
+    if (!ladderRows || ladderRows.length === 0) return enrichWinChance(makeRows());
+
+    const mapped: LadderEntry[] = ladderRows
+      .map((r, idx) => {
+        const teamKey = toTeamKeyFromSlug(String(r.team_slug || ''), String(r.team_name || ''));
+        return {
+          id: String(r.team_id),
+          pos: idx + 1,
+          teamKey,
+          teamName: String(r.team_name || TEAM_ASSETS[teamKey]?.name || 'Team'),
+          played: Number(r.played || 0),
+          wins: Number(r.wins || 0),
+          losses: Number(r.losses || 0),
+          draws: Number(r.draws || 0),
+          pf: Number(r.pf || 0),
+          pa: Number(r.pa || 0),
+          points: Number(r.points || 0),
+          percentage: Number(r.percentage || 0),
+          form: normalizeForm((r as any).last5_results),
+          winChance: 50,
+        };
+      });
+
+    return enrichWinChance(mapped);
+  }, [ladderRows]);
 
   const headerCols = useMemo(() => {
     if (mode === 'SUMMARY') return ['P', 'Pts', '%'];
@@ -226,12 +282,14 @@ export default function LadderPage() {
         <section className="ladderHero aflHero">
           <div className="heroTop">
             <div>
-              <div className="kicker">AFL26 • Elite Gaming</div>
+              <div className="kicker">{competitionKey.toUpperCase()} • Elite Gaming</div>
               <div className="title">Ladder</div>
               <div className="rule" />
-              <div className="hint">Ranked by points, then percentage</div>
+              <div className="hint">
+                {isLoading ? 'Loading ladder…' : isError ? 'Ladder error — showing fallback' : 'Ranked by points, then percentage'}
+              </div>
             </div>
-            <div className="seasonPill">Season One</div>
+            <div className="seasonPill">{seasonSlug.replace(/-/g, ' ')}</div>
           </div>
         </section>
 

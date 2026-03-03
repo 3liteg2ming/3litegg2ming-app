@@ -5,6 +5,8 @@ export type CoachUser = {
   email: string;
   displayName?: string;
   psn?: string;
+  firstName?: string;
+  lastName?: string;
   teamKey?: TeamKey;
 };
 

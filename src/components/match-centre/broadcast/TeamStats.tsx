@@ -9,6 +9,7 @@ function slugToTeamKey(slug: string): TeamKey | null {
   const keys = Object.keys(TEAM_ASSETS) as TeamKey[];
   if (keys.includes(s as TeamKey)) return s as TeamKey;
   const compact = s.replace(/[^a-z0-9]/g, '');
+  if (keys.includes(compact as TeamKey)) return compact as TeamKey;
   const aliases: Record<string, TeamKey> = {
     collingwoodmagpies: 'collingwood',
     carltonblues: 'carlton',
@@ -32,16 +33,30 @@ function slugToTeamKey(slug: string): TeamKey | null {
   return aliases[compact] || null;
 }
 
+function tintForStatValue(hex: string, fallback: string) {
+  const h = String(hex || '').replace('#', '').trim();
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  if (![r, g, b].every(Number.isFinite)) return fallback;
+  // Lift dark colors so numbers remain readable on dark glass.
+  const lift = (v: number) => Math.max(120, Math.min(255, v + 35));
+  return `rgb(${lift(r)}, ${lift(g)}, ${lift(b)})`;
+}
+
 function StatRow({ stat, homeColor, awayColor }: { stat: TeamStatRow; homeColor: string; awayColor: string }) {
   const maxMatch = Math.max(stat.homeMatch, stat.awayMatch, 1);
   const homePercent = (stat.homeMatch / maxMatch) * 100;
   const awayPercent = (stat.awayMatch / maxMatch) * 100;
+  const homeTint = tintForStatValue(homeColor, '#FFD44A');
+  const awayTint = tintForStatValue(awayColor, '#7BD6FF');
 
   return (
     <div className="mcTeamStatRow">
       {/* Home value */}
       <div className="mcTeamStatRow__home">
-        <span className="mcTeamStatRow__value" style={{ color: homeColor }}>
+        <span className="mcTeamStatRow__value" style={{ color: homeTint }}>
           {stat.homeMatch}
         </span>
       </div>
@@ -66,7 +81,7 @@ function StatRow({ stat, homeColor, awayColor }: { stat: TeamStatRow; homeColor:
 
       {/* Away value */}
       <div className="mcTeamStatRow__away">
-        <span className="mcTeamStatRow__value" style={{ color: awayColor }}>
+        <span className="mcTeamStatRow__value" style={{ color: awayTint }}>
           {stat.awayMatch}
         </span>
       </div>
@@ -82,9 +97,9 @@ export default function TeamStats({ model, loading }: { model: MatchCentreModel 
   const awayKey = away ? slugToTeamKey(away.slug) : null;
 
   const homeLogo =
-    home?.logoUrl || (homeKey ? assetUrl(TEAM_ASSETS[homeKey].logoFile ?? '') : '');
+    home?.logoUrl || (homeKey ? assetUrl(TEAM_ASSETS[homeKey].logoFile ?? '') : assetUrl('elite-gaming-logo.png'));
   const awayLogo =
-    away?.logoUrl || (awayKey ? assetUrl(TEAM_ASSETS[awayKey].logoFile ?? '') : '');
+    away?.logoUrl || (awayKey ? assetUrl(TEAM_ASSETS[awayKey].logoFile ?? '') : assetUrl('elite-gaming-logo.png'));
 
   const stats = model?.teamStats || [];
   const isEmpty = !loading && stats.length === 0;
@@ -107,26 +122,24 @@ export default function TeamStats({ model, loading }: { model: MatchCentreModel 
         <>
           <div className="mcTeamStats__teams">
             <div className="mcTeamStats__team">
-              {homeLogo && (
-                <SmartImg
-                  src={homeLogo}
-                  alt={home?.fullName || 'Home'}
-                  className="mcTeamStats__logo"
-                  fallbackText={home?.abbreviation || 'H'}
-                />
-              )}
+              <SmartImg
+                key={`teamstats-home-${homeLogo}`}
+                src={homeLogo}
+                alt={home?.fullName || 'Home'}
+                className="mcTeamStats__logo"
+                fallbackText={home?.abbreviation || 'H'}
+              />
               <span className="mcTeamStats__teamName">{home?.fullName || '—'}</span>
             </div>
             <div className="mcTeamStats__team mcTeamStats__team--away">
               <span className="mcTeamStats__teamName">{away?.fullName || '—'}</span>
-              {awayLogo && (
-                <SmartImg
-                  src={awayLogo}
-                  alt={away?.fullName || 'Away'}
-                  className="mcTeamStats__logo"
-                  fallbackText={away?.abbreviation || 'A'}
-                />
-              )}
+              <SmartImg
+                key={`teamstats-away-${awayLogo}`}
+                src={awayLogo}
+                alt={away?.fullName || 'Away'}
+                className="mcTeamStats__logo"
+                fallbackText={away?.abbreviation || 'A'}
+              />
             </div>
           </div>
 

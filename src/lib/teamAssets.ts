@@ -190,16 +190,41 @@ function _teamKeyFromNameOrKey(team: string): TeamKey {
       .map(_normName);
     if (candidates.some((c) => c && (n.includes(c) || c.includes(n)))) return k;
   }
-  return 'adelaide';
+  return maybeKey;
 }
 
 export function getTeamAssets(teamNameOrKey: string) {
-  const key = _teamKeyFromNameOrKey(teamNameOrKey);
+  const raw = String(teamNameOrKey || '').trim();
+  if (!raw) {
+    const neutral = '#2a2f38';
+    return {
+      key: 'unassigned',
+      name: 'Unassigned',
+      primary: neutral,
+      primaryHex: neutral,
+      dark: _darken(neutral, 0.42),
+      logo: '',
+    };
+  }
+
+  const key = _teamKeyFromNameOrKey(raw);
   const a = TEAM_ASSETS[key];
+  if (!a) {
+    const neutral = '#2a2f38';
+    return {
+      key: 'unassigned',
+      name: 'Unassigned',
+      primary: neutral,
+      primaryHex: neutral,
+      dark: _darken(neutral, 0.42),
+      logo: '',
+    };
+  }
+
   const logo = a?.logoPath ? assetUrl(a.logoPath) : '';
   return {
     key,
-    name: a?.name || teamNameOrKey,
+    name: a?.name || raw,
     primary: a?.colour || '#2a2f38',
     primaryHex: a?.colour || '#2a2f38',
     dark: _darken(a?.colour || '#2a2f38', 0.42),

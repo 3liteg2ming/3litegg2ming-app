@@ -82,10 +82,57 @@ export default function MatchCentrePage() {
     setTabDataLoaded((prev) => new Set(prev).add(newTab));
   };
 
+  const formatMetaTime = (iso?: string) => {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleString('en-AU', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  };
+
+  const renderTrustStrip = () => {
+    const trust = model?.trust;
+    if (!trust) return null;
+    return (
+      <section className={`mcTrust mcTrust--${trust.state.toLowerCase()}`}>
+        <div className="mcTrust__head">
+          <div className="mcTrust__title">Match Status</div>
+          <div className="mcTrust__state">{trust.label}</div>
+        </div>
+        <div className="mcTrust__summary">{trust.summary}</div>
+        <div className="mcTrust__meta">
+          {trust.state === 'Submitted' || trust.state === 'Verified' || trust.state === 'Disputed' || trust.state === 'Corrected' ? (
+            <span>Submitted by: {trust.submittedBy || 'Coach'}</span>
+          ) : (
+            <span>Submitted by: —</span>
+          )}
+          <span>Evidence: {trust.evidenceCount}</span>
+          <span>Last updated: {formatMetaTime(trust.lastUpdated)}</span>
+        </div>
+        {(trust.state === 'Disputed' || trust.state === 'Corrected') && (
+          <div className="mcTrust__links">
+            {trust.state === 'Disputed' ? <span>Details link coming soon</span> : null}
+            {trust.state === 'Corrected' ? <span>View changelog coming soon</span> : null}
+          </div>
+        )}
+      </section>
+    );
+  };
+
   return (
     <div className="mcPage">
       <div className="mcPage__inner">
-        <HeroHeader onBack={() => navigate(-1)} model={model} loading={loading} />
+        <HeroHeader
+          key={model?.fixtureId || resolvedFixtureId || 'latest'}
+          onBack={() => navigate(-1)}
+          model={model}
+          loading={loading}
+        />
 
         <div ref={topRef} />
 
@@ -110,6 +157,7 @@ export default function MatchCentrePage() {
           <>
             {tab === 'summary' && (
               <div className="mcPage__content">
+                {renderTrustStrip()}
                 <MatchLeaders model={model} loading={loading} />
                 <MatchTimeline model={model} loading={loading} />
                 <KeyMatchStats model={model} loading={loading} />
@@ -124,7 +172,7 @@ export default function MatchCentrePage() {
 
             {tab === 'players' && (
               <div className="mcPage__content">
-                <PlayerStatsTable model={model} loading={loading} />
+                <PlayerStatsTable model={model} />
               </div>
             )}
 

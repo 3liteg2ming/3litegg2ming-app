@@ -1,16 +1,18 @@
 import { supabase } from './supabaseClient';
 
 interface EGPlayer {
-  name: string;
+  id?: string;
+  name?: string | null;
+  full_name?: string | null;
+  display_name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
   headshot_url?: string | null;
+  photo_url?: string | null;
 }
 
-// Cache for player photos to avoid repeated queries
 const playerPhotosCache = new Map<string, string | null>();
 
-/**
- * Normalize player name for matching
- */
 function normalizeName(name?: string): string {
   return String(name || '')
     .toLowerCase()
@@ -18,120 +20,138 @@ function normalizeName(name?: string): string {
     .trim();
 }
 
-/**
- * Fetch player headshot URL from the eg_players table
- */
+function buildNameCandidates(name?: string): string[] {
+  const raw = String(name || '').trim();
+  if (!raw) return [];
+
+  const normalized = normalizeName(raw);
+  const compact = normalized.replace(/[^a-z0-9]/g, '');
+  const out = new Set<string>([raw, normalized, compact]);
+
+  const parts = normalized.split(' ').filter(Boolean);
+  if (parts.length >= 2) {
+    out.add(`${parts[0]} ${parts[parts.length - 1]}`);
+  }
+
+  return Array.from(out).filter(Boolean);
+}
+
+function pickPhoto(row: EGPlayer): string | null {
+  return String(row?.headshot_url || row?.photo_url || '').trim() || null;
+}
+
+function rowNames(row: EGPlayer): string[] {
+  const full = String(row?.full_name || '').trim();
+  const display = String(row?.display_name || '').trim();
+  const name = String(row?.name || '').trim();
+  const first = String(row?.first_name || '').trim();
+  const last = String(row?.last_name || '').trim();
+  const combined = `${first} ${last}`.trim();
+
+  return [name, display, full, combined].filter(Boolean).map((x) => normalizeName(x));
+}
+
+async function fetchPlayersForNames(playerNames: string[]): Promise<EGPlayer[]> {
+  const unique = Array.from(new Set(playerNames.map((n) => normalizeName(n)).filter(Boolean)));
+  if (!unique.length) return [];
+
+  const selectAttempts = [
+    'id,name,full_name,display_name,first_name,last_name,headshot_url,photo_url',
+    'id,name,full_name,display_name,headshot_url,photo_url',
+    'id,name,headshot_url,photo_url',
+    'id,name,headshot_url',
+  ] as const;
+
+  for (const select of selectAttempts) {
+    const { data, error } = await supabase
+      .from('eg_players')
+      .select(select)
+      .in('name', unique)
+      .limit(5000);
+
+    if (!error) return (data || []) as EGPlayer[];
+  }
+
+  for (const select of selectAttempts) {
+    const { data, error } = await supabase
+      .from('eg_players')
+      .select(select)
+      .limit(5000);
+
+    if (!error) return (data || []) as EGPlayer[];
+  }
+
+  return [];
+}
+
 export async function getPlayerPhotoFromSupabase(playerName?: string): Promise<string | null> {
   if (!playerName) return null;
-
   const normalizedName = normalizeName(playerName);
 
-  // Check cache first
   if (playerPhotosCache.has(normalizedName)) {
     return playerPhotosCache.get(normalizedName) ?? null;
   }
 
-  try {
-    const { data, error } = await supabase
-      .from('eg_players')
-      .select('name, headshot_url')
-      .eq('name', playerName)
-      .single();
-
-    if (error) {
-      console.warn(`[PlayerPhotos] Error fetching photo for ${playerName}:`, error.message);
-      playerPhotosCache.set(normalizedName, null);
-      return null;
-    }
-
-    const player = data as EGPlayer | null;
-    const headshot = player?.headshot_url || null;
-
-    // Cache the result
-    playerPhotosCache.set(normalizedName, headshot);
-
-    return headshot;
-  } catch (err) {
-    console.warn(`[PlayerPhotos] Exception fetching photo for ${playerName}:`, err);
-    playerPhotosCache.set(normalizedName, null);
-    return null;
-  }
+  const results = await preloadPlayerPhotos([playerName]);
+  return results.get(playerName) ?? null;
 }
 
-/**
- * Preload multiple player photos at once for performance
- */
 export async function preloadPlayerPhotos(playerNames: string[]): Promise<Map<string, string | null>> {
   const results = new Map<string, string | null>();
+  const pending: string[] = [];
 
-  // Only query for players not in cache
-  const uncachedNames = playerNames.filter(name => !playerPhotosCache.has(normalizeName(name)));
-
-  if (uncachedNames.length === 0) {
-    // All cached, return from cache
-    playerNames.forEach(name => {
-      const normalized = normalizeName(name);
-      results.set(name, playerPhotosCache.get(normalized) ?? null);
-    });
-    return results;
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from('eg_players')
-      .select('name, headshot_url')
-      .in('name', uncachedNames);
-
-    if (error) {
-      console.warn('[PlayerPhotos] Error batch fetching photos:', error.message);
-      // Mark as failed but still cache
-      playerNames.forEach(name => {
-        playerPhotosCache.set(normalizeName(name), null);
-        results.set(name, null);
-      });
-      return results;
-    }
-
-    const players = (data || []) as EGPlayer[];
-    const photoMap = new Map(players.map(p => [p.name, p.headshot_url || null]));
-
-    // Debug: Log which players have photos
-    console.log('[PlayerPhotos] Loaded photos for:', players.map(p => ({ name: p.name, hasPhoto: !!p.headshot_url })));
-
-    // Log missing players
-    const missingPlayers = uncachedNames.filter(name => !photoMap.has(name));
-    if (missingPlayers.length > 0) {
-      console.warn('[PlayerPhotos] Players not found in database:', missingPlayers);
-    }
-
-    // Cache and populate results
-    playerNames.forEach(name => {
-      const headshot = photoMap.get(name) ?? null;
-      playerPhotosCache.set(normalizeName(name), headshot);
-      results.set(name, headshot);
-    });
-
-    return results;
-  } catch (err) {
-    console.warn('[PlayerPhotos] Exception batch fetching photos:', err);
-    playerNames.forEach(name => {
-      playerPhotosCache.set(normalizeName(name), null);
+  for (const name of playerNames) {
+    const normalized = normalizeName(name);
+    if (!normalized) {
       results.set(name, null);
-    });
-    return results;
+      continue;
+    }
+
+    if (playerPhotosCache.has(normalized)) {
+      results.set(name, playerPhotosCache.get(normalized) ?? null);
+      continue;
+    }
+
+    pending.push(name);
   }
+
+  if (!pending.length) return results;
+
+  const rows = await fetchPlayersForNames(pending);
+
+  const photoByNormalizedName = new Map<string, string | null>();
+  for (const row of rows) {
+    const photo = pickPhoto(row);
+    for (const n of rowNames(row)) {
+      if (!photoByNormalizedName.has(n) || (photo && !photoByNormalizedName.get(n))) {
+        photoByNormalizedName.set(n, photo);
+      }
+    }
+  }
+
+  for (const requested of pending) {
+    const normalized = normalizeName(requested);
+    const candidates = buildNameCandidates(requested).map((x) => normalizeName(x));
+
+    let photo: string | null = null;
+    for (const candidate of candidates) {
+      if (photoByNormalizedName.has(candidate)) {
+        photo = photoByNormalizedName.get(candidate) ?? null;
+        if (photo) break;
+      }
+    }
+
+    playerPhotosCache.set(normalized, photo);
+    results.set(requested, photo);
+  }
+
+  return results;
 }
 
-/**
- * Clear the photo cache
- */
 export function clearPlayerPhotosCache(): void {
   playerPhotosCache.clear();
 }
 
-/**
- * Get cache size (useful for debugging)
- */
 export function getPlayerPhotosCacheSize(): number {
   return playerPhotosCache.size;
 }

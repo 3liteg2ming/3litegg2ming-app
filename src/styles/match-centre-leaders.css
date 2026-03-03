@@ -1,10 +1,4 @@
-/* Match Centre Leaders Cards
-   ===========================
-   - Team color gradients
-   - Glass morphism with glow- Horizontal scroll rail
-   - Player photos with premium fallback
-   - Dramatic stat display
-*/
+/* Match Centre Leaders */
 
 .mcLeaders {
   width: 100%;
@@ -13,7 +7,7 @@
 
 .mcLeaders__header {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   padding: 0 16px;
 }
 
@@ -33,30 +27,36 @@
 }
 
 .mcLeaders__empty {
-  padding: 40px 16px;
+  padding: 34px 16px;
   text-align: center;
+  border-radius: 22px;
+  margin: 0 16px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03)),
+    rgba(11,15,28,0.82);
+  border: 1px solid rgba(255,255,255,0.12);
 }
 
 .mcLeaders__emptyText {
   font-size: 18px;
   font-weight: 900;
-  color: rgba(255,255,255,0.65);
+  color: rgba(255,255,255,0.72);
 }
 
 .mcLeaders__emptyDesc {
   font-size: 13px;
   font-weight: 550;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.42);
   margin: 8px 0 0 0;
 }
 
 .mcLeaders__scroll {
   display: flex;
-  gap: 20px;
+  gap: 16px;
   overflow-x: auto;
   overflow-y: hidden;
   scroll-snap-type: x mandatory;
-  padding: 0 16px 16px 16px;
+  padding: 0 16px 14px;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -89,48 +89,37 @@
   box-shadow: 0 4px 12px rgba(245,196,0,0.3);
 }
 
-/* Leader Card */
 .mcLeaderCard {
   flex: 0 0 auto;
-  width: 320px;
-  min-height: 420px;
+  width: 336px;
+  min-height: 360px;
   border-radius: 24px;
   overflow: hidden;
   scroll-snap-align: center;
   scroll-snap-stop: always;
   background:
-    radial-gradient(70% 80% at 50% 30%, rgba(var(--mlR), var(--mlG), var(--mlB), 0.20) 0%, transparent 80%),
+    radial-gradient(70% 80% at 50% 30%, rgba(var(--mlR), var(--mlG), var(--mlB), 0.16) 0%, transparent 80%),
     linear-gradient(135deg, rgba(20,24,40,0.9) 0%, rgba(12,14,24,0.95) 100%);
   border: 1px solid rgba(255,255,255,0.12);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
   box-shadow:
     0 16px 40px rgba(0,0,0,0.4),
     inset 0 1px 0 rgba(255,255,255,0.08),
-    0 0 30px rgba(var(--mlR), var(--mlG), var(--mlB), 0.15);
+    0 0 28px rgba(var(--mlR), var(--mlG), var(--mlB), 0.12);
   position: relative;
   display: flex;
   flex-direction: column;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.mcLeaderCard:hover {
-  transform: translateY(-4px);
-  box-shadow:
-    0 24px 50px rgba(0,0,0,0.5),
-    inset 0 1px 0 rgba(255,255,255,0.12),
-    0 0 40px rgba(var(--mlR), var(--mlG), var(--mlB), 0.25);
-}
-
-/* Watermark logo background */
 .mcLeaderCard__watermark {
   position: absolute;
-  top: 50%;
-  right: -20px;
-  width: 260px;
-  height: 260px;
+  top: 62%;
+  right: -10px;
+  width: 200px;
+  height: 200px;
   transform: translateY(-50%);
-  opacity: 0.06;
+  opacity: 0.05;
   z-index: 1;
   pointer-events: none;
 }
@@ -139,190 +128,141 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.2));
 }
 
-/* Stat label bar */
 .mcLeaderCard__bar {
   position: relative;
   z-index: 3;
-  padding: 10px 16px;
+  padding: 11px 14px;
   background:
-    linear-gradient(90deg, 
-      rgba(var(--mlR), var(--mlG), var(--mlB), 0.85),
-      rgba(var(--mlR), var(--mlG), var(--mlB), 0.65)
+    linear-gradient(90deg,
+      rgba(var(--mlR), var(--mlG), var(--mlB), 0.88),
+      rgba(var(--mlR), var(--mlG), var(--mlB), 0.68)
     );
   border-bottom: 1px solid rgba(255,255,255,0.10);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .mcLeaderCard__barText {
   font-size: 11px;
   font-weight: 950;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.9);
-  display: block;
+  color: rgba(255,255,255,0.92);
 }
 
-/* Main content */
+.mcLeaderCard__barLogos {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mcLeaderCard__crest {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  opacity: 0.92;
+}
+
 .mcLeaderCard__content {
   position: relative;
   z-index: 2;
   flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 120px;
-  gap: 12px;
-  padding: 18px;
-  align-items: stretch;
+  padding: 14px;
 }
 
-/* Left side: text content */
-.mcLeaderCard__left {
+.mcLeaderCard__content--split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.mcLeaderSide {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.12);
+  background:
+    linear-gradient(135deg, rgba(var(--lsR), var(--lsG), var(--lsB), 0.12), rgba(8,10,16,0.6));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.mcLeaderSide--away {
+  background:
+    linear-gradient(135deg, rgba(var(--lsR), var(--lsG), var(--lsB), 0.10), rgba(8,10,16,0.6));
+}
+
+.mcLeaderSide__head {
   display: flex;
-  flex-direction: column;
   justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.mcLeaderSide__label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: rgba(255,255,255,0.64);
+}
+
+.mcLeaderSide__value {
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: -0.03em;
+  color: rgba(255,255,255,0.97);
+}
+
+.mcLeaderSide__body {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px 12px;
+}
+
+.mcLeaderSide__photo,
+.mcLeaderSide__photoFallback {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.28);
+}
+
+.mcLeaderSide__meta {
   min-width: 0;
 }
 
-/* Match stat */
-.mcLeaderCard__stat {
-  margin-bottom: 8px;
-}
-
-.mcLeaderCard__statLabel {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.50);
-  margin: 0 0 4px 0;
-}
-
-.mcLeaderCard__statValue {
-  font-size: 48px;
-  line-height: 1;
-  font-weight: 950;
-  letter-spacing: -0.02em;
-  color: rgba(255,255,255,0.98);
+.mcLeaderSide__name {
   margin: 0;
-  text-shadow: 0 8px 16px rgba(0,0,0,0.35);
-}
-
-/* Season average */
-.mcLeaderCard__season {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-  margin-bottom: 12px;
-}
-
-.mcLeaderCard__seasonLabel {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.40);
-}
-
-.mcLeaderCard__seasonValue {
-  font-size: 12px;
-  font-weight: 900;
-  color: rgba(255,255,255,0.70);
-}
-
-/* Player name */
-.mcLeaderCard__player {
-  margin-top: auto;
-}
-
-.mcLeaderCard__firstName {
-  font-size: 13px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.60);
-  margin: 0 0 2px 0;
-}
-
-.mcLeaderCard__lastName {
-  font-size: 18px;
-  font-weight: 900;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.95);
-  margin: 0 0 4px 0;
-  border-bottom: 2px solid rgba(var(--mlR), var(--mlG), var(--mlB), 0.6);
-  padding-bottom: 2px;
-  display: inline-block;
-}
-
-.mcLeaderCard__role {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.40);
-  margin: 0;
-}
-
-/* Right side: player photo */
-.mcLeaderCard__right {
-  width: 100%;
-  aspect-ratio: 3 / 4;
-  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 850;
+  color: rgba(255,255,255,0.92);
+  white-space: nowrap;
   overflow: hidden;
-  position: relative;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-  border: 1px solid rgba(255,255,255,0.10);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  text-overflow: ellipsis;
 }
 
-.mcLeaderCard__photo {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center top;
+.mcLeaderSide__sub {
+  margin: 2px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.58);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.mcLeaderCard__placeholder {
-  width: 100%;
-  height: 100%;
-  background:
-    linear-gradient(135deg, 
-      rgba(var(--mlR), var(--mlG), var(--mlB), 0.25),
-      rgba(var(--mlR), var(--mlG), var(--mlB), 0.10)
-    );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.mcLeaderCard__placeholderText {
-  font-size: 32px;
-  font-weight: 950;
-  color: rgba(255,255,255,0.35);
-  text-transform: uppercase;
-}
-
-/* Mobile optimizations */
 @media (max-width: 480px) {
   .mcLeaderCard {
-    width: 280px;
-    min-height: 380px;
-  }
-
-  .mcLeaderCard__content {
-    padding: 14px;
-    gap: 10px;
-  }
-
-  .mcLeaderCard__statValue {
-    font-size: 40px;
-  }
-
-  .mcLeaderCard__lastName {
-    font-size: 16px;
+    width: 292px;
+    min-height: 332px;
   }
 
   .mcLeaders__title {
@@ -330,15 +270,11 @@
   }
 
   .mcLeaders__scroll {
-    padding: 0 12px 12px 12px;
-    gap: 16px;
+    padding: 0 12px 12px;
+    gap: 14px;
   }
 
-  .mcLeaders__header {
-    padding: 0 12px;
-    margin-bottom: 16px;
-  }
-
+  .mcLeaders__header,
   .mcLeaders__dots {
     padding: 0 12px;
   }

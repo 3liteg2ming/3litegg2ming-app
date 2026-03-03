@@ -26,11 +26,12 @@
   padding: 12px 16px;
   display: flex;
   justify-content: center;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .mcTabs__track {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
   gap: 8px;
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.10);
@@ -38,11 +39,16 @@
   padding: 6px;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  width: 100%;
-  max-width: 380px;
+  width: min(100%, 420px);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .mcTabs__button {
+  flex: 1 1 0;
+  flex-basis: 0;
+  max-width: 33.333%;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -63,6 +69,10 @@
   outline: none;
 }
 
+.mcTabs__button > svg {
+  flex: 0 0 auto;
+}
+
 .mcTabs__button:hover:not(.mcTabs__button--active) {
   color: rgba(255,255,255,0.75);
   background: rgba(255,255,255,0.06);
@@ -78,6 +88,9 @@
 }
 
 .mcTabs__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -91,9 +104,16 @@
 
   .mcTabs__button {
     height: 36px;
-    padding: 0 8px;
-    font-size: 11px;
+    padding: 0 7px;
+    font-size: 10.5px;
     gap: 4px;
+    letter-spacing: 0.06em;
+  }
+
+  .mcTabs__button svg {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
   }
 
   .mcTabs__container {
@@ -110,6 +130,6 @@
   }
 
   .mcTabs__label {
-    display: none;
+    max-width: 100%;
   }
 }

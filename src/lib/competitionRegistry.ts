@@ -17,7 +17,7 @@ export const COMPETITIONS: CompetitionConfig[] = [
     label: 'Knockout Preseason',
     status: 'OPEN',
     seasonSlug: 'preseason',
-    dataFallbackSeasonSlug: 'afl26-season-two',
+    dataFallbackSeasonSlug: 'preseason',
   },
   {
     key: 'afl26',
@@ -47,8 +47,8 @@ export function getUiCompetition(key: CompetitionKey): CompetitionConfig {
 export function coerceCompetitionKey(value: string | null | undefined): CompetitionKey {
   const raw = String(value || '').trim().toLowerCase();
   if (raw === 'preseason') return 'preseason';
-  // Explicitly coerce any legacy/blocked values to preseason.
-  if (raw === 'afl26' || raw === 'proteam' || raw === 'pro-team') return getDefaultCompetitionKey();
+  if (raw === 'afl26') return 'afl26';
+  if (raw === 'proteam' || raw === 'pro-team') return getDefaultCompetitionKey();
   return getDefaultCompetitionKey();
 }
 
@@ -72,8 +72,7 @@ export function setStoredCompetitionKey(key: CompetitionKey): CompetitionKey {
 
 export function getDataSeasonSlugForCompetition(key: CompetitionKey): string {
   const comp = getCompetitionByKey(key);
-  // Preseason soft-launch: UI stays preseason, data uses seeded AFL26 season until preseason exists.
-  if (comp.key === 'preseason') return comp.dataFallbackSeasonSlug || comp.seasonSlug;
+  // Preseason is now primary data source.
+  if (comp.key === 'preseason') return comp.seasonSlug;
   return comp.seasonSlug;
 }
-

@@ -311,6 +311,48 @@
   font-variant-numeric: tabular-nums;
 }
 
+.mcHero__confidence {
+  margin-top: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.72);
+  max-width: 100%;
+  text-align: center;
+}
+
+.mcHero__confidence--neutral {
+  color: rgba(255,255,255,0.72);
+}
+
+.mcHero__confidence--warning {
+  color: rgba(245,196,0,0.98);
+  border-color: rgba(245,196,0,0.32);
+}
+
+.mcHero__confidence--info {
+  color: rgba(129,190,255,0.96);
+  border-color: rgba(129,190,255,0.32);
+}
+
+.mcHero__confidence--success {
+  color: rgba(66,222,146,0.98);
+  border-color: rgba(66,222,146,0.34);
+}
+
+.mcHero__confidence--danger {
+  color: rgba(255,106,106,0.98);
+  border-color: rgba(255,106,106,0.36);
+}
+
 .mcHero__minor {
   font-size: 13px;
 }

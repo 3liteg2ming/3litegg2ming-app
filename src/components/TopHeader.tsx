@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown, User } from 'lucide-react';
 import { assetUrl } from '../lib/teamAssets';
+import { useAuth } from '@/state/auth/AuthProvider';
+import { isUserAdmin } from '@/lib/profileRepo';
 import {
   COMPETITIONS,
   type CompetitionKey,
@@ -25,24 +27,48 @@ const HEADER_COMPETITIONS: HeaderCompetition[] = COMPETITIONS.map((c) => ({
   key: c.key,
   label: c.label,
   status: c.status,
-  logoSrc: assetUrl('afl26-logo.png'),
+  logoSrc: c.key === 'preseason' ? assetUrl('elite-gaming-logo.png') : assetUrl('afl26-logo.png'),
 }));
 
 export default function TopHeader() {
   const nav = useNavigate();
+  const { user } = useAuth();
 
   const [open, setOpen] = useState(false);
   const [activeKey, setActiveKey] = useState<CompetitionKey>(getDefaultCompetitionKey());
+  const [isAdmin, setIsAdmin] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
   const activeComp = useMemo(
     () => HEADER_COMPETITIONS.find((c) => c.key === activeKey) || HEADER_COMPETITIONS[0],
-    [activeKey]
+    [activeKey],
   );
 
   useEffect(() => {
     setActiveKey(getStoredCompetitionKey());
   }, []);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (!user?.id) {
+        if (alive) setIsAdmin(false);
+        return;
+      }
+      try {
+        const admin = await isUserAdmin(user.id);
+        if (alive) setIsAdmin(admin);
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.error('[EG CRASH] TopHeader admin check failed', error);
+        }
+        if (alive) setIsAdmin(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     const onMouseDown = (e: MouseEvent) => {
@@ -75,7 +101,6 @@ export default function TopHeader() {
   return (
     <header className="egTopHeader" role="banner">
       <div className="egTopHeader__inner">
-        {/* LEFT */}
         <div className="egTopHeader__left" ref={wrapRef}>
           <button
             type="button"
@@ -120,18 +145,36 @@ export default function TopHeader() {
                         {c.key === 'afl26' && c.status === 'COMING_SOON'
                           ? 'Season Two • Coming Soon'
                           : c.status === 'COMING_SOON'
-                          ? 'Coming Soon'
-                          : 'Season hub'}
+                            ? 'Coming Soon'
+                            : 'Season hub'}
                       </span>
                     </span>
                   </button>
                 ))}
+                {isAdmin ? (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="egTopHeader__menuItem"
+                    onClick={() => {
+                      setOpen(false);
+                      nav('/admin/create-fixture');
+                    }}
+                  >
+                    <span className="egTopHeader__menuItemIcon" aria-hidden="true">
+                      <img className="egTopHeader__menuLogo" src={assetUrl('elite-gaming-logo.png')} alt="" loading="lazy" />
+                    </span>
+                    <span className="egTopHeader__menuText">
+                      <span className="egTopHeader__menuTitle">Admin</span>
+                      <span className="egTopHeader__menuSub">Create Fixture</span>
+                    </span>
+                  </button>
+                ) : null}
               </motion.div>
             ) : null}
           </AnimatePresence>
         </div>
 
-        {/* CENTER */}
         <div className="egTopHeader__center" aria-label="Elite Gaming">
           <button type="button" className="egTopHeader__brand" onClick={() => nav('/')} aria-label="Go to home">
             <span className="egTopHeader__brandCrop" aria-hidden="true">
@@ -145,7 +188,6 @@ export default function TopHeader() {
           </button>
         </div>
 
-        {/* RIGHT */}
         <div className="egTopHeader__right">
           <button type="button" className="egTopHeader__avatar" onClick={goAuth} aria-label="Account">
             <User size={22} />

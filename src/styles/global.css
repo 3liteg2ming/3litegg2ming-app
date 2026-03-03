@@ -1,6 +1,41 @@
 /* Global baseline so the whole app never “defaults to white” */
 :root {
   color-scheme: dark;
+
+  /* ──────────────────────────────────────────────────────────────
+     Elite Gaming Theme Tokens (v1)
+     Goal: make every page feel like a premium AFL-style app shell.
+  ────────────────────────────────────────────────────────────── */
+  --eg-bg-0: #05070c;
+  --eg-bg-1: #070a12;
+  --eg-bg-2: #0a0f1c;
+  --eg-text: rgba(255, 255, 255, 0.92);
+  --eg-text-dim: rgba(255, 255, 255, 0.70);
+  --eg-text-faint: rgba(255, 255, 255, 0.55);
+
+  --eg-gold: #f5c84b;
+  --eg-gold-2: #ffde79;
+  --eg-blue: #2e8dff;
+  --eg-purple: #9a5cff;
+  --eg-green: #3dff7a;
+  --eg-red: #ff4d6d;
+
+  --eg-border: rgba(255, 255, 255, 0.10);
+  --eg-border-2: rgba(255, 255, 255, 0.14);
+
+  --eg-surface: rgba(10, 14, 24, 0.72);
+  --eg-surface-2: rgba(12, 18, 30, 0.82);
+  --eg-surface-3: rgba(18, 26, 42, 0.66);
+
+  --eg-shadow: 0 18px 50px rgba(0, 0, 0, 0.65);
+  --eg-shadow-soft: 0 12px 30px rgba(0, 0, 0, 0.45);
+  --eg-blur: 18px;
+
+  --eg-radius-sm: 12px;
+  --eg-radius: 18px;
+  --eg-radius-lg: 24px;
+
+  --eg-ring: 0 0 0 3px rgba(46, 141, 255, 0.35);
 }
 
 *,
@@ -11,27 +46,95 @@
 
 html,
 body {
+  width: 100%;
   height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 body {
   margin: 0;
-  background: #000;
-  color: rgba(255, 255, 255, 0.92);
+  background: radial-gradient(1200px 900px at 10% -10%, rgba(154, 92, 255, 0.18), transparent 55%),
+    radial-gradient(900px 800px at 90% 0%, rgba(46, 141, 255, 0.16), transparent 60%),
+    radial-gradient(800px 900px at 50% 120%, rgba(245, 200, 75, 0.10), transparent 58%),
+    linear-gradient(180deg, var(--eg-bg-0), var(--eg-bg-2));
+  color: var(--eg-text);
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 #root {
-  min-height: 100%;
-  background: #000;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+}
+
+/* Subtle texture without an image file */
+#root::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.09;
+  background-image:
+    radial-gradient(circle at 20% 25%, rgba(255,255,255,0.18), transparent 44%),
+    radial-gradient(circle at 75% 60%, rgba(255,255,255,0.10), transparent 48%),
+    linear-gradient(90deg, rgba(255,255,255,0.06) 0, rgba(255,255,255,0.02) 40%, rgba(255,255,255,0.06) 100%);
+  mix-blend-mode: overlay;
 }
 
 /* sensible defaults */
 button,
 input {
   font: inherit;
+}
+
+button,
+[role='button'],
+.eg-chip,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Better focus rings on keyboard navigation */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--eg-ring);
+  border-radius: 12px;
+}
+
+/* Nicer scrollbars on desktop */
+@media (hover: hover) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.18) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.16);
+    border-radius: 99px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.22);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+}
+
+button,
+[role='button'],
+.eg-chip {
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 img {

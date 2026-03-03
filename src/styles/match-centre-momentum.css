@@ -242,6 +242,105 @@
   text-align: right;
 }
 
+.mcMoments {
+  width: 100%;
+  padding: 8px 0 18px;
+}
+
+.mcMoments__card {
+  padding: 8px 0;
+}
+
+.mcMoments__list {
+  list-style: none;
+  margin: 0;
+  padding: 6px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.mcMoments__item {
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.mcMoments__item:last-child {
+  border-bottom: none;
+}
+
+.mcMoments__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  margin-top: 5px;
+  background: rgba(255,255,255,0.45);
+  box-shadow: 0 0 10px rgba(255,255,255,0.15);
+}
+
+.mcMoments__dot.is-info {
+  background: rgba(123,214,255,0.95);
+  box-shadow: 0 0 10px rgba(123,214,255,0.35);
+}
+
+.mcMoments__dot.is-success {
+  background: rgba(61,255,122,0.96);
+  box-shadow: 0 0 10px rgba(61,255,122,0.35);
+}
+
+.mcMoments__dot.is-warning {
+  background: rgba(245,196,0,0.95);
+  box-shadow: 0 0 10px rgba(245,196,0,0.35);
+}
+
+.mcMoments__dot.is-danger {
+  background: rgba(255,119,119,0.96);
+  box-shadow: 0 0 10px rgba(255,119,119,0.35);
+}
+
+.mcMoments__body {
+  min-width: 0;
+}
+
+.mcMoments__titleRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mcMoments__title {
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.9);
+}
+
+.mcMoments__time {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.56);
+  white-space: nowrap;
+}
+
+.mcMoments__detail {
+  margin-top: 2px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.62);
+  line-height: 1.35;
+}
+
+.mcMoments__empty {
+  padding: 18px 16px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.56);
+}
+
 /* Mobile optimizations */
 @media (max-width: 480px) {
   .mcMomentum {

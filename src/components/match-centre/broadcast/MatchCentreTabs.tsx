@@ -29,6 +29,8 @@ export default function MatchCentreTabs({
                 type="button"
                 onClick={() => onChange(t.key)}
                 aria-pressed={isActive}
+                aria-label={t.label}
+                title={t.label}
                 className={`mcTabs__button ${isActive ? 'mcTabs__button--active' : ''}`}
               >
                 {t.icon}

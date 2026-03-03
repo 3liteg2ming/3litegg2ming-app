@@ -4,10 +4,10 @@
   min-height: 100%;
   padding: 18px 16px 28px;
   background:
-    radial-gradient(900px 500px at 20% -10%, rgba(245,196,0,0.10), transparent 55%),
-    radial-gradient(700px 420px at 90% 10%, rgba(150,80,255,0.10), transparent 60%),
-    radial-gradient(900px 520px at 50% 120%, rgba(0,180,255,0.08), transparent 55%),
-    linear-gradient(180deg, rgba(7,9,12,1), rgba(7,9,12,1));
+    radial-gradient(1000px 600px at 20% -10%, rgba(245,200,75,0.14), transparent 58%),
+    radial-gradient(900px 560px at 92% 10%, rgba(154,92,255,0.16), transparent 62%),
+    radial-gradient(1000px 640px at 50% 120%, rgba(46,141,255,0.12), transparent 60%),
+    linear-gradient(180deg, var(--eg-bg-0), var(--eg-bg-2));
 }
 
 .auth-top{
@@ -34,12 +34,29 @@
   max-width: 520px;
   margin: 0 auto;
   padding: 18px 16px 16px;
-  border-radius: 18px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+  border-radius: 24px;
+  background: var(--eg-surface);
+  border: 1px solid var(--eg-border);
+  backdrop-filter: blur(var(--eg-blur));
+  -webkit-backdrop-filter: blur(var(--eg-blur));
+  box-shadow: var(--eg-shadow);
+  position: relative;
+  overflow: hidden;
 }
+
+.auth-card::before{
+  content:'';
+  position:absolute;
+  inset:-1px;
+  pointer-events:none;
+  opacity: 0.55;
+  background:
+    radial-gradient(800px 220px at 50% 0%, rgba(255,255,255,0.10), transparent 66%),
+    radial-gradient(700px 320px at 10% 40%, rgba(154,92,255,0.18), transparent 62%),
+    radial-gradient(700px 320px at 90% 55%, rgba(46,141,255,0.16), transparent 62%);
+}
+
+.auth-card > *{ position:relative; z-index:1; }
 
 .auth-card--wide{ max-width: 720px; }
 
@@ -57,7 +74,7 @@
 
 .auth-title{
   margin-top: 10px;
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 800;
   color: rgba(255,255,255,0.92);
 }
@@ -66,7 +83,7 @@
   margin-top: 6px;
   font-size: 13px;
   line-height: 1.45;
-  color: rgba(255,255,255,0.65);
+  color: var(--eg-text-dim);
 }
 
 .auth-note{
@@ -96,8 +113,13 @@
   gap: 10px;
   padding: 12px 12px;
   border-radius: 14px;
-  background: rgba(0,0,0,0.28);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.26);
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+.auth-inputWrap:focus-within{
+  box-shadow: var(--eg-ring);
+  border-color: rgba(46,141,255,0.45);
 }
 
 .auth-icon{ opacity: 0.70; }
@@ -140,7 +162,7 @@
   border-radius: 14px;
   font-weight: 900;
   letter-spacing: 0.02em;
-  background: linear-gradient(90deg, rgba(245,196,0,1), rgba(255,220,90,0.92));
+  background: linear-gradient(180deg, #ffe08a, #f3ba2e 44%, #c8850d);
   color: rgba(7,9,12,0.96);
   cursor:pointer;
 }
@@ -308,6 +330,362 @@
 
 .member-nextTitle{ font-weight: 900; color: rgba(255,255,255,0.90); }
 .member-nextText{ margin-top: 6px; font-size: 12px; color: rgba(255,255,255,0.70); line-height: 1.45; }
+
+.profileHero{
+  position: relative;
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.14);
+  overflow: hidden;
+  box-shadow: 0 18px 48px rgba(0,0,0,0.35);
+}
+
+.profileHero__watermark{
+  position: absolute;
+  right: -14px;
+  top: -10px;
+  width: 180px;
+  height: 180px;
+  opacity: 0.10;
+  filter: grayscale(0.1);
+  pointer-events: none;
+}
+
+.profileHero__head{
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.profileHero__rankChip{
+  min-width: 92px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(0,0,0,0.20);
+  text-align: right;
+}
+
+.profileHero__rankLabel{
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.62);
+}
+
+.profileHero__rankValue{
+  display: block;
+  margin-top: 2px;
+  font-size: 24px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.95);
+}
+
+.profileHero__stats{
+  position: relative;
+  z-index: 1;
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.profileHero__metric{
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.18);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.profileHero__metricLabel{
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.62);
+}
+
+.profileHero__metricValue{
+  display: block;
+  margin-top: 4px;
+  font-size: 18px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.93);
+}
+
+.profileMiniGrid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.profileMiniCard{
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.profileMiniCard__label{
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.66);
+}
+
+.profileMiniCard__value{
+  margin-top: 6px;
+  font-size: 22px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.94);
+}
+
+.profileDashHint{
+  margin-top: 10px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.62);
+}
+
+.profileBadgeSummary{
+  margin: -2px 0 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.70);
+}
+
+.badgeGrid{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.badgeGrid__loading,
+.badgeGrid__empty{
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.68);
+  border: 1px dashed rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.03);
+}
+
+.badgeGrid__groupTitle{
+  margin-bottom: 8px;
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  font-weight: 900;
+  color: rgba(255,255,255,0.66);
+}
+
+.badgeGrid__tiles{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.badgeTile{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.90);
+  cursor: pointer;
+}
+
+.badgeTile.isEarned{
+  border-color: rgba(245,196,0,0.34);
+  background: linear-gradient(135deg, rgba(245,196,0,0.14), rgba(255,255,255,0.04));
+}
+
+.badgeTile.isLocked{
+  opacity: 0.85;
+}
+
+.badgeTile--bronze.isEarned{
+  border-color: rgba(205,127,50,0.42);
+  background: linear-gradient(135deg, rgba(205,127,50,0.20), rgba(255,255,255,0.04));
+}
+
+.badgeTile--silver.isEarned{
+  border-color: rgba(192,192,192,0.42);
+  background: linear-gradient(135deg, rgba(192,192,192,0.18), rgba(255,255,255,0.04));
+}
+
+.badgeTile--gold.isEarned{
+  border-color: rgba(245,196,0,0.42);
+  background: linear-gradient(135deg, rgba(245,196,0,0.20), rgba(255,255,255,0.04));
+}
+
+.badgeTile--platinum.isEarned{
+  border-color: rgba(133,216,255,0.45);
+  background: linear-gradient(135deg, rgba(133,216,255,0.18), rgba(255,255,255,0.04));
+}
+
+.badgeTile__icon{
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.28);
+}
+
+.badgeTile__text{
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.badgeTile__title{
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.badgeTile__progress{
+  font-size: 11px;
+  color: rgba(255,255,255,0.68);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.badgeModal__scrim{
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0,0,0,0.54);
+  backdrop-filter: blur(2px);
+}
+
+.badgeModal{
+  width: min(460px, 100%);
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(10,12,18,0.95);
+  box-shadow: 0 22px 64px rgba(0,0,0,0.58);
+  position: relative;
+}
+
+.badgeModal--bronze .badgeModal__icon{ background: rgba(205,127,50,0.20); }
+.badgeModal--silver .badgeModal__icon{ background: rgba(192,192,192,0.20); }
+.badgeModal--gold .badgeModal__icon{ background: rgba(245,196,0,0.20); }
+.badgeModal--platinum .badgeModal__icon{ background: rgba(133,216,255,0.20); }
+
+.badgeModal__close{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.88);
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badgeModal__icon{
+  font-size: 28px;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(245,196,0,0.14);
+}
+
+.badgeModal__title{
+  margin-top: 12px;
+  font-size: 22px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.94);
+}
+
+.badgeModal__category{
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.62);
+}
+
+.badgeModal__desc{
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: rgba(255,255,255,0.82);
+}
+
+.badgeModal__state{
+  margin-top: 12px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 800;
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+.badgeModal__state.isEarned{
+  color: rgba(245,196,0,0.95);
+  border-color: rgba(245,196,0,0.32);
+  background: rgba(245,196,0,0.08);
+}
+
+.badgeModal__state.isLocked{
+  color: rgba(255,255,255,0.72);
+  background: rgba(255,255,255,0.03);
+}
+
+@media (max-width: 560px){
+  .profileHero__head{
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .profileHero__rankChip{
+    width: 100%;
+    text-align: left;
+  }
+
+  .profileHero__rankValue{
+    font-size: 20px;
+  }
+
+  .profileHero__stats{
+    grid-template-columns: 1fr;
+  }
+
+  .badgeGrid__tiles{
+    grid-template-columns: 1fr;
+  }
+}
 
 /* Success State */
 .auth-success{

@@ -1,26 +1,26 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  AlertTriangle,
+  Calendar,
   Check,
-  ChevronDown,
+  ChevronRight,
   Eye,
   EyeOff,
-  Minus,
-  Plus,
   Search,
+  Shield,
   Trophy,
   Upload,
   User,
-  X,
   Wand2,
-  AlertTriangle,
-  Home,
-  Zap,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 import { supabase } from '../lib/supabaseClient';
-import { fetchAflPlayers, type AflPlayer } from '../data/aflPlayers';
+import { fetchCoachProfile } from '../lib/profileRepo';
 import { TEAM_COLORS, TEAM_SHORT_NAMES } from '../data/teamColors';
+import { getDataSeasonSlugForCompetition, getStoredCompetitionKey } from '../lib/competitionRegistry';
+import { resolvePlayerDisplayName, resolvePlayerPhotoUrl, resolveTeamLogoUrl, resolveTeamName } from '@/lib/entityResolvers';
 import '../styles/submitPage.css';
 
 type NextFixturePayload = {
@@ -36,32 +36,47 @@ type NextFixturePayload = {
   awayTeam: { id: string; name: string; shortName?: string; logo?: string; teamKey?: string };
 } | null;
 
-type GoalKicker = {
-  id: string;
-  name: string;
-  photoUrl?: string;
-  goals: number;
-};
-
-type Uploaded = {
-  id: string;
-  file: File;
-  name: string;
-  size: number;
-  previewUrl: string;
-};
-
 type OcrState =
   | { status: 'idle' }
-  | { status: 'uploading'; progress01: number }
-  | { status: 'preprocessing'; progress01: number }
   | { status: 'ocr_running'; step: string; progress01: number }
-  | { status: 'parsing'; progress01: number }
   | { status: 'done'; rawText: string; teamStats: Record<string, number>; playerLines: string[] }
   | { status: 'timeout'; error: string }
   | { status: 'error'; message: string };
 
 type Step = 1 | 2 | 3 | 4 | 5;
+
+type PlayerLite = {
+  id: string;
+  name: string;
+  teamId: string;
+  teamName: string;
+  number?: number;
+  position?: string;
+  photoUrl?: string;
+};
+
+type DraftPayload = {
+  venue: string;
+  homeGoals: string;
+  homeBehinds: string;
+  awayGoals: string;
+  awayBehinds: string;
+  homeGoalMap: Record<string, number>;
+  awayGoalMap: Record<string, number>;
+  notes: string;
+  currentStep: Step;
+  ocrConfirm: boolean;
+  uploadedMeta: Array<{ name: string; size: number }>;
+  savedAt: number;
+};
+
+const STEP_LABELS: Record<Step, string> = {
+  1: 'Fixture',
+  2: 'Score',
+  3: 'Kickers',
+  4: 'Upload',
+  5: 'Review',
+};
 
 function uuid() {
   try {
@@ -84,10 +99,6 @@ function bytesToKb(n: number) {
   return Math.max(1, Math.round((n || 0) / 1024));
 }
 
-function normLine(s: string) {
-  return (s || '').replace(/\s+/g, ' ').trim();
-}
-
 function parseTeamStatsFromText(raw: string) {
   const keys = [
     'DISPOSALS',
@@ -108,7 +119,7 @@ function parseTeamStatsFromText(raw: string) {
   const text = raw.toUpperCase();
 
   for (const k of keys) {
-    const re = new RegExp(`${k.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\s*[:\\-]?\\s*(\\d{1,3})`, 'i');
+    const re = new RegExp(`${k.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\\\$&')}\\s*[:\\-]?\\s*(\\d{1,3})`, 'i');
     const m = text.match(re);
     if (m?.[1]) out[k] = safeNum(m[1]);
   }
@@ -123,11 +134,9 @@ function parsePlayerLinesFromText(raw: string) {
     .filter(Boolean);
 
   const out: string[] = [];
-
   for (const l of lines) {
-    const ll = normLine(l);
-    if (/^[A-Z][A-Z '\-\.]{2,}\s+\d{1,3}$/i.test(ll)) out.push(ll);
-    else if (/^[A-Z][A-Z '\-\.]{2,}.*\s\d{1,3}$/i.test(ll) && /\d{1,3}$/.test(ll)) out.push(ll);
+    if (/^[A-Z][A-Z '\-.]{2,}\s+\d{1,3}$/i.test(l)) out.push(l);
+    else if (/^[A-Z][A-Z '\-.]{2,}.*\s\d{1,3}$/i.test(l) && /\d{1,3}$/.test(l)) out.push(l);
   }
 
   return out.slice(0, 50);
@@ -156,10 +165,7 @@ async function runTesseract(files: File[], onProgress: (step: string, progress01
     (async () => {
       const mod: any = await import('tesseract.js');
       const createWorker = mod?.createWorker ?? mod?.default?.createWorker;
-
-      if (!createWorker) {
-        throw new Error('tesseract.js not available');
-      }
+      if (!createWorker) throw new Error('tesseract.js not available');
 
       const workerPath = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js';
       const corePath = 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core.wasm.js';
@@ -169,14 +175,13 @@ async function runTesseract(files: File[], onProgress: (step: string, progress01
         if (!m?.status) return;
         const status = String(m.status);
         const p = typeof m.progress === 'number' ? clamp(m.progress, 0, 1) : 0;
-
-        if (status.includes('loading')) onProgress('Loading OCR…', Math.max(0.05, p));
-        else if (status.includes('initializ')) onProgress('Initialising OCR…', Math.max(0.1, p));
-        else if (status.includes('recogniz')) onProgress('Recognising text…', Math.max(0.2, p));
+        if (status.includes('loading')) onProgress('Preparing OCR…', Math.max(0.05, p));
+        else if (status.includes('initializ')) onProgress('Reading screenshot…', Math.max(0.1, p));
+        else if (status.includes('recogniz')) onProgress('Extracting team stats…', Math.max(0.2, p));
         else onProgress(status, p);
       };
 
-      onProgress('Starting…', 0.01);
+      onProgress('Preparing OCR…', 0.01);
 
       let worker: any;
       try {
@@ -186,30 +191,20 @@ async function runTesseract(files: File[], onProgress: (step: string, progress01
       }
 
       try {
-        if (worker?.loadLanguage) {
-          onProgress('Loading language…', 0.06);
-          await withTimeout(worker.loadLanguage('eng'), 60000, 'loadLanguage');
-        }
-
-        if (worker?.initialize) {
-          onProgress('Initialising…', 0.12);
-          await withTimeout(worker.initialize('eng'), 60000, 'initialize');
-        }
+        if (worker?.loadLanguage) await withTimeout(worker.loadLanguage('eng'), 60000, 'loadLanguage');
+        if (worker?.initialize) await withTimeout(worker.initialize('eng'), 60000, 'initialize');
 
         let combined = '';
-        for (let i = 0; i < files.length; i++) {
+        for (let i = 0; i < files.length; i += 1) {
           const f = files[i];
           const base = i / Math.max(1, files.length);
-          onProgress(`Reading image ${i + 1} of ${files.length}…`, clamp(base, 0.15, 0.9));
-
+          onProgress(`Reading screenshot ${i + 1} of ${files.length}`, clamp(base, 0.15, 0.9));
           const res = await withTimeout(worker.recognize(f), 120000, `recognize(${f.name})`);
           const text = (res as any)?.data?.text ?? '';
-
-          combined += `\n\n--- ${f.name} ---\n`;
-          combined += text;
+          combined += `\n\n--- ${f.name} ---\n${text}`;
         }
 
-        onProgress('Finishing…', 0.98);
+        onProgress('Ready to review', 0.98);
         return combined.trim();
       } finally {
         try {
@@ -224,30 +219,117 @@ async function runTesseract(files: File[], onProgress: (step: string, progress01
   );
 }
 
+function resolveTeamLogo(teamName: string, logo?: string) {
+  const fallback = TEAM_COLORS[teamName]?.logo || 'elite-gaming-logo.png';
+  return resolveTeamLogoUrl({
+    logoUrl: logo,
+    name: teamName,
+    fallbackPath: fallback,
+  });
+}
+
+function formatKickoff(startTime?: string) {
+  if (!startTime) return 'TBC';
+  const d = new Date(startTime);
+  if (!Number.isFinite(d.getTime())) return 'TBC';
+  return d.toLocaleString('en-AU', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+function deriveShortName(name: string, explicit?: string) {
+  const short = String(explicit || '').trim();
+  if (short) return short;
+  const base = String(name || '').trim();
+  if (!base) return 'Team';
+  const firstWord = base.split(/\s+/)[0] || base;
+  if (firstWord.length <= 12) return firstWord;
+  return `${firstWord.slice(0, 11)}…`;
+}
+
+function normalizeToken(value: unknown) {
+  return String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function buildDraftKey(userId?: string | null, fixtureId?: string | null) {
+  const comp = getStoredCompetitionKey();
+  return `eg_submit_draft:${comp}:${userId || 'guest'}:${fixtureId || 'none'}`;
+}
+
+function getCompetitionLabel() {
+  const key = getStoredCompetitionKey();
+  return key === 'preseason' ? 'Preseason' : 'AFL26';
+}
+
+function formatSavedAt(ts: number | null) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  if (!Number.isFinite(d.getTime())) return '';
+  return d.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
+}
+
 export default function SubmitPage() {
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [myTeamId, setMyTeamId] = useState<string | null>(null);
-  const [myRole, setMyRole] = useState<string | null>(null);
   const [myCoachName, setMyCoachName] = useState<string | null>(null);
 
   const [payload, setPayload] = useState<NextFixturePayload>(null);
 
-  // Stepper
   const [currentStep, setCurrentStep] = useState<Step>(1);
-
-  // UI state
   const [venue, setVenue] = useState('');
-  const [venueEditable, setVenueEditable] = useState(false);
 
   const [homeGoals, setHomeGoals] = useState('');
   const [homeBehinds, setHomeBehinds] = useState('');
   const [awayGoals, setAwayGoals] = useState('');
   const [awayBehinds, setAwayBehinds] = useState('');
+
+  const [homeGoalMap, setHomeGoalMap] = useState<Record<string, number>>({});
+  const [awayGoalMap, setAwayGoalMap] = useState<Record<string, number>>({});
+  const [searchSide, setSearchSide] = useState<'home' | 'away' | 'both'>('both');
+  const [playerSearch, setPlayerSearch] = useState('');
+
+  const [notes, setNotes] = useState('');
+
+  const [allPlayers, setAllPlayers] = useState<PlayerLite[]>([]);
+  const [playerLoadErr, setPlayerLoadErr] = useState<string | null>(null);
+
+  const [uploaded, setUploaded] = useState<Array<{ id: string; file: File; name: string; size: number; previewUrl: string }>>([]);
+  const [ocr, setOcr] = useState<OcrState>({ status: 'idle' });
+  const [ocrConfirm, setOcrConfirm] = useState(false);
+  const [showOcrText, setShowOcrText] = useState(false);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [conflict, setConflict] = useState<null | { message: string }>(null);
+
+  const [draftSavedAt, setDraftSavedAt] = useState<number | null>(null);
+
+  const fixture = payload?.fixture || null;
+  const homeTeam = payload?.homeTeam || null;
+  const awayTeam = payload?.awayTeam || null;
+  const homeDisplayName = useMemo(
+    () => deriveShortName(homeTeam?.name || '', homeTeam?.shortName),
+    [homeTeam?.name, homeTeam?.shortName],
+  );
+  const awayDisplayName = useMemo(
+    () => deriveShortName(awayTeam?.name || '', awayTeam?.shortName),
+    [awayTeam?.name, awayTeam?.shortName],
+  );
 
   const homeGoalsN = useMemo(() => safeNum(homeGoals), [homeGoals]);
   const homeBehindsN = useMemo(() => safeNum(homeBehinds), [homeBehinds]);
@@ -257,34 +339,8 @@ export default function SubmitPage() {
   const homeScore = useMemo(() => homeGoalsN * 6 + homeBehindsN, [homeGoalsN, homeBehindsN]);
   const awayScore = useMemo(() => awayGoalsN * 6 + awayBehindsN, [awayGoalsN, awayBehindsN]);
 
-  const [homeGoalKickers, setHomeGoalKickers] = useState<GoalKicker[]>([]);
-  const [awayGoalKickers, setAwayGoalKickers] = useState<GoalKicker[]>([]);
+  const kickoffLabel = useMemo(() => formatKickoff(fixture?.startTime), [fixture?.startTime]);
 
-  const [homePlayerSearch, setHomePlayerSearch] = useState('');
-  const [awayPlayerSearch, setAwayPlayerSearch] = useState('');
-  const [notes, setNotes] = useState('');
-
-  const [allPlayers, setAllPlayers] = useState<AflPlayer[]>([]);
-  const [playerLoadErr, setPlayerLoadErr] = useState<string | null>(null);
-
-  const [uploaded, setUploaded] = useState<Uploaded[]>([]);
-  const [ocr, setOcr] = useState<OcrState>({ status: 'idle' });
-  const [ocrConfirm, setOcrConfirm] = useState(false);
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [conflict, setConflict] = useState<null | { message: string; other?: any }>(null);
-
-  const fixture = payload?.fixture || null;
-  const homeTeam = payload?.homeTeam || null;
-  const awayTeam = payload?.awayTeam || null;
-
-  const youAreHome = useMemo(() => {
-    if (!myTeamId || !homeTeam?.id) return false;
-    return myTeamId === homeTeam.id;
-  }, [myTeamId, homeTeam?.id]);
-
-  // Get team colors for CSS variables
   const homeTeamColors = useMemo(() => {
     if (!homeTeam?.name) return { r: '0', g: '0', b: '0' };
     const colors = TEAM_COLORS[homeTeam.name];
@@ -301,7 +357,6 @@ export default function SubmitPage() {
     return match ? { r: match[1], g: match[2], b: match[3] } : { r: '0', g: '0', b: '0' };
   }, [awayTeam?.name]);
 
-  // Load session, profile, and next fixture
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -312,32 +367,40 @@ export default function SubmitPage() {
         const { data: authData, error: authErr } = await supabase.auth.getSession();
         if (authErr) throw authErr;
         const uid = authData.session?.user?.id || null;
+        const email = authData.session?.user?.email || null;
         if (!uid) throw new Error('Not signed in.');
         if (!alive) return;
 
         setSessionUserId(uid);
+        setSessionEmail(email);
 
-        const { data: profile, error: pErr } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', uid)
-          .maybeSingle();
-        if (pErr) throw pErr;
+        const profile = await fetchCoachProfile(uid);
         if (!profile?.team_id) throw new Error('This account is not linked to a team yet.');
         if (!alive) return;
 
         setMyTeamId(profile.team_id);
-        setMyRole(profile.role || null);
         setMyCoachName(profile.display_name || profile.psn || 'Coach');
+
+        const activeComp = getStoredCompetitionKey();
+        const seasonSlug = getDataSeasonSlugForCompetition(activeComp);
+        const { data: seasonRow, error: seasonErr } = await supabase
+          .from('eg_seasons')
+          .select('id')
+          .eq('slug', seasonSlug)
+          .maybeSingle();
+        if (seasonErr || !seasonRow?.id) {
+          throw new Error(`Active season not found for slug "${seasonSlug}"`);
+        }
+        const activeSeasonId = String(seasonRow.id);
 
         const { data: fixtures, error: fxErr } = await supabase
           .from('eg_fixtures')
-          .select('id, round, status, venue, home_team_id, away_team_id, home_goals, home_behinds, away_goals, away_behinds')
-          .eq('home_team_id', profile.team_id)
+          .select('id, round, status, venue, season_id, start_time, home_team_id, away_team_id, home_goals, home_behinds, away_goals, away_behinds')
+          .eq('season_id', activeSeasonId)
+          .or(`home_team_id.eq.${profile.team_id},away_team_id.eq.${profile.team_id}`)
           .neq('status', 'FINAL')
           .order('round', { ascending: true })
           .limit(1);
-
         if (fxErr) throw fxErr;
 
         if (!fixtures || fixtures.length === 0) {
@@ -348,57 +411,56 @@ export default function SubmitPage() {
           return;
         }
 
-        const fixture = fixtures[0];
+        const fx = fixtures[0] as any;
 
-        const { data: homeTeamData, error: homeErr } = await supabase
-          .from('eg_teams')
-          .select('*')
-          .eq('id', fixture.home_team_id)
-          .maybeSingle();
+        const [{ data: homeTeamData, error: homeErr }, { data: awayTeamData, error: awayErr }] = await Promise.all([
+          supabase.from('eg_teams').select('*').eq('id', fx.home_team_id).maybeSingle(),
+          supabase.from('eg_teams').select('*').eq('id', fx.away_team_id).maybeSingle(),
+        ]);
 
-        const { data: awayTeamData, error: awayErr } = await supabase
-          .from('eg_teams')
-          .select('*')
-          .eq('id', fixture.away_team_id)
-          .maybeSingle();
-
-        if (homeErr || awayErr) {
-          throw new Error('Failed to load team info');
-        }
-
+        if (homeErr || awayErr) throw new Error('Failed to load team info');
         if (!alive) return;
 
-        // Get logo from database or fall back to TEAM_COLORS
-        const homeTeamName = homeTeamData?.name || 'Home Team';
-        const awayTeamName = awayTeamData?.name || 'Away Team';
-        const homeTeamLogo = homeTeamData?.logo_url || TEAM_COLORS[homeTeamName]?.logo;
-        const awayTeamLogo = awayTeamData?.logo_url || TEAM_COLORS[awayTeamName]?.logo;
+        const homeName = resolveTeamName({
+          name: homeTeamData?.name,
+          shortName: homeTeamData?.short_name,
+          slug: homeTeamData?.slug,
+          teamKey: homeTeamData?.team_key,
+        });
+        const awayName = resolveTeamName({
+          name: awayTeamData?.name,
+          shortName: awayTeamData?.short_name,
+          slug: awayTeamData?.slug,
+          teamKey: awayTeamData?.team_key,
+        });
 
         const nextPayload: NextFixturePayload = {
           fixture: {
-            id: fixture.id,
-            round: fixture.round,
-            venue: fixture.venue,
-            status: fixture.status,
+            id: String(fx.id),
+            round: safeNum(fx.round),
+            venue: String(fx.venue || 'TBC'),
+            status: String(fx.status || 'SCHEDULED'),
+            seasonId: fx.season_id ? String(fx.season_id) : undefined,
+            startTime: fx.start_time ? String(fx.start_time) : undefined,
           },
           homeTeam: {
-            id: homeTeamData?.id || fixture.home_team_id,
-            name: homeTeamName,
-            shortName: homeTeamData?.short_name,
-            logo: homeTeamLogo,
-            teamKey: homeTeamData?.team_key,
+            id: String(homeTeamData?.id || fx.home_team_id),
+            name: homeName,
+            shortName: deriveShortName(homeName, homeTeamData?.short_name || TEAM_SHORT_NAMES[homeName]),
+            logo: resolveTeamLogo(homeName, homeTeamData?.logo_url || undefined),
+            teamKey: homeTeamData?.team_key || undefined,
           },
           awayTeam: {
-            id: awayTeamData?.id || fixture.away_team_id,
-            name: awayTeamName,
-            shortName: awayTeamData?.short_name,
-            logo: awayTeamLogo,
-            teamKey: awayTeamData?.team_key,
+            id: String(awayTeamData?.id || fx.away_team_id),
+            name: awayName,
+            shortName: deriveShortName(awayName, awayTeamData?.short_name || TEAM_SHORT_NAMES[awayName]),
+            logo: resolveTeamLogo(awayName, awayTeamData?.logo_url || undefined),
+            teamKey: awayTeamData?.team_key || undefined,
           },
         };
 
         setPayload(nextPayload);
-        setVenue(nextPayload.fixture.venue);
+        setVenue(nextPayload.fixture.venue || '');
       } catch (e: any) {
         console.error('[Submit] load failed:', e);
         if (!alive) return;
@@ -412,87 +474,301 @@ export default function SubmitPage() {
     };
   }, []);
 
-  // Fetch AFL players
   useEffect(() => {
     let alive = true;
     (async () => {
+      if (!homeTeam?.id || !awayTeam?.id) return;
       try {
-        const players = await fetchAflPlayers();
-        if (alive) {
-          setAllPlayers(players);
-          setPlayerLoadErr(null);
+        const selectAttempts = [
+          'id,name,display_name,full_name,team_id,team_key,team_name,position,number,headshot_url,photo_url',
+          'id,name,team_id,team_key,team_name,position,number,headshot_url,photo_url',
+          'id,name,team_id,team_name,position,number,headshot_url,photo_url',
+        ] as const;
+
+        let rawPlayers: any[] = [];
+        let loaded = false;
+        for (const select of selectAttempts) {
+          const result = await supabase.from('eg_players').select(select).limit(5000);
+          if (result.error) {
+            if (!String(result.error.message || '').toLowerCase().includes('column')) {
+              throw result.error;
+            }
+            continue;
+          }
+          rawPlayers = (result.data || []) as any[];
+          loaded = true;
+          break;
         }
+
+        if (!loaded) throw new Error('Failed to load player data from Supabase');
+
+        const homeKey = normalizeToken(homeTeam.teamKey || homeTeam.name);
+        const awayKey = normalizeToken(awayTeam.teamKey || awayTeam.name);
+        const homeNameToken = normalizeToken(homeTeam.name);
+        const awayNameToken = normalizeToken(awayTeam.name);
+
+        const rows = rawPlayers.map((p) => {
+          const teamId = String(p.team_id || '').trim();
+          const teamNameRaw = String(p.team_name || '').trim();
+          const teamKeyRaw = String(p.team_key || '').trim();
+          const fullName = resolvePlayerDisplayName({
+            name: p.name,
+            displayName: p.display_name,
+            fullName: p.full_name,
+          });
+
+          let side: 'home' | 'away' | 'unlinked' = 'unlinked';
+          if (teamId && teamId === String(homeTeam.id)) side = 'home';
+          else if (teamId && teamId === String(awayTeam.id)) side = 'away';
+          else {
+            const token = normalizeToken(teamKeyRaw || teamNameRaw);
+            if (token && (token === homeKey || token === homeNameToken)) side = 'home';
+            else if (token && (token === awayKey || token === awayNameToken)) side = 'away';
+          }
+
+          const resolvedTeamName =
+            side === 'home' ? homeTeam.name : side === 'away' ? awayTeam.name : 'All players (team not linked)';
+
+          return {
+            id: String(p.id || uuid()),
+            name: fullName,
+            teamId,
+            teamName: resolvedTeamName,
+            number: safeNum(p.number),
+            position: String(p.position || ''),
+            photoUrl: resolvePlayerPhotoUrl({
+              photoUrl: p.photo_url,
+              headshotUrl: p.headshot_url,
+              fallbackPath: 'elite-gaming-logo.png',
+            }),
+          } as PlayerLite;
+        });
+
+        if (!alive) return;
+        setAllPlayers(rows);
+        setPlayerLoadErr(null);
       } catch (e: any) {
-        console.error('[Submit] failed to load players:', e);
-        if (alive) {
-          setPlayerLoadErr(e?.message || 'Failed to load player data');
-        }
+        if (!alive) return;
+        setAllPlayers([]);
+        setPlayerLoadErr(e?.message || 'Failed to load player data from Supabase');
       }
     })();
+
     return () => {
       alive = false;
     };
-  }, []);
+  }, [homeTeam?.id, homeTeam?.name, awayTeam?.id, awayTeam?.name]);
 
-  // Reset state when fixture changes
   useEffect(() => {
-    setVenue((fixture?.venue as any) || '');
-    setVenueEditable(false);
-    setHomeGoals('');
-    setHomeBehinds('');
-    setAwayGoals('');
-    setAwayBehinds('');
-    setHomeGoalKickers([]);
-    setAwayGoalKickers([]);
-    setHomePlayerSearch('');
-    setAwayPlayerSearch('');
-    setNotes('');
-    setUploaded([]);
-    setOcr({ status: 'idle' });
-    setOcrConfirm(false);
-    setSubmitSuccess(false);
-    setConflict(null);
-    setCurrentStep(1);
-  }, [fixture?.id]);
+    const draftKey = buildDraftKey(sessionUserId, fixture?.id);
+    if (!sessionUserId || !fixture?.id) return;
 
-  const canRunOcr = useMemo(() => {
-    if (!fixture) return false;
-    if (ocr.status === 'ocr_running') return false;
-    return uploaded.length > 0;
-  }, [fixture, ocr.status, uploaded.length]);
+    try {
+      const raw = window.localStorage.getItem(draftKey);
+      if (!raw) return;
+      const draft = JSON.parse(raw) as DraftPayload;
+      if (!draft || typeof draft !== 'object') return;
+
+      setVenue(String(draft.venue || fixture.venue || ''));
+      setHomeGoals(String(draft.homeGoals || ''));
+      setHomeBehinds(String(draft.homeBehinds || ''));
+      setAwayGoals(String(draft.awayGoals || ''));
+      setAwayBehinds(String(draft.awayBehinds || ''));
+      setHomeGoalMap(draft.homeGoalMap || {});
+      setAwayGoalMap(draft.awayGoalMap || {});
+      setNotes(String(draft.notes || ''));
+      setCurrentStep((draft.currentStep as Step) || 1);
+      setOcrConfirm(!!draft.ocrConfirm);
+      setDraftSavedAt(Number(draft.savedAt) || null);
+    } catch {
+      // ignore malformed draft
+    }
+  }, [sessionUserId, fixture?.id, fixture?.venue]);
+
+  useEffect(() => {
+    if (!sessionUserId || !fixture?.id) return;
+    const draftKey = buildDraftKey(sessionUserId, fixture.id);
+
+    const payload: DraftPayload = {
+      venue,
+      homeGoals,
+      homeBehinds,
+      awayGoals,
+      awayBehinds,
+      homeGoalMap,
+      awayGoalMap,
+      notes,
+      currentStep,
+      ocrConfirm,
+      uploadedMeta: uploaded.map((u) => ({ name: u.name, size: u.size })),
+      savedAt: Date.now(),
+    };
+
+    const t = window.setTimeout(() => {
+      window.localStorage.setItem(draftKey, JSON.stringify(payload));
+      setDraftSavedAt(payload.savedAt);
+    }, 250);
+
+    return () => window.clearTimeout(t);
+  }, [
+    sessionUserId,
+    fixture?.id,
+    venue,
+    homeGoals,
+    homeBehinds,
+    awayGoals,
+    awayBehinds,
+    homeGoalMap,
+    awayGoalMap,
+    notes,
+    currentStep,
+    ocrConfirm,
+    uploaded,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      uploaded.forEach((u) => {
+        try {
+          URL.revokeObjectURL(u.previewUrl);
+        } catch {
+          // ignore
+        }
+      });
+    };
+  }, [uploaded]);
+
+  const homePlayers = useMemo(
+    () =>
+      allPlayers
+        .filter((p) => p.teamName === homeTeam?.name)
+        .sort((a, b) => (a.number || 999) - (b.number || 999) || a.name.localeCompare(b.name)),
+    [allPlayers, homeTeam?.name],
+  );
+  const awayPlayers = useMemo(
+    () =>
+      allPlayers
+        .filter((p) => p.teamName === awayTeam?.name)
+        .sort((a, b) => (a.number || 999) - (b.number || 999) || a.name.localeCompare(b.name)),
+    [allPlayers, awayTeam?.name],
+  );
+
+  const unlinkedPlayers = useMemo(
+    () =>
+      allPlayers
+        .filter((p) => p.teamName === 'All players (team not linked)')
+        .sort((a, b) => (a.number || 999) - (b.number || 999) || a.name.localeCompare(b.name)),
+    [allPlayers],
+  );
+
+  const mergedPlayerList = useMemo(() => {
+    const source = [
+      ...(searchSide === 'home' || searchSide === 'both' ? homePlayers : []),
+      ...(searchSide === 'away' || searchSide === 'both' ? awayPlayers : []),
+      ...(searchSide === 'both' ? unlinkedPlayers : []),
+    ];
+    const q = playerSearch.trim().toLowerCase();
+    const filtered = q
+      ? source.filter((p) => p.name.toLowerCase().includes(q) || String(p.number || '').includes(q))
+      : source;
+    return filtered.sort((a, b) => {
+      const aSide = a.teamName === homeTeam?.name ? 'home' : 'away';
+      const bSide = b.teamName === homeTeam?.name ? 'home' : 'away';
+      const aGoals = aSide === 'home' ? safeNum(homeGoalMap[a.id]) : safeNum(awayGoalMap[a.id]);
+      const bGoals = bSide === 'home' ? safeNum(homeGoalMap[b.id]) : safeNum(awayGoalMap[b.id]);
+      return bGoals - aGoals || (a.number || 999) - (b.number || 999) || a.name.localeCompare(b.name);
+    });
+  }, [searchSide, homePlayers, awayPlayers, unlinkedPlayers, playerSearch, homeTeam?.name, homeGoalMap, awayGoalMap]);
+
+  const topScorers = useMemo(() => {
+    const out: Array<{ id: string; name: string; goals: number; team: 'home' | 'away'; photoUrl?: string }> = [];
+    for (const p of homePlayers) {
+      const g = safeNum(homeGoalMap[p.id]);
+      if (g > 0) out.push({ id: p.id, name: p.name, goals: g, team: 'home', photoUrl: p.photoUrl });
+    }
+    for (const p of awayPlayers) {
+      const g = safeNum(awayGoalMap[p.id]);
+      if (g > 0) out.push({ id: p.id, name: p.name, goals: g, team: 'away', photoUrl: p.photoUrl });
+    }
+    return out.sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name)).slice(0, 3);
+  }, [homePlayers, awayPlayers, homeGoalMap, awayGoalMap]);
+
+  const homeGoalKickers = useMemo(
+    () => homePlayers
+      .map((p) => ({ id: p.id, name: p.name, photoUrl: p.photoUrl, goals: safeNum(homeGoalMap[p.id]) }))
+      .filter((p) => p.goals > 0)
+      .sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name)),
+    [homePlayers, homeGoalMap],
+  );
+
+  const awayGoalKickers = useMemo(
+    () => awayPlayers
+      .map((p) => ({ id: p.id, name: p.name, photoUrl: p.photoUrl, goals: safeNum(awayGoalMap[p.id]) }))
+      .filter((p) => p.goals > 0)
+      .sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name)),
+    [awayPlayers, awayGoalMap],
+  );
+
+  const canRunOcr = useMemo(() => uploaded.length > 0 && ocr.status !== 'ocr_running', [uploaded.length, ocr.status]);
+
+  const isStep2Valid = useMemo(() => homeGoals !== '' && homeBehinds !== '' && awayGoals !== '' && awayBehinds !== '', [homeGoals, homeBehinds, awayGoals, awayBehinds]);
+  const isStep3Valid = useMemo(() => isStep2Valid, [isStep2Valid]);
+  const isStep4Valid = useMemo(() => uploaded.length > 0, [uploaded.length]);
 
   const canSubmit = useMemo(() => {
-    if (!fixture || !myTeamId) return false;
-    if (isSubmitting) return false;
+    if (!fixture || !myTeamId || isSubmitting) return false;
+    if (!isStep2Valid || !uploaded.length) return false;
     if (ocr.status !== 'done' && ocr.status !== 'idle') return false;
     if (ocr.status === 'done' && !ocrConfirm) return false;
-    if (!uploaded.length) return false;
-    if (!homeGoals || !homeBehinds || !awayGoals || !awayBehinds) return false;
     return true;
-  }, [fixture, myTeamId, isSubmitting, ocr.status, ocrConfirm, uploaded.length, homeGoals, homeBehinds, awayGoals, awayBehinds]);
+  }, [fixture, myTeamId, isSubmitting, isStep2Valid, uploaded.length, ocr.status, ocrConfirm]);
 
-  const getTeamPlayers = (teamId: string | undefined, search: string) => {
-    if (!teamId || !allPlayers.length) return [];
-    return allPlayers
-      .filter((p) => {
-        const teamMatch = p.teamId === teamId;
-        const searchMatch =
-          !search ||
-          p.name.toLowerCase().includes(search.toLowerCase()) ||
-          p.teamName?.toLowerCase().includes(search.toLowerCase());
-        return teamMatch && searchMatch;
-      })
-      .slice(0, 20);
+  const getStatusChip = () => {
+    if (submitSuccess) return { label: 'Submitted', tone: 'success' as const };
+    if (draftSavedAt) return { label: 'Draft saved', tone: 'muted' as const };
+    return { label: 'Ready to submit', tone: 'warning' as const };
   };
 
-  const homeTeamPlayers = useMemo(() => getTeamPlayers(homeTeam?.id, homePlayerSearch), [homeTeam?.id, homePlayerSearch, allPlayers]);
-  const awayTeamPlayers = useMemo(() => getTeamPlayers(awayTeam?.id, awayPlayerSearch), [awayTeam?.id, awayPlayerSearch, allPlayers]);
+  const statusChip = getStatusChip();
+  const competitionLabel = getCompetitionLabel();
+  const draftSavedLabel = formatSavedAt(draftSavedAt);
+
+  const canGoToStep = (step: Step) => {
+    if (step <= 2) return true;
+    if (step === 3) return isStep2Valid;
+    if (step === 4) return isStep3Valid;
+    if (step === 5) return isStep4Valid;
+    return false;
+  };
+
+  const setPlayerGoals = (side: 'home' | 'away', playerId: string, next: number) => {
+    const val = clamp(next, 0, 99);
+    if (side === 'home') {
+      setHomeGoalMap((prev) => {
+        if (val <= 0) {
+          const copy = { ...prev };
+          delete copy[playerId];
+          return copy;
+        }
+        return { ...prev, [playerId]: val };
+      });
+    } else {
+      setAwayGoalMap((prev) => {
+        if (val <= 0) {
+          const copy = { ...prev };
+          delete copy[playerId];
+          return copy;
+        }
+        return { ...prev, [playerId]: val };
+      });
+    }
+  };
 
   const onPickFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
 
-    const next: Uploaded[] = files.map((f) => ({
+    const next = files.map((f) => ({
       id: uuid(),
       file: f,
       name: f.name,
@@ -508,59 +784,32 @@ export default function SubmitPage() {
 
   const removeFile = (id: string) => {
     setUploaded((prev) => {
-      const f = prev.find((x) => x.id === id);
-      if (f?.previewUrl) URL.revokeObjectURL(f.previewUrl);
-      return prev.filter((x) => x.id !== id);
+      const target = prev.find((p) => p.id === id);
+      if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter((p) => p.id !== id);
     });
     setOcr({ status: 'idle' });
     setOcrConfirm(false);
   };
 
-  const ensureKicker = (side: 'home' | 'away', name: string) => {
-    const setList = side === 'home' ? setHomeGoalKickers : setAwayGoalKickers;
-    setList((prev) => {
-      const idx = prev.findIndex((k) => k.name.toLowerCase() === name.toLowerCase());
-      if (idx >= 0) {
-        return prev.map((k, i) => (i === idx ? { ...k, goals: clamp(k.goals + 1, 0, 99) } : k));
-      }
-      return [...prev, { id: uuid(), name, goals: 1 }];
-    });
-  };
-
-  const incGoal = (side: 'home' | 'away', id: string) => {
-    const setList = side === 'home' ? setHomeGoalKickers : setAwayGoalKickers;
-    setList((prev) => prev.map((k) => (k.id === id ? { ...k, goals: clamp(k.goals + 1, 0, 99) } : k)));
-  };
-
-  const decGoal = (side: 'home' | 'away', id: string) => {
-    const setList = side === 'home' ? setHomeGoalKickers : setAwayGoalKickers;
-    setList((prev) =>
-      prev.map((k) => (k.id === id ? { ...k, goals: clamp(k.goals - 1, 0, 99) } : k)).filter((k) => k.goals > 0),
-    );
-  };
-
   const runOcr = async () => {
     if (!canRunOcr) return;
-
-    setOcr({ status: 'ocr_running', step: 'Starting…', progress01: 0.02 });
+    setOcr({ status: 'ocr_running', step: 'Preparing OCR…', progress01: 0.02 });
     setConflict(null);
 
     try {
-      const rawText = await runTesseract(
-        uploaded.map((u) => u.file),
-        (step, p) => setOcr({ status: 'ocr_running', step, progress01: p }),
-      );
+      const rawText = await runTesseract(uploaded.map((u) => u.file), (step, p) => {
+        setOcr({ status: 'ocr_running', step, progress01: p });
+      });
 
       const teamStats = parseTeamStatsFromText(rawText);
       const playerLines = parsePlayerLinesFromText(rawText);
-
       setOcr({ status: 'done', rawText, teamStats, playerLines });
       setOcrConfirm(false);
     } catch (e: any) {
-      console.error('[Submit] OCR failed:', e);
       const msg = e?.message || 'OCR failed';
       if (msg.includes('timed out')) {
-        setOcr({ status: 'timeout', error: 'OCR took too long (exceeded 20 seconds). You can retry or skip to manual entry.' });
+        setOcr({ status: 'timeout', error: 'OCR took too long (20 seconds). Retry or continue with manual verification.' });
       } else {
         setOcr({ status: 'error', message: msg });
       }
@@ -568,79 +817,53 @@ export default function SubmitPage() {
   };
 
   const submit = async () => {
-    if (!fixture || !myTeamId) return;
-    if (!canSubmit) return;
+    if (!fixture || !myTeamId || !canSubmit) return;
     setIsSubmitting(true);
     setConflict(null);
 
     try {
       const ocrPayload = ocr.status === 'done' ? {
-        rawText: (ocr as any).rawText,
-        teamStats: (ocr as any).teamStats,
-        playerLines: (ocr as any).playerLines,
+        rawText: ocr.rawText,
+        teamStats: ocr.teamStats,
+        playerLines: ocr.playerLines,
       } : null;
 
-      const { data: result, error: rpcErr } = await supabase.rpc('eg_submit_result_home_only', {
+      const { error: rpcErr } = await supabase.rpc('eg_submit_result_home_only', {
         p_fixture_id: fixture.id,
         p_home_goals: homeGoalsN,
         p_home_behinds: homeBehindsN,
         p_away_goals: awayGoalsN,
         p_away_behinds: awayBehindsN,
         p_venue: venue || null,
-        p_goal_kickers_home: homeGoalKickers.length > 0 ? JSON.stringify(homeGoalKickers) : null,
-        p_goal_kickers_away: awayGoalKickers.length > 0 ? JSON.stringify(awayGoalKickers) : null,
+        p_goal_kickers_home: homeGoalKickers.length ? JSON.stringify(homeGoalKickers) : null,
+        p_goal_kickers_away: awayGoalKickers.length ? JSON.stringify(awayGoalKickers) : null,
         p_ocr: ocrPayload ? JSON.stringify(ocrPayload) : null,
         p_notes: notes || null,
       });
 
       if (rpcErr) {
         setConflict({ message: rpcErr.message || 'Submit failed.' });
-        setIsSubmitting(false);
         return;
       }
 
+      const draftKey = buildDraftKey(sessionUserId, fixture.id);
+      window.localStorage.removeItem(draftKey);
       setSubmitSuccess(true);
     } catch (e: any) {
-      console.error('[Submit] submit failed:', e);
       setConflict({ message: e?.message || 'Submit failed.' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const GoalKickerRow = ({ k, side }: { k: GoalKicker; side: 'home' | 'away' }) => (
-    <div className="goalKickerRow">
-      <div className="goalKickerRow__left">
-        <div className="goalKickerRow__avatar">
-          {k.photoUrl ? <img src={k.photoUrl} alt={k.name} /> : <User size={20} />}
-        </div>
-        <div className="goalKickerRow__meta">
-          <div className="goalKickerRow__name" title={k.name}>
-            {k.name}
-          </div>
-          <div className="goalKickerRow__label">Goals</div>
-        </div>
-      </div>
-      <div className="goalKickerRow__right">
-        <button type="button" className="goalKickerBtn" onClick={() => decGoal(side, k.id)} title="Remove goal">
-          <Minus size={16} className="goalKickerBtn__icon" />
-        </button>
-        <div className="goalKickerCount">{k.goals}</div>
-        <button type="button" className="goalKickerBtn" onClick={() => incGoal(side, k.id)} title="Add goal">
-          <Plus size={16} className="goalKickerBtn__icon" />
-        </button>
-      </div>
-    </div>
-  );
-
   if (loading) {
     return (
       <div className="egSubmitPage">
         <main className="egSubmitPage__main">
           <div className="egSubmitPage__wrap">
-            <div style={{ padding: '20px 4px', textAlign: 'center' }}>
-              <div style={{ fontSize: '16px', fontWeight: '850', marginBottom: '10px' }}>Loading…</div>
-              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>Fetching your next fixture…</div>
+            <div className="mdcLoading">
+              <div className="mdcLoading__title">Loading Match Day Console…</div>
+              <div className="mdcLoading__sub">Fetching your next fixture</div>
             </div>
           </div>
         </main>
@@ -648,16 +871,14 @@ export default function SubmitPage() {
     );
   }
 
-  if (loadError || !payload || !fixture || !homeTeam || !awayTeam) {
+  if (loadError || !fixture || !homeTeam || !awayTeam) {
     return (
       <div className="egSubmitPage">
         <main className="egSubmitPage__main">
           <div className="egSubmitPage__wrap">
-            <div style={{ padding: '20px 4px' }}>
-              <div style={{ fontSize: '16px', fontWeight: '850', marginBottom: '12px' }}>No eligible match</div>
-              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.65)', lineHeight: '1.5' }}>
-                {loadError || 'No upcoming fixtures available for submission. Check back when your next match is scheduled.'}
-              </div>
+            <div className="mdcLoading">
+              <div className="mdcLoading__title">Nothing to submit right now</div>
+              <div className="mdcLoading__sub">{loadError || 'No upcoming home fixture was found for your team.'}</div>
             </div>
           </div>
         </main>
@@ -669,9 +890,8 @@ export default function SubmitPage() {
     <div className="egSubmitPage">
       <main className="egSubmitPage__main">
         <div className="egSubmitPage__wrap">
-          {/* Premium Fixture Header */}
-          <div
-            className="submitFixtureHeader"
+          <section
+            className="mdcHero"
             style={{
               '--homeR': homeTeamColors.r,
               '--homeG': homeTeamColors.g,
@@ -679,668 +899,416 @@ export default function SubmitPage() {
               '--awayR': awayTeamColors.r,
               '--awayG': awayTeamColors.g,
               '--awayB': awayTeamColors.b,
-            } as any}
+            } as React.CSSProperties}
           >
-            <div className="submitFixtureHeader__halo"></div>
-
-            <div className="submitFixtureHeader__top">
-              <div className="submitFixtureHeader__status">
-                <div className="submitFixtureHeader__dot submitFixtureHeader__dot--upcoming"></div>
-                <span>ROUND {fixture.round}</span>
+            <div className="mdcHero__top">
+              <div className="mdcHero__chips">
+                <span className="mdcChip">Round {fixture.round}</span>
+                <span className="mdcChip">{competitionLabel}</span>
+                <span className={`mdcChip mdcChip--${statusChip.tone}`}>{statusChip.label}</span>
               </div>
-              <div className="submitFixtureHeader__coachBadge">
-                <span>Signed in as:</span>
-                <span className="submitFixtureHeader__coachName">{myCoachName}</span>
-              </div>
-            </div>
-
-            <div className="submitFixtureHeader__main">
-              <div className="submitFixtureHeader__side">
-                <div className="submitFixtureHeader__teamBox">
-                  {homeTeam.logo ? (
-                    <img src={homeTeam.logo} alt={homeTeam.name} className="submitFixtureHeader__logo" />
-                  ) : (
-                    <span style={{ fontSize: '28px', fontWeight: '900', color: 'rgba(245,196,0,0.9)' }}>H</span>
-                  )}
-                </div>
-                <div className="submitFixtureHeader__abbr">{TEAM_SHORT_NAMES[homeTeam.name] || homeTeam.name}</div>
-              </div>
-
-              <div className="submitFixtureHeader__center">
-                <div className="submitFixtureHeader__vs">VS</div>
-                <div className="submitFixtureHeader__meta">
-                  {venue && (
-                    <>
-                      <span>{venue}</span>
-                      <div className="submitFixtureHeader__metaDivider"></div>
-                    </>
-                  )}
-                  <span>Ready to submit</span>
-                </div>
-              </div>
-
-              <div className="submitFixtureHeader__side">
-                <div className="submitFixtureHeader__teamBox">
-                  {awayTeam.logo ? (
-                    <img src={awayTeam.logo} alt={awayTeam.name} className="submitFixtureHeader__logo" />
-                  ) : (
-                    <span style={{ fontSize: '28px', fontWeight: '900', color: 'rgba(245,196,0,0.9)' }}>A</span>
-                  )}
-                </div>
-                <div className="submitFixtureHeader__abbr">{TEAM_SHORT_NAMES[awayTeam.name] || awayTeam.name}</div>
+              <div className="mdcCoachPill">
+                <Shield size={13} />
+                <span>
+                  Signed in as: {sessionEmail || myCoachName || 'coach'}
+                  {draftSavedLabel ? ` • Draft ${draftSavedLabel}` : ''}
+                </span>
               </div>
             </div>
 
-            <div className="submitFixtureHeader__psnRow">
-              <div className="submitFixtureHeader__psn">
-                <Home size={16} className="submitFixtureHeader__psnIcon" />
-                <span className="submitFixtureHeader__psnText">{homeTeam.name}</span>
+            <div className="mdcHero__match">
+              <div className="mdcTeamBlock">
+                <div className="mdcTeamBlock__logo">
+                  {homeTeam.logo ? <img src={homeTeam.logo} alt={homeTeam.name} /> : <span>{homeTeam.name.slice(0, 1)}</span>}
+                </div>
+                <div className="mdcTeamBlock__name" title={homeTeam.name}>{homeDisplayName}</div>
               </div>
-              <div className="submitFixtureHeader__psn">
-                <Zap size={16} className="submitFixtureHeader__psnIcon" />
-                <span className="submitFixtureHeader__psnText">{awayTeam.name}</span>
+
+              <div className="mdcHero__center">
+                <div className="mdcHero__vs">VS</div>
+                <div className="mdcHero__meta">{venue || 'TBC'} • {kickoffLabel}</div>
+              </div>
+
+              <div className="mdcTeamBlock">
+                <div className="mdcTeamBlock__logo">
+                  {awayTeam.logo ? <img src={awayTeam.logo} alt={awayTeam.name} /> : <span>{awayTeam.name.slice(0, 1)}</span>}
+                </div>
+                <div className="mdcTeamBlock__name" title={awayTeam.name}>{awayDisplayName}</div>
               </div>
             </div>
-          </div>
 
-          {/* Status bar */}
-          {conflict?.message && (
-            <div className="egSubmitStatus egSubmitStatus--danger">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <AlertTriangle size={16} />
-                {conflict.message}
-              </div>
-            </div>
-          )}
-
-          {/* Stepper Navigation */}
-          <div className="submitStepper">
-            {[1, 2, 3, 4, 5].map((step) => (
-              <button
-                key={step}
-                type="button"
-                className={`submitStepperItem ${currentStep === step ? 'isActive' : ''} ${currentStep > step ? 'isCompleted' : ''}`}
-                onClick={() => setCurrentStep(step as Step)}
-              >
-                <div className="submitStepperItem__circle">
-                  {currentStep > step ? <Check size={20} className="submitStepperItem__check" /> : step}
-                </div>
-                <div className="submitStepperItem__label">
-                  {step === 1 && 'Fixture'}
-                  {step === 2 && 'Score'}
-                  {step === 3 && 'Kickers'}
-                  {step === 4 && 'Upload'}
-                  {step === 5 && 'Review'}
-                </div>
+            <div className="mdcHero__bottom">
+              <div className="mdcProgressMeta">Step {currentStep} of 5</div>
+              <button type="button" className="mdcHeroCta" onClick={() => navigate(`/match-centre/${fixture.id}`)}>
+                Match Centre <ChevronRight size={14} />
               </button>
-            ))}
+            </div>
+          </section>
+
+          {conflict?.message ? (
+            <div className="mdcStatus mdcStatus--danger">
+              <AlertTriangle size={14} /> {conflict.message}
+            </div>
+          ) : null}
+          {playerLoadErr ? <div className="mdcStatus mdcStatus--muted">{playerLoadErr}</div> : null}
+
+          <div className="mdcStepper" role="tablist" aria-label="Submit steps">
+            {([1, 2, 3, 4, 5] as Step[]).map((step) => {
+              const active = step === currentStep;
+              const done = step < currentStep;
+              const enabled = canGoToStep(step);
+              return (
+                <button
+                  key={step}
+                  type="button"
+                  className={`mdcStep ${active ? 'is-active' : ''} ${done ? 'is-done' : ''}`}
+                  onClick={() => enabled && setCurrentStep(step)}
+                  disabled={!enabled}
+                  aria-selected={active}
+                >
+                  <span className="mdcStep__node">{done ? <Check size={14} /> : step}</span>
+                  <span className="mdcStep__label">{STEP_LABELS[step]}</span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Step 1: Confirm Fixture */}
           <AnimatePresence mode="wait">
             {currentStep === 1 && (
-              <motion.div key="step1" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="submitStepContent">
-                <div className="submitGlassCard">
-                  <div className="submitGlassCard__head">
-                    <span>Confirm Match</span>
+              <motion.section key="s1" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="mdcCard">
+                <div className="mdcCard__head">Confirm Match</div>
+                <div className="mdcCard__body">
+                  <div className="mdcConfirmMatch">
+                    <div className="mdcConfirmMatch__teams">
+                      <span>{homeDisplayName}</span>
+                      <strong>vs</strong>
+                      <span>{awayDisplayName}</span>
+                    </div>
+                    <div className="mdcConfirmMatch__meta">Round {fixture.round} • {venue || 'Venue TBC'} • {kickoffLabel}</div>
                   </div>
-                  <div className="submitGlassCard__body">
-                    <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.75)', lineHeight: '1.5', marginBottom: '14px' }}>
-                      This is your next scheduled fixture. Once you submit results, this match will be marked as final and data will auto-update across the app.
+
+                  <div className="mdcRuleCard">
+                    <Trophy size={16} />
+                    <div>
+                      <div className="mdcRuleCard__title">Submission Rules</div>
+                      <div className="mdcRuleCard__text">This is your next scheduled fixture. Home coach submits final score, kickers and evidence for verification.</div>
                     </div>
-                    <div className="egSubmitHint egSubmitHint--gold">
-                      <Trophy size={16} className="egSubmitHint__icon" />
-                      This is a home-team-only submission. Both teams' results must match before going live.
-                    </div>
-                    <div style={{ marginTop: '14px' }}>
-                      <button
-                        type="button"
-                        className="reviewSubmitCTA"
-                        onClick={() => setCurrentStep(2)}
-                      >
-                        Continue to Score Entry →
-                      </button>
-                    </div>
+                  </div>
+
+                  <div className="mdcActions">
+                    <button type="button" className="mdcBtn mdcBtn--primary" onClick={() => setCurrentStep(2)}>
+                      Continue to Score
+                    </button>
                   </div>
                 </div>
-              </motion.div>
+              </motion.section>
             )}
           </AnimatePresence>
 
-          {/* Step 2: Score Entry */}
           <AnimatePresence mode="wait">
             {currentStep === 2 && (
-              <motion.div key="step2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="submitStepContent">
-                <div className="submitGlassCard">
-                  <div className="submitGlassCard__head">
-                    <span>Final Score</span>
-                  </div>
-                  <div className="submitGlassCard__body">
-                    <div className="scoreEntryModule">
-                      <div className="scoreEntryBox">
-                        <div className="scoreEntryBox__title">{homeTeam.name} (Home)</div>
-                        <div className="scoreEntryGrid">
-                          <div className="scoreEntryField">
-                            <label className="scoreEntryLabel">Goals</label>
-                            <input
-                              className="scoreEntryInput"
-                              inputMode="numeric"
-                              value={homeGoals}
-                              onChange={(e) => setHomeGoals(e.target.value.replace(/[^\d]/g, ''))}
-                            />
-                          </div>
-                          <div className="scoreEntryField">
-                            <label className="scoreEntryLabel">Behinds</label>
-                            <input
-                              className="scoreEntryInput"
-                              inputMode="numeric"
-                              value={homeBehinds}
-                              onChange={(e) => setHomeBehinds(e.target.value.replace(/[^\d]/g, ''))}
-                            />
-                          </div>
-                        </div>
-                        <div className="scoreEntryTotal">
-                          <span className="scoreEntryTotal__label">Total Score</span>
-                          <span className="scoreEntryTotal__value">{homeScore}</span>
-                        </div>
-                      </div>
-
-                      <div className="scoreEntryBox">
-                        <div className="scoreEntryBox__title">{awayTeam.name} (Away)</div>
-                        <div className="scoreEntryGrid">
-                          <div className="scoreEntryField">
-                            <label className="scoreEntryLabel">Goals</label>
-                            <input
-                              className="scoreEntryInput"
-                              inputMode="numeric"
-                              value={awayGoals}
-                              onChange={(e) => setAwayGoals(e.target.value.replace(/[^\d]/g, ''))}
-                            />
-                          </div>
-                          <div className="scoreEntryField">
-                            <label className="scoreEntryLabel">Behinds</label>
-                            <input
-                              className="scoreEntryInput"
-                              inputMode="numeric"
-                              value={awayBehinds}
-                              onChange={(e) => setAwayBehinds(e.target.value.replace(/[^\d]/g, ''))}
-                            />
-                          </div>
-                        </div>
-                        <div className="scoreEntryTotal">
-                          <span className="scoreEntryTotal__label">Total Score</span>
-                          <span className="scoreEntryTotal__value">{awayScore}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {homeGoals && homeBehinds && awayGoals && awayBehinds && (
-                      <div className="scoreLivePreview">
-                        <div className="scoreLivePreview__teamScore">
-                          <div className="scoreLivePreview__score">{homeScore}</div>
-                          <div className="scoreLivePreview__team">{TEAM_SHORT_NAMES[homeTeam.name]}</div>
-                        </div>
-                        <div className="scoreLivePreview__dash">—</div>
-                        <div className="scoreLivePreview__teamScore">
-                          <div className="scoreLivePreview__score">{awayScore}</div>
-                          <div className="scoreLivePreview__team">{TEAM_SHORT_NAMES[awayTeam.name]}</div>
-                        </div>
-                      </div>
-                    )}
-
-                    <div style={{ marginTop: '14px', display: 'flex', gap: '10px' }}>
-                      <button
-                        type="button"
-                        className="reviewSubmitCTA"
-                        style={{ flex: 1 }}
-                        onClick={() => setCurrentStep(1)}
-                      >
-                        ← Back
-                      </button>
-                      <button
-                        type="button"
-                        className="reviewSubmitCTA"
-                        style={{ flex: 1 }}
-                        onClick={() => setCurrentStep(3)}
-                        disabled={!homeGoals || !homeBehinds || !awayGoals || !awayBehinds}
-                      >
-                        Continue →
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Step 3: Goal Kickers */}
-          <AnimatePresence mode="wait">
-            {currentStep === 3 && (
-              <motion.div key="step3" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="submitStepContent">
-                <div className="submitGlassCard">
-                  <div className="submitGlassCard__head">
-                    <span>Goal Kickers</span>
-                  </div>
-                  <div className="submitGlassCard__body">
-                    <div className="goalKickerModule">
-                      <div className="goalKickerBlock">
-                        <div className="goalKickerBlock__title">{homeTeam.name}</div>
-                        <div className="goalKickerSearch">
-                          <Search size={16} style={{ position: 'absolute', left: '12px', top: '12px', opacity: 0.5 }} />
-                          <input
-                            className="goalKickerSearch__input"
-                            value={homePlayerSearch}
-                            onChange={(e) => setHomePlayerSearch(e.target.value)}
-                            placeholder="Search players…"
-                            style={{ paddingLeft: '36px' }}
-                          />
-                          <button
-                            type="button"
-                            className="goalKickerSearch__btn"
-                            onClick={() => homePlayerSearch.trim() && ensureKicker('home', homePlayerSearch.trim())}
-                          >
-                            Add
-                          </button>
-                        </div>
-                        {homeTeamPlayers.length > 0 && (
-                          <div className="goalKickerList">
-                            {homeTeamPlayers.map((p) => (
-                              <button
-                                key={p.id}
-                                type="button"
-                                className="goalKickerChip"
-                                onClick={() => ensureKicker('home', p.name)}
-                              >
-                                {p.name}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                        <div className="goalKickerSelected">
-                          {homeGoalKickers.length > 0 ? (
-                            [...homeGoalKickers]
-                              .sort((a, b) => b.goals - a.goals)
-                              .map((k) => <GoalKickerRow key={k.id} k={k} side="home" />)
-                          ) : (
-                            <div className="egSubmitMuted">No goal kickers added yet</div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="goalKickerBlock">
-                        <div className="goalKickerBlock__title">{awayTeam.name}</div>
-                        <div className="goalKickerSearch">
-                          <Search size={16} style={{ position: 'absolute', left: '12px', top: '12px', opacity: 0.5 }} />
-                          <input
-                            className="goalKickerSearch__input"
-                            value={awayPlayerSearch}
-                            onChange={(e) => setAwayPlayerSearch(e.target.value)}
-                            placeholder="Search players…"
-                            style={{ paddingLeft: '36px' }}
-                          />
-                          <button
-                            type="button"
-                            className="goalKickerSearch__btn"
-                            onClick={() => awayPlayerSearch.trim() && ensureKicker('away', awayPlayerSearch.trim())}
-                          >
-                            Add
-                          </button>
-                        </div>
-                        {awayTeamPlayers.length > 0 && (
-                          <div className="goalKickerList">
-                            {awayTeamPlayers.map((p) => (
-                              <button
-                                key={p.id}
-                                type="button"
-                                className="goalKickerChip"
-                                onClick={() => ensureKicker('away', p.name)}
-                              >
-                                {p.name}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                        <div className="goalKickerSelected">
-                          {awayGoalKickers.length > 0 ? (
-                            [...awayGoalKickers]
-                              .sort((a, b) => b.goals - a.goals)
-                              .map((k) => <GoalKickerRow key={k.id} k={k} side="away" />)
-                          ) : (
-                            <div className="egSubmitMuted">No goal kickers added yet</div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ marginTop: '14px', display: 'flex', gap: '10px' }}>
-                      <button
-                        type="button"
-                        className="reviewSubmitCTA"
-                        style={{ flex: 1 }}
-                        onClick={() => setCurrentStep(2)}
-                      >
-                        ← Back
-                      </button>
-                      <button
-                        type="button"
-                        className="reviewSubmitCTA"
-                        style={{ flex: 1 }}
-                        onClick={() => setCurrentStep(4)}
-                      >
-                        Continue →
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Step 4: Upload Evidence / OCR */}
-          <AnimatePresence mode="wait">
-            {currentStep === 4 && (
-              <motion.div key="step4" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="submitStepContent">
-                <div className="submitGlassCard">
-                  <div className="submitGlassCard__head">
-                    <span>Match Evidence</span>
-                  </div>
-                  <div className="submitGlassCard__body">
-                    <div className="ocrUploadModule">
-                      <div>
-                        <div className="ocrUploadTitle">Upload Screenshots *</div>
-                        <div className="ocrUploadSub">Final score, team stats, and player stats screens</div>
-                        <label className="ocrUploadBtn" style={{ marginTop: '10px' }}>
-                          <Upload size={16} className="ocrUploadBtn__icon" />
-                          Add Files
-                          <input
-                            ref={fileInputRef}
-                            className="ocrUploadBtn__input"
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            onChange={onPickFiles}
-                          />
+              <motion.section key="s2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="mdcCard">
+                <div className="mdcCard__head">Score Entry</div>
+                <div className="mdcCard__body">
+                  <div className="mdcScorePanel">
+                    <div className="mdcScoreTeam">
+                      <div className="mdcScoreTeam__head">{homeDisplayName}</div>
+                      <div className="mdcScoreInputs">
+                        <label>Goals
+                          <input inputMode="numeric" value={homeGoals} onChange={(e) => setHomeGoals(e.target.value.replace(/[^\d]/g, ''))} />
+                        </label>
+                        <label>Behinds
+                          <input inputMode="numeric" value={homeBehinds} onChange={(e) => setHomeBehinds(e.target.value.replace(/[^\d]/g, ''))} />
                         </label>
                       </div>
-
-                      {uploaded.length > 0 && (
-                        <div className="ocrFileList">
-                          {uploaded.map((f) => (
-                            <div className="ocrFile" key={f.id}>
-                              <div className="ocrFile__meta">
-                                <div className="ocrFile__name">{f.name}</div>
-                                <div className="ocrFile__size">{bytesToKb(f.size)} KB</div>
-                              </div>
-                              <button type="button" className="ocrFile__removeBtn" onClick={() => removeFile(f.id)}>
-                                <X size={12} className="ocrFile__removeIcon" /> Remove
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="ocrRunBar">
-                        <button type="button" className="ocrRunBtn" onClick={runOcr} disabled={!canRunOcr}>
-                          <Wand2 size={16} className="ocrRunBtn__icon" />
-                          {ocr.status === 'ocr_running' ? 'Running…' : 'Run OCR'}
-                        </button>
-                        <div className="ocrStatusBar">
-                          {ocr.status === 'ocr_running' && (
-                            <>
-                              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.55)', maxWidth: '60vw', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {(ocr as any).step}
-                              </span>
-                              <div className="ocrProgress">
-                                <div className="ocrProgress__bar" style={{ width: `${Math.round((ocr as any).progress01 * 100)}%` }} />
-                              </div>
-                            </>
-                          )}
-                          {ocr.status === 'done' && (
-                            <span className="ocrStatus ocrStatus--done">
-                              <Check size={14} /> OCR ready
-                            </span>
-                          )}
-                          {ocr.status === 'timeout' && (
-                            <span className="ocrStatus ocrStatus--error">
-                              <AlertTriangle size={14} /> Timeout
-                            </span>
-                          )}
-                          {ocr.status === 'error' && (
-                            <span className="ocrStatus ocrStatus--error">
-                              <AlertTriangle size={14} /> Error
-                            </span>
-                          )}
-                          {ocr.status === 'idle' && uploaded.length > 0 && (
-                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.55)' }}>Ready to run</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {ocr.status === 'timeout' && (
-                        <div className="ocrTimeoutBox">
-                          <div className="ocrTimeoutBox__title">OCR Taking Too Long</div>
-                          <div className="ocrTimeoutBox__msg">{(ocr as any).error}</div>
-                          <div className="ocrTimeoutBox__actions">
-                            <button type="button" className="ocrTimeoutBtn" onClick={runOcr}>
-                              Retry OCR
-                            </button>
-                            <button type="button" className="ocrTimeoutBtn ocrTimeoutBtn--secondary" onClick={() => setOcr({ status: 'idle' })}>
-                              Skip to Review
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {ocr.status === 'error' && (
-                        <div className="ocrTimeoutBox">
-                          <div className="ocrTimeoutBox__title">OCR Error</div>
-                          <div className="ocrTimeoutBox__msg">{(ocr as any).message}</div>
-                          <div className="ocrTimeoutBox__actions">
-                            <button type="button" className="ocrTimeoutBtn" onClick={runOcr}>
-                              Retry
-                            </button>
-                            <button type="button" className="ocrTimeoutBtn ocrTimeoutBtn--secondary" onClick={() => setOcr({ status: 'idle' })}>
-                              Continue
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {ocr.status === 'done' && (
-                        <div style={{ marginTop: '14px', padding: '12px', borderRadius: '14px', border: '1px solid rgba(180,255,210,0.28)', background: 'rgba(180,255,210,0.08)' }}>
-                          <label style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', cursor: 'pointer', fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>
-                            <input
-                              type="checkbox"
-                              checked={ocrConfirm}
-                              onChange={(e) => setOcrConfirm(e.target.checked)}
-                              style={{ marginTop: '3px' }}
-                            />
-                            <span>I've reviewed the OCR results and confirmed the data is correct</span>
-                          </label>
-                        </div>
-                      )}
+                      <div className="mdcScoreTotal">{homeGoalsN}.{homeBehindsN} <span>({homeScore})</span></div>
                     </div>
 
-                    <div style={{ marginTop: '14px', display: 'flex', gap: '10px' }}>
-                      <button
-                        type="button"
-                        className="reviewSubmitCTA"
-                        style={{ flex: 1 }}
-                        onClick={() => setCurrentStep(3)}
-                      >
-                        ← Back
-                      </button>
-                      <button
-                        type="button"
-                        className="reviewSubmitCTA"
-                        style={{ flex: 1 }}
-                        onClick={() => setCurrentStep(5)}
-                        disabled={!uploaded.length}
-                      >
-                        Continue →
-                      </button>
+                    <div className="mdcScoreTeam">
+                      <div className="mdcScoreTeam__head">{awayDisplayName}</div>
+                      <div className="mdcScoreInputs">
+                        <label>Goals
+                          <input inputMode="numeric" value={awayGoals} onChange={(e) => setAwayGoals(e.target.value.replace(/[^\d]/g, ''))} />
+                        </label>
+                        <label>Behinds
+                          <input inputMode="numeric" value={awayBehinds} onChange={(e) => setAwayBehinds(e.target.value.replace(/[^\d]/g, ''))} />
+                        </label>
+                      </div>
+                      <div className="mdcScoreTotal">{awayGoalsN}.{awayBehindsN} <span>({awayScore})</span></div>
                     </div>
                   </div>
+
+                  <div className="mdcLivePreview">
+                    <div className="mdcLivePreview__title">Final Score Preview</div>
+                    <div className="mdcLivePreview__row">
+                      <span>{homeDisplayName}</span>
+                      <strong>{homeScore}</strong>
+                      <span>—</span>
+                      <strong>{awayScore}</strong>
+                      <span>{awayDisplayName}</span>
+                    </div>
+                  </div>
+
+                  <div className="mdcActions">
+                    <button type="button" className="mdcBtn" onClick={() => setCurrentStep(1)}>Back</button>
+                    <button type="button" className="mdcBtn mdcBtn--primary" onClick={() => setCurrentStep(3)} disabled={!isStep2Valid}>Continue</button>
+                  </div>
                 </div>
-              </motion.div>
+              </motion.section>
             )}
           </AnimatePresence>
 
-          {/* Step 5: Review & Submit */}
           <AnimatePresence mode="wait">
-            {currentStep === 5 && (
-              <motion.div key="step5" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="submitStepContent">
-                <div className="submitGlassCard">
-                  <div className="submitGlassCard__head">
-                    <span>Review & Submit</span>
-                  </div>
-                  <div className="submitGlassCard__body">
-                    <div className="reviewSubmitCard">
-                      <div className="reviewSummaryBox">
-                        <div className="reviewSummaryBox__title">Final Score</div>
-                        <div className="reviewSummaryGrid">
-                          <div className="reviewSummaryItem">
-                            <div className="reviewSummaryItem__label">{homeTeam.name}</div>
-                            <div className="reviewSummaryItem__value">
-                              {homeGoalsN}G • {homeBehindsN}B = {homeScore}
-                            </div>
-                          </div>
-                          <div className="reviewSummaryItem">
-                            <div className="reviewSummaryItem__label">{awayTeam.name}</div>
-                            <div className="reviewSummaryItem__value">
-                              {awayGoalsN}G • {awayBehindsN}B = {awayScore}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {(homeGoalKickers.length > 0 || awayGoalKickers.length > 0) && (
-                        <div className="reviewSummaryBox">
-                          <div className="reviewSummaryBox__title">Goal Kickers</div>
-                          {homeGoalKickers.length > 0 && (
-                            <div style={{ marginBottom: '10px' }}>
-                              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', marginBottom: '6px' }}>{homeTeam.name}</div>
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                                {homeGoalKickers.map((k) => (
-                                  <div
-                                    key={k.id}
-                                    style={{
-                                      padding: '6px 10px',
-                                      borderRadius: '8px',
-                                      background: 'rgba(0,0,0,0.24)',
-                                      border: '1px solid rgba(245,196,0,0.18)',
-                                      fontSize: '11px',
-                                      color: 'rgba(255,255,255,0.8)',
-                                    }}
-                                  >
-                                    {k.name} ({k.goals})
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {awayGoalKickers.length > 0 && (
-                            <div>
-                              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', marginBottom: '6px' }}>{awayTeam.name}</div>
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                                {awayGoalKickers.map((k) => (
-                                  <div
-                                    key={k.id}
-                                    style={{
-                                      padding: '6px 10px',
-                                      borderRadius: '8px',
-                                      background: 'rgba(0,0,0,0.24)',
-                                      border: '1px solid rgba(245,196,0,0.18)',
-                                      fontSize: '11px',
-                                      color: 'rgba(255,255,255,0.8)',
-                                    }}
-                                  >
-                                    {k.name} ({k.goals})
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="reviewNotesBox">
-                        <div className="reviewNotesLabel">Notes (optional)</div>
-                        <textarea
-                          className="reviewNotesTextarea"
-                          value={notes}
-                          onChange={(e) => setNotes(e.target.value)}
-                          placeholder="Any details for admins?"
-                        />
-                      </div>
-
-                      <button type="button" className="reviewSubmitCTA" onClick={submit} disabled={!canSubmit || isSubmitting}>
-                        {isSubmitting ? 'Submitting…' : 'Submit Match Results'}
-                      </button>
-
-                      <div style={{ marginTop: '8px', display: 'flex', gap: '10px' }}>
+            {currentStep === 3 && (
+              <motion.section key="s3" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="mdcCard">
+                <div className="mdcCard__head">Goal Kickers</div>
+                <div className="mdcCard__body">
+                  <div className="mdcFilterRow">
+                    <div className="mdcSeg">
+                      {(['both', 'home', 'away'] as const).map((side) => (
                         <button
+                          key={side}
                           type="button"
-                          className="reviewSubmitCTA"
-                          style={{
-                            flex: 1,
-                            background: 'rgba(0,0,0,0.25)',
-                            border: '1px solid rgba(255,255,255,0.12)',
-                            color: 'rgba(255,255,255,0.75)',
-                          }}
-                          onClick={() => setCurrentStep(4)}
+                          className={`mdcSeg__btn ${searchSide === side ? 'is-active' : ''}`}
+                          onClick={() => setSearchSide(side)}
                         >
-                          ← Back
+                          {side === 'both' ? 'Both' : side === 'home' ? homeTeam.shortName || 'Home' : awayTeam.shortName || 'Away'}
                         </button>
-                      </div>
+                      ))}
+                    </div>
+                    <label className="mdcSearch">
+                      <Search size={14} />
+                      <input value={playerSearch} onChange={(e) => setPlayerSearch(e.target.value)} placeholder="Search players" />
+                    </label>
+                  </div>
+
+                  <div className="mdcTopScorers">
+                    <div className="mdcTopScorers__label">Top Scorers</div>
+                  <div className="mdcTopScorers__chips">
+                      {(topScorers.length ? topScorers : [
+                        { id: 'ph1', name: 'Awaiting entries', goals: 0, team: 'home' as const, photoUrl: homePlayers[0]?.photoUrl },
+                      ]).map((k) => (
+                        <div key={k.id} className="mdcTopChip">
+                          <div className="mdcTopChip__photo">
+                            {k.photoUrl ? <img src={k.photoUrl} alt={k.name} /> : <User size={12} />}
+                          </div>
+                          <span>{k.name}</span>
+                          <strong>{k.goals}</strong>
+                        </div>
+                      ))}
                     </div>
                   </div>
+
+                  {unlinkedPlayers.length ? (
+                    <div className="mdcStatus mdcStatus--muted" style={{ marginTop: 10 }}>
+                      Team links missing for some players. Showing “All players (team not linked)” in combined search.
+                    </div>
+                  ) : null}
+
+                  <div className="mdcPickerGrid" role="list">
+                    {mergedPlayerList.map((p) => {
+                      const side: 'home' | 'away' =
+                        p.teamName === homeTeam.name
+                          ? 'home'
+                          : p.teamName === awayTeam.name
+                            ? 'away'
+                            : searchSide === 'home'
+                              ? 'home'
+                              : 'away';
+                      const goals = side === 'home' ? safeNum(homeGoalMap[p.id]) : safeNum(awayGoalMap[p.id]);
+                      return (
+                        <button
+                          key={`${side}-${p.id}`}
+                          type="button"
+                          className={`mdcPickerHeadshot ${goals > 0 ? 'is-active' : ''}`}
+                          onClick={() => setPlayerGoals(side, p.id, goals + 1)}
+                          aria-label={`${p.name} (${side === 'home' ? homeDisplayName : awayDisplayName})`}
+                          title={`${p.name}${goals > 0 ? ` • ${goals} goal${goals === 1 ? '' : 's'}` : ''}`}
+                        >
+                          {p.photoUrl ? <img src={p.photoUrl} alt="" loading="lazy" /> : <span>{p.name.slice(0, 1).toUpperCase()}</span>}
+                          {goals > 0 ? <strong>{goals}</strong> : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {!mergedPlayerList.length ? <div className="mdcEmptyInline">No players found for this filter.</div> : null}
+
+                  <div className="mdcSelectedKickers">
+                    {[...homeGoalKickers, ...awayGoalKickers].map((k) => {
+                      const side = homeGoalMap[k.id] ? 'home' : 'away';
+                      return (
+                        <button
+                          key={k.id}
+                          type="button"
+                          className="mdcSelectedKicker"
+                          onClick={() => setPlayerGoals(side, k.id, safeNum((side === 'home' ? homeGoalMap : awayGoalMap)[k.id]) - 1)}
+                          aria-label={`Reduce ${k.name} goal count`}
+                        >
+                          <div className="mdcSelectedKicker__photo">
+                            {k.photoUrl ? <img src={k.photoUrl} alt={k.name} loading="lazy" /> : <span>{k.name.slice(0, 1).toUpperCase()}</span>}
+                          </div>
+                          <span>{k.goals}</span>
+                        </button>
+                      );
+                    })}
+                    {!homeGoalKickers.length && !awayGoalKickers.length ? (
+                      <div className="mdcEmptyInline">Tap player photos to add goal kickers.</div>
+                    ) : null}
+                  </div>
+
+                  <div className="mdcActions">
+                    <button type="button" className="mdcBtn" onClick={() => setCurrentStep(2)}>Back</button>
+                    <button type="button" className="mdcBtn mdcBtn--primary" onClick={() => setCurrentStep(4)}>Continue</button>
+                  </div>
                 </div>
-              </motion.div>
+              </motion.section>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence mode="wait">
+            {currentStep === 4 && (
+              <motion.section key="s4" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="mdcCard">
+                <div className="mdcCard__head">Evidence Upload + OCR</div>
+                <div className="mdcCard__body">
+                  <div className="mdcUploadDrop">
+                    <div className="mdcUploadDrop__title">Upload screenshots</div>
+                    <div className="mdcUploadDrop__sub">Screenshots are used as verification evidence.</div>
+                    <label className="mdcBtn mdcBtn--primary mdcUploadDrop__btn">
+                      <Upload size={14} /> Choose Images
+                      <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={onPickFiles} hidden />
+                    </label>
+                  </div>
+
+                  {!!uploaded.length && (
+                    <div className="mdcUploadGrid">
+                      {uploaded.map((f) => (
+                        <div key={f.id} className="mdcUploadItem">
+                          <div className="mdcUploadItem__thumb">{f.previewUrl ? <img src={f.previewUrl} alt={f.name} /> : <Upload size={14} />}</div>
+                          <div className="mdcUploadItem__meta">
+                            <div className="mdcUploadItem__name">{f.name}</div>
+                            <div className="mdcUploadItem__size">{bytesToKb(f.size)} KB</div>
+                          </div>
+                          <button type="button" className="mdcUploadItem__remove" onClick={() => removeFile(f.id)}>Remove</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="mdcOcrBar">
+                    <button type="button" className="mdcBtn mdcBtn--primary" disabled={!canRunOcr} onClick={runOcr}>
+                      <Wand2 size={14} /> {ocr.status === 'ocr_running' ? 'Running OCR…' : 'Run OCR'}
+                    </button>
+                    <div className="mdcOcrState">
+                      {ocr.status === 'ocr_running' ? (
+                        <>
+                          <span>{ocr.step}</span>
+                          <div className="mdcProgress"><div style={{ width: `${Math.round(ocr.progress01 * 100)}%` }} /></div>
+                        </>
+                      ) : ocr.status === 'done' ? (
+                        <span className="is-done"><Check size={13} /> Ready to review</span>
+                      ) : ocr.status === 'timeout' ? (
+                        <span className="is-error"><AlertTriangle size={13} /> {ocr.error}</span>
+                      ) : ocr.status === 'error' ? (
+                        <span className="is-error"><AlertTriangle size={13} /> {ocr.message}</span>
+                      ) : (
+                        <span>Waiting for OCR run</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {ocr.status === 'done' ? (
+                    <div className="mdcOcrPreview">
+                      <div className="mdcOcrPreview__head">
+                        <span>OCR Summary</span>
+                        <button type="button" onClick={() => setShowOcrText((v) => !v)}>
+                          {showOcrText ? <><EyeOff size={13} /> Hide text</> : <><Eye size={13} /> View text</>}
+                        </button>
+                      </div>
+                      <div className="mdcOcrPreview__stats">Detected stats: {Object.keys(ocr.teamStats || {}).length} • Player lines: {(ocr.playerLines || []).length}</div>
+                      {showOcrText ? <pre className="mdcOcrPreview__text">{ocr.rawText}</pre> : null}
+                      <label className="mdcConfirm">
+                        <input type="checkbox" checked={ocrConfirm} onChange={(e) => setOcrConfirm(e.target.checked)} />
+                        <span>Confirm OCR looks correct</span>
+                      </label>
+                    </div>
+                  ) : null}
+
+                  <div className="mdcActions">
+                    <button type="button" className="mdcBtn" onClick={() => setCurrentStep(3)}>Back</button>
+                    <button type="button" className="mdcBtn mdcBtn--primary" onClick={() => setCurrentStep(5)} disabled={!uploaded.length}>Continue</button>
+                  </div>
+                </div>
+              </motion.section>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence mode="wait">
+            {currentStep === 5 && (
+              <motion.section key="s5" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="mdcCard">
+                <div className="mdcCard__head">Review + Confirm</div>
+                <div className="mdcCard__body">
+                  <div className="mdcReviewScore">
+                    <div className="mdcReviewScore__value">{homeScore}</div>
+                    <div className="mdcReviewScore__teams">
+                      {homeDisplayName} <span>vs</span> {awayDisplayName}
+                    </div>
+                    <div className="mdcReviewScore__value">{awayScore}</div>
+                  </div>
+
+                  <div className="mdcChecklist">
+                    <div className={`mdcChecklist__row ${fixture ? 'is-ok' : ''}`}><Check size={13} /> Fixture confirmed</div>
+                    <div className={`mdcChecklist__row ${isStep2Valid ? 'is-ok' : ''}`}><Check size={13} /> Score entered</div>
+                    <div className={`mdcChecklist__row ${(homeGoalKickers.length + awayGoalKickers.length) > 0 ? 'is-ok' : ''}`}><Check size={13} /> Goal kickers added</div>
+                    <div className={`mdcChecklist__row ${uploaded.length > 0 ? 'is-ok' : ''}`}><Check size={13} /> Evidence uploaded ({uploaded.length})</div>
+                  </div>
+
+                  <div className="mdcReviewBlock">
+                    <div className="mdcReviewBlock__title">Top Goal Kickers</div>
+                    {(topScorers.length ? topScorers : [{ id: 'none', name: 'Awaiting coach input', goals: 0, team: 'home' as const }]).map((k) => (
+                      <div key={k.id} className="mdcReviewKicker">
+                        <div className="mdcReviewKicker__left">
+                          <div className="mdcReviewKicker__photo">
+                            {k.photoUrl ? <img src={k.photoUrl} alt={k.name} /> : <User size={12} />}
+                          </div>
+                          <span>{k.name}</span>
+                        </div>
+                        <strong>{k.goals}</strong>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mdcReviewBlock">
+                    <div className="mdcReviewBlock__title">Notes</div>
+                    <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Any details for admins?" />
+                  </div>
+
+                  <div className="mdcActions mdcActions--sticky">
+                    <button type="button" className="mdcBtn" onClick={() => setCurrentStep(4)}>Back</button>
+                    <button type="button" className="mdcBtn mdcBtn--primary" disabled={!canSubmit || isSubmitting} onClick={submit}>
+                      {isSubmitting ? 'Submitting…' : 'Confirm & Submit'}
+                    </button>
+                  </div>
+                </div>
+              </motion.section>
             )}
           </AnimatePresence>
         </div>
       </main>
 
-      {/* Success Overlay */}
       <AnimatePresence>
         {submitSuccess && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="submitSuccessOverlay">
-            <motion.div initial={{ scale: 0.95, y: 12 }} animate={{ scale: 1, y: 0 }} className="submitSuccessCard">
-              <div className="submitSuccessIcon">
-                <Check size={28} />
-              </div>
-              <div className="submitSuccessTitle">Submitted Successfully!</div>
-              <div className="submitSuccessSub">
-                Your match results have been recorded. If the away team's submission matches, the match will go live.
-              </div>
-
-              <div className="submitSuccessScore">
-                <span className="submitSuccessScore__score">{homeScore}</span>
-                <span className="submitSuccessScore__dash">—</span>
-                <span className="submitSuccessScore__score">{awayScore}</span>
-              </div>
-
-              <div className="submitSuccessActions">
-                <button
-                  type="button"
-                  className="submitSuccessAction isPrimary"
-                  onClick={() => {
-                    setSubmitSuccess(false);
-                    window.location.href = '/';
-                  }}
-                >
-                  Back to Home
+          <motion.div className="mdcSuccessOverlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div className="mdcSuccessCard" initial={{ y: 10, scale: 0.97 }} animate={{ y: 0, scale: 1 }}>
+              <div className="mdcSuccessCard__icon"><Check size={24} /></div>
+              <div className="mdcSuccessCard__title">Submitted</div>
+              <div className="mdcSuccessCard__sub">Your result has been captured and is now pending verification.</div>
+              <div className="mdcSuccessCard__score">{homeScore} — {awayScore}</div>
+              <div className="mdcSuccessCard__actions">
+                <button type="button" className="mdcBtn mdcBtn--primary" onClick={() => navigate(`/match-centre/${fixture.id}`)}>
+                  Open Match Centre
                 </button>
-                <button
-                  type="button"
-                  className="submitSuccessAction"
-                  onClick={() => {
-                    setSubmitSuccess(false);
-                    window.location.reload();
-                  }}
-                >
-                  View Updated Fixtures
+                <button type="button" className="mdcBtn" onClick={() => navigate('/fixtures')}>
+                  Back to Fixtures
                 </button>
               </div>
             </motion.div>

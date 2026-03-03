@@ -1,4 +1,3 @@
-// src/components/FixturePosterCard.tsx
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import SmartImg from './SmartImg';
@@ -14,8 +13,8 @@ export type FixturePosterMatch = {
   dateText?: string;
 
   status: 'SCHEDULED' | 'LIVE' | 'FINAL';
-  home: TeamKey;
-  away: TeamKey;
+  home: string;
+  away: string;
 
   homePsn?: string;
   awayPsn?: string;
@@ -27,6 +26,7 @@ export type FixturePosterMatch = {
 
   homeScore?: FixtureScore;
   awayScore?: FixtureScore;
+  headerTag?: string;
 
   onMatchCentreClick?: () => void;
 };
@@ -51,7 +51,7 @@ const TINT_OVERRIDES: Record<string, string> = {
   sydney: '#C71F2D',
 };
 
-function pickTeamTint(key: TeamKey, asset: any): string {
+function pickTeamTint(key: string, asset: any): string {
   const k = String(key);
   if (TINT_OVERRIDES[k]) return TINT_OVERRIDES[k];
   const candidates: any[] = [asset?.primary, asset?.glow, asset?.accent, asset?.tint];
@@ -75,9 +75,18 @@ function teamShort(asset: any) {
 }
 
 function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
-  const home = TEAM_ASSETS[m.home];
-  const away = TEAM_ASSETS[m.away];
-  if (!home || !away) return null;
+  const home = TEAM_ASSETS[m.home as TeamKey] || {
+    name: 'TBC',
+    shortName: 'TBC',
+    colour: '#2a2f38',
+    logoPath: '',
+  };
+  const away = TEAM_ASSETS[m.away as TeamKey] || {
+    name: 'TBC',
+    shortName: 'TBC',
+    colour: '#2a2f38',
+    logoPath: '',
+  };
 
   const isUpcoming = m.status === 'SCHEDULED';
 
@@ -101,7 +110,7 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
       ['--awayG' as any]: String(awayRgb.g),
       ['--awayB' as any]: String(awayRgb.b),
     }),
-    [homeRgb, awayRgb]
+    [homeRgb, awayRgb],
   );
 
   const winner = useMemo(() => {
@@ -116,22 +125,35 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
 
   const venueLine = useMemo(() => {
     const v = String(m.venue || '').trim();
-    return v || '';
+    return v || 'TBA';
   }, [m.venue]);
+
+  const dateLine = useMemo(() => {
+    const v = String(m.dateText || '').trim();
+    return v || 'Time TBA';
+  }, [m.dateText]);
 
   const homeCoachName = String(m.homeCoachName || 'TBC').trim() || 'TBC';
   const awayCoachName = String(m.awayCoachName || 'TBC').trim() || 'TBC';
+  const homeCoachNameIsTbc = homeCoachName.toUpperCase() === 'TBC';
+  const awayCoachNameIsTbc = awayCoachName.toUpperCase() === 'TBC';
 
-  // Prefer coach table PSN, fallback to match PSN
   const homeCoachPsn = String(m.homeCoachPsn || m.homePsn || '').trim();
   const awayCoachPsn = String(m.awayCoachPsn || m.awayPsn || '').trim();
+  const homeCoachPsnText = homeCoachPsn || 'TBC';
+  const awayCoachPsnText = awayCoachPsn || 'TBC';
+  const homeCoachPsnIsTbc = !homeCoachPsn;
+  const awayCoachPsnIsTbc = !awayCoachPsn;
 
   const psLogo = assetUrl('PlayStation-Logo.wine.png');
+  const competitionLogo = assetUrl('afl26-logo.png');
 
   const homeWins = showScore ? Number(m.homeScore!.total) > Number(m.awayScore!.total) : false;
   const awayWins = showScore ? Number(m.awayScore!.total) > Number(m.homeScore!.total) : false;
 
   const statusClass = m.status === 'FINAL' ? 'final' : m.status === 'LIVE' ? 'live' : 'upcoming';
+  const homeLogoSrc = home.logoFile || home.logoPath ? assetUrl(home.logoFile || home.logoPath || '') : '';
+  const awayLogoSrc = away.logoFile || away.logoPath ? assetUrl(away.logoFile || away.logoPath || '') : '';
 
   return (
     <motion.section
@@ -140,8 +162,14 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22 }}
+      whileTap={{ scale: 0.997 }}
     >
-      {/* Status glass pill */}
+      {m.headerTag ? (
+        <div className="fxPosterCard__formatTag" aria-label={m.headerTag}>
+          {m.headerTag}
+        </div>
+      ) : null}
+
       <div className="fxPosterCard__statusWrap" aria-hidden>
         <div className="fxPosterCard__statusPill">
           <span className="fxPosterCard__statusDot" />
@@ -149,17 +177,66 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
         </div>
       </div>
 
+      {homeLogoSrc ? (
+        <div className="fxPosterCard__watermark fxPosterCard__watermark--home" aria-hidden="true">
+          <img
+            src={homeLogoSrc}
+            alt={`${home.name} watermark`}
+            loading="lazy"
+            decoding="async"
+            fetchPriority="low"
+            width={256}
+            height={256}
+          />
+        </div>
+      ) : null}
+      {awayLogoSrc ? (
+        <div className="fxPosterCard__watermark fxPosterCard__watermark--away" aria-hidden="true">
+          <img
+            src={awayLogoSrc}
+            alt={`${away.name} watermark`}
+            loading="lazy"
+            decoding="async"
+            fetchPriority="low"
+            width={256}
+            height={256}
+          />
+        </div>
+      ) : null}
+
+      {competitionLogo ? (
+        <div className="fxPosterCard__compBadge" aria-hidden="true">
+          <img
+            src={competitionLogo}
+            alt="AFL 26"
+            loading="lazy"
+            decoding="async"
+            fetchPriority="low"
+            width={104}
+            height={42}
+          />
+        </div>
+      ) : null}
+
       <div className="fxPosterCard__main">
-        {/* HOME */}
         <div className="fxPosterCard__side fxPosterCard__side--home">
           <div className="fxPosterCard__teamGlow" />
           <div className="fxPosterCard__teamBox">
-            <SmartImg className="fxPosterCard__logo" src={assetUrl(home.logoFile ?? '')} alt={home.name} fallbackText="EG" loading="lazy" />
+            <SmartImg
+              className="fxPosterCard__logo"
+              src={homeLogoSrc}
+              alt={home.name}
+              fallbackText={teamShort(home)}
+              loading="lazy"
+              decoding="async"
+              fetchPriority="low"
+              width={72}
+              height={72}
+            />
           </div>
           <div className="fxPosterCard__abbr">{teamShort(home)}</div>
         </div>
 
-        {/* CENTER */}
         <div className="fxPosterCard__center">
           {isUpcoming ? (
             <div className="fxPosterCard__vsOnly">VS</div>
@@ -202,38 +279,48 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
           )}
         </div>
 
-        {/* AWAY */}
         <div className="fxPosterCard__side fxPosterCard__side--away">
           <div className="fxPosterCard__teamGlow" />
           <div className="fxPosterCard__teamBox">
-            <SmartImg className="fxPosterCard__logo" src={assetUrl(away.logoFile ?? '')} alt={away.name} fallbackText="EG" loading="lazy" />
+            <SmartImg
+              className="fxPosterCard__logo"
+              src={awayLogoSrc}
+              alt={away.name}
+              fallbackText={teamShort(away)}
+              loading="lazy"
+              decoding="async"
+              fetchPriority="low"
+              width={72}
+              height={72}
+            />
           </div>
           <div className="fxPosterCard__abbr">{teamShort(away)}</div>
         </div>
       </div>
 
-      {/* Coaches */}
-      <div className="fxPosterCard__coachesLabel">COACHES</div>
+      <div className="fxPosterCard__metaBlock">
+        <div className={`fxPosterCard__date ${dateLine.toUpperCase().includes('TBA') ? 'is-tbc' : ''}`}>{dateLine}</div>
+        <div className={`fxPosterCard__venue ${venueLine.toUpperCase() === 'TBA' ? 'is-tbc' : ''}`}>{venueLine}</div>
+      </div>
 
       <div className="fxPosterCard__coachRow">
         <div className="fxPosterCard__coachCard fxPosterCard__coachCard--home">
-          <div className="fxPosterCard__coachName">{homeCoachName}</div>
+          <div className={`fxPosterCard__coachName ${homeCoachNameIsTbc ? 'is-tbc' : ''}`}>{homeCoachName}</div>
           <div className="fxPosterCard__coachPsnRow">
             <img className="fxPosterCard__psIconImg fxPosterCard__psIconImg--white" src={psLogo} alt="PlayStation" />
-            <div className="fxPosterCard__coachPsn">{homeCoachPsn || '—'}</div>
+            <div className={`fxPosterCard__coachPsn ${homeCoachPsnIsTbc ? 'is-tbc' : ''}`}>{homeCoachPsnText}</div>
           </div>
         </div>
 
         <div className="fxPosterCard__coachCard fxPosterCard__coachCard--away">
-          <div className="fxPosterCard__coachName">{awayCoachName}</div>
+          <div className={`fxPosterCard__coachName ${awayCoachNameIsTbc ? 'is-tbc' : ''}`}>{awayCoachName}</div>
           <div className="fxPosterCard__coachPsnRow">
             <img className="fxPosterCard__psIconImg fxPosterCard__psIconImg--white" src={psLogo} alt="PlayStation" />
-            <div className="fxPosterCard__coachPsn">{awayCoachPsn || '—'}</div>
+            <div className={`fxPosterCard__coachPsn ${awayCoachPsnIsTbc ? 'is-tbc' : ''}`}>{awayCoachPsnText}</div>
           </div>
         </div>
       </div>
 
-      {venueLine ? <div className="fxPosterCard__venue">{venueLine}</div> : null}
       {winner ? <div className="fxPosterCard__result">{winner}</div> : null}
 
       <button className="fxPosterCard__cta" type="button" onClick={m.onMatchCentreClick}>
@@ -243,7 +330,35 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
   );
 }
 
-// Memoize to prevent unnecessary re-renders when parent updates
-const FixturePosterCard = React.memo(FixturePosterCardComponent);
+function arePropsEqual(prev: { m: FixturePosterMatch }, next: { m: FixturePosterMatch }) {
+  const a = prev.m;
+  const b = next.m;
+
+  return (
+    a.id === b.id &&
+    a.round === b.round &&
+    a.venue === b.venue &&
+    a.dateText === b.dateText &&
+    a.status === b.status &&
+    a.home === b.home &&
+    a.away === b.away &&
+    a.homePsn === b.homePsn &&
+    a.awayPsn === b.awayPsn &&
+    a.homeCoachName === b.homeCoachName &&
+    a.awayCoachName === b.awayCoachName &&
+    a.homeCoachPsn === b.homeCoachPsn &&
+    a.awayCoachPsn === b.awayCoachPsn &&
+    a.headerTag === b.headerTag &&
+    (a.homeScore?.total ?? null) === (b.homeScore?.total ?? null) &&
+    (a.homeScore?.goals ?? null) === (b.homeScore?.goals ?? null) &&
+    (a.homeScore?.behinds ?? null) === (b.homeScore?.behinds ?? null) &&
+    (a.awayScore?.total ?? null) === (b.awayScore?.total ?? null) &&
+    (a.awayScore?.goals ?? null) === (b.awayScore?.goals ?? null) &&
+    (a.awayScore?.behinds ?? null) === (b.awayScore?.behinds ?? null) &&
+    a.onMatchCentreClick === b.onMatchCentreClick
+  );
+}
+
+const FixturePosterCard = React.memo(FixturePosterCardComponent, arePropsEqual);
 
 export default FixturePosterCard;

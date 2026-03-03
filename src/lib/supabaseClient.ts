@@ -9,25 +9,31 @@ if (!url || !anonKey) {
 
 // Check if Supabase env is properly configured
 export const hasSupabaseEnv = Boolean(url && anonKey);
+let sharedClient: SupabaseClient | null = null;
 
 // Safe factory function - returns null if env vars are missing
 export function getSupabaseClient(): SupabaseClient | null {
   if (!hasSupabaseEnv) return null;
-  return createClient(url!, anonKey!, {
+  if (!sharedClient) {
+    sharedClient = createClient(url!, anonKey!, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    });
+  }
+  return sharedClient;
+}
+
+// Legacy export for backwards compatibility
+// For data fetching functions that already handle errors
+export const supabase =
+  getSupabaseClient() ??
+  createClient(url ?? '', anonKey ?? '', {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
     },
   });
-}
-
-// Legacy export for backwards compatibility
-// For data fetching functions that already handle errors
-export const supabase = createClient(url ?? '', anonKey ?? '', {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-});

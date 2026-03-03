@@ -11,8 +11,10 @@ type AuthContextValue = AuthState & {
     password: string;
     displayName?: string;
     psn?: string;
+    firstName?: string;
+    lastName?: string;
     teamKey?: TeamKey;
-  }) => Promise<void>;
+  }) => Promise<CoachUser | null>;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 };
@@ -27,6 +29,8 @@ function toCoachUserFromSupabase(raw: any): CoachUser | null {
     email: raw.email || '',
     displayName: meta.display_name || meta.displayName || undefined,
     psn: meta.psn || undefined,
+    firstName: meta.first_name || meta.firstName || undefined,
+    lastName: meta.last_name || meta.lastName || undefined,
     teamKey: meta.team_key || meta.teamKey || undefined,
   };
 }
@@ -57,12 +61,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    // Initial load
     refresh();
 
     if (!isSupabase) return;
 
-    // Keep in sync with Supabase session changes
     const { data: sub } = supabase!.auth.onAuthStateChange((_event, session) => {
       setUser(toCoachUserFromSupabase(session?.user));
       setLoading(false);
@@ -98,8 +100,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string;
     displayName?: string;
     psn?: string;
+    firstName?: string;
+    lastName?: string;
     teamKey?: TeamKey;
-  }) {
+  }): Promise<CoachUser | null> {
     setLoading(true);
     try {
       if (isSupabase) {
@@ -108,6 +112,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           password: args.password,
           options: {
             data: {
+              first_name: args.firstName,
+              last_name: args.lastName,
               display_name: args.displayName,
               psn: args.psn,
               team_key: args.teamKey,
@@ -115,11 +121,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           },
         });
         if (error) throw error;
-        setUser(toCoachUserFromSupabase(data.user));
-      } else {
-        const u = await mockSignUp(args);
-        setUser(u);
+        const next = toCoachUserFromSupabase(data.user);
+        setUser(next);
+        return next;
       }
+
+      const u = await mockSignUp(args);
+      setUser(u);
+      return u;
     } finally {
       setLoading(false);
     }

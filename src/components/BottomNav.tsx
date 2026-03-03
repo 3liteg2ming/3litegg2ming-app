@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { BarChart3, CalendarDays, Home, Trophy, Upload } from 'lucide-react';
-import { createClient, type Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/supabase-js';
 
+import { hasSupabaseEnv, supabase } from '../lib/supabaseClient';
 import '../styles/bottomNav.css';
 
 type NavItem = {
@@ -11,17 +12,10 @@ type NavItem = {
   Icon: React.ComponentType<{ className?: string }>;
 };
 
-const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || (import.meta as any).env?.VITE_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey =
-  (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || (import.meta as any).env?.VITE_PUBLIC_SUPABASE_ANON_KEY || '';
-
-const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
-
 const NAV_BASE: NavItem[] = [
   { label: 'Home', href: '/', Icon: Home },
   { label: 'Fixtures', href: '/fixtures', Icon: CalendarDays },
   { label: 'Ladder', href: '/ladder', Icon: Trophy },
-  // Stats v3
   { label: 'Stats', href: '/stats3', Icon: BarChart3 },
 ];
 
@@ -54,36 +48,34 @@ async function prefetchRouteAndData(href: string) {
     }
 
     if (href === '/stats3') {
-      const [leadersMod, rosterMod] = await Promise.all([
-        import('../lib/stats-leaders-cache'),
-        import('../lib/stats-cache'),
-      ]);
-      await Promise.all([
-        leadersMod.fetchStatLeaders(),
-        leadersMod.fetchLeaderCategories('players'),
-        rosterMod.fetchRosterData(),
-      ]);
+      const leadersMod = await import('../lib/stats-leaders-cache');
+      await Promise.all([leadersMod.fetchStatLeaders(), leadersMod.fetchLeaderCategories('players')]);
     }
 
     if (href === '/submit') {
-      const rosterMod = await import('../lib/stats-cache');
-      await rosterMod.fetchRosterData();
+      const rosterMod = await import('../data/aflPlayers');
+      await rosterMod.fetchAflPlayers();
     }
   } catch {
     // ignore data prewarm failures
   }
 }
 
-export default function BottomNav() {
+export default function BottomNav({ hidden = false }: { hidden?: boolean }) {
   const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
+    if (!hasSupabaseEnv) {
+      setSession(null);
+      return;
+    }
+
     let unsub: (() => void) | null = null;
+    let alive = true;
 
     (async () => {
-      if (!supabase) return;
-
       const { data } = await supabase.auth.getSession();
+      if (!alive) return;
       setSession(data.session ?? null);
 
       const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
@@ -94,6 +86,7 @@ export default function BottomNav() {
     })();
 
     return () => {
+      alive = false;
       if (unsub) unsub();
     };
   }, []);
@@ -101,7 +94,6 @@ export default function BottomNav() {
   const isAuthed = !!session;
 
   const NAV: NavItem[] = useMemo(() => {
-    // Only show Submit when logged in
     return isAuthed ? [...NAV_BASE, NAV_SUBMIT] : NAV_BASE;
   }, [isAuthed]);
 
@@ -115,7 +107,7 @@ export default function BottomNav() {
   }, []);
 
   return (
-    <nav className="egBottomNav" role="navigation" aria-label="Bottom navigation">
+    <nav className={`egBottomNav ${hidden ? 'egBottomNav--hidden' : ''}`} role="navigation" aria-label="Bottom navigation">
       <div className="egBottomNav__bar" role="menubar" aria-label="Primary navigation">
         {NAV.map(({ label, href, Icon }) => (
           <NavLink

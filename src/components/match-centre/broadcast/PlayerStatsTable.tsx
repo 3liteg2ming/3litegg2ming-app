@@ -1,221 +1,189 @@
-import { useMemo, useState } from 'react';
+import { type KeyboardEvent, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import SmartImg from '@/components/SmartImg';
 import type { MatchCentreModel, PlayerStatRow } from '@/lib/matchCentreRepo';
 import '@/styles/match-centre-player-stats.css';
 
-type SortKey = keyof PlayerStatRow;
+type SortKey = 'D' | 'K' | 'H' | 'M' | 'T' | 'CLR';
 type SortDir = 'asc' | 'desc';
 
-const statColumns: { key: SortKey; label: string }[] = [
-  { key: 'AF', label: 'AF' },
-  { key: 'G', label: 'G' },
-  { key: 'B', label: 'B' },
+const statColumns: { key: SortKey; label: string; optional?: boolean }[] = [
   { key: 'D', label: 'D' },
-  { key: 'K', label: 'K' },
-  { key: 'H', label: 'H' },
   { key: 'M', label: 'M' },
   { key: 'T', label: 'T' },
-  { key: 'HO', label: 'HO' },
   { key: 'CLR', label: 'CLR' },
-  { key: 'MG', label: 'MG' },
-  { key: 'GA', label: 'GA' },
-  { key: 'TOG', label: 'ToG%' },
+  { key: 'K', label: 'K', optional: true },
+  { key: 'H', label: 'H', optional: true },
 ];
 
 function initials(name: string) {
   const parts = name.trim().split(' ').filter(Boolean);
   const a = parts[0]?.[0] ?? '';
-  const b = parts[parts.length - 1]?.[0] ?? '';
+  const b = parts.length > 1 ? parts[parts.length - 1]?.[0] ?? '' : parts[0]?.[1] ?? '';
   return (a + b).toUpperCase();
 }
 
-export default function PlayerStatsTable({ model, loading }: { model: MatchCentreModel | null; loading?: boolean }) {
-  const homeName = model?.home?.fullName || 'Home';
-  const awayName = model?.away?.fullName || 'Away';
+function numOrNegInf(v: number | null | undefined) {
+  if (v === null || v === undefined) return -Infinity;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : -Infinity;
+}
 
-  const teamOptions = useMemo(() => ['Both', homeName, awayName], [homeName, awayName]);
+function isUuidLike(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || '').trim());
+}
 
-  const [teamFilter, setTeamFilter] = useState<string>('Both');
-  const [showTeamDropdown, setShowTeamDropdown] = useState(false);
-  const [sortKey, setSortKey] = useState<SortKey>('G');
+export default function PlayerStatsTable({ model }: { model: MatchCentreModel | null }) {
+  const navigate = useNavigate();
+  const [sortKey, setSortKey] = useState<SortKey>('D');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
-  const [viewMode, setViewMode] = useState<'match' | 'season'>('match');
 
-  const base = model?.playerStats || [];
+  const hasOptionalColumn = useMemo(() => {
+    const rows = model?.playerStats || [];
+    return {
+      K: rows.some((r) => r.K !== null && r.K !== undefined),
+      H: rows.some((r) => r.H !== null && r.H !== undefined),
+    };
+  }, [model?.playerStats]);
 
-  const filtered = useMemo(() => {
-    let data = [...base];
-    if (teamFilter !== 'Both') data = data.filter((p) => p.team === teamFilter);
+  const columns = useMemo(() => {
+    return statColumns.filter((c) => {
+      if (!c.optional) return true;
+      if (c.key === 'K') return hasOptionalColumn.K;
+      if (c.key === 'H') return hasOptionalColumn.H;
+      return true;
+    });
+  }, [hasOptionalColumn]);
 
-    data.sort((a, b) => {
-      const av = a[sortKey];
-      const bv = b[sortKey];
-      if (typeof av === 'number' && typeof bv === 'number') {
-        return sortDir === 'desc' ? bv - av : av - bv;
-      }
-      return String(av).localeCompare(String(bv)) * (sortDir === 'desc' ? -1 : 1);
+  const rows = useMemo(() => {
+    const list = (model?.playerStats || []).slice();
+
+    list.sort((a, b) => {
+      const av = numOrNegInf((a as any)[sortKey]);
+      const bv = numOrNegInf((b as any)[sortKey]);
+      if (av !== bv) return sortDir === 'desc' ? bv - av : av - bv;
+
+      if (a.team !== b.team) return a.team.localeCompare(b.team);
+      if (a.number !== b.number) return a.number - b.number;
+      return a.name.localeCompare(b.name);
     });
 
-    return data;
-  }, [base, teamFilter, sortKey, sortDir]);
+    return list;
+  }, [model?.playerStats, sortKey, sortDir]);
 
   const handleSort = (key: SortKey) => {
-    if (sortKey === key) setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
-    else {
-      setSortKey(key);
-      setSortDir('desc');
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
+      return;
+    }
+    setSortKey(key);
+    setSortDir('desc');
+  };
+
+  const handleRowClick = (row: PlayerStatRow) => {
+    if (!isUuidLike(row.playerId)) return;
+    navigate(`/player/${row.playerId}`);
+  };
+
+  const handleRowKeyDown = (e: KeyboardEvent<HTMLTableRowElement>, row: PlayerStatRow) => {
+    if (!isUuidLike(row.playerId)) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      navigate(`/player/${row.playerId}`);
     }
   };
 
   return (
-    <section className="mcPlayerStats">
-      <div className="mcPlayerStats__header">
-        <h2 className="mcPlayerStats__title">Player Stats</h2>
-        <p className="mcPlayerStats__desc">Detailed match breakdown</p>
-      </div>
+    <div className="mc-playerstats">
+      <div className="mc-playerstats__header">
+        <div className="mc-playerstats__title">PLAYER STATS</div>
 
-      {/* Controls */}
-      <div className="mcPlayerStats__controls">
-        <div className="mcPlayerStats__left">
-          <div className="mcPlayerStats__filterDropdown">
-            <label className="mcPlayerStats__label">Teams</label>
-            <div className="mcPlayerStats__dropdownButton" onClick={() => setShowTeamDropdown((s) => !s)}>
-              <span>{teamFilter}</span>
-              <ChevronDown className="mcPlayerStats__dropdownIcon" />
-            </div>
-
-            {showTeamDropdown && (
-              <div className="mcPlayerStats__dropdownMenu">
-                {teamOptions.map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => {
-                      setTeamFilter(t);
-                      setShowTeamDropdown(false);
-                    }}
-                    className={`mcPlayerStats__dropdownItem ${teamFilter === t ? 'mcPlayerStats__dropdownItem--active' : ''}`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="mcPlayerStats__right">
-          <div className="mcPlayerStats__toggle">
-            <button
-              onClick={() => setViewMode('match')}
-              className={`mcPlayerStats__toggleBtn ${viewMode === 'match' ? 'mcPlayerStats__toggleBtn--active' : ''}`}
-            >
-              Match
-            </button>
-            <button
-              onClick={() => setViewMode('season')}
-              className={`mcPlayerStats__toggleBtn ${viewMode === 'season' ? 'mcPlayerStats__toggleBtn--active' : ''}`}
-            >
-              Season
-            </button>
+        <div className="mc-playerstats__sort">
+          <button className="mc-playerstats__sortBtn" type="button">
+            SORT <ChevronDown size={16} />
+          </button>
+          <div className="mc-playerstats__sortGrid">
+            {columns.map((c) => (
+              <button
+                key={c.key}
+                className={`mc-playerstats__sortOpt ${sortKey === c.key ? 'is-active' : ''}`}
+                type="button"
+                onClick={() => handleSort(c.key)}
+              >
+                {c.label}
+                {sortKey === c.key ? (sortDir === 'desc' ? ' ↓' : ' ↑') : ''}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="mcPlayerStats__tableWrapper">
-        {loading && !model ? (
-          <div className="mcPlayerStats__placeholder">
-            <div className="mcPlayerStats__placeholderText">Loading player stats…</div>
-            <p className="mcPlayerStats__placeholderDesc">Fetching match centre data.</p>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="mcPlayerStats__placeholder">
-            <div className="mcPlayerStats__placeholderText">No player stats yet</div>
-            <p className="mcPlayerStats__placeholderDesc">
-              This will populate after match submissions (goal kickers + OCR stats).
-            </p>
-          </div>
-        ) : (
-          <div className="mcPlayerStats__scroll">
-            <table className="mcPlayerStats__table">
-              <thead className="mcPlayerStats__head">
-                <tr className="mcPlayerStats__headerRow">
-                  <th className="mcPlayerStats__headerCell mcPlayerStats__headerCell--number">#</th>
-                  <th className="mcPlayerStats__headerCell mcPlayerStats__headerCell--player">Player</th>
-                  {statColumns.map((col) => (
-                    <th
-                      key={col.key}
-                      className="mcPlayerStats__headerCell mcPlayerStats__headerCell--stat"
-                      onClick={() => handleSort(col.key)}
-                    >
-                      <span>{col.label}</span>
-                      {sortKey === col.key && (
-                        <span className="mcPlayerStats__sortIndicator">
-                          {sortDir === 'asc' ? '▲' : '▼'}
-                        </span>
-                      )}
-                    </th>
+      <div className="mc-playerstats__tableWrap">
+        <table className="mc-playerstats__table">
+          <thead>
+            <tr>
+              <th className="mc-playerstats__colPlayer">PLAYER</th>
+              {columns.map((c) => (
+                <th key={c.key} className="mc-playerstats__colStat">
+                  {c.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r: PlayerStatRow, idx: number) => {
+              const rowClickable = isUuidLike(r.playerId);
+              return (
+                <tr
+                  key={`${r.playerId || r.name}-${idx}`}
+                  onClick={rowClickable ? () => handleRowClick(r) : undefined}
+                  onKeyDown={(e) => handleRowKeyDown(e, r)}
+                  role={rowClickable ? 'button' : undefined}
+                  tabIndex={rowClickable ? 0 : undefined}
+                  aria-label={rowClickable ? `View ${r.name} profile` : undefined}
+                >
+                  <td className="mc-playerstats__playerCell">
+                    <div className="mc-playerstats__player">
+                      <div className="mc-playerstats__avatar">
+                        {r.photoUrl ? (
+                          <SmartImg src={r.photoUrl} alt={r.name} />
+                        ) : (
+                          <div className="mc-playerstats__avatarFallback">{initials(r.name)}</div>
+                        )}
+                      </div>
+                      <div className="mc-playerstats__meta">
+                        <div className="mc-playerstats__nameRow">
+                          <span className="mc-playerstats__name">{r.name}</span>
+                          {r.number ? <span className="mc-playerstats__number">#{r.number}</span> : null}
+                        </div>
+                        <div className="mc-playerstats__subRow">
+                          <span className="mc-playerstats__team">{r.team}</span>
+                          {r.position ? <span className="mc-playerstats__pos">{r.position}</span> : null}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+
+                  {columns.map((c) => (
+                    <td key={c.key} className="mc-playerstats__statCell">
+                      {((r as any)[c.key] ?? '—') === null ? '—' : ((r as any)[c.key] ?? '—')}
+                    </td>
                   ))}
                 </tr>
-              </thead>
+              );
+            })}
 
-              <tbody className="mcPlayerStats__body">
-                {filtered.map((player) => {
-                  const isHome = player.team === homeName;
-                  const badgeColor = isHome ? (model?.home?.color || '#4a7fe1') : (model?.away?.color || '#e14a4a');
-
-                  const first = player.name.split(' ')[0] ?? player.name;
-                  const last = player.name.split(' ').slice(1).join(' ');
-
-                  return (
-                    <tr
-                      key={`${player.name}-${player.team}`}
-                      className="mcPlayerStats__row"
-                    >
-                      <td className="mcPlayerStats__cell mcPlayerStats__cell--number">
-                        <span className="mcPlayerStats__badge" style={{ background: badgeColor }}>
-                          {player.number || '—'}
-                        </span>
-                      </td>
-
-                      <td className="mcPlayerStats__cell mcPlayerStats__cell--player">
-                        <div className="mcPlayerStats__playerInfo">
-                          <div className="mcPlayerStats__avatar">
-                            {player.photoUrl ? (
-                              <SmartImg
-                                src={player.photoUrl}
-                                alt={player.name}
-                                className="mcPlayerStats__avatarImg"
-                                fallbackText={initials(player.name)}
-                              />
-                            ) : (
-                              <span className="mcPlayerStats__avatarFallback">{initials(player.name)}</span>
-                            )}
-                          </div>
-
-                          <div className="mcPlayerStats__playerName">
-                            <span className="mcPlayerStats__firstName">{first}</span>
-                            <span className="mcPlayerStats__lastName">{last}</span>
-                          </div>
-                        </div>
-                      </td>
-
-                      {statColumns.map((col) => (
-                        <td key={col.key} className="mcPlayerStats__cell mcPlayerStats__cell--stat">
-                          <span className="mcPlayerStats__statValue">
-                            {viewMode === 'match' ? (player[col.key] as number) : (player[col.key] as number)}
-                          </span>
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+            {rows.length === 0 ? (
+              <tr>
+                <td className="mc-playerstats__empty" colSpan={1 + columns.length}>
+                  No player stats yet. Submit the OCR stat pack to populate this table.
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
       </div>
-    </section>
+    </div>
   );
 }

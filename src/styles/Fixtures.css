@@ -1,443 +1,496 @@
-/* ============================================
-   ELITE GAMING — FIXTURES PAGE
-   ✅ FIX: do NOT mess with page padding (caused weird layouts)
-   ✅ Instead: big bottom spacer so the dock never covers MATCH CENTRE
-   ============================================ */
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
-:root{
+:root {
   --fx-bg0: #0a0b0f;
   --fx-bg1: #0f1117;
-  --fx-surface: rgba(255,255,255,0.04);
-  --fx-stroke: rgba(255,255,255,0.10);
-  --fx-muted: rgba(255,255,255,0.55);
-  --fx-text: rgba(255,255,255,0.95);
-  --eg-yellow: #F5C400;
+  --eg-yellow: #f5c400;
+  --fx-sticky-top: 0px;
 }
 
-.fxAflPage{
-  min-height: 100vh;
+.fxAflPage {
+  min-height: 100%;
   background:
-    radial-gradient(120% 120% at 50% -10%, rgba(11,58,141,0.15) 0%, rgba(0,0,0,0) 55%),
+    radial-gradient(120% 120% at 50% -10%, rgba(11, 58, 141, 0.15) 0%, rgba(0, 0, 0, 0) 55%),
     linear-gradient(180deg, var(--fx-bg1) 0%, var(--fx-bg0) 100%);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-
-  /* ✅ keep this clean; bottom spacing handled by fxAflBottomPad */
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: calc(var(--eg-bottom-nav-height, var(--bottom-nav-h, 88px)) + env(safe-area-inset-bottom, 0px) + 8px);
 }
 
-/* Wider column */
-.fxAflInner{
+.fxAflInner {
   max-width: 740px;
   margin: 0 auto;
-  padding: 0 10px;
+  padding: 8px 10px 0;
 }
 
-/* ---------- Non-sticky Brand Header ---------- */
-.fxAflBrandHeader{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap: 12px;
-  padding: 16px 0 12px;
-}
-
-.fxAflBrand{
-  display:flex;
-  align-items:center;
-  gap: 12px;
-  min-width: 0;
-}
-
-.fxAflBrand__logo{
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
-  background: linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
-  border: 1px solid rgba(255,255,255,0.12);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-  box-shadow: 0 14px 30px rgba(0,0,0,0.5);
-}
-
-.fxAflBrand__logo img{
-  width: 75%;
-  height: 75%;
-  object-fit: contain;
-}
-
-.fxAflBrand__text{ min-width: 0; }
-
-.fxAflBrand__kicker{
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  color: rgba(255,255,255,0.45);
-  text-transform: uppercase;
-}
-
-.fxAflBrand__title{
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--fx-text);
-  line-height: 1.1;
-}
-
-/* ---------- Sticky Navigation Bar ---------- */
-.fxAflStickyNav{
+.fxAflStickyNav {
   position: sticky;
-  top: 0;
-  z-index: 30;
-  padding-top: env(safe-area-inset-top, 0px);
-  background: linear-gradient(180deg, var(--fx-bg1) 0%, rgba(15,17,23,0.95) 70%, transparent 100%);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding-bottom: 12px;
+  top: var(--fx-sticky-top);
+  z-index: 42;
+  margin-bottom: 10px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(12, 15, 23, 0.86);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
+  padding: 9px 9px 8px;
+  isolation: isolate;
+  will-change: padding, border-color, box-shadow;
+  transition: padding 280ms cubic-bezier(0.2, 0.8, 0.2, 1), border-color 280ms ease, box-shadow 280ms ease;
 }
 
-/* Competition Selector */
-.fxAflSelect{
-  width: 100%;
-  margin-bottom: 12px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: var(--fx-text);
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap: 12px;
-  text-align:left;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.fxAflStickyNav.is-compact {
+  padding: 7px 7px 6px;
+  border-color: rgba(255, 255, 255, 0.13);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
 }
 
-.fxAflSelect:hover{
-  background: rgba(255,255,255,0.06);
-  border-color: rgba(255,255,255,0.15);
+.fxAflStickyNav::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
+  pointer-events: none;
 }
 
-.fxAflSelect__left{ display:flex; flex-direction:column; gap: 2px; }
-
-.fxAflSelect__label{
-  font-size: 11px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.5);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.fxAflTopHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
 }
 
-.fxAflSelect__value{
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: rgba(255,255,255,0.95);
+.fxAflHeaderTitle {
+  font-size: 25px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: rgba(255, 255, 255, 0.96);
 }
 
-.fxAflSelect__badge{
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-  background: rgba(0,0,0,0.4);
-  border: 1px solid rgba(255,255,255,0.12);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-}
-
-.fxAflSelect__badge img{ width: 75%; height: 75%; object-fit: contain; }
-
-.fxAflSelect__chev{
-  width: 20px;
-  height: 20px;
-  color: rgba(255,255,255,0.5);
-}
-
-/* ---------- Rounds Row (Sticky) ---------- */
-.fxAflRounds{
-  display:flex;
-  gap: 10px;
-  overflow-x:auto;
-  padding: 4px 0;
-  scrollbar-width: none;
-}
-.fxAflRounds::-webkit-scrollbar{ display:none; }
-
-.fxAflRound{
-  min-width: 46px;
-  height: 46px;
+.fxAflCountPill {
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(0,0,0,0.35);
-  color: rgba(255,255,255,0.65);
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.fxAflRound:hover{
-  background: rgba(255,255,255,0.08);
-  border-color: rgba(255,255,255,0.18);
-  color: rgba(255,255,255,0.85);
-}
-
-.fxAflRound--active{
-  background: var(--eg-yellow);
-  color: #0a0b0d;
-  border-color: transparent;
-  box-shadow: 0 8px 24px rgba(245,196,0,0.25);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 9px;
   font-weight: 800;
-}
-
-/* ---------- Round Content Panel ---------- */
-.fxAflPanel{
-  border-radius: 22px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  padding: 18px 12px 20px;
-  margin-top: 10px;
-}
-
-.fxAflPanel__top{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap: 12px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  margin-bottom: 14px;
-}
-
-.fxAflRoundTitle{
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  color: rgba(255,255,255,0.95);
-}
-
-.fxAflRoundMeta{
-  font-size: 12px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.5);
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: rgba(0,0,0,0.35);
-  border: 1px solid rgba(255,255,255,0.08);
-}
-
-/* ---------- Filters ---------- */
-.fxAflFilters{
-  display:flex;
-  gap: 8px;
-  overflow-x:auto;
-  padding: 2px;
-  margin-bottom: 16px;
-  scrollbar-width: none;
-}
-.fxAflFilters::-webkit-scrollbar{ display:none; }
-
-.fxAflFilter{
-  padding: 10px 16px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(0,0,0,0.3);
-  color: rgba(255,255,255,0.6);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  cursor: pointer;
+  line-height: 1;
+  padding: 6px 10px;
   white-space: nowrap;
-  transition: all 0.2s ease;
 }
 
-.fxAflFilter:hover{
-  background: rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.15);
-  color: rgba(255,255,255,0.8);
+.fxAflControlRow {
+  margin-top: 6px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
 }
 
-.fxAflFilter--active{
-  background: rgba(11,58,141,0.5);
-  border-color: rgba(120,170,255,0.4);
+.fxAflCompetitionBar {
+  width: 100%;
+  position: relative;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.28);
+  color: inherit;
+  text-align: left;
+  padding: 6px 34px 6px 10px;
+}
+
+.fxAflCompetitionBar__label {
+  display: block;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.54);
+}
+
+.fxAflCompetitionBar__value {
+  display: block;
+  margin-top: 2px;
+  font-size: 15px;
+  font-weight: 860;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.94);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fxAflCompetitionBar__chev {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.fxAflFilterBtn {
+  min-width: 88px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.3);
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.fxAflFormatStrip {
+  margin-top: 5px;
+  padding: 1px 2px 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 10px;
+  font-weight: 580;
+  line-height: 1.25;
+}
+
+.fxAflFormatStrip__label {
+  color: rgba(255, 255, 255, 0.44);
+  font-weight: 740;
+}
+
+.fxAflFormatStrip__dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 9px;
+  line-height: 1;
+}
+
+.fxAflFormatStrip__accent {
+  color: rgba(245, 196, 0, 0.86);
+  font-weight: 740;
+}
+
+.fxAflRoundStrip {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  padding: 7px 0 3px;
+  scrollbar-width: none;
+}
+
+.fxAflRoundStrip::-webkit-scrollbar,
+.fxAflStatusRow::-webkit-scrollbar {
+  display: none;
+}
+
+.fxAflRoundChip {
+  min-width: 50px;
+  height: 31px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.34);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 10px;
+  font-weight: 860;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0 11px;
+  white-space: nowrap;
+}
+
+.fxAflRoundChip.is-active {
+  background: linear-gradient(180deg, #ffd96d, var(--eg-yellow));
+  color: #101215;
+  border-color: transparent;
+  box-shadow: 0 7px 20px rgba(245, 196, 0, 0.24);
+}
+
+.fxAflStatusRow {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  padding-bottom: 0;
+  scrollbar-width: none;
+}
+
+.fxAflStatusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.32);
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.fxAflStatusPill__count {
+  min-width: 17px;
+  height: 17px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.fxAflStatusPill.is-active {
+  background: rgba(18, 80, 188, 0.48);
+  border-color: rgba(127, 179, 255, 0.42);
   color: #fff;
-  box-shadow: 0 4px 16px rgba(11,58,141,0.25);
+  box-shadow: 0 5px 14px rgba(11, 58, 141, 0.22);
 }
 
-/* ---------- Card List ---------- */
-.fxAflList{
-  display:flex;
-  flex-direction:column;
+.fxAflStatusPill.is-active .fxAflStatusPill__count {
+  background: rgba(245, 196, 0, 0.2);
+  border-color: rgba(245, 196, 0, 0.36);
+  color: rgba(255, 238, 170, 0.98);
+}
+
+.fxAflMetaLine {
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 9px;
+  font-weight: 560;
+  letter-spacing: 0.03em;
+}
+
+.fxAflPanel {
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 16px 12px 20px;
+}
+
+.fxAflList {
+  display: flex;
+  flex-direction: column;
   gap: 26px;
 }
 
-.fxAflEmpty{
-  text-align:center;
-  padding: 40px 20px;
-  color: rgba(255,255,255,0.5);
-  font-size: 15px;
-  font-weight: 500;
+.fxAflLoadSentinel {
+  width: 100%;
+  height: 1px;
 }
 
-.fxAflLoading,
-.fxAflNotice{
-  text-align:center;
+.fxAflNotice,
+.fxAflEmpty {
+  text-align: center;
   padding: 20px;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255, 255, 255, 0.62);
   font-size: 14px;
   font-weight: 500;
 }
 
-/* ---------- Skeleton Loaders ---------- */
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
-}
-
-.fx-skeleton-card {
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 16px 12px;
+.fxAflEmpty--preseason {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  animation: shimmer 2s infinite;
-  background-image: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.03) 0%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(255, 255, 255, 0.03) 100%
-  );
-  background-size: 1000px 100%;
-}
-
-.fx-skeleton-header {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.fx-skeleton-round {
-  width: 60px;
-  height: 20px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.fx-skeleton-time {
-  width: 100px;
-  height: 16px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.fx-skeleton-teams {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 0;
-}
-
-.fx-skeleton-team {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-}
-
-.fx-skeleton-logo {
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.fx-skeleton-name {
-  width: 70%;
-  height: 16px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.fx-skeleton-score {
-  width: 50px;
-  height: 24px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.fx-skeleton-divider {
-  width: 1px;
-  height: 60px;
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.fx-skeleton-footer {
-  display: flex;
   justify-content: center;
+  padding: 34px 16px;
+}
+
+.fxAflEmpty__title {
+  font-size: 15px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.fxAflBottomPad {
+  height: calc(var(--eg-bottom-nav-height, var(--bottom-nav-h, 88px)) + env(safe-area-inset-bottom, 0px) + 18px);
+}
+
+.fxSheet {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  align-items: end;
+}
+
+.fxSheet__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.56);
+}
+
+.fxSheet__panel {
+  position: relative;
+  z-index: 1;
+  border-radius: 22px 22px 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, rgba(16, 20, 29, 0.98), rgba(9, 12, 18, 0.98));
+  padding: 12px;
+  max-height: min(72vh, 620px);
+  overflow: auto;
+}
+
+.fxSheet__handle {
+  width: 48px;
+  height: 4px;
+  border-radius: 999px;
+  margin: 2px auto 10px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.fxSheet__title {
+  margin: 0 0 10px;
+  font-size: 18px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.fxSheet__copy {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.fxSheet__section {
+  margin-top: 12px;
+}
+
+.fxSheet__sectionTitle {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.56);
+  margin-bottom: 8px;
+}
+
+.fxSheet__list {
+  display: grid;
   gap: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.fx-skeleton-status {
-  width: 80px;
-  height: 16px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.08);
+.fxSheet__item {
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.88);
+  padding: 11px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-/* ✅ THE REAL FIX: enough space for your BIG bottom dock */
-.fxAflBottomPad{
-  height: calc(var(--eg-dock-h, 140px) + 26px + env(safe-area-inset-bottom, 0px));
+.fxSheet__item.is-active {
+  border-color: rgba(245, 196, 0, 0.45);
+  background: rgba(245, 196, 0, 0.15);
+  color: rgba(255, 237, 174, 0.98);
 }
 
-/* ---------- Media Queries ---------- */
-
-@media (max-width: 420px){
-  .fxAflInner{ padding: 0 10px; max-width: 560px; }
-  .fxAflBrandHeader{ padding: 14px 0 10px; }
-  .fxAflBrand__title{ font-size: 22px; }
-  .fxAflBrand__logo{ width: 38px; height: 38px; }
-  .fxAflSelect{ padding: 10px 12px; }
-  .fxAflSelect__value{ font-size: 16px; }
-  .fxAflRound{ min-width: 42px; height: 42px; font-size: 14px; }
-  .fxAflPanel{ padding: 14px 10px 16px; }
-  .fxAflRoundTitle{ font-size: 18px; }
-  .fxAflFilter{ padding: 9px 14px; font-size: 11px; }
-  .fxAflList{ gap: 22px; }
+.fxSheet__actions {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 
-@media (max-width: 380px){
-  .fxAflInner{ padding: 0 8px; max-width: 560px; }
-  .fxAflBrandHeader{ padding: 12px 0 8px; }
-  .fxAflBrand__title{ font-size: 20px; }
-  .fxAflBrand__logo{ width: 36px; height: 36px; }
-  .fxAflBrand__kicker{ font-size: 9px; }
-  .fxAflSelect{ padding: 10px; border-radius: 14px; }
-  .fxAflSelect__value{ font-size: 15px; }
-  .fxAflSelect__badge{ width: 32px; height: 32px; }
-  .fxAflRound{ min-width: 40px; height: 40px; font-size: 13px; }
-  .fxAflPanel{ padding: 12px 9px 14px; border-radius: 16px; }
-  .fxAflRoundTitle{ font-size: 17px; }
-  .fxAflRoundMeta{ font-size: 11px; padding: 5px 12px; }
-  .fxAflFilter{ padding: 8px 12px; font-size: 10px; }
-  .fxAflList{ gap: 20px; }
+.fxSheet__actions--single {
+  grid-template-columns: 1fr;
+}
+
+.fxSheet__reset,
+.fxSheet__done {
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 11px;
+}
+
+.fxSheet__reset {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.fxSheet__done {
+  border: 1px solid rgba(245, 196, 0, 0.36);
+  background: linear-gradient(180deg, #ffd869, var(--eg-yellow));
+  color: #131313;
+}
+
+@media (max-width: 420px) {
+  .fxAflInner {
+    padding: 0 10px;
+  }
+
+  .fxAflStickyNav {
+    border-radius: 16px;
+    padding: 8px 8px 7px;
+  }
+
+  .fxAflStickyNav.is-compact {
+    padding: 6px 6px 5px;
+  }
+
+  .fxAflHeaderTitle {
+    font-size: 22px;
+  }
+
+  .fxAflCountPill {
+    font-size: 9px;
+    padding: 6px 8px;
+  }
+
+  .fxAflCompetitionBar__value {
+    font-size: 14px;
+  }
+
+  .fxAflFilterBtn {
+    min-width: 80px;
+    font-size: 10px;
+    padding: 0 9px;
+  }
+
+  .fxAflRoundChip {
+    min-width: 48px;
+    height: 29px;
+    font-size: 10px;
+  }
+
+  .fxAflStatusPill {
+    padding: 6px 9px;
+    font-size: 9px;
+  }
+
+  .fxAflPanel {
+    padding: 14px 10px 16px;
+  }
+
+  .fxAflList {
+    gap: 22px;
+  }
 }

@@ -1,5 +1,19 @@
 import React, { useState } from 'react';
 
+type SmartImgProps = {
+  src: string;
+  alt: string;
+  className?: string;
+  fallbackText?: string;
+  style?: React.CSSProperties;
+  loading?: 'eager' | 'lazy';
+  fetchPriority?: 'high' | 'low' | 'auto';
+  sizes?: string;
+  decoding?: 'async' | 'sync' | 'auto';
+  width?: number;
+  height?: number;
+};
+
 export default function SmartImg({
   src,
   alt,
@@ -10,17 +24,9 @@ export default function SmartImg({
   fetchPriority,
   sizes,
   decoding,
-}: {
-  src: string;
-  alt: string;
-  className?: string;
-  fallbackText?: string;
-  style?: React.CSSProperties;
-  loading?: 'eager' | 'lazy';
-  fetchPriority?: 'high' | 'low' | 'auto';
-  sizes?: string;
-  decoding?: 'async' | 'sync' | 'auto';
-}) {
+  width,
+  height,
+}: SmartImgProps) {
   const [ok, setOk] = useState(true);
 
   if (!ok) {
@@ -37,16 +43,22 @@ export default function SmartImg({
     );
   }
 
+  const resolvedLoading = loading ?? 'lazy';
+  const resolvedDecoding = decoding ?? 'async';
+  const resolvedPriority = fetchPriority ?? (resolvedLoading === 'lazy' ? 'low' : 'auto');
+
   return (
     <img
       className={className}
       src={src}
       alt={alt}
       style={style}
-      loading={loading ?? 'lazy'}
-      decoding={decoding ?? 'async'}
-      fetchPriority={fetchPriority}
+      loading={resolvedLoading}
+      decoding={resolvedDecoding}
+      fetchPriority={resolvedPriority}
       sizes={sizes}
+      width={width}
+      height={height}
       draggable={false}
       onError={() => setOk(false)}
     />

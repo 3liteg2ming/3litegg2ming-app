@@ -15,6 +15,20 @@ npm install
 npm run dev
 ```
 
+## Supabase SQL scripts
+Run these in the Supabase SQL editor (in order):
+
+1. `scripts/sql/001_preseason_registrations.sql`
+2. `scripts/sql/002_fix_next_fixture_rpc.sql`
+3. `scripts/sql/003_profiles_admin.sql`
+
+Admin grant snippet:
+```sql
+update public.profiles
+set is_admin = true
+where user_id = 'YOUR-USER-UUID';
+```
+
 ## IMPORTANT
 Replace the placeholder `public/assets/mcg.jpg` with your real MCG image (same filename).
 Also add:

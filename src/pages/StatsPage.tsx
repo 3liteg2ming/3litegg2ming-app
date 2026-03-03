@@ -59,12 +59,17 @@ export default function StatsPage() {
 
   useEffect(() => {
     let alive = true;
+    setCats([]);
     setLoading(true);
     import('../lib/stats-leaders-cache')
       .then((mod) => mod.fetchLeaderCategories(mode))
       .then((rows) => {
         if (!alive) return;
-        setCats(rows || []);
+        setCats(Array.isArray(rows) ? rows : []);
+      })
+      .catch(() => {
+        if (!alive) return;
+        setCats([]);
       })
       .finally(() => {
         if (!alive) return;

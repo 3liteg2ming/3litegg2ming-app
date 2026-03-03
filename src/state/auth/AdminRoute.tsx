@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthProvider';
-import { supabase } from '../../lib/supabaseClient';
+import { isUserAdmin } from '@/lib/profileRepo';
 
 export function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -21,26 +21,8 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // Query profiles with SELECT('*') to avoid missing column errors
-        const { data: profile, error: pErr } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (pErr) {
-          console.error('[AdminRoute] profile query failed:', pErr);
-          setIsAdmin(false);
-          setAdminLoading(false);
-          return;
-        }
-
-        // Check is_admin column, fallback to user_metadata if needed
-        const adminFlag = profile?.is_admin === true;
-
-        if (alive) {
-          setIsAdmin(adminFlag);
-        }
+        const adminFlag = await isUserAdmin(user.id);
+        if (alive) setIsAdmin(adminFlag);
       } catch (e) {
         console.error('[AdminRoute] error checking admin:', e);
         if (alive) {

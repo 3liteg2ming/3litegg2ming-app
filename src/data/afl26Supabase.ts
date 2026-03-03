@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabaseClient';
+import { getDataSeasonSlugForCompetition, getStoredCompetitionKey } from '../lib/competitionRegistry';
 
 export type ScoreLine = { total: number; goals: number; behinds: number };
 
@@ -25,11 +26,60 @@ export type AflRound = {
   matches: AflMatch[];
 };
 
-const AFL26_SEASON_ID = '55184ee9-4e96-496d-8d19-ca65d13ca28c';
+const SEASON_SLUG_ALIASES: Record<string, string> = {
+  afl26: 'afl26-season-two',
+  'afl-26': 'afl26-season-two',
+};
 
 // small cache so Home + Fixtures don’t refetch back-to-back
-let cache: { at: number; rounds: AflRound[] } | null = null;
+let cache = new Map<string, { at: number; rounds: AflRound[] }>();
+const seasonIdCache = new Map<string, string>();
 const TTL_MS = 60_000;
+
+function normalizeSlug(value: unknown): string {
+  return String(value || '').trim().toLowerCase();
+}
+
+function getActiveSeasonSlug() {
+  const activeCompetition = getStoredCompetitionKey();
+  return getDataSeasonSlugForCompetition(activeCompetition);
+}
+
+async function resolveSeasonIdForSlug(inputSlug?: string): Promise<string> {
+  const requested = normalizeSlug(inputSlug || getActiveSeasonSlug());
+  if (!requested) throw new Error('Missing season slug for active competition');
+
+  const cached = seasonIdCache.get(requested);
+  if (cached) return cached;
+
+  const alias = SEASON_SLUG_ALIASES[requested];
+  const attempts = [requested, alias].filter((v, i, arr): v is string => !!v && arr.indexOf(v) === i);
+
+  for (const attempt of attempts) {
+    const exact = await supabase.from('eg_seasons').select('id, slug').eq('slug', attempt).maybeSingle();
+    if (!exact.error && exact.data?.id) {
+      const id = String(exact.data.id);
+      seasonIdCache.set(requested, id);
+      seasonIdCache.set(normalizeSlug((exact.data as any).slug || attempt), id);
+      return id;
+    }
+  }
+
+  const fuzzy = await supabase
+    .from('eg_seasons')
+    .select('id, slug')
+    .ilike('slug', `%${requested}%`)
+    .limit(1);
+
+  if (!fuzzy.error && Array.isArray(fuzzy.data) && fuzzy.data[0]?.id) {
+    const id = String(fuzzy.data[0].id);
+    seasonIdCache.set(requested, id);
+    seasonIdCache.set(normalizeSlug((fuzzy.data[0] as any).slug || requested), id);
+    return id;
+  }
+
+  throw new Error(`Season not found for slug "${requested}"`);
+}
 
 function toNum(v: any): number | null {
   const n = typeof v === 'number' ? v : Number(v);
@@ -44,18 +94,25 @@ function coerceStatus(v: any): 'SCHEDULED' | 'LIVE' | 'FINAL' {
 }
 
 export function invalidateAfl26Cache() {
-  cache = null;
+  cache.clear();
 }
 
-export function peekAfl26RoundsCache(): AflRound[] | null {
-  if (!cache) return null;
-  if (Date.now() - cache.at >= TTL_MS) return null;
-  return cache.rounds;
+export function peekAfl26RoundsCache(seasonSlug?: string): AflRound[] | null {
+  const key = normalizeSlug(seasonSlug || getActiveSeasonSlug());
+  if (!key) return null;
+  const hit = cache.get(key);
+  if (!hit) return null;
+  if (Date.now() - hit.at >= TTL_MS) return null;
+  return hit.rounds;
 }
 
-export async function getAfl26RoundsFromSupabase(opts?: { force?: boolean }): Promise<AflRound[]> {
+export async function getAfl26RoundsFromSupabase(opts?: { force?: boolean; seasonSlug?: string }): Promise<AflRound[]> {
   const now = Date.now();
-  if (!opts?.force && cache && now - cache.at < TTL_MS) return cache.rounds;
+  const requestedSlug = normalizeSlug(opts?.seasonSlug || getActiveSeasonSlug());
+  const cacheKey = requestedSlug;
+  const cached = cache.get(cacheKey);
+  if (!opts?.force && cached && now - cached.at < TTL_MS) return cached.rounds;
+  const seasonId = await resolveSeasonIdForSlug(requestedSlug);
 
   // The eg_fixture_cards view has changed a few times during the build.
   // Try a few select shapes (and finally fallback to eg_fixtures) so the page never hard-crashes
@@ -148,7 +205,7 @@ export async function getAfl26RoundsFromSupabase(opts?: { force?: boolean }): Pr
     const res = await supabase
       .from(a.table)
       .select(a.select)
-      .eq('season_id', AFL26_SEASON_ID)
+      .eq('season_id', seasonId)
       .order('round', { ascending: true });
 
     if (!res.error) {
@@ -204,6 +261,6 @@ export async function getAfl26RoundsFromSupabase(opts?: { force?: boolean }): Pr
   }
 
   const out = Array.from(byRound.values()).sort((a, b) => a.round - b.round);
-  cache = { at: now, rounds: out };
+  cache.set(cacheKey, { at: now, rounds: out });
   return out;
 }

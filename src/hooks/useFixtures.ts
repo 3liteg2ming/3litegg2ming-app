@@ -145,119 +145,167 @@ async function fetchFixturesWithTeams(
   const from = Math.max(0, Number(offset) || 0);
   const to = from + Math.max(1, Number(limit) || 100) - 1;
 
-  const selectAttempts: Array<{ select: string; orderStartTime: boolean }> = [
+  // We intentionally avoid PostgREST relationship embeds here because they are fragile
+  // across Supabase schema tweaks. Instead we prefer stable views.
+  const selectAttempts: Array<{ table: string; select: string; orderStartTime: boolean }> = [
     {
-      select: `
-        id,
-        round,
-        status,
-        start_time,
-        venue,
-        home_team_key,
-        home_team_id,
-        away_team_key,
-        away_team_id,
-        home_team_slug,
-        away_team_slug,
-        home_goals,
-        home_behinds,
-        home_total,
-        away_goals,
-        away_behinds,
-        away_total,
-        eg_teams:home_team_id(slug, name, logo_url, primary_color),
-        away_team:away_team_id(slug, name, logo_url, primary_color)
-      `,
+      table: 'eg_fixtures_with_teams',
+      select: [
+        'id',
+        'season_id',
+        'round',
+        'stage_name',
+        'stage_index',
+        'bracket_slot',
+        'week_index',
+        'is_preseason',
+        'next_fixture_id',
+        'status',
+        'start_time',
+        'venue',
+        'home_team_id',
+        'away_team_id',
+        'home_goals',
+        'home_behinds',
+        'home_total',
+        'away_goals',
+        'away_behinds',
+        'away_total',
+        'home_team_slug',
+        'away_team_slug',
+        'home_team_name',
+        'away_team_name',
+        'home_team_logo_url',
+        'away_team_logo_url',
+        'home_team_colour',
+        'away_team_colour',
+      ].join(','),
       orderStartTime: true,
     },
     {
-      select: `
-        id,
-        round,
-        status,
-        start_time,
-        venue,
-        home_team_key,
-        home_team_id,
-        away_team_key,
-        away_team_id,
-        home_goals,
-        home_behinds,
-        home_total,
-        away_goals,
-        away_behinds,
-        away_total,
-        eg_teams:home_team_id(slug, name, logo_url, primary_color),
-        away_team:away_team_id(slug, name, logo_url, primary_color)
-      `,
+      table: 'eg_fixtures_with_teams',
+      select: [
+        'id',
+        'season_id',
+        'round',
+        'status',
+        'start_time',
+        'venue',
+        'home_team_id',
+        'away_team_id',
+        'home_goals',
+        'home_behinds',
+        'home_total',
+        'away_goals',
+        'away_behinds',
+        'away_total',
+        'home_team_slug',
+        'away_team_slug',
+        'home_team_name',
+        'away_team_name',
+        'home_team_logo_url',
+        'away_team_logo_url',
+        'home_team_colour',
+        'away_team_colour',
+      ].join(','),
       orderStartTime: true,
     },
     {
-      select: `
-        id,
-        round,
-        status,
-        start_time,
-        venue,
-        home_team_slug,
-        away_team_slug,
-        home_goals,
-        home_behinds,
-        home_total,
-        away_goals,
-        away_behinds,
-        away_total
-      `,
+      table: 'eg_fixtures_by_stage',
+      select: [
+        'fixture_id',
+        'season_id',
+        'stage_name',
+        'stage_index',
+        'start_time',
+        'home_team_id',
+        'away_team_id',
+        'home_team_slug',
+        'away_team_slug',
+        'status',
+        'home_goals',
+        'home_behinds',
+        'home_total',
+        'away_goals',
+        'away_behinds',
+        'away_total',
+        'bracket_slot',
+        'next_fixture_id',
+      ].join(','),
       orderStartTime: true,
     },
     {
-      select: `
-        id,
-        round,
-        status,
-        venue,
-        home_team_slug,
-        away_team_slug,
-        home_goals,
-        home_behinds,
-        home_total,
-        away_goals,
-        away_behinds,
-        away_total
-      `,
-      orderStartTime: false,
+      table: 'eg_fixtures',
+      select: [
+        'id',
+        'season_id',
+        'round',
+        'stage_name',
+        'stage_index',
+        'bracket_slot',
+        'week_index',
+        'is_preseason',
+        'next_fixture_id',
+        'status',
+        'start_time',
+        'venue',
+        'home_team_id',
+        'away_team_id',
+        'home_team_slug',
+        'away_team_slug',
+        'home_goals',
+        'home_behinds',
+        'home_total',
+        'away_goals',
+        'away_behinds',
+        'away_total',
+      ].join(','),
+      orderStartTime: true,
     },
     {
-      select: `
-        id,
-        round,
-        status,
-        venue,
-        home_goals,
-        home_behinds,
-        home_total,
-        away_goals,
-        away_behinds,
-        away_total
-      `,
-      orderStartTime: false,
+      table: 'eg_fixtures',
+      select: [
+        'id',
+        'season_id',
+        'round',
+        'status',
+        'start_time',
+        'venue',
+        'home_team_id',
+        'away_team_id',
+        'home_goals',
+        'home_behinds',
+        'home_total',
+        'away_goals',
+        'away_behinds',
+        'away_total',
+      ].join(','),
+      orderStartTime: true,
     },
-    {
-      select: '*',
-      orderStartTime: false,
-    },
+    { table: 'eg_fixtures', select: '*', orderStartTime: false },
   ];
 
   let fixtures: any[] | null = null;
   let lastError: any = null;
 
   for (const attempt of selectAttempts) {
+    const table = attempt.table;
     let query = supabase
-      .from('eg_fixtures')
+      .from(table)
       .select(attempt.select)
       .eq('season_id', seasonId)
       .order('round', { ascending: false })
       .range(from, to);
+
+    // eg_fixtures_by_stage doesn't expose round; stage_index can be used instead.
+    if (table === 'eg_fixtures_by_stage') {
+      query = supabase
+        .from(table)
+        .select(attempt.select)
+        .eq('season_id', seasonId)
+        .order('stage_index', { ascending: true })
+        .range(from, to);
+    }
 
     if (attempt.orderStartTime) {
       query = query.order('start_time', { ascending: true });
@@ -284,7 +332,8 @@ async function fetchFixturesWithTeams(
     throw lastError;
   }
 
-  return (fixtures || []).map((f: any) => {
+  return (fixtures || []).map((raw: any) => {
+    const f: any = raw?.fixture_id ? { ...raw, id: raw.fixture_id } : raw;
     const homeGoals = Number(f?.home_goals);
     const homeBehinds = Number(f?.home_behinds);
     const awayGoals = Number(f?.away_goals);
@@ -307,11 +356,17 @@ async function fetchFixturesWithTeams(
     return {
       ...f,
       round: Number.isFinite(Number(f?.round)) ? Number(f.round) : 1,
+      stage_name: f?.stage_name || null,
+      stage_index: Number.isFinite(Number(f?.stage_index)) ? Number(f.stage_index) : null,
+      bracket_slot: f?.bracket_slot || null,
+      week_index: Number.isFinite(Number(f?.week_index)) ? Number(f.week_index) : null,
+      is_preseason: Boolean(f?.is_preseason),
+      next_fixture_id: f?.next_fixture_id || null,
       status: String(f?.status || 'SCHEDULED').toUpperCase(),
       home_total: homeTotal,
       away_total: awayTotal,
-      home_team_slug: f?.home_team_slug || f?.home_team_key || f?.eg_teams?.slug || '',
-      away_team_slug: f?.away_team_slug || f?.away_team_key || f?.away_team?.slug || '',
+      home_team_slug: f?.home_team_slug || '',
+      away_team_slug: f?.away_team_slug || '',
     };
   });
 }
@@ -358,27 +413,31 @@ async function fetchFixtureById(fixtureId: string): Promise<any> {
     throw err;
   }
 
-  const { data: fixture, error } = await supabase
-    .from('eg_fixtures')
-    .select(
-      `
-      id,
-      round,
-      status,
-      start_time,
-      venue,
-      home_team_id,
-      away_team_id,
-      home_goals,
-      home_behinds,
-      away_goals,
-      away_behinds,
-      eg_teams:home_team_id(slug, name, logo_url, primary_color),
-      away_team:away_team_id(slug, name, logo_url, primary_color)
-    `
-    )
-    .eq('id', fixtureId)
-    .maybeSingle();
+  // Prefer the view that already includes team metadata.
+  const attempts: Array<{ table: string; select: string; idCol: string }> = [
+    {
+      table: 'eg_fixtures_with_teams',
+      select: '*',
+      idCol: 'id',
+    },
+    {
+      table: 'eg_fixtures',
+      select: '*',
+      idCol: 'id',
+    },
+  ];
+
+  let fixture: any = null;
+  let error: any = null;
+  for (const attempt of attempts) {
+    const res = await supabase.from(attempt.table).select(attempt.select).eq(attempt.idCol, fixtureId).maybeSingle();
+    if (!res.error) {
+      fixture = res.data;
+      error = null;
+      break;
+    }
+    error = res.error;
+  }
 
   if (error) throw error;
   return fixture;

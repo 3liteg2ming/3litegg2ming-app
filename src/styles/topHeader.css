@@ -2,17 +2,13 @@
   --eg-header-h: 72px;
 }
 
-/* push fixtures sticky below header */
-.fxAflStickyNav {
-  top: var(--eg-header-h) !important;
-}
-
 .egTopHeader {
   position: sticky;
   top: 0;
   z-index: 999;
   width: 100%;
-  height: var(--eg-header-h);
+  height: calc(var(--eg-header-h) + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
 
   background:
     radial-gradient(900px 120px at 50% 115%, rgba(255, 255, 255, 0.06), transparent 62%),

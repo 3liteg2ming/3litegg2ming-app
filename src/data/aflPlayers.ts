@@ -24,6 +24,7 @@ export type AflPlayer = {
 };
 
 type TeamLookup = { id?: string; name?: string; teamKey?: string };
+type RawPlayerRow = Record<string, any>;
 
 let cache: { at: number; players: AflPlayer[] } | null = null;
 const TTL_MS = 5 * 60_000;
@@ -59,6 +60,8 @@ async function fetchPlayersRaw() {
     'id,name,team_id,team_key,team_name,team,position,number,headshot_url,photo_url,headshot',
     // Minimal schema requested by user
     'id,name,team_id,position,number,headshot_url',
+    // First/last name schema fallback
+    'id,first_name,last_name,team_id,position,number,headshot_url,photo_url',
   ] as const;
 
   let data: any[] = [];
@@ -129,7 +132,10 @@ function resolveTeamFields(p: any, teamById: Map<string, TeamLookup>) {
 
 function toAflPlayer(p: any, teamById: Map<string, TeamLookup>): AflPlayer | null {
   const id = strOrUndef(p?.id);
-  const name = strOrUndef(p?.name);
+  const first = strOrUndef(p?.first_name);
+  const last = strOrUndef(p?.last_name);
+  const combined = `${first || ''} ${last || ''}`.trim();
+  const name = strOrUndef(p?.name) || combined || strOrUndef(p?.display_name) || strOrUndef(p?.full_name);
   if (!id || !name) return null;
 
   const { teamId, teamName, teamKey } = resolveTeamFields(p, teamById);
@@ -197,7 +203,13 @@ export async function fetchAflPlayers(): Promise<AflPlayer[]> {
   const now = Date.now();
   if (cache && now - cache.at < TTL_MS) return cache.players;
 
-  const [rawPlayers, teamById] = await Promise.all([fetchPlayersRaw(), fetchTeamsById()]);
+  let rawPlayers: RawPlayerRow[] = [];
+  try {
+    rawPlayers = await fetchPlayersRaw();
+  } catch {
+    rawPlayers = [];
+  }
+  const teamById = await fetchTeamsById();
 
   const byId = new Map<string, AflPlayer>();
   for (const row of rawPlayers || []) {

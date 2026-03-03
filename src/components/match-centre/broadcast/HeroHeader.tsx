@@ -2,8 +2,9 @@ import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft } from 'lucide-react';
 import SmartImg from '@/components/SmartImg';
-import { assetUrl, TEAM_ASSETS, type TeamKey } from '@/lib/teamAssets';
+import { TEAM_ASSETS, type TeamKey } from '@/lib/teamAssets';
 import type { MatchCentreModel } from '@/lib/matchCentreRepo';
+import { resolveTeamKey, resolveTeamLogoUrl } from '@/lib/entityResolvers';
 import '@/styles/match-centre-hero.css';
 
 type Props = {
@@ -13,31 +14,9 @@ type Props = {
 };
 
 function slugToTeamKey(slug: string): TeamKey | null {
-  const s = String(slug || '').toLowerCase().trim();
-  const keys = Object.keys(TEAM_ASSETS) as TeamKey[];
-  if (keys.includes(s as TeamKey)) return s as TeamKey;
-  const compact = s.replace(/[^a-z0-9]/g, '');
-  const aliases: Record<string, TeamKey> = {
-    collingwoodmagpies: 'collingwood',
-    carltonblues: 'carlton',
-    adelaidecrows: 'adelaide',
-    brisbanelions: 'brisbane',
-    gwsgiants: 'gws',
-    stkildasaints: 'stkilda',
-    westernbulldogs: 'westernbulldogs',
-    westcoasteagles: 'westcoast',
-    portadelaidepower: 'portadelaide',
-    northmelbournekangaroos: 'northmelbourne',
-    goldcoastsuns: 'goldcoast',
-    geelongcats: 'geelong',
-    hawthornhawks: 'hawthorn',
-    richmondtigers: 'richmond',
-    sydneyswans: 'sydney',
-    melbournedemons: 'melbourne',
-    essendonbombers: 'essendon',
-    fremantledockers: 'fremantle',
-  };
-  return aliases[compact] || null;
+  if (!String(slug || '').trim()) return null;
+  const key = resolveTeamKey({ slug });
+  return TEAM_ASSETS[key] ? key : null;
 }
 
 function hexToRgb(hex: string) {
@@ -76,10 +55,22 @@ export default function HeroHeader({ onBack, model, loading }: Props) {
   const awayAsset = awayKey ? TEAM_ASSETS[awayKey] : null;
 
   const homeLogo =
-    home?.logoUrl || (homeKey ? assetUrl(TEAM_ASSETS[homeKey].logoFile ?? '') : '');
+    resolveTeamLogoUrl({
+      logoUrl: home?.logoUrl,
+      slug: home?.slug,
+      teamKey: homeKey || undefined,
+      name: home?.fullName,
+      fallbackPath: homeKey ? TEAM_ASSETS[homeKey]?.logoFile || TEAM_ASSETS[homeKey]?.logoPath : 'elite-gaming-logo.png',
+    });
 
   const awayLogo =
-    away?.logoUrl || (awayKey ? assetUrl(TEAM_ASSETS[awayKey].logoFile ?? '') : '');
+    resolveTeamLogoUrl({
+      logoUrl: away?.logoUrl,
+      slug: away?.slug,
+      teamKey: awayKey || undefined,
+      name: away?.fullName,
+      fallbackPath: awayKey ? TEAM_ASSETS[awayKey]?.logoFile || TEAM_ASSETS[awayKey]?.logoPath : 'elite-gaming-logo.png',
+    });
 
   const homeTint = pickTeamTint(homeKey ?? undefined, homeAsset);
   const awayTint = pickTeamTint(awayKey ?? undefined, awayAsset);
@@ -103,6 +94,7 @@ export default function HeroHeader({ onBack, model, loading }: Props) {
   const dateText = model?.dateText ?? 'TBC';
   const venue = model?.venue ?? 'TBC';
   const status = model?.statusLabel ?? '—';
+  const confidence = model?.dataConfidence;
   const margin = model?.margin ?? 0;
   const hasTripleDigitScore = Math.max(home?.score ?? 0, away?.score ?? 0) >= 100;
   const hasBothTripleDigitScores = (home?.score ?? 0) >= 100 && (away?.score ?? 0) >= 100;
@@ -154,6 +146,7 @@ export default function HeroHeader({ onBack, model, loading }: Props) {
           <div className="mcHero__side">
             <div className="mcHero__logoBox">
               <SmartImg
+                key={`home-${homeLogo}`}
                 src={homeLogo}
                 alt={home?.fullName || 'Home'}
                 className="mcHero__logo"
@@ -177,12 +170,16 @@ export default function HeroHeader({ onBack, model, loading }: Props) {
               <span className="mcHero__pipe">|</span>
               <span className="mcHero__minor">{away ? `${away.goals}.${away.behinds}` : '0.0'}</span>
             </div>
+            <div className={`mcHero__confidence mcHero__confidence--${confidence?.tone || 'neutral'}`}>
+              {confidence?.label || 'Scheduled'}
+            </div>
           </div>
 
           {/* AWAY */}
           <div className="mcHero__side">
             <div className="mcHero__logoBox">
               <SmartImg
+                key={`away-${awayLogo}`}
                 src={awayLogo}
                 alt={away?.fullName || 'Away'}
                 className="mcHero__logo"
