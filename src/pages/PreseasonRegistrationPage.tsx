@@ -51,6 +51,8 @@ type PrettyRegistrationSummary = {
   prefTeamNames: string;
 };
 
+const PRESEASON_OPEN_AT_UTC = '2026-03-04T09:30:00.000Z'; // 8:30pm Melbourne (AEDT)
+
 function text(v: unknown): string {
   return String(v || '').trim();
 }
@@ -381,9 +383,23 @@ function formatPrefNames(value: unknown): string {
   return text(value);
 }
 
+function getRemainingMs(): number {
+  const openAtMs = new Date(PRESEASON_OPEN_AT_UTC).getTime();
+  return Math.max(0, openAtMs - Date.now());
+}
+
+function formatCountdown(remainingMs: number): string {
+  const totalSeconds = Math.floor(Math.max(0, remainingMs) / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
 export default function PreseasonRegistrationPage() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const isLoggedIn = Boolean(user?.id);
 
   const [loading, setLoading] = useState(true);
   const [teamsLoading, setTeamsLoading] = useState(true);
@@ -396,6 +412,20 @@ export default function PreseasonRegistrationPage() {
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [submittedSummary, setSubmittedSummary] = useState<PrettyRegistrationSummary | null>(null);
+  const [isOpen, setIsOpen] = useState(getRemainingMs() <= 0);
+  const [countdown, setCountdown] = useState(formatCountdown(getRemainingMs()));
+
+  useEffect(() => {
+    const tick = () => {
+      const remaining = getRemainingMs();
+      setIsOpen(remaining <= 0);
+      setCountdown(formatCountdown(remaining));
+    };
+
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (authLoading) return;
@@ -532,6 +562,11 @@ export default function PreseasonRegistrationPage() {
   async function submitRegistration(event: React.FormEvent) {
     event.preventDefault();
 
+    if (!isOpen) {
+      setInlineError('Registration opens at 8:30pm (Melbourne time).');
+      return;
+    }
+
     if (!user?.id) {
       navigate('/auth/sign-in', { replace: true, state: { from: '/preseason-registration' } });
       return;
@@ -596,74 +631,102 @@ export default function PreseasonRegistrationPage() {
 
   return (
     <div className="prPage">
-      <div className="prShell">
-        <RegistrationHeroCard
-          title="Registration"
-          subtitle="2 rounds → Top 8 finals → Grand Final"
-          kicker="KNOCKOUT PRESEASON"
-          leftLogoUrl={heroLogos.left}
-          rightLogoUrl={heroLogos.right}
-          fallbackMark="EG"
-          cta={
-            !submitted ? (
-              <button type="button" className="prBtn prBtn--primary" onClick={() => document.getElementById('pr-form')?.scrollIntoView({ behavior: 'smooth' })}>
-                Register Now
-              </button>
-            ) : null
-          }
-          helper={<span>Signed in as {signedInName}</span>}
-        />
-
-        {loading ? (
-          <section className="prLoading" aria-label="Loading registration">
-            <div className="prSkeleton" />
-            <div className="prSkeleton" />
-          </section>
-        ) : submitted ? (
-          <section className="prConfirmCard">
-            <div className="prConfirmCard__icon">
-              <CheckCircle2 size={22} />
-            </div>
-            <h2>You’re registered</h2>
-            <div className="prConfirmCard__prefs">
-              <div className="prPrefPill">Coach name: {submittedSummary?.coachDisplayName || signedInName}</div>
-              <div className="prPrefPill">PSN: {submittedSummary?.coachPsn || profilePsn}</div>
-              <div className="prPrefPill">Teams: {submittedSummary?.prefTeamNames || selectedNames.join(', ') || 'TBC'}</div>
-            </div>
-            <button type="button" className="prBtn prBtn--primary" onClick={() => navigate('/')}>
-              Done
-            </button>
-          </section>
-        ) : (
-          <section className="prFormCard" id="pr-form">
-            <form onSubmit={submitRegistration} className="prForm" noValidate>
-              <p className="prProgress">Signed in as {signedInName}</p>
-              <p className="prGridHeading">Select up to 4 teams</p>
-
-              <TeamLogoGrid
-                teams={teams}
-                selectedTeamIds={selectedTeamIds}
-                onToggle={toggleTeam}
-                maxSelections={4}
-                disabled={submitting}
-                loading={teamsLoading}
-                emptyMessage="Team logos are syncing. Try again shortly."
-              />
-
-              {inlineError ? <div className="prInlineError">{inlineError}</div> : null}
-              {inlineError && inlineError.toLowerCase().includes('add your psn in profile') ? (
-                <button type="button" className="prBtn prBtn--profile" onClick={() => navigate('/members')}>
-                  Go to Profile
+      <div className={`prLockable ${!isOpen ? 'is-locked' : ''}`}>
+        <div className="prShell">
+          <RegistrationHeroCard
+            title="Registration"
+            subtitle="2 rounds → Top 8 finals → Grand Final"
+            kicker="KNOCKOUT PRESEASON"
+            leftLogoUrl={heroLogos.left}
+            rightLogoUrl={heroLogos.right}
+            fallbackMark="EG"
+            cta={
+              !submitted ? (
+                <button type="button" className="prBtn prBtn--primary" onClick={() => document.getElementById('pr-form')?.scrollIntoView({ behavior: 'smooth' })}>
+                  Register Now
                 </button>
-              ) : null}
+              ) : null
+            }
+            helper={<span>Signed in as {signedInName}</span>}
+          />
 
-              <button type="submit" className="prBtn prBtn--primary prBtn--confirm" disabled={submitting || !selectedTeamIds.length}>
-                {submitting ? 'Submitting…' : 'Confirm Registration'}
+          {loading ? (
+            <section className="prLoading" aria-label="Loading registration">
+              <div className="prSkeleton" />
+              <div className="prSkeleton" />
+            </section>
+          ) : submitted ? (
+            <section className="prConfirmCard">
+              <div className="prConfirmCard__icon">
+                <CheckCircle2 size={22} />
+              </div>
+              <h2>You’re registered</h2>
+              <div className="prConfirmCard__prefs">
+                <div className="prPrefPill">Coach name: {submittedSummary?.coachDisplayName || signedInName}</div>
+                <div className="prPrefPill">PSN: {submittedSummary?.coachPsn || profilePsn}</div>
+                <div className="prPrefPill">Teams: {submittedSummary?.prefTeamNames || selectedNames.join(', ') || 'TBC'}</div>
+              </div>
+              <button type="button" className="prBtn prBtn--primary" onClick={() => navigate('/')}>
+                Done
               </button>
-            </form>
-          </section>
-        )}
+            </section>
+          ) : (
+            <section className="prFormCard" id="pr-form">
+              <form onSubmit={submitRegistration} className="prForm" noValidate>
+                <p className="prProgress">Signed in as {signedInName}</p>
+                <p className="prGridHeading">Select up to 4 teams</p>
+
+                <TeamLogoGrid
+                  teams={teams}
+                  selectedTeamIds={selectedTeamIds}
+                  onToggle={toggleTeam}
+                  maxSelections={4}
+                  disabled={submitting}
+                  loading={teamsLoading}
+                  emptyMessage="Team logos are syncing. Try again shortly."
+                />
+
+                {inlineError ? <div className="prInlineError">{inlineError}</div> : null}
+                {inlineError && inlineError.toLowerCase().includes('add your psn in profile') ? (
+                  <button type="button" className="prBtn prBtn--profile" onClick={() => navigate('/members')}>
+                    Go to Profile
+                  </button>
+                ) : null}
+
+                <button type="submit" className="prBtn prBtn--primary prBtn--confirm" disabled={submitting || !selectedTeamIds.length}>
+                  {submitting ? 'Submitting…' : 'Confirm Registration'}
+                </button>
+              </form>
+            </section>
+          )}
+        </div>
       </div>
+
+      {!isOpen ? (
+        <div className="prLockOverlay" role="dialog" aria-modal="true" aria-label="Registration locked">
+          <div className="prLockModal">
+            <div className="prLockKicker">Preseason Knockout</div>
+            <h2 className="prLockTitle">Registration opens at 8:30pm</h2>
+            <p className="prLockSub">Melbourne time • Wednesday 4 March</p>
+            <div className="prLockCountdown">{countdown}</div>
+            <p className="prLockHint">Create your account now and come back when the timer hits zero.</p>
+            {!isLoggedIn ? (
+              <>
+                <button type="button" className="prBtn prBtn--primary" onClick={() => navigate('/auth/sign-up')}>
+                  Create account
+                </button>
+                <button type="button" className="prBtn prBtn--ghost" onClick={() => navigate('/auth/sign-in')}>
+                  Sign in
+                </button>
+              </>
+            ) : (
+              <button type="button" className="prBtn prBtn--primary" onClick={() => navigate('/')}>
+                Back to Home
+              </button>
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -1,11 +1,11 @@
 :root {
-  --home-gold: #f5c400;
-  --home-gold-2: #ffd95f;
-  --home-green: #5cff8c;
-  --home-green-soft: rgba(92, 255, 140, 0.18);
-  --home-text: rgba(246, 249, 255, 0.96);
-  --home-dim: rgba(220, 228, 246, 0.74);
-  --home-border: rgba(255, 255, 255, 0.14);
+  --home-gold: var(--eg-gold-2, #f5c400);
+  --home-gold-2: var(--eg-gold-1, #ffdd72);
+  --home-text: var(--eg-text, rgba(246, 249, 255, 0.95));
+  --home-dim: var(--eg-muted, rgba(210, 220, 240, 0.7));
+  --home-border: var(--eg-border, rgba(255, 255, 255, 0.1));
+  --home-accent: var(--eg-accent, rgba(70, 180, 255, 0.55));
+  --home-accent-soft: var(--eg-glow, rgba(70, 180, 255, 0.18));
 }
 
 .homePage {
@@ -27,16 +27,16 @@
   position: relative;
   overflow: hidden;
   border-radius: 22px;
-  border: 1px solid rgba(103, 234, 152, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   background:
-    linear-gradient(135deg, rgba(0, 40, 20, 0.85), rgba(0, 0, 0, 0.9)),
-    radial-gradient(84% 112% at 8% 10%, rgba(98, 227, 150, 0.14), transparent 76%),
+    linear-gradient(135deg, rgba(7, 10, 16, 0.9), rgba(10, 16, 32, 0.92)),
+    radial-gradient(84% 112% at 8% 10%, rgba(70, 180, 255, 0.14), transparent 76%),
     url('https://zohtixrgskbzosgfluni.supabase.co/storage/v1/object/public/Assets/mcg-stadium.jpg');
   background-size: cover, 140% 140%, cover;
   background-position: center, left top, center;
   box-shadow:
     0 16px 36px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(118, 255, 172, 0.08) inset;
+    0 0 0 1px rgba(70, 180, 255, 0.12) inset;
   padding: 24px 20px;
 }
 
@@ -49,8 +49,8 @@
   background: linear-gradient(
     132deg,
     transparent 39%,
-    rgba(97, 230, 149, 0.13) 43%,
-    rgba(97, 230, 149, 0.04) 56%,
+    rgba(70, 180, 255, 0.14) 43%,
+    rgba(120, 90, 255, 0.05) 56%,
     transparent 60%
   );
   filter: blur(0.7px);
@@ -64,9 +64,9 @@
   align-items: center;
   gap: 6px;
   border-radius: 999px;
-  border: 1px solid rgba(92, 255, 140, 0.4);
-  background: rgba(92, 255, 140, 0.14);
-  color: rgba(212, 255, 225, 0.96);
+  border: 1px solid rgba(70, 180, 255, 0.34);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(232, 242, 255, 0.96);
   padding: 6px 10px;
   font-size: 10px;
   font-weight: 900;
@@ -92,7 +92,7 @@
 
 .homeHero__subtext {
   margin: 6px 0 0;
-  color: rgba(196, 233, 208, 0.84);
+  color: rgba(188, 210, 242, 0.84);
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -121,7 +121,7 @@
   font-weight: 900;
   letter-spacing: 0.01em;
   cursor: pointer;
-  box-shadow: 0 10px 24px rgba(245, 196, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.34);
+  box-shadow: 0 10px 24px var(--eg-gold-shadow, rgba(245, 196, 0, 0.28)), inset 0 1px 0 rgba(255, 255, 255, 0.34);
   transition: transform 0.14s ease, box-shadow 0.16s ease;
 }
 
@@ -165,8 +165,8 @@
 .homeFeatureItem {
   width: min(290px, 100%);
   border-radius: 12px;
-  border: 1px solid rgba(92, 255, 140, 0.24);
-  background: linear-gradient(180deg, rgba(92, 255, 140, 0.1), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(70, 180, 255, 0.24);
+  background: linear-gradient(180deg, rgba(70, 180, 255, 0.1), rgba(255, 255, 255, 0.03));
   padding: 10px 12px;
   display: grid;
   gap: 3px;
@@ -188,9 +188,9 @@
 .homeComingSoon {
   position: relative;
   overflow: hidden;
-  border-color: rgba(120, 255, 200, 0.22);
+  border-color: rgba(70, 180, 255, 0.24);
   background:
-    radial-gradient(72% 92% at 10% 0%, rgba(98, 227, 150, 0.12), transparent 80%),
+    radial-gradient(72% 92% at 10% 0%, rgba(70, 180, 255, 0.12), transparent 80%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
 }
 
@@ -200,15 +200,15 @@
   inset: 0;
   pointer-events: none;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(95, 225, 150, 0.05), transparent 45%);
+  background: linear-gradient(135deg, rgba(70, 180, 255, 0.06), transparent 45%);
 }
 
 .homeComingSoon__chip {
   width: fit-content;
   border-radius: 999px;
-  border: 1px solid rgba(95, 225, 150, 0.34);
-  background: rgba(95, 225, 150, 0.12);
-  color: rgba(223, 246, 235, 0.9);
+  border: 1px solid rgba(70, 180, 255, 0.34);
+  background: rgba(70, 180, 255, 0.14);
+  color: rgba(226, 239, 255, 0.9);
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.1em;
@@ -251,7 +251,7 @@
   font-weight: 800;
   letter-spacing: 0.01em;
   cursor: pointer;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 20px var(--eg-gold-shadow, rgba(245, 196, 0, 0.28)), inset 0 1px 0 rgba(255, 255, 255, 0.2);
   transition: transform 0.14s ease, box-shadow 0.16s ease;
 }
 

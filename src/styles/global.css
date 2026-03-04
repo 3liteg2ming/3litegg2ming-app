@@ -6,24 +6,32 @@
      Elite Gaming Theme Tokens (v1)
      Goal: make every page feel like a premium AFL-style app shell.
   ────────────────────────────────────────────────────────────── */
-  --eg-bg-0: #05070c;
-  --eg-bg-1: #070a12;
+  --eg-bg-0: #070A10;
+  --eg-bg-1: #0A1020;
   --eg-bg-2: #0a0f1c;
-  --eg-text: rgba(255, 255, 255, 0.92);
-  --eg-text-dim: rgba(255, 255, 255, 0.70);
+  --eg-text: rgba(246, 249, 255, 0.95);
+  --eg-text-dim: rgba(210, 220, 240, 0.70);
   --eg-text-faint: rgba(255, 255, 255, 0.55);
 
-  --eg-gold: #f5c84b;
-  --eg-gold-2: #ffde79;
+  --eg-card: rgba(255, 255, 255, 0.06);
+  --eg-card-2: rgba(255, 255, 255, 0.035);
+  --eg-border: rgba(255, 255, 255, 0.10);
+  --eg-border-2: rgba(255, 255, 255, 0.16);
+
+  --eg-accent: rgba(70, 180, 255, 0.55);
+  --eg-accent-2: rgba(120, 90, 255, 0.35);
+  --eg-glow: rgba(70, 180, 255, 0.18);
+
+  --eg-gold: #F5C400;
+  --eg-gold-1: #FFDD72;
+  --eg-gold-2: #F5C400;
+  --eg-gold-shadow: rgba(245, 196, 0, 0.28);
   --eg-blue: #2e8dff;
   --eg-purple: #9a5cff;
   --eg-green: #3dff7a;
   --eg-red: #ff4d6d;
 
-  --eg-border: rgba(255, 255, 255, 0.10);
-  --eg-border-2: rgba(255, 255, 255, 0.14);
-
-  --eg-surface: rgba(10, 14, 24, 0.72);
+  --eg-surface: var(--eg-card);
   --eg-surface-2: rgba(12, 18, 30, 0.82);
   --eg-surface-3: rgba(18, 26, 42, 0.66);
 
@@ -35,7 +43,7 @@
   --eg-radius: 18px;
   --eg-radius-lg: 24px;
 
-  --eg-ring: 0 0 0 3px rgba(46, 141, 255, 0.35);
+  --eg-ring: 0 0 0 3px rgba(70, 180, 255, 0.30);
 }
 
 *,
@@ -54,8 +62,8 @@ body {
 
 body {
   margin: 0;
-  background: radial-gradient(1200px 900px at 10% -10%, rgba(154, 92, 255, 0.18), transparent 55%),
-    radial-gradient(900px 800px at 90% 0%, rgba(46, 141, 255, 0.16), transparent 60%),
+  background: radial-gradient(1200px 900px at 10% -10%, rgba(120, 90, 255, 0.12), transparent 55%),
+    radial-gradient(900px 800px at 90% 0%, rgba(70, 180, 255, 0.14), transparent 60%),
     radial-gradient(800px 900px at 50% 120%, rgba(245, 200, 75, 0.10), transparent 58%),
     linear-gradient(180deg, var(--eg-bg-0), var(--eg-bg-2));
   color: var(--eg-text);

@@ -152,6 +152,93 @@
   color: rgba(218, 248, 230, 0.96);
 }
 
+.prLockable.is-locked {
+  filter: blur(10px) saturate(0.9);
+  transform: scale(0.995);
+  pointer-events: none;
+  user-select: none;
+}
+
+.prLockOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: radial-gradient(70% 80% at 50% 30%, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.72));
+}
+
+.prLockModal {
+  width: min(520px, 100%);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.55);
+  padding: 16px;
+  text-align: center;
+}
+
+.prLockKicker {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(246, 249, 255, 0.9);
+}
+
+.prLockTitle {
+  margin: 12px 0 0;
+  font-size: 26px;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: rgba(246, 249, 255, 0.95);
+}
+
+.prLockSub {
+  margin: 8px 0 0;
+  color: rgba(210, 220, 245, 0.72);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.prLockCountdown {
+  margin: 12px auto 0;
+  width: fit-content;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.prLockHint {
+  margin: 12px 0 12px;
+  color: rgba(210, 220, 245, 0.7);
+  font-size: 13px;
+}
+
+.prBtn--ghost {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(246, 249, 255, 0.92);
+  box-shadow: none;
+}
+
+.prLockModal .prBtn {
+  width: 100%;
+  max-width: 360px;
+  margin: 8px auto 0;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .prBtn--confirm:hover {
     transform: translateY(-1px);

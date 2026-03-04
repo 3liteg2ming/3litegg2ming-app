@@ -1,14 +1,40 @@
 :root {
-  --eg-header-h: 72px;
+  --eg-announce-h: 34px;
+  --eg-header-h: 104px;
+}
+
+.egAnnounceBar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: rgba(8, 10, 14, 0.72);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.egAnnounceBar__inner {
+  height: var(--eg-announce-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  color: rgba(230, 237, 255, 0.78);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.1;
 }
 
 .egTopHeader {
   position: sticky;
-  top: 0;
-  z-index: 999;
+  top: calc(env(safe-area-inset-top, 0px) + var(--eg-announce-h));
+  z-index: 900;
   width: 100%;
-  height: calc(var(--eg-header-h) + env(safe-area-inset-top, 0px));
-  padding-top: env(safe-area-inset-top, 0px);
+  height: var(--eg-header-h);
+  padding-top: 0;
 
   background:
     radial-gradient(900px 120px at 50% 115%, rgba(255, 255, 255, 0.06), transparent 62%),
@@ -173,10 +199,14 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 0;
 }
 
 /* ✅ Move the WHOLE center block up so it aligns with left pill + avatar */
 .egTopHeader__brand {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
   padding: 0;
   border: 0;
   background: transparent;
@@ -199,7 +229,7 @@
   width: auto;
   object-fit: contain;
 
-  transform: translateY(-16px) scale(1.06); /* keep your size, centered properly now */
+  transform: translateY(-16px) scale(1.06);
   transform-origin: center;
 
   filter:
@@ -234,6 +264,11 @@
 }
 
 @media (max-width: 420px) {
+  :root {
+    --eg-announce-h: 32px;
+    --eg-header-h: 96px;
+  }
+
   .egTopHeader__inner {
     padding: 0 10px;
   }
@@ -251,6 +286,8 @@
     height: 118px;
     transform: translateY(-16px) scale(1.06);
   }
+
+  .egAnnounceBar__inner { font-size: 11px; }
 }
 
 /* Preseason accent overrides (logic-only visual hook usage) */
