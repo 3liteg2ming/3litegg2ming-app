@@ -31,6 +31,9 @@ type ProfileRow = {
 type RegistrationRow = {
   user_id: string;
   season_slug?: string | null;
+  coach_name?: string | null;
+  psn_name?: string | null;
+  psn?: string | null;
   coach_display_name?: string | null;
   coach_psn?: string | null;
   pref_team_names?: string | string[] | null;
@@ -116,9 +119,61 @@ function assetKeyFromSlugOrName(slug: string, rawName: string): string {
   return n;
 }
 
-function normalizeLogoUrl(raw: string | null | undefined, slug: string | null | undefined, rawName: string): string {
-  const value = text(raw);
+const AFL_CANONICAL_KEYS = [
+  'adelaide',
+  'brisbane',
+  'carlton',
+  'collingwood',
+  'essendon',
+  'fremantle',
+  'geelong',
+  'goldcoast',
+  'gws',
+  'hawthorn',
+  'melbourne',
+  'northmelbourne',
+  'portadelaide',
+  'richmond',
+  'stkilda',
+  'sydney',
+  'westcoast',
+  'westernbulldogs',
+] as const;
 
+type CanonicalKey = (typeof AFL_CANONICAL_KEYS)[number];
+
+function canonicalTeamKey(slug: string | null | undefined, name: string | null | undefined): CanonicalKey | '' {
+  const s = text(slug).toLowerCase();
+  const n = text(name).toLowerCase();
+  const combined = `${s} ${n}`;
+
+  if (combined.includes('port-adelaide') || combined.includes('port adelaide')) return 'portadelaide';
+  if (combined.includes('north-melbourne') || combined.includes('north melbourne')) return 'northmelbourne';
+  if (combined.includes('western-bulldogs') || combined.includes('western bulldogs') || combined.includes('bulldogs')) return 'westernbulldogs';
+  if (combined.includes('gold-coast') || combined.includes('gold coast')) return 'goldcoast';
+  if (combined.includes('west-coast') || combined.includes('west coast')) return 'westcoast';
+  if (combined.includes('st-kilda') || combined.includes('st kilda')) return 'stkilda';
+  if (combined.includes('collingwood')) return 'collingwood';
+  if (combined.includes('carlton')) return 'carlton';
+  if (combined.includes('adelaide')) return 'adelaide';
+  if (combined.includes('brisbane')) return 'brisbane';
+  if (combined.includes('essendon')) return 'essendon';
+  if (combined.includes('fremantle')) return 'fremantle';
+  if (combined.includes('geelong')) return 'geelong';
+  if (combined.includes('gws') || combined.includes('greater western sydney')) return 'gws';
+  if (combined.includes('hawthorn')) return 'hawthorn';
+  if (combined.includes('melbourne') && !combined.includes('north')) return 'melbourne';
+  if (combined.includes('richmond')) return 'richmond';
+  if (combined.includes('sydney')) return 'sydney';
+  return '';
+}
+
+function normalizeLogoUrl(raw: string | null | undefined, slug: string | null | undefined, rawName: string): string {
+  const canonical = canonicalTeamKey(slug, rawName);
+  const primaryAssetLogo = text(getTeamAssets(canonical || rawName).logo);
+  if (primaryAssetLogo) return primaryAssetLogo;
+
+  const value = text(raw);
   if (value) {
     if (/^https?:\/\//i.test(value)) return value;
     if (value.startsWith('/storage/v1/object/public/')) {
@@ -187,15 +242,15 @@ function dedupeTeams(rows: TeamFetchRow[]): TeamFetchRow[] {
   const score = (r: TeamFetchRow) => {
     const hasLogo = Boolean(text(r.logo_url));
     const hasSlug = Boolean(text(r.slug));
+    const canonical = canonicalTeamKey(r.slug, r.name);
+    const canonicalWeight = canonical ? 1000 : 0;
     const nameLen = text(r.name).length;
-    return (hasLogo ? 100 : 0) + (hasSlug ? 10 : 0) + Math.min(nameLen, 50);
+    return canonicalWeight + (hasLogo ? 100 : 0) + (hasSlug ? 10 : 0) + Math.min(nameLen, 50);
   };
 
   rows.forEach((row) => {
-    const rawName = text(row.name);
-    const rawSlug = text(row.slug);
-    const display = rawName ? shortTeamName(rawName) : '';
-    const key = text(display || rawSlug || row.id).toLowerCase();
+    const canonical = canonicalTeamKey(row.slug, row.name);
+    const key = canonical || text(row.slug || row.name || row.id).toLowerCase();
     if (!key) return;
 
     const existing = byKey.get(key);
@@ -209,7 +264,8 @@ function dedupeTeams(rows: TeamFetchRow[]): TeamFetchRow[] {
     }
   });
 
-  return Array.from(byKey.values());
+  const ordered = Array.from(byKey.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  return ordered.map((entry) => entry[1]);
 }
 
 function seasonSlugCandidates(): string[] {
@@ -285,11 +341,14 @@ async function resolvePreseasonSeasonId(): Promise<string | null> {
   return null;
 }
 
-async function insertRegistration(userId: string, selectedTeamIds: string[]) {
+async function insertRegistration(userId: string, selectedTeamIds: string[], coachName: string, profilePsn: string) {
   const seasonId = await resolvePreseasonSeasonId();
 
   const payload = {
     user_id: userId,
+    coach_name: coachName,
+    psn: profilePsn,
+    psn_name: profilePsn,
     pref_team_ids: selectedTeamIds,
     pref_team_1: selectedTeamIds[0] ?? null,
     pref_team_2: selectedTeamIds[1] ?? null,
@@ -378,13 +437,16 @@ export default function PreseasonRegistrationPage() {
           })
           .filter((team): team is TeamRow => Boolean(team));
 
-        const seen = new Set<string>();
-        const finalRows = rows.filter((team) => {
-          const key = shortTeamName(team.name).toLowerCase();
-          if (seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        });
+        const sourceById = new Map(deduped.map((row) => [text(row.id), row]));
+        const canonicalRows = new Map<CanonicalKey, TeamRow>();
+        for (const team of rows) {
+          const source = sourceById.get(team.id);
+          const canonical = canonicalTeamKey(source?.slug || null, source?.name || team.name);
+          if (!canonical) continue;
+          if (!canonicalRows.has(canonical)) canonicalRows.set(canonical, team);
+        }
+
+        const finalRows = AFL_CANONICAL_KEYS.map((key) => canonicalRows.get(key)).filter((row): row is TeamRow => Boolean(row));
 
         setTeams(finalRows);
         if (import.meta.env.DEV && finalRows.length !== 18) {
@@ -489,8 +551,9 @@ export default function PreseasonRegistrationPage() {
     setSubmitting(true);
 
     try {
+      const coachName = signedInName;
       const nowIso = new Date().toISOString();
-      await insertRegistration(user.id, selectedTeamIds);
+      await insertRegistration(user.id, selectedTeamIds, coachName, profilePsn);
       const pretty = await loadPrettyRegistration(user.id);
       if (pretty) {
         setSubmittedSummary({
@@ -588,6 +651,11 @@ export default function PreseasonRegistrationPage() {
               />
 
               {inlineError ? <div className="prInlineError">{inlineError}</div> : null}
+              {inlineError && inlineError.toLowerCase().includes('add your psn in profile') ? (
+                <button type="button" className="prBtn prBtn--profile" onClick={() => navigate('/members')}>
+                  Go to Profile
+                </button>
+              ) : null}
 
               <button type="submit" className="prBtn prBtn--primary prBtn--confirm" disabled={submitting || !selectedTeamIds.length}>
                 {submitting ? 'Submitting…' : 'Confirm Registration'}

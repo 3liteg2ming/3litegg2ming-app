@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useState, type CSSProperties } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -91,17 +91,14 @@ function HomeRouteSafe() {
 
 function AppRoutes() {
   const location = useLocation();
-  const scrollRef = useRef<HTMLDivElement | null>(null);
-  const [navAutoHidden, setNavAutoHidden] = useState(false);
   const [globalCrash, setGlobalCrash] = useState<{ message: string; source: string } | null>(null);
 
   const isAdminRoute = location.pathname.startsWith('/admin');
 
-  const hideNav = location.pathname.startsWith('/auth/sign-in') || location.pathname.startsWith('/auth/sign-up') || isAdminRoute;
+  const hideNav = true;
   const hideTopHeader = isAdminRoute;
 
   useEffect(() => {
-    setNavAutoHidden(false);
     setGlobalCrash(null);
   }, [location.pathname]);
 
@@ -119,67 +116,11 @@ function AppRoutes() {
     };
   }, []);
 
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    let lastScrollTop = el.scrollTop;
-    let downDistance = 0;
-    let upDistance = 0;
-    let ticking = false;
-
-    const HIDE_THRESHOLD = 20;
-    const SHOW_THRESHOLD = 10;
-
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-
-      window.requestAnimationFrame(() => {
-        const currentTop = el.scrollTop;
-
-        if (currentTop <= 0) {
-          downDistance = 0;
-          upDistance = 0;
-          lastScrollTop = 0;
-          setNavAutoHidden(false);
-          ticking = false;
-          return;
-        }
-
-        const delta = currentTop - lastScrollTop;
-
-        if (Math.abs(delta) < 1) {
-          ticking = false;
-          return;
-        }
-
-        if (delta > 0) {
-          downDistance += delta;
-          upDistance = 0;
-          if (downDistance >= HIDE_THRESHOLD) setNavAutoHidden(true);
-        } else {
-          upDistance += Math.abs(delta);
-          downDistance = 0;
-          if (upDistance >= SHOW_THRESHOLD) setNavAutoHidden(false);
-        }
-
-        lastScrollTop = currentTop;
-        ticking = false;
-      });
-    };
-
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => {
-      el.removeEventListener('scroll', onScroll);
-    };
-  }, []);
-
   return (
     <>
       {!hideTopHeader ? <TopHeader /> : null}
 
-      <main ref={scrollRef} className="eg-content-scroll" role="main">
+      <main className="eg-content-scroll" role="main">
         {globalCrash ? (
           <PageCrashFallback
             title="Something went wrong"
@@ -241,6 +182,7 @@ function AppRoutes() {
                     </ProtectedRoute>
                   }
                 />
+                <Route path="/profile" element={<Navigate to="/members" replace />} />
 
                 <Route path="/pro-team" element={<ComingSoonPage />} />
                 <Route path="/admin" element={<AdminConsolePage />} />
@@ -256,7 +198,7 @@ function AppRoutes() {
         )}
       </main>
 
-      {!hideNav ? <BottomNav hidden={navAutoHidden} /> : null}
+      {!hideNav ? <BottomNav hidden={false} /> : null}
     </>
   );
 }
@@ -267,7 +209,17 @@ function AppShell() {
 
   return (
     <div className="eg-viewport">
-      <div className={`eg-device${isAdminRoute ? ' eg-device--admin' : ''}`} role="application" aria-label="Elite Gaming App">
+      <div
+        className={`eg-device${isAdminRoute ? ' eg-device--admin' : ''}`}
+        style={
+          {
+            '--bottom-nav-h': '0px',
+            '--eg-bottom-nav-height': '0px',
+          } as CSSProperties
+        }
+        role="application"
+        aria-label="Elite Gaming App"
+      >
         <QueryClientProvider client={queryClient}>
           <AppRoutes />
         </QueryClientProvider>

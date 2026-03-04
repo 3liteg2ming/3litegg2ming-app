@@ -35,6 +35,12 @@
   color: rgba(214, 224, 244, 0.42);
 }
 
+@media (max-width: 820px), (pointer: coarse) {
+  .auth-input {
+    font-size: 16px;
+  }
+}
+
 .auth-inputWrap {
   transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
 }
