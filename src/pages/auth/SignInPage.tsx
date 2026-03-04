@@ -24,6 +24,20 @@ function toFriendlyAuthMessage(message: string): { title: string; detail: string
     };
   }
 
+  if (lower.includes('missing vite_supabase_url') || lower.includes('missing vite_supabase_anon_key') || lower.includes('app misconfigured')) {
+    return {
+      title: 'App misconfigured: missing server keys. Please contact support.',
+      detail: raw,
+    };
+  }
+
+  if (lower.includes('could not reach server')) {
+    return {
+      title: 'Could not reach server. Please try again.',
+      detail: raw,
+    };
+  }
+
   return {
     title: 'Could not sign in right now.',
     detail: raw || 'Please try again in a moment.',

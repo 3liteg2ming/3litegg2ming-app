@@ -1,9 +1,6 @@
 import { ChevronLeft, Eye, EyeOff, Gamepad2, Lock, Mail, UserRound } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-
-const supabase = requireSupabaseClient();
-
 import { requireSupabaseClient } from '../../lib/supabaseClient';
 import { useAuth } from '../../state/auth/AuthProvider';
 import '../../styles/auth-premium.css';
@@ -45,6 +42,13 @@ function toFriendlyCreateMessage(message: string): { title: string; detail: stri
     };
   }
 
+  if (lower.includes('missing vite_supabase_url') || lower.includes('missing vite_supabase_anon_key') || lower.includes('app misconfigured')) {
+    return {
+      title: 'App misconfigured: missing server keys. Please contact support.',
+      detail: raw,
+    };
+  }
+
   return {
     title: 'Could not create account right now.',
     detail: raw || 'Please try again in a moment.',
@@ -52,6 +56,7 @@ function toFriendlyCreateMessage(message: string): { title: string; detail: stri
 }
 
 async function upsertProfileForUser(args: {
+  supabase: ReturnType<typeof requireSupabaseClient>;
   userId?: string;
   email: string;
   firstName: string;
@@ -59,6 +64,7 @@ async function upsertProfileForUser(args: {
   displayName: string;
   psn: string;
 }): Promise<string[]> {
+  const { supabase } = args;
   const userId = String(args.userId || '').trim();
   if (!userId) return ['Missing user id from signup response.'];
 
@@ -88,6 +94,7 @@ async function upsertProfileForUser(args: {
 }
 
 async function ensureProfileExists(userId: string): Promise<void> {
+  const supabase = requireSupabaseClient();
   const check = await supabase.from('profiles').select('user_id').eq('user_id', userId).maybeSingle();
   if (!check.error && check.data?.user_id) return;
   const fallback = await supabase.from('eg_profiles').select('user_id').eq('user_id', userId).maybeSingle();
@@ -164,6 +171,7 @@ export default function SignUpPage() {
 
     setSubmitting(true);
     try {
+      const supabase = requireSupabaseClient();
       const createdUser = await signUp({
         email: trimmedEmail,
         password,
@@ -175,6 +183,7 @@ export default function SignUpPage() {
 
       const profileFailures: string[] = [];
       await upsertProfileForUser({
+        supabase,
         userId: createdUser?.id,
         email: trimmedEmail,
         firstName: cleanFirst,
@@ -189,6 +198,7 @@ export default function SignUpPage() {
         } catch (missingErr) {
           console.error('[SignUp] profile check failed, retrying upsert', missingErr);
           const retryFailures = await upsertProfileForUser({
+            supabase,
             userId: createdUser.id,
             email: trimmedEmail,
             firstName: cleanFirst,

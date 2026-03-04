@@ -3,7 +3,6 @@ import type { AuthState, CoachUser } from './types';
 import type { TeamKey } from '../../lib/teamAssets';
 import { buildAuthRedirect } from '../../lib/authRedirect';
 import { getSupabaseClient, hasSupabaseEnv, requireSupabaseClient } from '../../lib/supabaseClient';
-import { mockGetUser, mockSignIn, mockSignOut, mockSignUp } from './mockAuth';
 
 type AuthContextValue = AuthState & {
   signIn: (args: { email: string; password: string }) => Promise<void>;
@@ -22,6 +21,28 @@ type AuthContextValue = AuthState & {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 const AUTH_TIMEOUT_MS = 10_000;
+const SIGN_IN_TIMEOUT_MS = 25_000;
+const SUPABASE_ENV_ERROR = 'App misconfigured: missing server keys. Please contact support.';
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim() || '';
+const SUPABASE_ANON_PRESENT = Boolean((import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim());
+
+function isDebugEnabled(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.localStorage.getItem('eg_debug') === '1';
+  } catch {
+    return false;
+  }
+}
+
+function debugLog(event: string, payload?: Record<string, unknown>) {
+  if (!isDebugEnabled()) return;
+  if (payload) {
+    console.info(`[EG DEBUG][auth] ${event}`, payload);
+  } else {
+    console.info(`[EG DEBUG][auth] ${event}`);
+  }
+}
 
 function toCoachUserFromSupabase(raw: any): CoachUser | null {
   if (!raw) return null;
@@ -45,19 +66,32 @@ function cleanText(value: unknown): string {
 function toLoggableError(error: unknown) {
   const err = error as any;
   return {
+    name: err?.name,
     code: err?.code,
     status: err?.status,
     message: err?.message || String(error || ''),
+    stack: err?.stack,
     details: err?.details,
     hint: err?.hint,
+    timeout: Boolean(err?.timeout),
   };
+}
+
+class AuthTimeoutError extends Error {
+  timeout: boolean;
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'AuthTimeoutError';
+    this.timeout = true;
+  }
 }
 
 async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
   let timeoutId: number | undefined;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutId = window.setTimeout(() => {
-      reject(new Error(message));
+      reject(new AuthTimeoutError(message));
     }, timeoutMs);
   });
 
@@ -66,6 +100,33 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: s
   } finally {
     if (timeoutId !== undefined) window.clearTimeout(timeoutId);
   }
+}
+
+function isReachabilityError(error: unknown): boolean {
+  const message = String((error as any)?.message || '').toLowerCase();
+  return (
+    message.includes('could not reach server') ||
+    message.includes('failed to fetch') ||
+    message.includes('network request failed') ||
+    message.includes('networkerror')
+  );
+}
+
+function logBootstrapError(error: unknown) {
+  const err = error as any;
+  const payload = {
+    name: err?.name,
+    message: err?.message || String(error || ''),
+    stack: err?.stack,
+    status: err?.status,
+    code: err?.code,
+    details: err?.details,
+    hint: err?.hint,
+    timeout: Boolean(err?.timeout),
+  };
+
+  console.error('[Auth.refresh] bootstrap failed', payload);
+  debugLog('boot.failed', payload);
 }
 
 async function ensureProfileFromAuthUser(supabase: ReturnType<typeof getSupabaseClient>, authUser: any | null) {
@@ -122,6 +183,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loading = booting || actionLoading;
 
   async function refresh() {
+    debugLog('boot.start', {
+      hasSupabaseEnv,
+      isSupabase,
+      supabaseUrl: SUPABASE_URL,
+      hasAnonKey: SUPABASE_ANON_PRESENT,
+    });
     setBooting(true);
     try {
       if (isSupabase) {
@@ -131,20 +198,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } = await withTimeout(
           supabase!.auth.getSession(),
           AUTH_TIMEOUT_MS,
-          'Could not reach the server. Please try again.',
+          'Could not reach server. Please try again.',
         );
         if (sessionError) {
+          debugLog('boot.session.error', toLoggableError(sessionError));
           throw sessionError;
         }
         if (!session) {
+          debugLog('boot.session.none');
           setUser(null);
         } else {
+          debugLog('boot.session.found');
           const { data, error } = await withTimeout(
             supabase!.auth.getUser(),
             AUTH_TIMEOUT_MS,
-            'Could not reach the server. Please try again.',
+            'Could not reach server. Please try again.',
           );
           if (error) {
+            debugLog('boot.user.error', toLoggableError(error));
             setUser(null);
           } else {
             await ensureProfileFromAuthUser(supabase, data.user);
@@ -152,22 +223,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } else {
-        setUser(mockGetUser());
+        debugLog('boot.env.missing');
+        setUser(null);
       }
     } catch (error) {
-      console.error('[Auth.refresh] bootstrap failed', toLoggableError(error));
+      logBootstrapError(error);
       setUser(null);
     } finally {
       setBooting(false);
+      debugLog('boot.end');
     }
   }
 
   useEffect(() => {
+    debugLog('provider.init', { hasSupabaseEnv, isSupabase });
     refresh();
 
     if (!isSupabase) return;
 
     const { data: sub } = supabase!.auth.onAuthStateChange(async (_event, session) => {
+      debugLog('auth.state.change', { event: _event, hasSession: Boolean(session) });
       await ensureProfileFromAuthUser(supabase, session?.user || null);
       setUser(toCoachUserFromSupabase(session?.user));
       setBooting(false);
@@ -180,26 +255,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function signIn(args: { email: string; password: string }) {
+    debugLog('signin.start');
     setActionLoading(true);
     try {
-      if (isSupabase) {
-        const { data, error } = await withTimeout(
+      if (!isSupabase) {
+        throw new Error(SUPABASE_ENV_ERROR);
+      }
+      let data: any = null;
+      let error: any = null;
+      try {
+        const response = await withTimeout(
           supabase!.auth.signInWithPassword({
             email: args.email,
             password: args.password,
           }),
-          AUTH_TIMEOUT_MS,
-          'Could not reach the server. Please try again.',
+          SIGN_IN_TIMEOUT_MS,
+          'Could not reach server. Please try again.',
         );
-        if (error) throw error;
-        await ensureProfileFromAuthUser(supabase, data.user);
-        setUser(toCoachUserFromSupabase(data.user));
-      } else {
-        const u = await mockSignIn(args);
-        setUser(u);
+        data = response.data;
+        error = response.error;
+      } catch (firstErr) {
+        if (!isReachabilityError(firstErr)) {
+          throw firstErr;
+        }
+        debugLog('signin.retry', { reason: String((firstErr as any)?.message || 'network timeout') });
+        const response = await withTimeout(
+          supabase!.auth.signInWithPassword({
+            email: args.email,
+            password: args.password,
+          }),
+          SIGN_IN_TIMEOUT_MS,
+          'Could not reach server. Please try again.',
+        );
+        data = response.data;
+        error = response.error;
       }
+
+      if (error) throw error;
+      await ensureProfileFromAuthUser(supabase, data.user);
+      setUser(toCoachUserFromSupabase(data.user));
+      debugLog('signin.success', { hasUser: Boolean(data.user) });
+    } catch (error) {
+      debugLog('signin.failed', toLoggableError(error));
+      throw error;
     } finally {
       setActionLoading(false);
+      debugLog('signin.end');
     }
   }
 
@@ -212,54 +313,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     lastName?: string;
     teamKey?: TeamKey;
   }): Promise<CoachUser | null> {
+    debugLog('signup.start');
     setActionLoading(true);
     try {
-      if (isSupabase) {
-        const { data, error } = await supabase!.auth.signUp({
-          email: args.email,
-          password: args.password,
-          options: {
-            emailRedirectTo: buildAuthRedirect('/auth/callback'),
-            data: {
-              first_name: args.firstName,
-              last_name: args.lastName,
-              display_name: args.displayName,
-              psn: args.psn,
-              team_key: args.teamKey,
-            },
-          },
-        });
-        if (error) {
-          console.error('[Auth.signUp] Supabase error', {
-            code: (error as any)?.code,
-            message: error.message,
-            status: (error as any)?.status,
-            name: (error as any)?.name,
-          });
-          throw error;
-        }
-        await ensureProfileFromAuthUser(supabase, data.user);
-        const next = toCoachUserFromSupabase(data.user);
-        setUser(next);
-        return next;
+      if (!isSupabase) {
+        throw new Error(SUPABASE_ENV_ERROR);
       }
-
-      const u = await mockSignUp(args);
-      setUser(u);
-      return u;
+      const { data, error } = await supabase!.auth.signUp({
+        email: args.email,
+        password: args.password,
+        options: {
+          emailRedirectTo: buildAuthRedirect('/auth/callback'),
+          data: {
+            first_name: args.firstName,
+            last_name: args.lastName,
+            display_name: args.displayName,
+            psn: args.psn,
+            team_key: args.teamKey,
+          },
+        },
+      });
+      if (error) {
+        console.error('[Auth.signUp] Supabase error', {
+          code: (error as any)?.code,
+          message: error.message,
+          status: (error as any)?.status,
+          name: (error as any)?.name,
+        });
+        throw error;
+      }
+      await ensureProfileFromAuthUser(supabase, data.user);
+      const next = toCoachUserFromSupabase(data.user);
+      setUser(next);
+      debugLog('signup.success', { hasUser: Boolean(next) });
+      return next;
+    } catch (error) {
+      debugLog('signup.failed', toLoggableError(error));
+      throw error;
     } finally {
       setActionLoading(false);
+      debugLog('signup.end');
     }
   }
 
   async function signOut() {
     setActionLoading(true);
     try {
-      if (isSupabase) {
-        await supabase!.auth.signOut();
-      } else {
-        await mockSignOut();
-      }
+      if (!isSupabase) throw new Error(SUPABASE_ENV_ERROR);
+      await supabase!.auth.signOut();
       setUser(null);
     } finally {
       setActionLoading(false);
