@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+const supabase = requireSupabaseClient();
+
 import RegistrationHeroCard from '../components/RegistrationHeroCard';
 import TeamLogoGrid from '../components/TeamLogoGrid';
 import { resolveGamerTag } from '../lib/gamerTag';
 import { getTeamAssets } from '../lib/teamAssets';
 import { useAuth } from '../state/auth/AuthProvider';
-import { supabase } from '../lib/supabaseClient';
+import { requireSupabaseClient } from '../lib/supabaseClient';
 import '../styles/preseason-registration.css';
 
 type TeamRow = {
@@ -376,6 +378,7 @@ async function insertRegistration(args: {
     user_id: args.userId,
     coach_name: args.coachName,
     psn: args.coachPsn,
+    // Backward compatibility for legacy views/functions still reading psn_name.
     psn_name: args.coachPsn,
     pref_team_ids: args.selectedTeamIds,
     pref_team_1: args.selectedTeamIds[0] ?? null,
@@ -672,21 +675,19 @@ export default function PreseasonRegistrationPage() {
       return;
     }
 
-    const freshProfile = await loadProfile(user.id).catch(() => null);
+    const freshProfile = await loadProfile(user.id).catch((error) => {
+      console.error('[EG CRASH] Registration profile refresh failed', error);
+      return null;
+    });
     const authUserRes = await supabase.auth.getUser();
     const freshAuthUser = (authUserRes.data?.user as unknown as AuthMetaUser) || null;
-    setProfile(freshProfile);
+    if (freshProfile) setProfile(freshProfile);
     setAuthMetaUser(freshAuthUser);
 
-    if (!freshProfile) {
-      setProfileLoadError('We could not load your profile right now.');
-      setInlineError('Profile is still syncing. Retry in a moment.');
-      return;
-    }
-    setProfileLoadError(null);
+    setProfileLoadError(freshProfile ? null : 'We could not refresh your profile right now. Using last known profile data.');
 
     const resolvedTag = resolveGamerTag({
-      profile: freshProfile,
+      profile: freshProfile || profile,
       user: (freshAuthUser || { psn: user?.psn, user_metadata: { psn: user?.psn } }) as AuthMetaUser,
     });
 
@@ -704,8 +705,8 @@ export default function PreseasonRegistrationPage() {
       await insertRegistration({
         userId: user.id,
         selectedTeamIds,
-        coachName:
-          text(freshProfile.display_name) ||
+          coachName:
+          text(freshProfile?.display_name || profile?.display_name) ||
           text(freshAuthUser?.user_metadata?.display_name) ||
           text(freshAuthUser?.user_metadata?.name) ||
           signedInName,

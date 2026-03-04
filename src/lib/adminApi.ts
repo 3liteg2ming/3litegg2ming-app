@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+import { requireSupabaseClient } from './supabaseClient';
 import type {
   AdminAuditLog,
   AdminCompetition,
@@ -18,6 +18,8 @@ import type {
   EgRole,
   StorageObjectItem,
 } from './adminTypes';
+
+const supabase = requireSupabaseClient();
 
 const ADMIN_ERROR_MESSAGE = 'Admin privileges required';
 

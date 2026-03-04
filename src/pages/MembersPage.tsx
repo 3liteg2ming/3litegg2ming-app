@@ -2,6 +2,8 @@ import { ChevronLeft, Gamepad2, KeyRound, Mail, Shield, Trophy } from 'lucide-re
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const supabase = requireSupabaseClient();
+
 import BadgeGrid from '../components/BadgeGrid';
 import BadgeModal from '../components/BadgeModal';
 import SmartImg from '../components/SmartImg';
@@ -10,7 +12,7 @@ import { getAfl26RoundsFromSupabase, type AflMatch, type AflRound } from '../dat
 import { fetchCoachBadges, groupCoachBadgesByCategory, type CoachBadgeModel } from '../lib/badges';
 import { getStoredCompetitionKey, getUiCompetition } from '../lib/competitionRegistry';
 import { resolveGamerTag } from '../lib/gamerTag';
-import { supabase } from '../lib/supabaseClient';
+import { requireSupabaseClient } from '../lib/supabaseClient';
 import { TEAM_ASSETS, assetUrl, type TeamKey } from '../lib/teamAssets';
 import { useAuth } from '../state/auth/AuthProvider';
 

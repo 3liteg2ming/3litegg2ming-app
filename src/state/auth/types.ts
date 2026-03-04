@@ -12,6 +12,11 @@ export type CoachUser = {
 
 export type AuthState = {
   user: CoachUser | null;
+  // Initial session/user bootstrap loading.
+  booting: boolean;
+  // Active auth action loading (sign in/up/out).
+  actionLoading: boolean;
+  // Backward compatible aggregate loading flag.
   loading: boolean;
   // Indicates whether Supabase env vars are present and we are using Supabase auth.
   isSupabase: boolean;

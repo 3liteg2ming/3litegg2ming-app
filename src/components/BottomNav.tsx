@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { BarChart3, CalendarDays, Home, Trophy, Upload } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
 
-import { hasSupabaseEnv, supabase } from '../lib/supabaseClient';
+import { hasSupabaseEnv, requireSupabaseClient } from '../lib/supabaseClient';
 import '../styles/bottomNav.css';
 
 type NavItem = {
@@ -74,11 +74,12 @@ export default function BottomNav({ hidden = false }: { hidden?: boolean }) {
     let alive = true;
 
     (async () => {
+      const supabase = requireSupabaseClient();
       const { data } = await supabase.auth.getSession();
       if (!alive) return;
       setSession(data.session ?? null);
 
-      const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      const { data: sub } = supabase.auth.onAuthStateChange((_event: string, newSession: Session | null) => {
         setSession(newSession ?? null);
       });
 

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import type { AuthState, CoachUser } from './types';
 import type { TeamKey } from '../../lib/teamAssets';
 import { buildAuthRedirect } from '../../lib/authRedirect';
-import { getSupabaseClient, hasSupabaseEnv } from './supabaseClient';
+import { getSupabaseClient, hasSupabaseEnv } from '../../lib/supabaseClient';
 import { mockGetUser, mockSignIn, mockSignOut, mockSignUp } from './mockAuth';
 
 type AuthContextValue = AuthState & {
@@ -21,6 +21,7 @@ type AuthContextValue = AuthState & {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const AUTH_TIMEOUT_MS = 10_000;
 
 function toCoachUserFromSupabase(raw: any): CoachUser | null {
   if (!raw) return null;
@@ -41,6 +42,32 @@ function cleanText(value: unknown): string {
   return String(value ?? '').trim();
 }
 
+function toLoggableError(error: unknown) {
+  const err = error as any;
+  return {
+    code: err?.code,
+    status: err?.status,
+    message: err?.message || String(error || ''),
+    details: err?.details,
+    hint: err?.hint,
+  };
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+  let timeoutId: number | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = window.setTimeout(() => {
+      reject(new Error(message));
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+  }
+}
+
 async function ensureProfileFromAuthUser(supabase: ReturnType<typeof getSupabaseClient>, authUser: any | null) {
   if (!supabase || !authUser?.id) return;
 
@@ -49,12 +76,12 @@ async function ensureProfileFromAuthUser(supabase: ReturnType<typeof getSupabase
   const lastName = cleanText(meta.last_name || meta.lastName);
   const displayName =
     cleanText(meta.display_name || meta.displayName) || cleanText(`${firstName} ${lastName}`) || cleanText(authUser.email).split('@')[0];
-  const gamerTag = cleanText(meta.gamer_tag || meta.gamertag || meta.psn || meta.psn_name);
+  const gamerTag = cleanText(meta.psn || meta.gamer_tag || meta.gamertag || meta.psn_name);
 
   try {
     const { data, error } = await supabase.from('profiles').select('user_id,psn').eq('user_id', authUser.id).maybeSingle();
     if (error) {
-      console.error('[AuthBootstrap] profiles select failed', error);
+      console.error('[AuthBootstrap] profiles select failed', toLoggableError(error));
     }
 
     const existingPsn = cleanText(data?.psn);
@@ -73,41 +100,65 @@ async function ensureProfileFromAuthUser(supabase: ReturnType<typeof getSupabase
 
     const profileUpsert = await supabase.from('profiles').upsert(payload, { onConflict: 'user_id' });
     if (profileUpsert.error) {
-      console.error('[AuthBootstrap] profiles upsert failed', profileUpsert.error);
+      console.error('[AuthBootstrap] profiles upsert failed', toLoggableError(profileUpsert.error));
     }
 
     const egUpsert = await supabase.from('eg_profiles').upsert(payload, { onConflict: 'user_id' });
     if (egUpsert.error) {
-      console.error('[AuthBootstrap] eg_profiles upsert failed', egUpsert.error);
+      console.error('[AuthBootstrap] eg_profiles upsert failed', toLoggableError(egUpsert.error));
     }
   } catch (err) {
-    console.error('[AuthBootstrap] ensureProfileFromAuthUser failed', err);
+    console.error('[AuthBootstrap] ensureProfileFromAuthUser failed', toLoggableError(err));
   }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = useMemo(() => getSupabaseClient(), []);
   const [user, setUser] = useState<CoachUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [booting, setBooting] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const isSupabase = Boolean(supabase && hasSupabaseEnv);
+  const loading = booting || actionLoading;
 
   async function refresh() {
-    setLoading(true);
+    setBooting(true);
     try {
       if (isSupabase) {
-        const { data, error } = await supabase!.auth.getUser();
-        if (error) {
+        const {
+          data: { session },
+          error: sessionError,
+        } = await withTimeout(
+          supabase!.auth.getSession(),
+          AUTH_TIMEOUT_MS,
+          'Could not reach the server. Please try again.',
+        );
+        if (sessionError) {
+          throw sessionError;
+        }
+        if (!session) {
           setUser(null);
         } else {
-          await ensureProfileFromAuthUser(supabase, data.user);
-          setUser(toCoachUserFromSupabase(data.user));
+          const { data, error } = await withTimeout(
+            supabase!.auth.getUser(),
+            AUTH_TIMEOUT_MS,
+            'Could not reach the server. Please try again.',
+          );
+          if (error) {
+            setUser(null);
+          } else {
+            await ensureProfileFromAuthUser(supabase, data.user);
+            setUser(toCoachUserFromSupabase(data.user));
+          }
         }
       } else {
         setUser(mockGetUser());
       }
+    } catch (error) {
+      console.error('[Auth.refresh] bootstrap failed', toLoggableError(error));
+      setUser(null);
     } finally {
-      setLoading(false);
+      setBooting(false);
     }
   }
 
@@ -119,7 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: sub } = supabase!.auth.onAuthStateChange(async (_event, session) => {
       await ensureProfileFromAuthUser(supabase, session?.user || null);
       setUser(toCoachUserFromSupabase(session?.user));
-      setLoading(false);
+      setBooting(false);
     });
 
     return () => {
@@ -129,13 +180,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function signIn(args: { email: string; password: string }) {
-    setLoading(true);
+    setActionLoading(true);
     try {
       if (isSupabase) {
-        const { data, error } = await supabase!.auth.signInWithPassword({
-          email: args.email,
-          password: args.password,
-        });
+        const { data, error } = await withTimeout(
+          supabase!.auth.signInWithPassword({
+            email: args.email,
+            password: args.password,
+          }),
+          AUTH_TIMEOUT_MS,
+          'Could not reach the server. Please try again.',
+        );
         if (error) throw error;
         await ensureProfileFromAuthUser(supabase, data.user);
         setUser(toCoachUserFromSupabase(data.user));
@@ -144,7 +199,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(u);
       }
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   }
 
@@ -157,7 +212,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     lastName?: string;
     teamKey?: TeamKey;
   }): Promise<CoachUser | null> {
-    setLoading(true);
+    setActionLoading(true);
     try {
       if (isSupabase) {
         const { data, error } = await supabase!.auth.signUp({
@@ -170,9 +225,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               last_name: args.lastName,
               display_name: args.displayName,
               psn: args.psn,
-              gamer_tag: args.psn,
-              gamertag: args.psn,
-              psn_name: args.psn,
               team_key: args.teamKey,
             },
           },
@@ -196,12 +248,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(u);
       return u;
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   }
 
   async function signOut() {
-    setLoading(true);
+    setActionLoading(true);
     try {
       if (isSupabase) {
         await supabase!.auth.signOut();
@@ -210,12 +262,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setUser(null);
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   }
 
   const value: AuthContextValue = {
     user,
+    booting,
+    actionLoading,
     loading,
     isSupabase,
     signIn,

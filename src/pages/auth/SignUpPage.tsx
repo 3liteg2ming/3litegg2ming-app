@@ -2,7 +2,9 @@ import { ChevronLeft, Eye, EyeOff, Gamepad2, Lock, Mail, UserRound } from 'lucid
 import { useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 
-import { supabase } from '../../lib/supabaseClient';
+const supabase = requireSupabaseClient();
+
+import { requireSupabaseClient } from '../../lib/supabaseClient';
 import { useAuth } from '../../state/auth/AuthProvider';
 import '../../styles/auth-premium.css';
 

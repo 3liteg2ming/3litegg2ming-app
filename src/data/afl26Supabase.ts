@@ -1,5 +1,7 @@
-import { supabase } from '../lib/supabaseClient';
+import { requireSupabaseClient } from '../lib/supabaseClient';
 import { getDataSeasonSlugForCompetition, getStoredCompetitionKey } from '../lib/competitionRegistry';
+
+const supabase = requireSupabaseClient();
 
 export type ScoreLine = { total: number; goals: number; behinds: number };
 

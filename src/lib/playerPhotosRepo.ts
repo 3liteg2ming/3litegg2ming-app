@@ -1,4 +1,6 @@
-import { supabase } from './supabaseClient';
+import { requireSupabaseClient } from './supabaseClient';
+
+const supabase = requireSupabaseClient();
 
 interface EGPlayer {
   id?: string;

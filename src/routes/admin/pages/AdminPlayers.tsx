@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { listPlayers, listTeams } from '@/lib/adminApi';
-import { supabase } from '@/lib/supabaseClient';
+import { requireSupabaseClient } from '@/lib/supabaseClient';
 import { useAdminLayoutContext } from '../AdminLayout';
 import { useDebouncedValue, usePagination } from '../useAdminTools';
 import { AdminCard, EmptyState, Pager } from './AdminUi';
+
+const supabase = requireSupabaseClient();
 
 const PAGE_SIZE = 25;
 

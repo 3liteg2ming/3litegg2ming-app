@@ -10,10 +10,12 @@ import {
 } from '@/types/stats2';
 import { fetchAflPlayers } from '@/data/aflPlayers';
 import { assetUrl, getTeamAssets } from '@/lib/teamAssets';
-import { supabase } from '@/lib/supabaseClient';
+import { requireSupabaseClient } from '@/lib/supabaseClient';
 import { usePlayerPhotos } from '@/lib/usePlayerPhoto';
 import type { StatLeaderCategory } from '@/lib/stats-leaders-cache';
 import '@/styles/stats-home.css';
+
+const supabase = requireSupabaseClient();
 
 /* ── helpers ── */
 const getInitials = (name: string) =>

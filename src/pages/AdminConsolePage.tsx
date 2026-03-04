@@ -13,8 +13,10 @@ import {
   Wrench,
 } from 'lucide-react';
 
-import { supabase } from '../lib/supabaseClient';
+import { requireSupabaseClient } from '../lib/supabaseClient';
 import '../styles/admin-console.css';
+
+const supabase = requireSupabaseClient();
 
 type AdminTab = 'overview' | 'fixtures' | 'users' | 'registrations' | 'diagnostics';
 type CompetitionKey = 'preseason' | 'afl26';

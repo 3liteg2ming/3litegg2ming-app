@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from './supabaseClient';
+import { requireSupabaseClient } from './supabaseClient';
+
+const supabase = requireSupabaseClient();
 
 type FeatureFlagRow = {
   key: string;

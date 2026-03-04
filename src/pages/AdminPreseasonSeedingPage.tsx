@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, CheckCircle2, Loader2, Play, ShieldCheck, Save } from 'lucide-react';
 import { useAuth } from '../state/auth/AuthProvider';
 import { isUserAdmin } from '../lib/profileRepo';
-import { supabase } from '../lib/supabaseClient';
+import { requireSupabaseClient } from '../lib/supabaseClient';
 import '../styles/admin-preseason-seeding.css';
+
+const supabase = requireSupabaseClient();
 
 type TeamRow = {
   id: string;

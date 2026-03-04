@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Filter } from 'lucide-react';
 
+const supabase = requireSupabaseClient();
+
 import FixturePosterCard, { type FixturePosterMatch } from '../components/FixturePosterCard';
 import { FixtureSkeletons } from '../components/FixtureSkeleton';
 import FixturesCompetitionSheet from '../components/fixtures/FixturesCompetitionSheet';
@@ -15,7 +17,7 @@ import {
   type CompetitionKey,
 } from '../lib/competitionRegistry';
 import { resolveTeamKey } from '../lib/entityResolvers';
-import { supabase } from '../lib/supabaseClient';
+import { requireSupabaseClient } from '../lib/supabaseClient';
 
 import '../styles/Fixtures.css';
 

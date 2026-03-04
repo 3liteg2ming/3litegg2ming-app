@@ -42,7 +42,7 @@ function sanitizeRedirectPath(input: unknown): string {
 export default function SignInPage() {
   const nav = useNavigate();
   const location = useLocation() as any;
-  const { signIn, user, loading } = useAuth();
+  const { signIn, user, loading, booting, actionLoading } = useAuth();
 
   const redirectTo = useMemo(() => sanitizeRedirectPath(location?.state?.from), [location]);
   const [email, setEmail] = useState('');
@@ -55,7 +55,7 @@ export default function SignInPage() {
   const trimmedEmail = email.trim();
   const emailValid = EMAIL_RE.test(trimmedEmail);
   const passwordValid = password.length >= 8;
-  const canSubmit = emailValid && passwordValid && !submitting && !loading;
+  const canSubmit = emailValid && passwordValid && !submitting && !actionLoading;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -129,7 +129,7 @@ export default function SignInPage() {
                 placeholder="Email address"
                 autoComplete="email"
                 required
-                disabled={submitting || loading}
+                disabled={submitting || actionLoading}
               />
             </div>
             {email.length > 0 && !emailValid ? (
@@ -149,14 +149,14 @@ export default function SignInPage() {
                 placeholder="Password"
                 autoComplete="current-password"
                 required
-                disabled={submitting || loading}
+                disabled={submitting || actionLoading}
               />
               <button
                 type="button"
                 className="auth-eye"
                 onClick={() => setShowPassword((s) => !s)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
-                disabled={submitting || loading}
+                disabled={submitting || actionLoading}
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -176,8 +176,10 @@ export default function SignInPage() {
             </div>
           ) : null}
 
+          {booting ? <div className="auth-inlineHint">Checking your coach session…</div> : null}
+
           <button type="submit" className="auth-primary" disabled={!canSubmit}>
-            {submitting || loading ? 'Signing in…' : 'Sign in'}
+            {submitting || actionLoading ? 'Signing in…' : 'Sign in'}
           </button>
 
           <div className="auth-footerRow">

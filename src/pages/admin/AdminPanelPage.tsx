@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Search, Edit2, Save, X, Plus, RotateCw, AlertCircle } from 'lucide-react';
-import { supabase } from '../../lib/supabaseClient';
+import { requireSupabaseClient } from '../../lib/supabaseClient';
 import '../../styles/adminPanel.css';
+
+const supabase = requireSupabaseClient();
 
 type Tab = 'coaches' | 'teams' | 'fixtures' | 'submissions' | 'tools';
 

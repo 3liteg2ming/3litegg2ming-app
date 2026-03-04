@@ -1,4 +1,6 @@
-import { supabase } from '../lib/supabaseClient';
+import { requireSupabaseClient } from '../lib/supabaseClient';
+
+const supabase = requireSupabaseClient();
 
 export type AflPlayer = {
   id: string;

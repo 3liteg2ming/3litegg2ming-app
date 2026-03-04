@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, CalendarDays } from 'lucide-react';
 
+const supabase = requireSupabaseClient();
+
 import SmartImg from '@/components/SmartImg';
-import { supabase } from '@/lib/supabaseClient';
+import { requireSupabaseClient } from '@/lib/supabaseClient';
 import { getDataSeasonSlugForCompetition, getStoredCompetitionKey } from '@/lib/competitionRegistry';
 import { resolvePlayerDisplayName, resolvePlayerPhotoUrl, resolveTeamLogoUrl, resolveTeamName } from '@/lib/entityResolvers';
 

@@ -16,12 +16,14 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-import { supabase } from '../lib/supabaseClient';
+import { requireSupabaseClient } from '../lib/supabaseClient';
 import { fetchCoachProfile } from '../lib/profileRepo';
 import { TEAM_COLORS, TEAM_SHORT_NAMES } from '../data/teamColors';
 import { getDataSeasonSlugForCompetition, getStoredCompetitionKey } from '../lib/competitionRegistry';
 import { resolvePlayerDisplayName, resolvePlayerPhotoUrl, resolveTeamLogoUrl, resolveTeamName } from '@/lib/entityResolvers';
 import '../styles/submitPage.css';
+
+const supabase = requireSupabaseClient();
 
 type NextFixturePayload = {
   fixture: {

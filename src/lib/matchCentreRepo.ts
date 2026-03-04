@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabaseClient';
+import { requireSupabaseClient } from '@/lib/supabaseClient';
 import { getDataSeasonSlugForCompetition, getStoredCompetitionKey } from '@/lib/competitionRegistry';
 import { TEAM_ASSETS, type TeamKey } from '@/lib/teamAssets';
 import {
@@ -8,6 +8,8 @@ import {
   resolveTeamLogoUrl,
   resolveTeamName,
 } from '@/lib/entityResolvers';
+
+const supabase = requireSupabaseClient();
 
 type FixtureRow = {
   id: string;

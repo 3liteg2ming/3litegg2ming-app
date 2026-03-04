@@ -2,9 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import type { AdminProfile } from '@/lib/adminTypes';
-import { supabase } from '@/lib/supabaseClient';
+import { requireSupabaseClient } from '@/lib/supabaseClient';
 import { useAuth } from '@/state/auth/AuthProvider';
 import { isUserAdmin } from '@/lib/profileRepo';
+
+const supabase = requireSupabaseClient();
 
 let profileMemoryCache: AdminProfile | null = null;
 

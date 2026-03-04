@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { supabase } from '../../lib/supabaseClient';
+const supabase = requireSupabaseClient();
+
+import { requireSupabaseClient } from '../../lib/supabaseClient';
 import '../../styles/auth-premium.css';
 
 function sanitizePath(input: string | null): string | null {
