@@ -176,20 +176,41 @@ function _teamKeyFromNameOrKey(team: string): TeamKey {
   if ((TEAM_ASSETS as any)[maybeKey]) return maybeKey;
 
   const n = _normName(raw);
+  if (n.includes('port adelaide')) return 'portadelaide';
+  if (n.includes('north melbourne')) return 'northmelbourne';
+
   const entries = Object.entries(TEAM_ASSETS) as Array<[TeamKey, TeamAsset]>;
+
+  type Match = { key: TeamKey; score: number };
+  const matches: Match[] = [];
 
   for (const [k, v] of entries) {
     const candidates = [v.name, v.shortName, v.short, k]
       .filter((x): x is string => typeof x === 'string' && x.length > 0)
-      .map(_normName);
-    if (candidates.includes(n)) return k;
+      .map(_normName)
+      .filter(Boolean);
+
+    for (const candidate of candidates) {
+      if (!candidate) continue;
+      if (candidate === n) {
+        matches.push({ key: k, score: 1000 + candidate.length });
+        continue;
+      }
+      if (n.startsWith(candidate) || candidate.startsWith(n)) {
+        matches.push({ key: k, score: 700 + candidate.length });
+        continue;
+      }
+      if (n.includes(candidate) || candidate.includes(n)) {
+        matches.push({ key: k, score: 500 + candidate.length });
+      }
+    }
   }
-  for (const [k, v] of entries) {
-    const candidates = [v.name, v.shortName, v.short, k]
-      .filter((x): x is string => typeof x === 'string' && x.length > 0)
-      .map(_normName);
-    if (candidates.some((c) => c && (n.includes(c) || c.includes(n)))) return k;
+
+  if (matches.length > 0) {
+    matches.sort((a, b) => b.score - a.score);
+    return matches[0].key;
   }
+
   return maybeKey;
 }
 

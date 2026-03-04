@@ -1,0 +1,47 @@
+:root {
+  --eg-bg-0: #070A12;
+  --eg-bg-1: #0A1020;
+
+  --eg-card: rgba(255,255,255,0.06);
+  --eg-card-2: rgba(255,255,255,0.04);
+  --eg-border: rgba(255,255,255,0.12);
+
+  --eg-purple: #7C5CFF;
+  --eg-purple-2: #4A2BFF;
+
+  --eg-gold: #F5C400;
+  --eg-gold-2: #FFDD72;
+
+  --eg-text: rgba(246,249,255,0.94);
+  --eg-muted: rgba(210,220,240,0.72);
+
+  --eg-glow-purple: 0 18px 50px rgba(124,92,255,0.22);
+  --eg-glow-gold: 0 14px 36px rgba(245,196,0,0.26);
+
+  /* compatibility aliases used across existing files */
+  --eg-bg-2: #0B0B16;
+  --eg-surface-0: var(--eg-card);
+  --eg-surface-1: var(--eg-card-2);
+  --eg-border-0: var(--eg-border);
+  --eg-border-1: rgba(255,255,255,0.16);
+  --eg-accent: rgba(124,92,255,0.62);
+  --eg-accent-soft: rgba(124,92,255,0.22);
+  --eg-glow: rgba(124,92,255,0.18);
+  --eg-glow-strong: rgba(124,92,255,0.28);
+  --eg-gold-1: var(--eg-gold-2);
+  --eg-gold-shadow: rgba(245,196,0,0.28);
+  --eg-text-dim: var(--eg-muted);
+  --eg-text-faint: rgba(210,220,240,0.55);
+  --eg-shadow-0: rgba(0,0,0,0.35);
+  --eg-shadow-1: rgba(0,0,0,0.55);
+  --eg-shadow: 0 18px 50px rgba(0,0,0,0.45);
+  --eg-shadow-soft: 0 12px 30px rgba(0,0,0,0.4);
+  --eg-surface: var(--eg-card);
+  --eg-surface-2: rgba(12,16,28,0.84);
+  --eg-surface-3: rgba(16,20,36,0.72);
+  --eg-blur: 18px;
+  --eg-radius-sm: 12px;
+  --eg-radius: 18px;
+  --eg-radius-lg: 24px;
+  --eg-ring: 0 0 0 3px rgba(124,92,255,0.18);
+}

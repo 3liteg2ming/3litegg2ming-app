@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { AuthProvider } from './state/auth/AuthProvider';
 
+import './styles/tokens.css';
 import './styles/global.css';
 
 declare global {

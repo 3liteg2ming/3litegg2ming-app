@@ -343,21 +343,18 @@ async function resolvePreseasonSeasonId(): Promise<string | null> {
   return null;
 }
 
-async function insertRegistration(userId: string, selectedTeamIds: string[], coachName: string, profilePsn: string) {
+async function insertRegistration(userId: string, selectedTeamIds: string[]) {
   const seasonId = await resolvePreseasonSeasonId();
 
   const payload = {
     user_id: userId,
-    coach_name: coachName,
-    psn: profilePsn,
-    psn_name: profilePsn,
     pref_team_ids: selectedTeamIds,
     pref_team_1: selectedTeamIds[0] ?? null,
     pref_team_2: selectedTeamIds[1] ?? null,
     pref_team_3: selectedTeamIds[2] ?? null,
     pref_team_4: selectedTeamIds[3] ?? null,
     season_id: seasonId,
-    season_slug: 'preseason-2026',
+    season_slug: 'preseason',
   };
 
   const inserted = await supabase.from('eg_preseason_registrations').insert(payload);
@@ -430,8 +427,55 @@ export default function PreseasonRegistrationPage() {
   useEffect(() => {
     if (authLoading) return;
     if (!user?.id) {
-      navigate('/auth/sign-in', { replace: true, state: { from: '/preseason-registration' } });
-      return;
+      let alive = true;
+      (async () => {
+        setLoading(true);
+        setTeamsLoading(true);
+        try {
+          const teamsRes = await supabase.from('eg_teams').select('id,name,logo_url,slug').order('name', { ascending: true });
+          if (!alive) return;
+          if (teamsRes.error) throw new Error(teamsRes.error.message || 'Unable to load teams.');
+
+          const deduped = dedupeTeams((teamsRes.data || []) as TeamFetchRow[]);
+          const rows = deduped
+            .map((team) => {
+              const id = text(team.id);
+              const rawName = text(team.name);
+              if (!id || !rawName) return null;
+              return {
+                id,
+                slug: text(team.slug) || null,
+                name: shortTeamName(rawName),
+                logo_url: normalizeLogoUrl(team.logo_url || null, team.slug || null, rawName),
+              } as TeamRow;
+            })
+            .filter((team): team is TeamRow => Boolean(team));
+
+          const sourceById = new Map(deduped.map((row) => [text(row.id), row]));
+          const canonicalRows = new Map<CanonicalKey, TeamRow>();
+          for (const team of rows) {
+            const source = sourceById.get(team.id);
+            const canonical = canonicalTeamKey(source?.slug || null, source?.name || team.name);
+            if (!canonical) continue;
+            if (!canonicalRows.has(canonical)) canonicalRows.set(canonical, team);
+          }
+
+          const finalRows = AFL_CANONICAL_KEYS.map((key) => canonicalRows.get(key)).filter((row): row is TeamRow => Boolean(row));
+          setTeams(finalRows);
+        } catch (error: any) {
+          console.error('[EG CRASH] PreseasonRegistration team load failed', error);
+          if (!alive) return;
+          setFatalError(String(error?.message || 'Unable to load registration page.'));
+        } finally {
+          if (alive) {
+            setLoading(false);
+            setTeamsLoading(false);
+          }
+        }
+      })();
+      return () => {
+        alive = false;
+      };
     }
 
     let alive = true;
@@ -517,7 +561,7 @@ export default function PreseasonRegistrationPage() {
     return () => {
       alive = false;
     };
-  }, [authLoading, navigate, user?.id]);
+  }, [authLoading, user?.id]);
 
   const signedInName = useMemo(() => {
     const display = text(profile?.display_name);
@@ -586,9 +630,8 @@ export default function PreseasonRegistrationPage() {
     setSubmitting(true);
 
     try {
-      const coachName = signedInName;
       const nowIso = new Date().toISOString();
-      await insertRegistration(user.id, selectedTeamIds, coachName, profilePsn);
+      await insertRegistration(user.id, selectedTeamIds);
       const pretty = await loadPrettyRegistration(user.id);
       if (pretty) {
         setSubmittedSummary({
@@ -674,6 +717,7 @@ export default function PreseasonRegistrationPage() {
             <section className="prFormCard" id="pr-form">
               <form onSubmit={submitRegistration} className="prForm" noValidate>
                 <p className="prProgress">Signed in as {signedInName}</p>
+                <p className="prProgress">Your preseason team becomes your club for AFL26 Season Two.</p>
                 <p className="prGridHeading">Select up to 4 teams</p>
 
                 <TeamLogoGrid
@@ -688,7 +732,7 @@ export default function PreseasonRegistrationPage() {
 
                 {inlineError ? <div className="prInlineError">{inlineError}</div> : null}
                 {inlineError && inlineError.toLowerCase().includes('add your psn in profile') ? (
-                  <button type="button" className="prBtn prBtn--profile" onClick={() => navigate('/members')}>
+                  <button type="button" className="prBtn prBtn--profile" onClick={() => navigate('/profile')}>
                     Go to Profile
                   </button>
                 ) : null}

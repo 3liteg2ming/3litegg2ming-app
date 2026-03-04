@@ -1,58 +1,6 @@
-/* Global baseline so the whole app never “defaults to white” */
+/* Global baseline so the whole app never defaults to white */
 :root {
   color-scheme: dark;
-
-  /* ──────────────────────────────────────────────────────────────
-     Elite Gaming Theme Tokens (v1)
-     Goal: make every page feel like a premium AFL-style app shell.
-  ────────────────────────────────────────────────────────────── */
-  --eg-bg-0: #07070c;
-  --eg-bg-1: #0b0b16;
-  --eg-bg-2: #0a0a14;
-  --eg-surface-0: rgba(255, 255, 255, 0.045);
-  --eg-surface-1: rgba(255, 255, 255, 0.03);
-  --eg-border-0: rgba(255, 255, 255, 0.1);
-  --eg-border-1: rgba(255, 255, 255, 0.16);
-
-  --eg-text: rgba(246, 249, 255, 0.95);
-  --eg-muted: rgba(210, 220, 245, 0.72);
-  --eg-faint: rgba(210, 220, 245, 0.55);
-  --eg-text-dim: var(--eg-muted);
-  --eg-text-faint: var(--eg-faint);
-
-  --eg-accent: rgba(155, 105, 255, 0.62);
-  --eg-accent-soft: rgba(155, 105, 255, 0.22);
-  --eg-glow: rgba(155, 105, 255, 0.18);
-  --eg-glow-strong: rgba(155, 105, 255, 0.28);
-
-  --eg-gold: #F5C400;
-  --eg-gold-1: #FFDD72;
-  --eg-gold-2: #F5C400;
-  --eg-gold-shadow: rgba(245, 196, 0, 0.28);
-  --eg-blue: #2e8dff;
-  --eg-purple: #9a5cff;
-  --eg-green: #3dff7a;
-  --eg-red: #ff4d6d;
-
-  --eg-card: var(--eg-surface-0);
-  --eg-card-2: var(--eg-surface-1);
-  --eg-border: var(--eg-border-0);
-  --eg-border-2: var(--eg-border-1);
-  --eg-surface: var(--eg-surface-0);
-  --eg-surface-2: rgba(12, 18, 30, 0.82);
-  --eg-surface-3: rgba(18, 26, 42, 0.66);
-
-  --eg-shadow: 0 18px 50px rgba(0, 0, 0, 0.65);
-  --eg-shadow-soft: 0 12px 30px rgba(0, 0, 0, 0.45);
-  --eg-shadow-0: rgba(0, 0, 0, 0.35);
-  --eg-shadow-1: rgba(0, 0, 0, 0.55);
-  --eg-blur: 18px;
-
-  --eg-radius-sm: 12px;
-  --eg-radius: 18px;
-  --eg-radius-lg: 24px;
-
-  --eg-ring: 0 0 0 3px rgba(155, 105, 255, 0.3);
 }
 
 *,
@@ -71,10 +19,11 @@ body {
 
 body {
   margin: 0;
-  background: radial-gradient(1200px 900px at 10% -10%, rgba(155, 105, 255, 0.16), transparent 55%),
-    radial-gradient(900px 800px at 90% 0%, rgba(120, 90, 255, 0.1), transparent 60%),
-    radial-gradient(800px 900px at 50% 120%, rgba(245, 200, 75, 0.10), transparent 58%),
-    linear-gradient(180deg, var(--eg-bg-0), var(--eg-bg-2));
+  background:
+    radial-gradient(1200px 900px at 10% -10%, rgba(124, 92, 255, 0.16), transparent 55%),
+    radial-gradient(900px 800px at 90% 0%, rgba(74, 43, 255, 0.10), transparent 60%),
+    radial-gradient(800px 900px at 50% 120%, rgba(245, 196, 0, 0.08), transparent 58%),
+    linear-gradient(180deg, var(--eg-bg-0), var(--eg-bg-1));
   color: var(--eg-text);
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
   -webkit-font-smoothing: antialiased;
@@ -90,24 +39,39 @@ body {
   overflow: hidden;
 }
 
-/* Subtle texture without an image file */
 #root::before {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
-  opacity: 0.09;
+  opacity: 0.08;
   background-image:
-    radial-gradient(circle at 20% 25%, rgba(255,255,255,0.18), transparent 44%),
+    radial-gradient(circle at 20% 25%, rgba(255,255,255,0.16), transparent 44%),
     radial-gradient(circle at 75% 60%, rgba(255,255,255,0.10), transparent 48%),
-    linear-gradient(90deg, rgba(255,255,255,0.06) 0, rgba(255,255,255,0.02) 40%, rgba(255,255,255,0.06) 100%);
+    linear-gradient(90deg, rgba(255,255,255,0.05) 0, rgba(255,255,255,0.02) 40%, rgba(255,255,255,0.05) 100%);
   mix-blend-mode: overlay;
 }
 
-/* sensible defaults */
 button,
-input {
+input,
+textarea,
+select {
   font: inherit;
+}
+
+/* prevent iOS zoom on inputs */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+@media (min-width: 768px) {
+  input,
+  textarea,
+  select {
+    font-size: 14px;
+  }
 }
 
 button,
@@ -117,29 +81,55 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Better focus rings on keyboard navigation */
 :focus-visible {
   outline: none;
-  box-shadow: var(--eg-ring);
+  box-shadow: 0 0 0 3px rgba(124,92,255,0.18);
   border-radius: 12px;
 }
 
-/* Nicer scrollbars on desktop */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: rgba(124,92,255,0.45);
+  box-shadow: 0 0 0 3px rgba(124,92,255,0.18);
+}
+
+/* consistent tap feedback */
+button,
+[role='button'],
+.eg-chip,
+.card,
+[class*='Card'] {
+  transition: transform .12s ease, box-shadow .14s ease;
+}
+
+button:active,
+[role='button']:active,
+.eg-chip:active,
+.card:active,
+[class*='Card']:active {
+  transform: scale(0.99);
+}
+
 @media (hover: hover) {
   * {
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,0.18) transparent;
   }
+
   *::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
+
   *::-webkit-scrollbar-thumb {
     background: rgba(255,255,255,0.16);
     border-radius: 99px;
     border: 2px solid transparent;
     background-clip: padding-box;
   }
+
   *::-webkit-scrollbar-thumb:hover {
     background: rgba(255,255,255,0.22);
     border: 2px solid transparent;

@@ -3,8 +3,8 @@
   width: 100%;
   color: rgba(246, 249, 255, 0.95);
   background:
-    linear-gradient(138deg, rgba(0, 0, 0, 0.92), rgba(2, 10, 8, 0.94)),
-    radial-gradient(88% 120% at 4% 10%, rgba(96, 236, 156, 0.06), transparent 72%),
+    linear-gradient(138deg, rgba(7, 7, 12, 0.94), rgba(10, 10, 20, 0.95)),
+    radial-gradient(88% 120% at 4% 10%, rgba(124, 92, 255, 0.12), transparent 72%),
     url('https://zohtixrgskbzosgfluni.supabase.co/storage/v1/object/public/Assets/mcg-stadium.jpg');
   background-size: cover, 150% 150%, cover;
   background-position: center, left top, center;
@@ -147,9 +147,9 @@
   max-width: 420px;
   justify-self: center;
   min-height: 42px;
-  border-color: rgba(96, 236, 156, 0.36);
-  background: rgba(96, 236, 156, 0.12);
-  color: rgba(218, 248, 230, 0.96);
+  border-color: rgba(124, 92, 255, 0.36);
+  background: rgba(124, 92, 255, 0.12);
+  color: rgba(232, 223, 255, 0.96);
 }
 
 .prLockable.is-locked {
@@ -252,8 +252,8 @@
 }
 
 .prConfirmCard {
-  border-color: rgba(42, 220, 140, 0.36);
-  background: linear-gradient(180deg, rgba(42, 220, 140, 0.12), rgba(12, 22, 16, 0.58));
+  border-color: rgba(124, 92, 255, 0.36);
+  background: linear-gradient(180deg, rgba(124, 92, 255, 0.14), rgba(12, 14, 24, 0.62));
 }
 
 .prConfirmCard__icon {
@@ -262,9 +262,9 @@
   border-radius: 999px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(42, 220, 140, 0.42);
-  color: rgba(214, 255, 234, 0.98);
-  background: rgba(42, 220, 140, 0.14);
+  border: 1px solid rgba(124, 92, 255, 0.42);
+  color: rgba(234, 224, 255, 0.98);
+  background: rgba(124, 92, 255, 0.14);
 }
 
 .prConfirmCard h2,
@@ -290,9 +290,9 @@
 
 .prPrefPill {
   border-radius: 999px;
-  border: 1px solid rgba(42, 220, 140, 0.4);
-  background: rgba(42, 220, 140, 0.15);
-  color: rgba(214, 255, 234, 0.98);
+  border: 1px solid rgba(124, 92, 255, 0.4);
+  background: rgba(124, 92, 255, 0.15);
+  color: rgba(234, 224, 255, 0.98);
   padding: 7px 10px;
   font-size: 12px;
   font-weight: 700;

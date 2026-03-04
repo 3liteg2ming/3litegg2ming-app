@@ -46,8 +46,8 @@
 }
 
 .auth-inputWrap:focus-within {
-  border-color: rgba(245, 196, 0, 0.34);
-  box-shadow: 0 0 0 1px rgba(245, 196, 0, 0.26), 0 0 18px rgba(245, 196, 0, 0.12);
+  border-color: rgba(124, 92, 255, 0.45);
+  box-shadow: 0 0 0 1px rgba(124, 92, 255, 0.26), 0 0 18px rgba(124, 92, 255, 0.16);
 }
 
 .auth-inlineStack {
@@ -67,7 +67,7 @@
 }
 
 .auth-inlineHint--strong {
-  color: rgba(153, 255, 196, 0.9);
+  color: rgba(196, 176, 255, 0.92);
 }
 
 .auth-inlineHint--fair {
@@ -93,8 +93,8 @@
 }
 
 .auth-message--success {
-  border-color: rgba(120, 231, 170, 0.34);
-  background: rgba(9, 29, 20, 0.62);
+  border-color: rgba(124, 92, 255, 0.34);
+  background: rgba(23, 16, 40, 0.62);
 }
 
 .auth-message__title {

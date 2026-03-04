@@ -163,7 +163,7 @@
 }
 
 .tlgCard:hover {
-  border-color: rgba(121, 249, 177, 0.34);
+  border-color: rgba(124, 92, 255, 0.34);
   transform: translateY(-1px);
 }
 
@@ -173,9 +173,9 @@
 
 .tlgCard.is-active {
   transform: scale(1.04);
-  border-color: rgba(104, 255, 174, 0.92);
-  background: linear-gradient(180deg, rgba(84, 227, 145, 0.14), rgba(255, 255, 255, 0.02));
-  box-shadow: 0 0 0 1px rgba(84, 227, 145, 0.5), 0 10px 24px rgba(41, 179, 108, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  border-color: rgba(124, 92, 255, 0.92);
+  background: linear-gradient(180deg, rgba(124, 92, 255, 0.14), rgba(255, 255, 255, 0.02));
+  box-shadow: 0 0 0 1px rgba(124, 92, 255, 0.5), 0 10px 24px rgba(74, 43, 255, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 .tlgCard__logo {
@@ -224,7 +224,7 @@
 
 .tlgCard__check {
   position: absolute;
-  top: 7px;
+  bottom: 7px;
   right: 7px;
   width: 18px;
   height: 18px;
@@ -232,15 +232,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(110, 255, 180, 0.95);
-  background: rgba(19, 133, 78, 0.42);
-  color: rgba(214, 255, 232, 0.98);
+  border: 1px solid rgba(155, 130, 255, 0.95);
+  background: rgba(74, 43, 255, 0.42);
+  color: rgba(234, 224, 255, 0.98);
 }
 
 .tlgCard__order {
   position: absolute;
   top: 9px;
-  left: 9px;
+  right: 9px;
   z-index: 2;
 }
 

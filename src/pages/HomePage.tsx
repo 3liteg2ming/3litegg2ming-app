@@ -14,6 +14,8 @@ export default function HomePage() {
   const { user } = useAuth();
 
   const ctaTarget = user ? '/preseason-registration' : '/auth/sign-in';
+  const comingSoonCtaLabel = user ? 'Register for Preseason' : 'Create account / Sign in';
+  const comingSoonCtaTarget = user ? '/preseason-registration' : '/auth/sign-up';
   const signedAs = useMemo(
     () => text(user?.displayName) || text(user?.email).split('@')[0] || 'Guest',
     [user?.displayName, user?.email],
@@ -69,8 +71,8 @@ export default function HomePage() {
             <p>Once updated, fixtures + stats leaders will unlock for Season Two.</p>
             <p>Preseason registrations are open now.</p>
           </div>
-          <button type="button" className="homeComingSoon__cta" onClick={() => navigate('/preseason-registration')}>
-            Register for Preseason
+          <button type="button" className="homeComingSoon__cta" onClick={() => navigate(comingSoonCtaTarget)}>
+            {comingSoonCtaLabel}
           </button>
         </section>
       </div>
