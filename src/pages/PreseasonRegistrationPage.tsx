@@ -57,7 +57,7 @@ type PrettyRegistrationSummary = {
   prefTeamNames: string;
 };
 
-const PRESEASON_OPEN_AT_UTC = '2026-03-04T10:00:00.000Z'; // 9:00pm Melbourne (AEDT)
+const PRESEASON_OPEN_AT_UTC = '2026-03-04T10:10:00.000Z'; // 9:10pm Melbourne (AEDT)
 
 function text(v: unknown): string {
   return String(v || '').trim();
@@ -640,7 +640,7 @@ export default function PreseasonRegistrationPage() {
     event.preventDefault();
 
     if (!isOpen) {
-      setInlineError('Registration opens at 9:00pm (Melbourne time).');
+      setInlineError('Registration opens at 9:10pm (Melbourne time).');
       return;
     }
 
@@ -829,7 +829,7 @@ export default function PreseasonRegistrationPage() {
         <div className="prLockOverlay" role="dialog" aria-modal="true" aria-label="Registration locked">
           <div className="prLockModal">
             <div className="prLockKicker">Preseason Knockout</div>
-            <h2 className="prLockTitle">Registration opens at 9:00pm</h2>
+            <h2 className="prLockTitle">Registration opens at 9:10pm</h2>
             <p className="prLockSub">Melbourne time • Wednesday 4 March</p>
             <div className="prLockCountdown">{countdown}</div>
             <p className="prLockHint">Create your account now and come back when the timer hits zero.</p>
