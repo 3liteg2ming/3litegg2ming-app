@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const supabase = requireSupabaseClient();
 
@@ -429,8 +429,11 @@ function formatCountdown(remainingMs: number): string {
 
 export default function PreseasonRegistrationPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const isLoggedIn = Boolean(user?.id);
+  const isRegistrationRoute =
+    location.pathname === '/preseason-registration' || location.pathname === '/preseason/register';
 
   const [loading, setLoading] = useState(true);
   const [teamsLoading, setTeamsLoading] = useState(true);
@@ -448,6 +451,7 @@ export default function PreseasonRegistrationPage() {
   const [profileLoadError, setProfileLoadError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(getRemainingMs() <= 0);
   const [countdown, setCountdown] = useState(formatCountdown(getRemainingMs()));
+  const lockActive = isRegistrationRoute && !isOpen;
 
   useEffect(() => {
     const tick = () => {
@@ -671,7 +675,7 @@ export default function PreseasonRegistrationPage() {
   async function submitRegistration(event: React.FormEvent) {
     event.preventDefault();
 
-    if (!isOpen) {
+    if (lockActive) {
       setInlineError('Unlocks at half-time — Swans vs Carlton (8:30pm).');
       return;
     }
@@ -783,7 +787,7 @@ export default function PreseasonRegistrationPage() {
 
   return (
     <div className="prPage">
-      <div className={`prLockable ${!isOpen ? 'is-locked' : ''}`}>
+      <div className={`prLockable ${lockActive ? 'is-locked' : ''}`}>
         <div className="prShell">
           <RegistrationHeroCard
             title="Registration"
@@ -797,7 +801,7 @@ export default function PreseasonRegistrationPage() {
                 <button
                   type="button"
                   className="prBtn prBtn--primary"
-                  disabled={!isOpen}
+                  disabled={lockActive}
                   onClick={() => document.getElementById('pr-form')?.scrollIntoView({ behavior: 'smooth' })}
                 >
                   Register Now
@@ -830,7 +834,7 @@ export default function PreseasonRegistrationPage() {
           ) : (
             <section className="prFormCard" id="pr-form">
               <form onSubmit={submitRegistration} className="prForm" noValidate>
-                {isOpen ? <div className="prPrefPill">Registration is live.</div> : null}
+                {!lockActive ? <div className="prPrefPill">Registration is live.</div> : null}
                 <p className="prProgress">Signed in as {signedInName}</p>
                 <p className="prProgress">Your preseason team becomes your club for AFL26 Season Two.</p>
                 <p className="prGridHeading">Select up to 4 teams</p>
@@ -878,7 +882,7 @@ export default function PreseasonRegistrationPage() {
                 <button
                   type="submit"
                   className="prBtn prBtn--primary prBtn--confirm"
-                  disabled={!isOpen || profileLoading || teamsLoading || submitting || !selectedTeamIds.length}
+                  disabled={lockActive || profileLoading || teamsLoading || submitting || !selectedTeamIds.length}
                 >
                   {submitting ? 'Submitting…' : 'Confirm Registration'}
                 </button>
@@ -888,7 +892,7 @@ export default function PreseasonRegistrationPage() {
         </div>
       </div>
 
-      {!isOpen ? (
+      {lockActive ? (
         <div className="prLockOverlay" role="dialog" aria-modal="true" aria-label="Registration locked">
           <div className="prLockModal">
             <div className="prLockKicker">Preseason Knockout</div>
