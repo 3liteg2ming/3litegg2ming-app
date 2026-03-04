@@ -1,6 +1,6 @@
 .auth-screen--premium {
-  padding-top: 14px;
-  padding-bottom: 14px;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 16px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
 }
 
 .auth-card--premium {
@@ -37,13 +37,16 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 @media (max-width: 820px), (pointer: coarse) {
   input,
   textarea,
   select {
+    font-size: 16px;
     -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   .auth-input {
@@ -174,8 +177,8 @@ html {
 
 @media (min-width: 720px) {
   .auth-screen--premium {
-    padding-top: 10px;
-    padding-bottom: 10px;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
   }
 
   .auth-card--premium {

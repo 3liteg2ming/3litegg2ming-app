@@ -19,8 +19,8 @@ function toFriendlyAuthMessage(message: string): { title: string; detail: string
 
   if (lower.includes('email not confirmed')) {
     return {
-      title: 'Confirm your email before signing in.',
-      detail: raw,
+      title: 'Your email isn’t confirmed yet. Check your inbox for the verification link.',
+      detail: raw || 'Complete email verification, then sign in again.',
     };
   }
 

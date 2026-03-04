@@ -27,6 +27,7 @@ type TeamFetchRow = {
 type ProfileRow = {
   display_name?: string | null;
   psn?: string | null;
+  xbox_gamertag?: string | null;
 };
 
 type AuthMetaUser = {
@@ -57,7 +58,8 @@ type PrettyRegistrationSummary = {
   prefTeamNames: string;
 };
 
-const PRESEASON_OPEN_AT_UTC = '2026-03-04T10:10:00.000Z'; // 9:10pm Melbourne (AEDT)
+const PRESEASON_OPEN_AT_UTC =
+  import.meta.env.VITE_PRESEASON_REG_OPEN_AT?.trim() || '2026-03-05T14:00:00+11:00'; // 2:00pm Melbourne (AEDT)
 
 function text(v: unknown): string {
   return String(v || '').trim();
@@ -276,10 +278,26 @@ function seasonSlugCandidates(): string[] {
 }
 
 async function loadProfile(userId: string): Promise<ProfileRow | null> {
-  const primary = await supabase.from('profiles').select('display_name,psn').eq('user_id', userId).maybeSingle();
+  const primaryWithXbox = await supabase
+    .from('profiles')
+    .select('display_name,psn,xbox_gamertag')
+    .eq('user_id', userId)
+    .maybeSingle();
+  const primary =
+    primaryWithXbox.error && String(primaryWithXbox.error.message || '').toLowerCase().includes('xbox_gamertag')
+      ? await supabase.from('profiles').select('display_name,psn').eq('user_id', userId).maybeSingle()
+      : primaryWithXbox;
   if (!primary.error) return (primary.data || null) as ProfileRow | null;
 
-  const fallback = await supabase.from('eg_profiles').select('display_name,psn').eq('user_id', userId).maybeSingle();
+  const fallbackWithXbox = await supabase
+    .from('eg_profiles')
+    .select('display_name,psn,xbox_gamertag')
+    .eq('user_id', userId)
+    .maybeSingle();
+  const fallback =
+    fallbackWithXbox.error && String(fallbackWithXbox.error.message || '').toLowerCase().includes('xbox_gamertag')
+      ? await supabase.from('eg_profiles').select('display_name,psn').eq('user_id', userId).maybeSingle()
+      : fallbackWithXbox;
   if (!fallback.error) return (fallback.data || null) as ProfileRow | null;
 
   throw new Error(primary.error.message || fallback.error.message || 'Unable to load profile.');
@@ -640,7 +658,7 @@ export default function PreseasonRegistrationPage() {
     event.preventDefault();
 
     if (!isOpen) {
-      setInlineError('Registration opens at 9:10pm (Melbourne time).');
+      setInlineError('Registration opens at 2:00pm (Melbourne time).');
       return;
     }
 
@@ -674,7 +692,7 @@ export default function PreseasonRegistrationPage() {
 
     const resolvedPsn = text(resolvedTag.value);
     if (!resolvedPsn) {
-      setInlineError('Add your PSN or Xbox Gamertag in Profile to register.');
+      setInlineError('Add PSN or Xbox gamertag in Profile to register.');
       return;
     }
 
@@ -769,7 +787,7 @@ export default function PreseasonRegistrationPage() {
               <h2>You’re registered</h2>
               <div className="prConfirmCard__prefs">
                 <div className="prPrefPill">Coach name: {submittedSummary?.coachDisplayName || signedInName}</div>
-                <div className="prPrefPill">PSN / Xbox tag: {submittedSummary?.coachPsn || profilePsn}</div>
+                <div className="prPrefPill">PSN or Xbox gamertag: {submittedSummary?.coachPsn || profilePsn}</div>
                 <div className="prPrefPill">Teams: {submittedSummary?.prefTeamNames || selectedNames.join(', ') || 'TBC'}</div>
               </div>
               <button type="button" className="prBtn prBtn--primary" onClick={() => navigate('/')}>
@@ -779,6 +797,7 @@ export default function PreseasonRegistrationPage() {
           ) : (
             <section className="prFormCard" id="pr-form">
               <form onSubmit={submitRegistration} className="prForm" noValidate>
+                {isOpen ? <div className="prPrefPill">Registration is live.</div> : null}
                 <p className="prProgress">Signed in as {signedInName}</p>
                 <p className="prProgress">Your preseason team becomes your club for AFL26 Season Two.</p>
                 <p className="prGridHeading">Select up to 4 teams</p>
@@ -810,7 +829,7 @@ export default function PreseasonRegistrationPage() {
                     Retry profile sync
                   </button>
                 ) : null}
-                {inlineError && inlineError.toLowerCase().includes('add your psn or xbox gamertag in profile') ? (
+                {inlineError && inlineError.toLowerCase().includes('add psn or xbox gamertag in profile') ? (
                   <button type="button" className="prBtn prBtn--profile" onClick={() => navigate('/profile')}>
                     Go to Profile
                   </button>
@@ -829,12 +848,12 @@ export default function PreseasonRegistrationPage() {
         <div className="prLockOverlay" role="dialog" aria-modal="true" aria-label="Registration locked">
           <div className="prLockModal">
             <div className="prLockKicker">Preseason Knockout</div>
-            <h2 className="prLockTitle">Registration opens at 9:10pm</h2>
-            <p className="prLockSub">Melbourne time • Wednesday 4 March</p>
+            <h2 className="prLockTitle">Registration opens at 2:00pm</h2>
+            <p className="prLockSub">Melbourne time • Thursday 5 March</p>
             <div className="prLockCountdown">{countdown}</div>
-            <p className="prLockHint">Create your account now and come back when the timer hits zero.</p>
             {!isLoggedIn ? (
               <>
+                <p className="prLockHint">Create your account now and come back when the timer hits zero.</p>
                 <button type="button" className="prBtn prBtn--primary" onClick={() => navigate('/auth/sign-up')}>
                   Create account
                 </button>
@@ -843,9 +862,7 @@ export default function PreseasonRegistrationPage() {
                 </button>
               </>
             ) : (
-              <button type="button" className="prBtn prBtn--primary" onClick={() => navigate('/')}>
-                Back to Home
-              </button>
+              <p className="prLockHint">You’re signed in as {signedInName}</p>
             )}
           </div>
         </div>

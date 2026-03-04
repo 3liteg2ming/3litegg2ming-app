@@ -1,5 +1,6 @@
 export type GamerTagProfileLike = {
   psn?: unknown;
+  xbox_gamertag?: unknown;
 } | null;
 
 export type GamerTagUserLike = {
@@ -9,7 +10,14 @@ export type GamerTagUserLike = {
 
 export type GamerTagResolution = {
   value: string | null;
-  source: 'profiles.psn' | 'user_metadata.psn' | 'user_metadata.gamertag' | 'user_metadata.psn_name' | 'user.psn' | 'none';
+  source:
+    | 'profiles.psn'
+    | 'profiles.xbox_gamertag'
+    | 'user_metadata.psn'
+    | 'user_metadata.gamertag'
+    | 'user_metadata.psn_name'
+    | 'user.psn'
+    | 'none';
 };
 
 function text(value: unknown): string {
@@ -50,10 +58,13 @@ export function resolveGamerTag(args: {
   const fromProfile = clean(profile?.psn);
   if (fromProfile) return { value: fromProfile, source: 'profiles.psn' };
 
+  const fromProfileXbox = clean(profile?.xbox_gamertag);
+  if (fromProfileXbox) return { value: fromProfileXbox, source: 'profiles.xbox_gamertag' };
+
   const fromMetaPsn = clean(meta.psn);
   if (fromMetaPsn) return { value: fromMetaPsn, source: 'user_metadata.psn' };
 
-  const fromMetaGamertag = clean(meta.gamertag);
+  const fromMetaGamertag = clean(meta.gamertag ?? meta.gamer_tag);
   if (fromMetaGamertag) return { value: fromMetaGamertag, source: 'user_metadata.gamertag' };
 
   const fromMetaLegacy = clean(meta.psn_name);

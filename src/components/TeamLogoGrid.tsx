@@ -30,6 +30,7 @@ export default function TeamLogoGrid({
 }: Props) {
   const selected = new Set(selectedTeamIds);
   const orderById = new Map(selectedTeamIds.map((id, idx) => [id, idx + 1]));
+  const teamById = new Map(teams.map((team) => [team.id, team]));
 
   if (loading) {
     return (
@@ -52,6 +53,23 @@ export default function TeamLogoGrid({
         <span>
           {selectedTeamIds.length}/{maxSelections}
         </span>
+      </div>
+
+      <div className="tlgSlots" aria-label="Preference order">
+        {Array.from({ length: maxSelections }).map((_, index) => {
+          const teamId = selectedTeamIds[index];
+          const team = teamId ? teamById.get(teamId) : null;
+          return (
+            <div key={`slot-${index + 1}`} className={`tlgSlot ${team ? 'is-filled' : ''}`}>
+              <span className="tlgSlot__index">{index + 1}</span>
+              {team?.logo_url ? (
+                <SmartImg src={team.logo_url} alt={team.name} className="tlgSlot__logo" fallbackText="EG" />
+              ) : (
+                <span className="tlgSlot__empty">—</span>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <div className="tlgGrid">

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { getSupabaseClient } from '../../state/auth/supabaseClient';
+import { buildAuthRedirect } from '../../lib/authRedirect';
 
 export default function ForgotPasswordPage() {
   const nav = useNavigate();
@@ -25,7 +26,7 @@ export default function ForgotPasswordPage() {
       }
 
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        redirectTo: buildAuthRedirect('/auth/callback'),
       });
 
       if (resetError) {

@@ -9,6 +9,7 @@ import MembersPage from './pages/MembersPage';
 import SignInPage from './pages/auth/SignInPage';
 import SignUpPage from './pages/auth/SignUpPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import AuthCallbackPage from './pages/auth/AuthCallbackPage';
 
 import { ProtectedRoute } from './state/auth/ProtectedRoute';
 
@@ -181,6 +182,13 @@ function AppRoutes() {
                 <Route path="/auth/sign-in" element={<SignInPage />} />
                 <Route path="/auth/sign-up" element={<SignUpPage />} />
                 <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/auth/callback" element={<AuthCallbackPage />} />
+                <Route path="/sign-in" element={<Navigate to="/auth/sign-in" replace />} />
+                <Route path="/signin" element={<Navigate to="/auth/sign-in" replace />} />
+                <Route path="/login" element={<Navigate to="/auth/sign-in" replace />} />
+                <Route path="/create-account" element={<Navigate to="/auth/sign-up" replace />} />
+                <Route path="/register" element={<Navigate to="/auth/sign-up" replace />} />
+                <Route path="/auth/confirm" element={<Navigate to="/auth/callback" replace />} />
 
                 <Route
                   path="/members"

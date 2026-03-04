@@ -40,6 +40,7 @@ type RegistrationState = {
 type ProfileRow = {
   display_name?: string | null;
   psn?: string | null;
+  xbox_gamertag?: string | null;
   email?: string | null;
 };
 
@@ -250,17 +251,25 @@ function cleanProfileText(v: unknown): string {
 }
 
 async function loadProfileForUser(userId: string): Promise<ProfileRow | null> {
-  const primary = await supabase
+  const primaryWithXbox = await supabase
     .from('profiles')
-    .select('display_name,psn,email')
+    .select('display_name,psn,xbox_gamertag,email')
     .eq('user_id', userId)
     .maybeSingle();
+  const primary =
+    primaryWithXbox.error && String(primaryWithXbox.error.message || '').toLowerCase().includes('xbox_gamertag')
+      ? await supabase.from('profiles').select('display_name,psn,email').eq('user_id', userId).maybeSingle()
+      : primaryWithXbox;
 
-  const fallback = await supabase
+  const fallbackWithXbox = await supabase
     .from('eg_profiles')
-    .select('display_name,psn,email')
+    .select('display_name,psn,xbox_gamertag,email')
     .eq('user_id', userId)
     .maybeSingle();
+  const fallback =
+    fallbackWithXbox.error && String(fallbackWithXbox.error.message || '').toLowerCase().includes('xbox_gamertag')
+      ? await supabase.from('eg_profiles').select('display_name,psn,email').eq('user_id', userId).maybeSingle()
+      : fallbackWithXbox;
 
   if (primary.error && fallback.error) {
     console.error('[Members] profile load failed', { profiles: primary.error, egProfiles: fallback.error });
@@ -270,6 +279,7 @@ async function loadProfileForUser(userId: string): Promise<ProfileRow | null> {
   return {
     display_name: cleanProfileText(primary.data?.display_name) || cleanProfileText(fallback.data?.display_name) || null,
     psn: cleanProfileText(primary.data?.psn) || cleanProfileText(fallback.data?.psn) || null,
+    xbox_gamertag: cleanProfileText((primary.data as any)?.xbox_gamertag) || cleanProfileText((fallback.data as any)?.xbox_gamertag) || null,
     email: cleanProfileText(primary.data?.email) || cleanProfileText(fallback.data?.email) || null,
   };
 }
@@ -279,15 +289,42 @@ async function upsertProfileForUser(userId: string, payload: ProfileRow) {
     user_id: userId,
     display_name: payload.display_name ?? null,
     psn: payload.psn ?? null,
+    xbox_gamertag: payload.xbox_gamertag ?? null,
     email: payload.email ?? null,
   };
 
   const profilesRes = await supabase.from('profiles').upsert(writePayload, { onConflict: 'user_id' });
+  if (profilesRes.error && String(profilesRes.error.message || '').toLowerCase().includes('xbox_gamertag')) {
+    await supabase
+      .from('profiles')
+      .upsert(
+        {
+          user_id: userId,
+          display_name: payload.display_name ?? null,
+          psn: payload.psn ?? null,
+          email: payload.email ?? null,
+        },
+        { onConflict: 'user_id' },
+      );
+  }
   if (profilesRes.error) {
     console.error('[Members] profiles upsert failed', profilesRes.error);
   }
 
   const egProfilesRes = await supabase.from('eg_profiles').upsert(writePayload, { onConflict: 'user_id' });
+  if (egProfilesRes.error && String(egProfilesRes.error.message || '').toLowerCase().includes('xbox_gamertag')) {
+    await supabase
+      .from('eg_profiles')
+      .upsert(
+        {
+          user_id: userId,
+          display_name: payload.display_name ?? null,
+          psn: payload.psn ?? null,
+          email: payload.email ?? null,
+        },
+        { onConflict: 'user_id' },
+      );
+  }
   if (egProfilesRes.error) {
     console.error('[Members] eg_profiles upsert failed', egProfilesRes.error);
   }
@@ -505,6 +542,9 @@ export default function MembersPage() {
     profile: profileRow,
     user: (authMetaUser || { psn: user?.psn, user_metadata: { psn: user?.psn } }) as AuthMetaUser,
   }).value;
+  const profilePsn = cleanProfileText(profileRow?.psn);
+  const profileXboxTag = cleanProfileText(profileRow?.xbox_gamertag);
+  const showMissingTagBanner = Boolean(user?.id) && !profilePsn && !profileXboxTag;
   const resolvedEmail = cleanProfileText(profileRow?.email) || cleanProfileText(user?.email);
   const record = useMemo<TeamRecord>(() => {
     const teamKey = user?.teamKey as TeamKey | undefined;
@@ -550,7 +590,7 @@ export default function MembersPage() {
     if (!user?.id) return;
     const nextPsn = cleanProfileText(psnDraft);
     if (!nextPsn) {
-      setPsnStatus('PSN or Xbox Gamertag cannot be empty.');
+      setPsnStatus('PSN or Xbox gamertag cannot be empty.');
       return;
     }
 
@@ -562,6 +602,7 @@ export default function MembersPage() {
         display_name: cleanProfileText(profileRow?.display_name) || cleanProfileText(user?.displayName) || null,
         email: resolvedEmail || null,
         psn: nextPsn,
+        xbox_gamertag: null,
       });
 
       const authUpdate = await supabase.auth.updateUser({
@@ -574,16 +615,22 @@ export default function MembersPage() {
         console.error('[Members] auth user metadata update failed', authUpdate.error);
       }
 
-      setProfileRow((prev) => ({
-        ...(prev || {}),
-        display_name: cleanProfileText(prev?.display_name) || cleanProfileText(user?.displayName) || null,
-        email: resolvedEmail || null,
-        psn: nextPsn,
-      }));
-      setPsnStatus('PSN or Xbox Gamertag saved.');
+      const [freshProfile, authUserRes] = await Promise.all([loadProfileForUser(user.id), supabase.auth.getUser()]);
+      setProfileRow(freshProfile);
+      setAuthMetaUser((authUserRes.data?.user as unknown as AuthMetaUser) || null);
+      setPsnDraft(
+        resolveGamerTag({
+          profile: freshProfile,
+          user: ((authUserRes.data?.user as unknown as AuthMetaUser) || {
+            psn: user?.psn,
+            user_metadata: { psn: user?.psn },
+          }) as AuthMetaUser,
+        }).value || '',
+      );
+      setPsnStatus('PSN or Xbox gamertag saved.');
     } catch (err: any) {
       console.error('[Members] PSN save failed', err);
-      setPsnStatus('Could not save PSN or Xbox Gamertag right now.');
+      setPsnStatus('Could not save PSN or Xbox gamertag right now.');
     } finally {
       setSavingPsn(false);
     }
@@ -609,7 +656,7 @@ export default function MembersPage() {
               <h1 className="coachHubHero__name">{displayName}</h1>
               <p className="coachHubHero__team">{team?.name || 'Unassigned Team'}</p>
               <div className="coachHubHero__sub">
-                <span>{resolvedPsn || 'PSN or Xbox Gamertag not set'}</span>
+                <span>{resolvedPsn || 'PSN or Xbox gamertag not set'}</span>
                 <span>•</span>
                 <span>{resolvedEmail || '—'}</span>
               </div>
@@ -630,6 +677,12 @@ export default function MembersPage() {
             </article>
           ))}
         </section>
+
+        {showMissingTagBanner ? (
+          <section className="memberTagBanner" role="status" aria-live="polite">
+            Add PSN or Xbox gamertag to complete your profile.
+          </section>
+        ) : null}
 
         <section className="member-panel member-panel--tight">
           <div className="member-panelTitle">
@@ -693,7 +746,7 @@ export default function MembersPage() {
             <div className="member-miniRow">
               <Gamepad2 size={16} className="member-ico" />
               <div>
-                <div className="member-miniLabel">PSN or Xbox Gamertag</div>
+                <div className="member-miniLabel">PSN or Xbox gamertag</div>
                 <div className="member-miniValue">{resolvedPsn || 'Not set'}</div>
               </div>
             </div>
@@ -707,7 +760,7 @@ export default function MembersPage() {
                     type="text"
                     value={psnDraft}
                     onChange={(e) => setPsnDraft(e.target.value)}
-                    placeholder="PSN ID or Gamertag"
+                    placeholder="PSN ID or gamertag"
                     autoCapitalize="none"
                     disabled={savingPsn}
                     style={{
@@ -761,7 +814,7 @@ export default function MembersPage() {
             <div className="coachActions__hint">Checking preseason registration…</div>
           ) : registration.registered ? (
             <div className="coachActions__hint">
-              Registered for preseason • {registration.coachPsn || 'PSN/Gamertag TBC'} • {registration.prefTeamNames || `${registration.prefCount}/4 preferences set`}
+              Registered for preseason • {registration.coachPsn || 'PSN or gamertag TBC'} • {registration.prefTeamNames || `${registration.prefCount}/4 preferences set`}
             </div>
           ) : (
             <div className="coachActions__hint">Not registered yet</div>

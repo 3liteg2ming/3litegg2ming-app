@@ -145,6 +145,17 @@
   color: rgba(245, 250, 255, 0.95);
 }
 
+.memberTagBanner {
+  border-radius: 12px;
+  border: 1px solid rgba(245, 196, 0, 0.34);
+  background: rgba(245, 196, 0, 0.1);
+  color: rgba(255, 233, 173, 0.95);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  padding: 10px 12px;
+}
+
 .coachEmptyBadges {
   display: grid;
   place-items: center;

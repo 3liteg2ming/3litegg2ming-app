@@ -56,9 +56,9 @@ async function upsertProfileForUser(args: {
   lastName: string;
   displayName: string;
   psn: string;
-}) {
+}): Promise<string[]> {
   const userId = String(args.userId || '').trim();
-  if (!userId) return;
+  if (!userId) return ['Missing user id from signup response.'];
 
   const payload = {
     user_id: userId,
@@ -70,14 +70,19 @@ async function upsertProfileForUser(args: {
   };
 
   const { error: profilesError } = await supabase.from('profiles').upsert(payload, { onConflict: 'user_id' });
+  const failures: string[] = [];
   if (profilesError) {
     console.error('[SignUp] profiles upsert failed', profilesError);
+    failures.push(`profiles: ${profilesError.message}${(profilesError as any)?.code ? ` (code ${(profilesError as any).code})` : ''}`);
   }
 
   const { error: egProfilesError } = await supabase.from('eg_profiles').upsert(payload, { onConflict: 'user_id' });
   if (egProfilesError) {
     console.error('[SignUp] eg_profiles upsert failed', egProfilesError);
+    failures.push(`eg_profiles: ${egProfilesError.message}${(egProfilesError as any)?.code ? ` (code ${(egProfilesError as any).code})` : ''}`);
   }
+
+  return failures;
 }
 
 async function ensureProfileExists(userId: string): Promise<void> {
@@ -86,6 +91,13 @@ async function ensureProfileExists(userId: string): Promise<void> {
   const fallback = await supabase.from('eg_profiles').select('user_id').eq('user_id', userId).maybeSingle();
   if (!fallback.error && fallback.data?.user_id) return;
   throw new Error('Profile row is still missing after signup.');
+}
+
+function formatErrorDetails(err: any): string {
+  const message = String(err?.message || 'Unknown error').trim();
+  const code = String(err?.code || '').trim();
+  const status = String(err?.status || '').trim();
+  return [message, code ? `code ${code}` : '', status ? `status ${status}` : ''].filter(Boolean).join(' • ');
 }
 
 export default function SignUpPage() {
@@ -132,8 +144,8 @@ export default function SignUpPage() {
 
     if (!cleanPsn) {
       setError({
-        title: 'PSN or Xbox Gamertag is required.',
-        detail: 'Enter your PSN ID or Xbox Gamertag to create your account.',
+        title: 'PSN or Xbox gamertag is required.',
+        detail: 'Enter your PSN ID or gamertag to create your account.',
       });
       return;
     }
@@ -141,7 +153,7 @@ export default function SignUpPage() {
     if (!isFormValid) {
       setError({
         title: 'Check your details before continuing.',
-        detail: 'First name, last name, PSN or Xbox Gamertag, valid email, and matching password are required.',
+        detail: 'First name, last name, PSN or Xbox gamertag, valid email, and matching password are required.',
       });
       return;
     }
@@ -159,6 +171,7 @@ export default function SignUpPage() {
         psn: cleanPsn,
       });
 
+      const profileFailures: string[] = [];
       await upsertProfileForUser({
         userId: createdUser?.id,
         email: trimmedEmail,
@@ -166,14 +179,14 @@ export default function SignUpPage() {
         lastName: cleanLast,
         displayName,
         psn: cleanPsn,
-      });
+      }).then((failures) => profileFailures.push(...failures));
 
       if (createdUser?.id) {
         try {
           await ensureProfileExists(createdUser.id);
         } catch (missingErr) {
           console.error('[SignUp] profile check failed, retrying upsert', missingErr);
-          await upsertProfileForUser({
+          const retryFailures = await upsertProfileForUser({
             userId: createdUser.id,
             email: trimmedEmail,
             firstName: cleanFirst,
@@ -181,7 +194,15 @@ export default function SignUpPage() {
             displayName,
             psn: cleanPsn,
           });
+          profileFailures.push(...retryFailures);
         }
+      }
+
+      if (profileFailures.length) {
+        setError({
+          title: 'Account created but profile sync needs attention.',
+          detail: `Profile sync details: ${profileFailures.join(' | ')}`,
+        });
       }
 
       try {
@@ -203,7 +224,21 @@ export default function SignUpPage() {
         }
       }, 1400);
     } catch (err: any) {
+      console.error('[SignUp] create account failed', {
+        code: err?.code,
+        status: err?.status,
+        message: err?.message,
+        name: err?.name,
+      });
       setError(toFriendlyCreateMessage(String(err?.message || 'Could not create account.')));
+      setError((prev) =>
+        prev
+          ? {
+              ...prev,
+              detail: `${prev.detail} | ${formatErrorDetails(err)}`,
+            }
+          : prev,
+      );
       setSuccess(false);
     } finally {
       setSubmitting(false);
@@ -275,7 +310,7 @@ export default function SignUpPage() {
               </label>
 
               <label className="auth-field">
-                <span className="auth-label">PSN or Xbox Gamertag</span>
+                <span className="auth-label">PSN / Xbox gamertag</span>
                 <div className="auth-inputWrap">
                   <Gamepad2 size={16} className="auth-icon" />
                   <input
@@ -289,6 +324,7 @@ export default function SignUpPage() {
                     disabled={submitting || loading}
                   />
                 </div>
+                <span className="auth-inlineHint">Add at least one so people can find you.</span>
               </label>
 
               <div className="auth-divider" />

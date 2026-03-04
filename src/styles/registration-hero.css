@@ -131,6 +131,55 @@
   gap: 10px;
 }
 
+.tlgSlots {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tlgSlot {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  background: rgba(255, 255, 255, 0.03);
+  min-height: 46px;
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+}
+
+.tlgSlot.is-filled {
+  border-color: rgba(124, 92, 255, 0.44);
+  background: linear-gradient(180deg, rgba(124, 92, 255, 0.14), rgba(255, 255, 255, 0.02));
+}
+
+.tlgSlot__index {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(230, 237, 250, 0.9);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.tlgSlot__logo {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  justify-self: start;
+}
+
+.tlgSlot__empty {
+  color: rgba(210, 220, 245, 0.52);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .tlgCount {
   display: flex;
   justify-content: space-between;
@@ -152,8 +201,8 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.03);
   color: rgba(246, 250, 255, 0.96);
-  min-height: 108px;
-  padding: 8px 8px;
+  min-height: 98px;
+  padding: 7px;
   display: grid;
   place-items: center;
   gap: 0;
@@ -179,9 +228,9 @@
 }
 
 .tlgCard__logo {
-  width: 70px;
-  height: 70px;
-  padding: 6px;
+  width: 64px;
+  height: 64px;
+  padding: 7px;
   box-sizing: border-box;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -224,8 +273,8 @@
 
 .tlgCard__check {
   position: absolute;
-  bottom: 7px;
-  right: 7px;
+  bottom: 6px;
+  right: 6px;
   width: 18px;
   height: 18px;
   border-radius: 999px;
@@ -317,8 +366,23 @@
   }
 
   .tlgCard__logo {
-    width: 64px;
-    height: 64px;
+    width: 58px;
+    height: 58px;
+  }
+
+  .tlgSlots {
+    gap: 6px;
+  }
+
+  .tlgSlot {
+    min-height: 42px;
+    grid-template-columns: 17px 1fr;
+    padding: 5px 7px;
+  }
+
+  .tlgSlot__logo {
+    width: 26px;
+    height: 26px;
   }
 
   .tlgCard:hover {
