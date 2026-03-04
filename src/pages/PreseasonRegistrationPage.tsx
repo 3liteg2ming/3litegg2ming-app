@@ -61,7 +61,7 @@ type PrettyRegistrationSummary = {
 };
 
 const REG_UNLOCK_AT =
-  import.meta.env.VITE_PRESEASON_REG_OPEN_AT?.trim() || '2026-03-04T20:30:00+11:00'; // 8:30pm Melbourne (AEDT)
+  import.meta.env.VITE_REG_UNLOCK_AT?.trim() || '2026-03-05T20:30:00+11:00'; // 8:30pm Melbourne (AEDT)
 
 function text(v: unknown): string {
   return String(v || '').trim();
@@ -672,7 +672,7 @@ export default function PreseasonRegistrationPage() {
     event.preventDefault();
 
     if (!isOpen) {
-      setInlineError('Registrations open at half-time — Swans vs Carlton (8:30pm).');
+      setInlineError('Unlocks at half-time — Swans vs Carlton (8:30pm).');
       return;
     }
 
@@ -794,7 +794,12 @@ export default function PreseasonRegistrationPage() {
             fallbackMark="EG"
             cta={
               !submitted ? (
-                <button type="button" className="prBtn prBtn--primary" onClick={() => document.getElementById('pr-form')?.scrollIntoView({ behavior: 'smooth' })}>
+                <button
+                  type="button"
+                  className="prBtn prBtn--primary"
+                  disabled={!isOpen}
+                  onClick={() => document.getElementById('pr-form')?.scrollIntoView({ behavior: 'smooth' })}
+                >
                   Register Now
                 </button>
               ) : null
@@ -873,7 +878,7 @@ export default function PreseasonRegistrationPage() {
                 <button
                   type="submit"
                   className="prBtn prBtn--primary prBtn--confirm"
-                  disabled={profileLoading || teamsLoading || submitting || !selectedTeamIds.length}
+                  disabled={!isOpen || profileLoading || teamsLoading || submitting || !selectedTeamIds.length}
                 >
                   {submitting ? 'Submitting…' : 'Confirm Registration'}
                 </button>
@@ -890,6 +895,7 @@ export default function PreseasonRegistrationPage() {
             <h2 className="prLockTitle">Registrations open at half-time</h2>
             <p className="prLockSub">Swans vs Carlton — unlocks at 8:30pm</p>
             <div className="prLockCountdown">{countdown}</div>
+            <p className="prLockHint">Check back at 8:30pm AEDT.</p>
             {!isLoggedIn ? (
               <>
                 <p className="prLockHint">Create your account now and come back when the timer hits zero.</p>
