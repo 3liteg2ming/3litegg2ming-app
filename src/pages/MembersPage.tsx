@@ -349,6 +349,7 @@ export default function MembersPage() {
     prefTeamNames: '',
   });
   const [profileRow, setProfileRow] = useState<ProfileRow | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [authMetaUser, setAuthMetaUser] = useState<AuthMetaUser>(null);
   const [psnDraft, setPsnDraft] = useState('');
   const [savingPsn, setSavingPsn] = useState(false);
@@ -512,26 +513,32 @@ export default function MembersPage() {
   useEffect(() => {
     let alive = true;
     (async () => {
+      setProfileLoading(true);
       if (!user?.id) {
         if (alive) {
           setProfileRow(null);
           setAuthMetaUser(null);
           setPsnDraft('');
+          setProfileLoading(false);
         }
         return;
       }
-      const [row, authUserRes] = await Promise.all([loadProfileForUser(user.id), supabase.auth.getUser()]);
-      if (!alive) return;
-      setProfileRow(row);
-      setAuthMetaUser((authUserRes.data?.user as unknown as AuthMetaUser) || null);
-      const resolved = resolveGamerTag({
-        profile: row,
-        user: ((authUserRes.data?.user as unknown as AuthMetaUser) || {
-          psn: user.psn,
-          user_metadata: { psn: user.psn },
-        }) as AuthMetaUser,
-      });
-      setPsnDraft(resolved.value || '');
+      try {
+        const [row, authUserRes] = await Promise.all([loadProfileForUser(user.id), supabase.auth.getUser()]);
+        if (!alive) return;
+        setProfileRow(row);
+        setAuthMetaUser((authUserRes.data?.user as unknown as AuthMetaUser) || null);
+        const resolved = resolveGamerTag({
+          profile: row,
+          user: ((authUserRes.data?.user as unknown as AuthMetaUser) || {
+            psn: user.psn,
+            user_metadata: { psn: user.psn },
+          }) as AuthMetaUser,
+        });
+        setPsnDraft(resolved.value || '');
+      } finally {
+        if (alive) setProfileLoading(false);
+      }
     })();
     return () => {
       alive = false;
@@ -546,7 +553,7 @@ export default function MembersPage() {
   }).value;
   const profilePsn = cleanProfileText(profileRow?.psn);
   const profileXboxTag = cleanProfileText(profileRow?.xbox_gamertag);
-  const showMissingTagBanner = Boolean(user?.id) && !profilePsn && !profileXboxTag;
+  const showMissingTagBanner = Boolean(user?.id) && !profileLoading && Boolean(profileRow) && !profilePsn && !profileXboxTag;
   const resolvedEmail = cleanProfileText(profileRow?.email) || cleanProfileText(user?.email);
   const record = useMemo<TeamRecord>(() => {
     const teamKey = user?.teamKey as TeamKey | undefined;
@@ -778,7 +785,7 @@ export default function MembersPage() {
                   <button
                     type="button"
                     onClick={handleSavePsn}
-                    disabled={savingPsn || !cleanProfileText(psnDraft)}
+                    disabled={profileLoading || savingPsn || !cleanProfileText(psnDraft)}
                     className="coachSoonChip"
                     style={{
                       justifySelf: 'start',

@@ -60,8 +60,8 @@ type PrettyRegistrationSummary = {
   prefTeamNames: string;
 };
 
-const PRESEASON_OPEN_AT_UTC =
-  import.meta.env.VITE_PRESEASON_REG_OPEN_AT?.trim() || '2026-03-05T14:00:00+11:00'; // 2:00pm Melbourne (AEDT)
+const REG_UNLOCK_AT =
+  import.meta.env.VITE_PRESEASON_REG_OPEN_AT?.trim() || '2026-03-04T20:30:00+11:00'; // 8:30pm Melbourne (AEDT)
 
 function text(v: unknown): string {
   return String(v || '').trim();
@@ -415,7 +415,7 @@ function formatPrefNames(value: unknown): string {
 }
 
 function getRemainingMs(): number {
-  const openAtMs = new Date(PRESEASON_OPEN_AT_UTC).getTime();
+  const openAtMs = new Date(REG_UNLOCK_AT).getTime();
   return Math.max(0, openAtMs - Date.now());
 }
 
@@ -434,6 +434,7 @@ export default function PreseasonRegistrationPage() {
 
   const [loading, setLoading] = useState(true);
   const [teamsLoading, setTeamsLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [fatalError, setFatalError] = useState<string | null>(null);
   const [inlineError, setInlineError] = useState<string | null>(null);
@@ -467,6 +468,9 @@ export default function PreseasonRegistrationPage() {
       (async () => {
         setLoading(true);
         setTeamsLoading(true);
+        setProfileLoading(false);
+        setProfile(null);
+        setAuthMetaUser(null);
         try {
           const teamsRes = await supabase.from('eg_teams').select('id,name,logo_url,slug').order('name', { ascending: true });
           if (!alive) return;
@@ -520,6 +524,7 @@ export default function PreseasonRegistrationPage() {
     (async () => {
       setLoading(true);
       setFatalError(null);
+      setProfileLoading(true);
 
       try {
         const [teamsRes, profileRes, regRes, prettyRes, authUserRes] = await Promise.all([
@@ -571,7 +576,12 @@ export default function PreseasonRegistrationPage() {
 
         setProfile(profileRes);
         setAuthMetaUser((authUserRes.data?.user as unknown as AuthMetaUser) || null);
-        setProfileLoadError(profileRes ? null : 'We could not load your profile yet.');
+        if (profileRes) {
+          setProfileLoadError(null);
+        } else {
+          console.error('[PreseasonRegistration] profile not found for user', user.id);
+          setProfileLoadError('Profile not found. Please sign out/in.');
+        }
 
         const existingPrefs = readPrefs((regRes || null) as RegistrationRow | null).slice(0, 4);
         if (existingPrefs.length) {
@@ -593,6 +603,7 @@ export default function PreseasonRegistrationPage() {
       } finally {
         if (alive) {
           setTeamsLoading(false);
+          setProfileLoading(false);
           setLoading(false);
         }
       }
@@ -661,12 +672,23 @@ export default function PreseasonRegistrationPage() {
     event.preventDefault();
 
     if (!isOpen) {
-      setInlineError('Registration opens at 2:00pm (Melbourne time).');
+      setInlineError('Registrations open at half-time — Swans vs Carlton (8:30pm).');
       return;
     }
 
     if (!user?.id) {
       navigate('/auth/sign-in', { replace: true, state: { from: '/preseason-registration' } });
+      return;
+    }
+
+    if (profileLoading) {
+      setInlineError('Loading your profile, please wait.');
+      return;
+    }
+
+    if (!profile) {
+      console.error('[PreseasonRegistration] submit blocked: profile not found for user', user.id);
+      setInlineError('Profile not found. Please sign out/in.');
       return;
     }
 
@@ -683,7 +705,12 @@ export default function PreseasonRegistrationPage() {
     const freshAuthUser = (authUserRes.data?.user as unknown as AuthMetaUser) || null;
     if (freshProfile) setProfile(freshProfile);
     setAuthMetaUser(freshAuthUser);
-
+    if (!freshProfile && !profile) {
+      console.error('[PreseasonRegistration] refresh profile missing for user', user.id);
+      setProfileLoadError('Profile not found. Please sign out/in.');
+      setInlineError('Profile not found. Please sign out/in.');
+      return;
+    }
     setProfileLoadError(freshProfile ? null : 'We could not refresh your profile right now. Using last known profile data.');
 
     const resolvedTag = resolveGamerTag({
@@ -820,11 +847,18 @@ export default function PreseasonRegistrationPage() {
                     className="prBtn prBtn--ghost"
                     onClick={async () => {
                       if (!user?.id) return;
+                      setProfileLoading(true);
                       const freshProfile = await loadProfile(user.id).catch(() => null);
                       const authUserRes = await supabase.auth.getUser();
                       setProfile(freshProfile);
                       setAuthMetaUser((authUserRes.data?.user as unknown as AuthMetaUser) || null);
-                      setProfileLoadError(freshProfile ? null : 'We could not load your profile right now.');
+                      if (!freshProfile) {
+                        console.error('[PreseasonRegistration] retry profile load failed for user', user.id);
+                        setProfileLoadError('Profile not found. Please sign out/in.');
+                      } else {
+                        setProfileLoadError(null);
+                      }
+                      setProfileLoading(false);
                     }}
                   >
                     Retry profile sync
@@ -836,7 +870,11 @@ export default function PreseasonRegistrationPage() {
                   </button>
                 ) : null}
 
-                <button type="submit" className="prBtn prBtn--primary prBtn--confirm" disabled={submitting || !selectedTeamIds.length}>
+                <button
+                  type="submit"
+                  className="prBtn prBtn--primary prBtn--confirm"
+                  disabled={profileLoading || teamsLoading || submitting || !selectedTeamIds.length}
+                >
                   {submitting ? 'Submitting…' : 'Confirm Registration'}
                 </button>
               </form>
@@ -849,8 +887,8 @@ export default function PreseasonRegistrationPage() {
         <div className="prLockOverlay" role="dialog" aria-modal="true" aria-label="Registration locked">
           <div className="prLockModal">
             <div className="prLockKicker">Preseason Knockout</div>
-            <h2 className="prLockTitle">Registration opens at 2:00pm</h2>
-            <p className="prLockSub">Melbourne time • Thursday 5 March</p>
+            <h2 className="prLockTitle">Registrations open at half-time</h2>
+            <p className="prLockSub">Swans vs Carlton — unlocks at 8:30pm</p>
             <div className="prLockCountdown">{countdown}</div>
             {!isLoggedIn ? (
               <>
