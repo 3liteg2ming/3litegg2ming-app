@@ -30,12 +30,21 @@ function toFriendlyAuthMessage(message: string): { title: string; detail: string
   };
 }
 
+function sanitizeRedirectPath(input: unknown): string {
+  const raw = String(input || '').trim();
+  if (!raw) return '/members';
+  if (/^https?:\/\//i.test(raw)) return '/members';
+  if (raw.includes('localhost') || raw.includes('127.0.0.1')) return '/members';
+  if (!raw.startsWith('/')) return '/members';
+  return raw;
+}
+
 export default function SignInPage() {
   const nav = useNavigate();
   const location = useLocation() as any;
   const { signIn, user, loading } = useAuth();
 
-  const redirectTo = useMemo(() => location?.state?.from || '/members', [location]);
+  const redirectTo = useMemo(() => sanitizeRedirectPath(location?.state?.from), [location]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);

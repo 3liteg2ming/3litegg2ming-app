@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import RegistrationHeroCard from '../components/RegistrationHeroCard';
 import TeamLogoGrid from '../components/TeamLogoGrid';
+import { resolveGamerTag } from '../lib/gamerTag';
 import { getTeamAssets } from '../lib/teamAssets';
 import { useAuth } from '../state/auth/AuthProvider';
 import { supabase } from '../lib/supabaseClient';
@@ -28,6 +29,11 @@ type ProfileRow = {
   psn?: string | null;
 };
 
+type AuthMetaUser = {
+  psn?: string | null;
+  user_metadata?: Record<string, unknown> | null;
+} | null;
+
 type RegistrationRow = {
   user_id: string;
   season_slug?: string | null;
@@ -51,15 +57,10 @@ type PrettyRegistrationSummary = {
   prefTeamNames: string;
 };
 
-const PRESEASON_OPEN_AT_UTC = '2026-03-04T09:30:00.000Z'; // 8:30pm Melbourne (AEDT)
+const PRESEASON_OPEN_AT_UTC = '2026-03-04T10:00:00.000Z'; // 9:00pm Melbourne (AEDT)
 
 function text(v: unknown): string {
   return String(v || '').trim();
-}
-
-function isPlaceholderPsn(value: unknown): boolean {
-  const normalized = text(value).toLowerCase().replace(/\s+/g, '');
-  return normalized === 'yourpsn' || normalized === 'yourpsnid';
 }
 
 function hasMissingSeasonSlug(error: unknown): boolean {
@@ -343,18 +344,30 @@ async function resolvePreseasonSeasonId(): Promise<string | null> {
   return null;
 }
 
-async function insertRegistration(userId: string, selectedTeamIds: string[]) {
+async function insertRegistration(args: {
+  userId: string;
+  selectedTeamIds: string[];
+  coachName: string;
+  coachPsn: string;
+  prefTeamNames: string[];
+  prefTeamSlugs: string[];
+}) {
   const seasonId = await resolvePreseasonSeasonId();
 
   const payload = {
-    user_id: userId,
-    pref_team_ids: selectedTeamIds,
-    pref_team_1: selectedTeamIds[0] ?? null,
-    pref_team_2: selectedTeamIds[1] ?? null,
-    pref_team_3: selectedTeamIds[2] ?? null,
-    pref_team_4: selectedTeamIds[3] ?? null,
+    user_id: args.userId,
+    coach_name: args.coachName,
+    psn: args.coachPsn,
+    psn_name: args.coachPsn,
+    pref_team_ids: args.selectedTeamIds,
+    pref_team_1: args.selectedTeamIds[0] ?? null,
+    pref_team_2: args.selectedTeamIds[1] ?? null,
+    pref_team_3: args.selectedTeamIds[2] ?? null,
+    pref_team_4: args.selectedTeamIds[3] ?? null,
+    pref_team_names: args.prefTeamNames,
+    pref_team_slugs: args.prefTeamSlugs,
     season_id: seasonId,
-    season_slug: 'preseason',
+    season_slug: 'preseason-2026',
   };
 
   const inserted = await supabase.from('eg_preseason_registrations').insert(payload);
@@ -365,7 +378,7 @@ async function insertRegistration(userId: string, selectedTeamIds: string[]) {
     const updated = await supabase
       .from('eg_preseason_registrations')
       .update(payload)
-      .eq('user_id', userId);
+      .eq('user_id', args.userId);
     if (!updated.error) return;
     throw new Error(updated.error.message || 'Unable to save registration.');
   }
@@ -406,9 +419,11 @@ export default function PreseasonRegistrationPage() {
 
   const [teams, setTeams] = useState<TeamRow[]>([]);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
+  const [authMetaUser, setAuthMetaUser] = useState<AuthMetaUser>(null);
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [submittedSummary, setSubmittedSummary] = useState<PrettyRegistrationSummary | null>(null);
+  const [profileLoadError, setProfileLoadError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(getRemainingMs() <= 0);
   const [countdown, setCountdown] = useState(formatCountdown(getRemainingMs()));
 
@@ -462,6 +477,7 @@ export default function PreseasonRegistrationPage() {
 
           const finalRows = AFL_CANONICAL_KEYS.map((key) => canonicalRows.get(key)).filter((row): row is TeamRow => Boolean(row));
           setTeams(finalRows);
+          setProfileLoadError(null);
         } catch (error: any) {
           console.error('[EG CRASH] PreseasonRegistration team load failed', error);
           if (!alive) return;
@@ -485,11 +501,12 @@ export default function PreseasonRegistrationPage() {
       setFatalError(null);
 
       try {
-        const [teamsRes, profileRes, regRes, prettyRes] = await Promise.all([
+        const [teamsRes, profileRes, regRes, prettyRes, authUserRes] = await Promise.all([
           supabase.from('eg_teams').select('id,name,logo_url,slug').order('name', { ascending: true }),
           loadProfile(user.id),
           loadRegistrationFromTable(user.id),
           loadPrettyRegistration(user.id),
+          supabase.auth.getUser(),
         ]);
 
         if (!alive) return;
@@ -532,6 +549,8 @@ export default function PreseasonRegistrationPage() {
         }
 
         setProfile(profileRes);
+        setAuthMetaUser((authUserRes.data?.user as unknown as AuthMetaUser) || null);
+        setProfileLoadError(profileRes ? null : 'We could not load your profile yet.');
 
         const existingPrefs = readPrefs((regRes || null) as RegistrationRow | null).slice(0, 4);
         if (existingPrefs.length) {
@@ -566,19 +585,33 @@ export default function PreseasonRegistrationPage() {
   const signedInName = useMemo(() => {
     const display = text(profile?.display_name);
     if (display) return display;
+    const metaDisplay = text(authMetaUser?.user_metadata?.display_name);
+    if (metaDisplay) return metaDisplay;
+    const metaName = text(authMetaUser?.user_metadata?.name);
+    if (metaName) return metaName;
+    const userDisplay = text(user?.displayName);
+    if (userDisplay) return userDisplay;
     return text(user?.email).split('@')[0] || 'Coach';
-  }, [profile?.display_name, user?.email]);
+  }, [profile?.display_name, authMetaUser?.user_metadata, user?.displayName, user?.email]);
 
   const profilePsn = useMemo(() => {
-    const value = text(profile?.psn);
-    return !isPlaceholderPsn(value) ? value : '';
-  }, [profile?.psn]);
+    const resolved = resolveGamerTag({
+      profile,
+      user: (authMetaUser || { psn: user?.psn, user_metadata: { psn: user?.psn } }) as AuthMetaUser,
+    });
+    return resolved.value || '';
+  }, [profile, authMetaUser, user?.psn]);
 
   const selectedTeamSet = useMemo(() => new Set(selectedTeamIds), [selectedTeamIds]);
 
   const selectedNames = useMemo(() => {
     const map = new Map(teams.map((team) => [team.id, team.name]));
     return selectedTeamIds.map((id) => map.get(id) || id);
+  }, [selectedTeamIds, teams]);
+
+  const selectedTeamRows = useMemo(() => {
+    const map = new Map(teams.map((team) => [team.id, team]));
+    return selectedTeamIds.map((id) => map.get(id)).filter((team): team is TeamRow => Boolean(team));
   }, [selectedTeamIds, teams]);
 
   const heroLogos = useMemo(() => {
@@ -607,7 +640,7 @@ export default function PreseasonRegistrationPage() {
     event.preventDefault();
 
     if (!isOpen) {
-      setInlineError('Registration opens at 8:30pm (Melbourne time).');
+      setInlineError('Registration opens at 9:00pm (Melbourne time).');
       return;
     }
 
@@ -621,8 +654,27 @@ export default function PreseasonRegistrationPage() {
       return;
     }
 
-    if (!profilePsn) {
-      setInlineError('Add your PSN in Profile to register.');
+    const freshProfile = await loadProfile(user.id).catch(() => null);
+    const authUserRes = await supabase.auth.getUser();
+    const freshAuthUser = (authUserRes.data?.user as unknown as AuthMetaUser) || null;
+    setProfile(freshProfile);
+    setAuthMetaUser(freshAuthUser);
+
+    if (!freshProfile) {
+      setProfileLoadError('We could not load your profile right now.');
+      setInlineError('Profile is still syncing. Retry in a moment.');
+      return;
+    }
+    setProfileLoadError(null);
+
+    const resolvedTag = resolveGamerTag({
+      profile: freshProfile,
+      user: (freshAuthUser || { psn: user?.psn, user_metadata: { psn: user?.psn } }) as AuthMetaUser,
+    });
+
+    const resolvedPsn = text(resolvedTag.value);
+    if (!resolvedPsn) {
+      setInlineError('Add your PSN or Xbox Gamertag in Profile to register.');
       return;
     }
 
@@ -631,18 +683,29 @@ export default function PreseasonRegistrationPage() {
 
     try {
       const nowIso = new Date().toISOString();
-      await insertRegistration(user.id, selectedTeamIds);
+      await insertRegistration({
+        userId: user.id,
+        selectedTeamIds,
+        coachName:
+          text(freshProfile.display_name) ||
+          text(freshAuthUser?.user_metadata?.display_name) ||
+          text(freshAuthUser?.user_metadata?.name) ||
+          signedInName,
+        coachPsn: resolvedPsn,
+        prefTeamNames: selectedTeamRows.map((team) => team.name),
+        prefTeamSlugs: selectedTeamRows.map((team) => text(team.slug)).filter(Boolean),
+      });
       const pretty = await loadPrettyRegistration(user.id);
       if (pretty) {
         setSubmittedSummary({
           coachDisplayName: text(pretty.coach_display_name) || signedInName,
-          coachPsn: text(pretty.coach_psn) || profilePsn,
+          coachPsn: text(pretty.coach_psn) || resolvedPsn,
           prefTeamNames: formatPrefNames(pretty.pref_team_names),
         });
       } else {
         setSubmittedSummary({
           coachDisplayName: signedInName,
-          coachPsn: profilePsn,
+          coachPsn: resolvedPsn,
           prefTeamNames: selectedNames.join(', '),
         });
       }
@@ -706,7 +769,7 @@ export default function PreseasonRegistrationPage() {
               <h2>You’re registered</h2>
               <div className="prConfirmCard__prefs">
                 <div className="prPrefPill">Coach name: {submittedSummary?.coachDisplayName || signedInName}</div>
-                <div className="prPrefPill">PSN: {submittedSummary?.coachPsn || profilePsn}</div>
+                <div className="prPrefPill">PSN / Xbox tag: {submittedSummary?.coachPsn || profilePsn}</div>
                 <div className="prPrefPill">Teams: {submittedSummary?.prefTeamNames || selectedNames.join(', ') || 'TBC'}</div>
               </div>
               <button type="button" className="prBtn prBtn--primary" onClick={() => navigate('/')}>
@@ -731,7 +794,23 @@ export default function PreseasonRegistrationPage() {
                 />
 
                 {inlineError ? <div className="prInlineError">{inlineError}</div> : null}
-                {inlineError && inlineError.toLowerCase().includes('add your psn in profile') ? (
+                {profileLoadError ? (
+                  <button
+                    type="button"
+                    className="prBtn prBtn--ghost"
+                    onClick={async () => {
+                      if (!user?.id) return;
+                      const freshProfile = await loadProfile(user.id).catch(() => null);
+                      const authUserRes = await supabase.auth.getUser();
+                      setProfile(freshProfile);
+                      setAuthMetaUser((authUserRes.data?.user as unknown as AuthMetaUser) || null);
+                      setProfileLoadError(freshProfile ? null : 'We could not load your profile right now.');
+                    }}
+                  >
+                    Retry profile sync
+                  </button>
+                ) : null}
+                {inlineError && inlineError.toLowerCase().includes('add your psn or xbox gamertag in profile') ? (
                   <button type="button" className="prBtn prBtn--profile" onClick={() => navigate('/profile')}>
                     Go to Profile
                   </button>
@@ -750,7 +829,7 @@ export default function PreseasonRegistrationPage() {
         <div className="prLockOverlay" role="dialog" aria-modal="true" aria-label="Registration locked">
           <div className="prLockModal">
             <div className="prLockKicker">Preseason Knockout</div>
-            <h2 className="prLockTitle">Registration opens at 8:30pm</h2>
+            <h2 className="prLockTitle">Registration opens at 9:00pm</h2>
             <p className="prLockSub">Melbourne time • Wednesday 4 March</p>
             <div className="prLockCountdown">{countdown}</div>
             <p className="prLockHint">Create your account now and come back when the timer hits zero.</p>

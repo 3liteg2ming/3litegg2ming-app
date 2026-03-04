@@ -116,6 +116,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               last_name: args.lastName,
               display_name: args.displayName,
               psn: args.psn,
+              gamertag: args.psn,
+              psn_name: args.psn,
               team_key: args.teamKey,
             },
           },

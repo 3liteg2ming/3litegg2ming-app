@@ -36,6 +36,13 @@ function toFriendlyCreateMessage(message: string): { title: string; detail: stri
     };
   }
 
+  if (lower.includes('database error saving new user')) {
+    return {
+      title: 'Account creation is partially complete.',
+      detail: 'Account created in Auth may have failed to create profile. Try signing in. If it persists, contact support.',
+    };
+  }
+
   return {
     title: 'Could not create account right now.',
     detail: raw || 'Please try again in a moment.',
@@ -71,6 +78,14 @@ async function upsertProfileForUser(args: {
   if (egProfilesError) {
     console.error('[SignUp] eg_profiles upsert failed', egProfilesError);
   }
+}
+
+async function ensureProfileExists(userId: string): Promise<void> {
+  const check = await supabase.from('profiles').select('user_id').eq('user_id', userId).maybeSingle();
+  if (!check.error && check.data?.user_id) return;
+  const fallback = await supabase.from('eg_profiles').select('user_id').eq('user_id', userId).maybeSingle();
+  if (!fallback.error && fallback.data?.user_id) return;
+  throw new Error('Profile row is still missing after signup.');
 }
 
 export default function SignUpPage() {
@@ -117,8 +132,8 @@ export default function SignUpPage() {
 
     if (!cleanPsn) {
       setError({
-        title: 'PSN is required.',
-        detail: 'Enter your PSN ID to create your account.',
+        title: 'PSN or Xbox Gamertag is required.',
+        detail: 'Enter your PSN ID or Xbox Gamertag to create your account.',
       });
       return;
     }
@@ -126,7 +141,7 @@ export default function SignUpPage() {
     if (!isFormValid) {
       setError({
         title: 'Check your details before continuing.',
-        detail: 'First name, last name, PSN, valid email, and matching password are required.',
+        detail: 'First name, last name, PSN or Xbox Gamertag, valid email, and matching password are required.',
       });
       return;
     }
@@ -152,6 +167,28 @@ export default function SignUpPage() {
         displayName,
         psn: cleanPsn,
       });
+
+      if (createdUser?.id) {
+        try {
+          await ensureProfileExists(createdUser.id);
+        } catch (missingErr) {
+          console.error('[SignUp] profile check failed, retrying upsert', missingErr);
+          await upsertProfileForUser({
+            userId: createdUser.id,
+            email: trimmedEmail,
+            firstName: cleanFirst,
+            lastName: cleanLast,
+            displayName,
+            psn: cleanPsn,
+          });
+        }
+      }
+
+      try {
+        await supabase.auth.signInWithPassword({ email: trimmedEmail, password });
+      } catch (signInError) {
+        console.error('[SignUp] post-signup sign-in skipped', signInError);
+      }
 
       setSuccess(true);
 
@@ -238,7 +275,7 @@ export default function SignUpPage() {
               </label>
 
               <label className="auth-field">
-                <span className="auth-label">PSN</span>
+                <span className="auth-label">PSN or Xbox Gamertag</span>
                 <div className="auth-inputWrap">
                   <Gamepad2 size={16} className="auth-icon" />
                   <input
@@ -246,7 +283,7 @@ export default function SignUpPage() {
                     type="text"
                     value={psn}
                     onChange={(e) => setPsn(e.target.value)}
-                    placeholder="PSN ID"
+                    placeholder="PSN ID or Gamertag"
                     autoCapitalize="none"
                     required
                     disabled={submitting || loading}
@@ -344,15 +381,18 @@ export default function SignUpPage() {
                 ) : null}
               </label>
 
-              {error ? (
-                <div className="auth-message auth-message--error" role="alert" aria-live="assertive">
-                  <div className="auth-message__title">{error.title}</div>
-                  <details className="auth-message__details">
-                    <summary>Details</summary>
-                    <div className="auth-message__body">{error.detail}</div>
-                  </details>
-                </div>
-              ) : null}
+          {error ? (
+            <div className="auth-message auth-message--error" role="alert" aria-live="assertive">
+              <div className="auth-message__title">{error.title}</div>
+              <details className="auth-message__details">
+                <summary>Details</summary>
+                <div className="auth-message__body">{error.detail}</div>
+              </details>
+              <button type="button" className="auth-message__retry" onClick={() => setError(null)} disabled={submitting || loading}>
+                Try again
+              </button>
+            </div>
+          ) : null}
 
               <button type="submit" className="auth-primary" disabled={!canSubmit}>
                 {submitting || loading ? 'Creating account…' : 'Create account'}

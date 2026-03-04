@@ -9,6 +9,7 @@ import { afl26LocalRounds } from '../data/afl26LocalRounds';
 import { getAfl26RoundsFromSupabase, type AflMatch, type AflRound } from '../data/afl26Supabase';
 import { fetchCoachBadges, groupCoachBadgesByCategory, type CoachBadgeModel } from '../lib/badges';
 import { getStoredCompetitionKey, getUiCompetition } from '../lib/competitionRegistry';
+import { resolveGamerTag } from '../lib/gamerTag';
 import { supabase } from '../lib/supabaseClient';
 import { TEAM_ASSETS, assetUrl, type TeamKey } from '../lib/teamAssets';
 import { useAuth } from '../state/auth/AuthProvider';
@@ -41,6 +42,11 @@ type ProfileRow = {
   psn?: string | null;
   email?: string | null;
 };
+
+type AuthMetaUser = {
+  psn?: string | null;
+  user_metadata?: Record<string, unknown> | null;
+} | null;
 
 function normalize(v: string) {
   return String(v || '')
@@ -304,6 +310,7 @@ export default function MembersPage() {
     prefTeamNames: '',
   });
   const [profileRow, setProfileRow] = useState<ProfileRow | null>(null);
+  const [authMetaUser, setAuthMetaUser] = useState<AuthMetaUser>(null);
   const [psnDraft, setPsnDraft] = useState('');
   const [savingPsn, setSavingPsn] = useState(false);
   const [psnStatus, setPsnStatus] = useState<string | null>(null);
@@ -469,15 +476,23 @@ export default function MembersPage() {
       if (!user?.id) {
         if (alive) {
           setProfileRow(null);
+          setAuthMetaUser(null);
           setPsnDraft('');
         }
         return;
       }
-      const row = await loadProfileForUser(user.id);
+      const [row, authUserRes] = await Promise.all([loadProfileForUser(user.id), supabase.auth.getUser()]);
       if (!alive) return;
       setProfileRow(row);
-      const resolvedPsn = cleanProfileText(row?.psn) || cleanProfileText(user.psn);
-      setPsnDraft(resolvedPsn);
+      setAuthMetaUser((authUserRes.data?.user as unknown as AuthMetaUser) || null);
+      const resolved = resolveGamerTag({
+        profile: row,
+        user: ((authUserRes.data?.user as unknown as AuthMetaUser) || {
+          psn: user.psn,
+          user_metadata: { psn: user.psn },
+        }) as AuthMetaUser,
+      });
+      setPsnDraft(resolved.value || '');
     })();
     return () => {
       alive = false;
@@ -486,7 +501,10 @@ export default function MembersPage() {
 
   const displayName =
     cleanProfileText(profileRow?.display_name) || user?.displayName || (user?.email ? user.email.split('@')[0] : 'Coach');
-  const resolvedPsn = cleanProfileText(profileRow?.psn) || cleanProfileText(user?.psn);
+  const resolvedPsn = resolveGamerTag({
+    profile: profileRow,
+    user: (authMetaUser || { psn: user?.psn, user_metadata: { psn: user?.psn } }) as AuthMetaUser,
+  }).value;
   const resolvedEmail = cleanProfileText(profileRow?.email) || cleanProfileText(user?.email);
   const record = useMemo<TeamRecord>(() => {
     const teamKey = user?.teamKey as TeamKey | undefined;
@@ -532,7 +550,7 @@ export default function MembersPage() {
     if (!user?.id) return;
     const nextPsn = cleanProfileText(psnDraft);
     if (!nextPsn) {
-      setPsnStatus('PSN cannot be empty.');
+      setPsnStatus('PSN or Xbox Gamertag cannot be empty.');
       return;
     }
 
@@ -562,10 +580,10 @@ export default function MembersPage() {
         email: resolvedEmail || null,
         psn: nextPsn,
       }));
-      setPsnStatus('PSN saved.');
+      setPsnStatus('PSN or Xbox Gamertag saved.');
     } catch (err: any) {
       console.error('[Members] PSN save failed', err);
-      setPsnStatus('Could not save PSN right now.');
+      setPsnStatus('Could not save PSN or Xbox Gamertag right now.');
     } finally {
       setSavingPsn(false);
     }
@@ -591,7 +609,7 @@ export default function MembersPage() {
               <h1 className="coachHubHero__name">{displayName}</h1>
               <p className="coachHubHero__team">{team?.name || 'Unassigned Team'}</p>
               <div className="coachHubHero__sub">
-                <span>{resolvedPsn || 'PSN not set'}</span>
+                <span>{resolvedPsn || 'PSN or Xbox Gamertag not set'}</span>
                 <span>•</span>
                 <span>{resolvedEmail || '—'}</span>
               </div>
@@ -675,7 +693,7 @@ export default function MembersPage() {
             <div className="member-miniRow">
               <Gamepad2 size={16} className="member-ico" />
               <div>
-                <div className="member-miniLabel">PSN</div>
+                <div className="member-miniLabel">PSN or Xbox Gamertag</div>
                 <div className="member-miniValue">{resolvedPsn || 'Not set'}</div>
               </div>
             </div>
@@ -689,7 +707,7 @@ export default function MembersPage() {
                     type="text"
                     value={psnDraft}
                     onChange={(e) => setPsnDraft(e.target.value)}
-                    placeholder="PSN ID"
+                    placeholder="PSN ID or Gamertag"
                     autoCapitalize="none"
                     disabled={savingPsn}
                     style={{
@@ -699,7 +717,7 @@ export default function MembersPage() {
                       background: 'rgba(4, 9, 22, 0.72)',
                       color: '#e8ecf8',
                       padding: '10px 12px',
-                      fontSize: 13,
+                      fontSize: 16,
                     }}
                   />
                   <button
@@ -715,7 +733,7 @@ export default function MembersPage() {
                       cursor: savingPsn ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    {savingPsn ? 'Saving…' : 'Save PSN'}
+                    {savingPsn ? 'Saving…' : 'Save Tag'}
                   </button>
                   {psnStatus ? (
                     <div className="member-miniValue" style={{ fontSize: 12, opacity: 0.85 }}>
@@ -743,7 +761,7 @@ export default function MembersPage() {
             <div className="coachActions__hint">Checking preseason registration…</div>
           ) : registration.registered ? (
             <div className="coachActions__hint">
-              Registered for preseason • {registration.coachPsn || 'PSN TBC'} • {registration.prefTeamNames || `${registration.prefCount}/4 preferences set`}
+              Registered for preseason • {registration.coachPsn || 'PSN/Gamertag TBC'} • {registration.prefTeamNames || `${registration.prefCount}/4 preferences set`}
             </div>
           ) : (
             <div className="coachActions__hint">Not registered yet</div>
