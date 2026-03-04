@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import type { AuthState, CoachUser } from './types';
 import type { TeamKey } from '../../lib/teamAssets';
 import { buildAuthRedirect } from '../../lib/authRedirect';
-import { getSupabaseClient, hasSupabaseEnv } from '../../lib/supabaseClient';
+import { getSupabaseClient, hasSupabaseEnv, requireSupabaseClient } from '../../lib/supabaseClient';
 import { mockGetUser, mockSignIn, mockSignOut, mockSignUp } from './mockAuth';
 
 type AuthContextValue = AuthState & {
@@ -113,7 +113,7 @@ async function ensureProfileFromAuthUser(supabase: ReturnType<typeof getSupabase
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const supabase = useMemo(() => getSupabaseClient(), []);
+  const supabase = useMemo(() => (hasSupabaseEnv ? requireSupabaseClient() : null), []);
   const [user, setUser] = useState<CoachUser | null>(null);
   const [booting, setBooting] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
