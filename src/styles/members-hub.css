@@ -1,0 +1,222 @@
+.member-screen {
+  padding-bottom: calc(var(--bottom-nav-h, 108px) + env(safe-area-inset-bottom, 0px) + 8px);
+}
+
+.member-card {
+  padding-bottom: 12px;
+  display: grid;
+  gap: 12px;
+}
+
+.member-panel--tight {
+  margin-top: 0;
+}
+
+.coachHubHero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  padding: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.coachHubHero__left {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.coachHubHero__logoWrap {
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(7, 12, 20, 0.45);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  flex: 0 0 58px;
+}
+
+.coachHubHero__logo {
+  width: 84%;
+  height: 84%;
+  object-fit: contain;
+}
+
+.coachHubHero__meta {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.coachHubHero__kicker {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(219, 229, 246, 0.72);
+}
+
+.coachHubHero__name {
+  margin: 0;
+  font-size: clamp(22px, 5vw, 30px);
+  line-height: 1.04;
+  color: rgba(249, 252, 255, 0.95);
+}
+
+.coachHubHero__team {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(230, 238, 252, 0.86);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.coachHubHero__sub {
+  margin-top: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(205, 217, 239, 0.72);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.coachHubHero__chips {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.coachHubChip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 196, 0, 0.36);
+  background: rgba(245, 196, 0, 0.12);
+  color: rgba(255, 230, 159, 0.96);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 9px;
+}
+
+.coachHubChip--muted {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(227, 236, 252, 0.82);
+}
+
+.coachQuickStats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.coachQuickStats__item {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 10px;
+  display: grid;
+  gap: 3px;
+}
+
+.coachQuickStats__label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(213, 223, 242, 0.66);
+}
+
+.coachQuickStats__value {
+  font-size: 18px;
+  line-height: 1;
+  color: rgba(245, 250, 255, 0.95);
+}
+
+.coachEmptyBadges {
+  display: grid;
+  place-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.coachEmptyBadges__icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.coachEmptyBadges__text {
+  font-size: 12px;
+  color: rgba(216, 225, 243, 0.78);
+}
+
+.member-miniRow--manage {
+  align-items: center;
+}
+
+.member-miniRow__grow {
+  flex: 1;
+}
+
+.coachSoonChip {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(214, 225, 244, 0.84);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 8px;
+}
+
+.coachActions {
+  display: grid;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.coachActions__primary {
+  width: 100%;
+}
+
+.coachActions__secondary {
+  width: 100%;
+}
+
+.coachActions__hint {
+  font-size: 12px;
+  color: rgba(215, 225, 244, 0.72);
+  text-align: center;
+}
+
+@media (min-width: 900px) {
+  .coachQuickStats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .coachHubHero {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .coachHubHero__chips {
+    align-items: flex-start;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}

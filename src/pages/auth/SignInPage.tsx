@@ -1,231 +1,192 @@
-import { Eye, EyeOff, Lock, Mail, ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { useAuth } from '../../state/auth/AuthProvider';
+import '../../styles/auth-premium.css';
 
-function cn(...a: Array<string | false | undefined | null>) {
-  return a.filter(Boolean).join(' ');
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function toFriendlyAuthMessage(message: string): { title: string; detail: string } {
+  const raw = String(message || '').trim();
+  const lower = raw.toLowerCase();
+
+  if (lower.includes('invalid login credentials')) {
+    return {
+      title: 'Email or password is incorrect.',
+      detail: raw,
+    };
+  }
+
+  if (lower.includes('email not confirmed')) {
+    return {
+      title: 'Confirm your email before signing in.',
+      detail: raw,
+    };
+  }
+
+  return {
+    title: 'Could not sign in right now.',
+    detail: raw || 'Please try again in a moment.',
+  };
 }
 
 export default function SignInPage() {
   const nav = useNavigate();
   const location = useLocation() as any;
-  const { signIn, user, loading, isSupabase } = useAuth();
-  const redirectTo = useMemo(() => location?.state?.from || '/members', [location]);
+  const { signIn, user, loading } = useAuth();
 
+  const redirectTo = useMemo(() => location?.state?.from || '/members', [location]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [show, setShow] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(location?.state?.message || null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<{ title: string; detail: string } | null>(null);
+  const [successMessage] = useState<string | null>(location?.state?.message || null);
 
-  const isFormValid = email && password;
+  const trimmedEmail = email.trim();
+  const emailValid = EMAIL_RE.test(trimmedEmail);
+  const passwordValid = password.length >= 8;
+  const canSubmit = emailValid && passwordValid && !submitting && !loading;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (!emailValid) {
+      setError({
+        title: 'Enter a valid email address.',
+        detail: 'Email format is invalid.',
+      });
+      return;
+    }
+
+    if (!passwordValid) {
+      setError({
+        title: 'Password is too short.',
+        detail: 'Password must be at least 8 characters.',
+      });
+      return;
+    }
+
+    setSubmitting(true);
     try {
-      await signIn({ email, password });
+      await signIn({ email: trimmedEmail, password });
       nav(redirectTo, { replace: true });
     } catch (err: any) {
-      const errMsg = err?.message || 'Could not sign in. Check your email and password.';
-      setError(errMsg);
+      setError(toFriendlyAuthMessage(String(err?.message || 'Unable to sign in.')));
+    } finally {
+      setSubmitting(false);
     }
   }
 
-  // If already signed in, bounce to members
   if (user && !loading) {
     return <Navigate to="/members" replace />;
   }
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
-  };
-
   return (
-    <div className="auth-screen">
-      <motion.div 
-        className="auth-top"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <motion.button 
-          type="button" 
-          className="auth-back" 
-          onClick={() => nav('/')}
-          aria-label="Back to home"
-          whileHover={{ scale: 1.05, x: -4 }}
-          whileTap={{ scale: 0.95 }}
-        >
+    <div className="auth-screen auth-screen--premium">
+      <div className="auth-top">
+        <button type="button" className="auth-back" onClick={() => nav('/')} aria-label="Back to home">
           <ChevronLeft size={18} />
           <span>Home</span>
-        </motion.button>
-      </motion.div>
+        </button>
+      </div>
 
-      <motion.div 
-        className="auth-card"
-        initial={{ opacity: 0, y: 20, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
-        variants={containerVariants}
-      >
-        <motion.div 
-          className="auth-badge"
-          variants={itemVariants}
-        >
-          COACH ACCESS
-        </motion.div>
-        
-        <motion.div variants={itemVariants}>
+      <div className="auth-card auth-card--premium">
+        <div className="auth-badge">COACH ACCESS</div>
+
+        <div className="auth-head">
           <div className="auth-title">Sign in</div>
-          <div className="auth-sub">
-            Coaches only — this links your account to your team so only you can submit results.
+          <div className="auth-sub">Use your coach account to access the members hub and submissions.</div>
+        </div>
+
+        {successMessage ? (
+          <div className="auth-message auth-message--success" role="status" aria-live="polite">
+            <div className="auth-message__title">Account created</div>
+            <div className="auth-message__body">{successMessage}</div>
           </div>
-        </motion.div>
-
-        {successMessage && (
-          <motion.div 
-            className="auth-note"
-            variants={itemVariants}
-            style={{
-              background: 'rgba(34,197,94,0.10)',
-              borderColor: 'rgba(34,197,94,0.20)',
-            }}
-          >
-            ✓ {successMessage}
-          </motion.div>
-        )}
-
-        {!isSupabase ? (
-          <motion.div 
-            className="auth-note"
-            variants={itemVariants}
-          >
-            <strong>Local mode:</strong> Sign-in is stored on this device only.
-          </motion.div>
         ) : null}
 
-        <motion.form 
-          onSubmit={onSubmit} 
-          className="auth-form"
-          variants={itemVariants}
-        >
-          <motion.label 
-            className="auth-field"
-            whileHover={{ scale: 1.01 }}
-          >
+        <form onSubmit={onSubmit} className="auth-form auth-form--compact" noValidate>
+          <label className="auth-field">
             <span className="auth-label">Email</span>
-            <motion.div className="auth-inputWrap">
+            <div className="auth-inputWrap">
               <Mail size={16} className="auth-icon" />
               <input
                 className="auth-input"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="coach@email.com"
+                placeholder="Email address"
                 autoComplete="email"
                 required
-                disabled={loading}
+                disabled={submitting || loading}
               />
-            </motion.div>
-          </motion.label>
+            </div>
+            {email.length > 0 && !emailValid ? (
+              <span className="auth-inlineHint auth-inlineHint--error">Enter a valid email format.</span>
+            ) : null}
+          </label>
 
-          <motion.label 
-            className="auth-field"
-            whileHover={{ scale: 1.01 }}
-          >
+          <label className="auth-field">
             <span className="auth-label">Password</span>
-            <motion.div className="auth-inputWrap">
+            <div className="auth-inputWrap">
               <Lock size={16} className="auth-icon" />
               <input
                 className="auth-input"
-                type={show ? 'text' : 'password'}
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="Password"
                 autoComplete="current-password"
                 required
-                disabled={loading}
+                disabled={submitting || loading}
               />
-              <motion.button
+              <button
                 type="button"
-                className={cn('auth-eye', show && 'active')}
-                onClick={() => setShow((s) => !s)}
-                aria-label={show ? 'Hide password' : 'Show password'}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                disabled={loading}
+                className="auth-eye"
+                onClick={() => setShowPassword((s) => !s)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                disabled={submitting || loading}
               >
-                {show ? <EyeOff size={16} /> : <Eye size={16} />}
-              </motion.button>
-            </motion.div>
-          </motion.label>
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            {password.length > 0 && !passwordValid ? (
+              <span className="auth-inlineHint auth-inlineHint--error">Minimum 8 characters.</span>
+            ) : null}
+          </label>
 
           {error ? (
-            <motion.div 
-              className="auth-error"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              {error}
-            </motion.div>
+            <div className="auth-message auth-message--error" role="alert" aria-live="assertive">
+              <div className="auth-message__title">{error.title}</div>
+              <details className="auth-message__details">
+                <summary>Details</summary>
+                <div className="auth-message__body">{error.detail}</div>
+              </details>
+            </div>
           ) : null}
 
-          <motion.button 
-            type="submit" 
-            className="auth-primary" 
-            disabled={loading || !isFormValid}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-          >
-            {loading ? (
-              <>
-                <span className="auth-button-spinner" />
-                <span style={{ marginLeft: 8 }}>Signing in…</span>
-              </>
-            ) : (
-              'Sign in'
-            )}
-          </motion.button>
+          <button type="submit" className="auth-primary" disabled={!canSubmit}>
+            {submitting || loading ? 'Signing in…' : 'Sign in'}
+          </button>
 
-          <motion.div 
-            className="auth-footer"
-            variants={itemVariants}
-          >
-            <span>New coach?</span>
-            <Link className="auth-link" to="/auth/sign-up">
-              Create account
-            </Link>
-          </motion.div>
-
-          <motion.div 
-            className="auth-footer"
-            variants={itemVariants}
-            style={{ marginTop: 12, gap: 4 }}
-          >
-            <span>Forgot your password?</span>
-            <Link className="auth-link" to="/auth/forgot-password">
-              Reset it
-            </Link>
-          </motion.div>
-        </motion.form>
-      </motion.div>
+          <div className="auth-footerRow">
+            <div className="auth-footer">
+              <span>New coach?</span>
+              <Link className="auth-link" to="/auth/sign-up">
+                Create account
+              </Link>
+            </div>
+            <div className="auth-footer">
+              <span>Forgot password?</span>
+              <Link className="auth-link" to="/auth/forgot-password">
+                Reset it
+              </Link>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

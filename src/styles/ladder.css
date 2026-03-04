@@ -20,7 +20,7 @@
 /* HERO (keeps your existing style hooks) */
 .ladderHero {
   border-radius: 22px;
-  padding: 18px 18px;
+  padding: 14px 16px;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.10);
   box-shadow: 0 18px 40px rgba(0,0,0,0.35);
@@ -41,7 +41,7 @@
 }
 
 .ladderHero .title {
-  font-size: 48px;
+  font-size: 42px;
   line-height: 1;
   font-weight: 900;
   margin-top: 6px;
@@ -57,8 +57,8 @@
 }
 
 .ladderHero .hint {
-  margin-top: 10px;
-  font-size: 16px;
+  margin-top: 8px;
+  font-size: 15px;
   color: rgba(255,255,255,0.55);
   font-weight: 700;
 }
@@ -210,7 +210,7 @@
   backdrop-filter: blur(10px);
   overflow: visible;
   box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-  min-height: 80px;
+  min-height: 72px;
 }
 
 /* Team color tint background */
@@ -243,7 +243,7 @@
 
 /* Club pill - now stretches to fill space */
 .cClub {
-  height: 68px;
+  height: 62px;
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.15);
   background: linear-gradient(90deg, rgba(0,0,0,0.1), rgba(0,0,0,0.05));
@@ -259,14 +259,14 @@
 }
 
 .clubLogo {
-  width: 64px;
-  height: 64px;
+  width: 58px;
+  height: 58px;
   border-radius: 999px;
   display: grid;
   place-items: center;
   background: linear-gradient(135deg, var(--teamA), var(--teamB));
   border: 2px solid rgba(255,255,255,0.25);
-  flex: 0 0 64px;
+  flex: 0 0 58px;
   position: absolute;
   left: 50%;
   top: 50%;
@@ -277,8 +277,8 @@
 }
 
 .logoImg {
-  width: 46px;
-  height: 46px;
+  width: 42px;
+  height: 42px;
   object-fit: contain;
   display: block;
   max-width: 100%;
@@ -349,7 +349,7 @@
 }
 
 .cell .v {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 950;
   color: rgba(255,255,255,0.98);
   line-height: 1;
@@ -432,21 +432,22 @@
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .ladderWrap { padding: 12px 10px 0; }
-  .ladderHero .title { font-size: 36px; }
-  .ladderHero .hint { font-size: 14px; }
+  .ladderHero { padding: 12px 12px; }
+  .ladderHero .title { font-size: 32px; }
+  .ladderHero .hint { font-size: 13px; }
 
   .egAflRow {
     gap: 10px;
     padding: 3px 12px;
     margin-bottom: 8px;
-    min-height: 76px;
+    min-height: 70px;
   }
 
   .cPos { font-size: 16px; color: rgba(255,255,255,0.60); }
-  .clubLogo { width: 58px; height: 58px; }
-  .logoImg { width: 42px; height: 42px; }
+  .clubLogo { width: 56px; height: 56px; }
+  .logoImg { width: 40px; height: 40px; }
   .clubName { font-size: 14px; max-width: 28%; display: none; }
-  .cClub { height: 62px; padding: 2px 12px; }
+  .cClub { height: 58px; padding: 2px 12px; }
 
   .hCols[data-mode="SUMMARY"],
   .cCols[data-mode="SUMMARY"] {
@@ -466,7 +467,7 @@
     gap: 10px;
   }
 
-  .cell .v { font-size: 18px; }
+  .cell .v { font-size: 17px; }
   .cell .k { font-size: 9px; }
   .dot { width: 12px; height: 12px; }
   .oddsPill { font-size: 14px; padding: 5px 10px; min-width: 65px; }

@@ -1,119 +1,32 @@
 .prPage {
+  position: relative;
   width: 100%;
-  min-height: 100%;
   color: rgba(246, 249, 255, 0.95);
-  padding-bottom: calc(var(--bottom-nav-h, 108px) + env(safe-area-inset-bottom, 0px) + 14px);
+  background:
+    linear-gradient(138deg, rgba(0, 0, 0, 0.92), rgba(2, 10, 8, 0.94)),
+    radial-gradient(88% 120% at 4% 10%, rgba(96, 236, 156, 0.06), transparent 72%),
+    url('https://zohtixrgskbzosgfluni.supabase.co/storage/v1/object/public/Assets/mcg-stadium.jpg');
+  background-size: cover, 150% 150%, cover;
+  background-position: center, left top, center;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
 }
 
 .prShell {
-  width: min(1080px, 100%);
+  width: min(900px, 100%);
   margin: 0 auto;
   padding: 12px 10px 0;
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
-.prHero,
-.prGate,
 .prFormCard,
 .prErrorCard,
-.prFormatCard,
 .prConfirmCard {
-  border-radius: 22px;
+  border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3);
-  padding: 14px;
-}
-
-.prHero {
-  border-color: rgba(245, 196, 0, 0.25);
-  background:
-    radial-gradient(70% 96% at 8% 10%, rgba(245, 196, 0, 0.14), transparent 72%),
-    radial-gradient(72% 92% at 92% 12%, rgba(85, 152, 255, 0.16), transparent 77%),
-    linear-gradient(165deg, rgba(12, 16, 25, 0.97), rgba(6, 9, 15, 0.99));
-}
-
-.prHero__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(245, 196, 0, 0.34);
-  background: rgba(245, 196, 0, 0.13);
-  color: rgba(255, 236, 171, 0.96);
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.prHero h1 {
-  margin: 10px 0 0;
-  font-size: clamp(30px, 6vw, 42px);
-  line-height: 1.01;
-  letter-spacing: -0.03em;
-}
-
-.prHero p {
-  margin: 8px 0 0;
-  color: rgba(255, 255, 255, 0.86);
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.prHero__note {
-  margin-top: 8px;
-  color: rgba(255, 217, 95, 0.9);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.prFormatCard {
-  border-color: rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.prFormatCard__line {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 5px;
-  color: rgba(235, 242, 255, 0.84);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.prFormatCard__label {
-  color: rgba(218, 226, 243, 0.62);
-}
-
-.prFormatCard__dot {
-  color: rgba(219, 227, 245, 0.4);
-}
-
-.prFormatCard__accent {
-  color: rgba(245, 196, 0, 0.94);
-}
-
-.prGate h2,
-.prFormCard h2,
-.prErrorCard h1,
-.prConfirmCard h2 {
-  margin: 0;
-  font-size: clamp(24px, 4.2vw, 30px);
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-}
-
-.prGate p,
-.prErrorCard p,
-.prConfirmCard p,
-.prFormCard__head p {
-  margin: 8px 0 0;
-  color: rgba(223, 231, 246, 0.72);
-  font-size: 13px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
+  padding: 12px;
 }
 
 .prLoading {
@@ -122,8 +35,8 @@
 }
 
 .prSkeleton {
-  height: 60px;
-  border-radius: 14px;
+  height: 58px;
+  border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
   background-size: 200% 100%;
@@ -131,7 +44,6 @@
 }
 
 .prIdentityRow {
-  margin-top: 12px;
   display: grid;
   gap: 8px;
 }
@@ -146,9 +58,9 @@
 }
 
 .prIdentityRow span {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
-  color: rgba(218, 225, 239, 0.72);
+  color: rgba(218, 225, 239, 0.68);
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -156,77 +68,32 @@
 .prIdentityRow input {
   width: 100%;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.04);
-  color: rgba(245, 249, 255, 0.95);
-  padding: 11px 12px;
+  color: rgba(245, 249, 255, 0.93);
+  padding: 10px 11px;
   font-size: 13px;
   font-weight: 800;
 }
 
 .prForm {
-  margin-top: 12px;
+  margin-top: 10px;
   display: grid;
-  gap: 12px;
-}
-
-.prPrefsHead {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: rgba(233, 240, 254, 0.82);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.prTeamGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.prTeamCard {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(246, 250, 255, 0.94);
-  padding: 10px;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
   gap: 10px;
-  text-align: left;
-  cursor: pointer;
 }
 
-.prTeamCard.is-active {
-  border-color: rgba(245, 196, 0, 0.54);
-  background: rgba(245, 196, 0, 0.16);
-  box-shadow: 0 0 0 1px rgba(245, 196, 0, 0.28);
-}
-
-.prTeamCard__logoWrap {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(7, 11, 18, 0.78);
-  display: grid;
-  place-items: center;
-}
-
-.prTeamCard__logoWrap img {
-  width: 76%;
-  height: 76%;
-  object-fit: contain;
-}
-
-.prTeamCard__logoWrap span {
+.prProgress {
+  margin: 0;
+  color: rgba(212, 233, 220, 0.76);
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
-.prTeamCard__name {
+.prGridHeading {
+  margin: -2px 0 2px;
+  color: rgba(232, 245, 238, 0.94);
   font-size: 13px;
   font-weight: 800;
 }
@@ -253,12 +120,33 @@
   font-weight: 900;
   cursor: pointer;
   letter-spacing: 0.01em;
+  transition: transform 0.14s ease, box-shadow 0.16s ease;
+}
+
+.prBtn:active {
+  transform: scale(0.985);
 }
 
 .prBtn--primary {
   background: linear-gradient(180deg, #ffdd72, #f5c400);
   color: rgba(10, 12, 18, 0.96);
-  box-shadow: 0 10px 24px rgba(245, 196, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.36);
+  box-shadow: 0 10px 24px rgba(245, 196, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.42), inset 0 -1px 0 rgba(90, 56, 0, 0.18);
+}
+
+.prBtn--confirm {
+  min-height: 46px;
+  font-size: 14px;
+  width: 100%;
+  max-width: 420px;
+  justify-self: center;
+  box-shadow: 0 12px 28px rgba(245, 196, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.44), inset 0 -1px 0 rgba(90, 56, 0, 0.2);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .prBtn--confirm:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px rgba(245, 196, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.46), inset 0 -1px 0 rgba(90, 56, 0, 0.22);
+  }
 }
 
 .prBtn:disabled {
@@ -282,6 +170,20 @@
   background: rgba(42, 220, 140, 0.14);
 }
 
+.prConfirmCard h2,
+.prErrorCard h1 {
+  margin: 10px 0 0;
+  font-size: clamp(24px, 5vw, 30px);
+  line-height: 1.03;
+  letter-spacing: -0.02em;
+}
+
+.prErrorCard p {
+  margin: 8px 0 0;
+  color: rgba(223, 231, 246, 0.72);
+  font-size: 13px;
+}
+
 .prConfirmCard__prefs {
   margin: 12px 0;
   display: flex;
@@ -299,6 +201,20 @@
   font-weight: 700;
 }
 
+.teamLogoGrid__name {
+  display: block;
+  margin-top: 10px;
+  max-width: 100%;
+  color: rgba(236, 243, 255, 0.85);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 @keyframes prShimmer {
   to {
     background-position: -200% 0;
@@ -308,39 +224,17 @@
 @media (max-width: 760px) {
   .prShell {
     padding: 10px 8px 0;
-    gap: 12px;
+    gap: 10px;
   }
 
-  .prHero,
-  .prGate,
   .prFormCard,
   .prErrorCard,
-  .prFormatCard,
   .prConfirmCard {
-    border-radius: 18px;
-    padding: 12px;
+    border-radius: 16px;
+    padding: 11px;
   }
 
   .prIdentityRow--triple {
     grid-template-columns: 1fr;
   }
-
-  .prTeamGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (min-width: 980px) {
-  .prShell {
-    grid-template-columns: 1fr;
-  }
-}
-
-.prSubmittedAt {
-  margin-top: 8px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: rgba(223, 231, 246, 0.72);
-  font-size: 12px;
 }

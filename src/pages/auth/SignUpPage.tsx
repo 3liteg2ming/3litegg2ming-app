@@ -1,10 +1,12 @@
-import { ChevronLeft, Lock, Mail, UserRound, Gamepad2, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
-import { useState } from 'react';
+import { ChevronLeft, Eye, EyeOff, Gamepad2, Lock, Mail, UserRound } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../state/auth/AuthProvider';
+import '../../styles/auth-premium.css';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function getPasswordStrength(password: string): 'weak' | 'fair' | 'strong' | null {
   if (!password) return null;
@@ -14,6 +16,30 @@ function getPasswordStrength(password: string): 'weak' | 'fair' | 'strong' | nul
   if (hasLength && hasNumber) return 'strong';
   if (hasLength || hasNumber) return 'fair';
   return 'weak';
+}
+
+function toFriendlyCreateMessage(message: string): { title: string; detail: string } {
+  const raw = String(message || '').trim();
+  const lower = raw.toLowerCase();
+
+  if (lower.includes('already registered') || lower.includes('already been registered')) {
+    return {
+      title: 'That email is already in use.',
+      detail: raw,
+    };
+  }
+
+  if (lower.includes('password')) {
+    return {
+      title: 'Password does not meet requirements.',
+      detail: raw,
+    };
+  }
+
+  return {
+    title: 'Could not create account right now.',
+    detail: raw || 'Please try again in a moment.',
+  };
 }
 
 async function upsertProfileForUser(args: {
@@ -34,16 +60,17 @@ async function upsertProfileForUser(args: {
     last_name: args.lastName,
     display_name: args.displayName,
     psn: args.psn,
-    updated_at: new Date().toISOString(),
   };
 
-  const primary = await supabase.from('eg_profiles').upsert(payload, { onConflict: 'user_id' });
-  if (!primary.error) return;
+  const { error: profilesError } = await supabase.from('profiles').upsert(payload, { onConflict: 'user_id' });
+  if (profilesError) {
+    console.error('[SignUp] profiles upsert failed', profilesError);
+  }
 
-  const fallback = await supabase.from('profiles').upsert(payload, { onConflict: 'user_id' });
-  if (!fallback.error) return;
-
-  throw new Error(fallback.error.message || primary.error.message || 'Unable to create profile row.');
+  const { error: egProfilesError } = await supabase.from('eg_profiles').upsert(payload, { onConflict: 'user_id' });
+  if (egProfilesError) {
+    console.error('[SignUp] eg_profiles upsert failed', egProfilesError);
+  }
 }
 
 export default function SignUpPage() {
@@ -58,40 +85,58 @@ export default function SignUpPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<{ title: string; detail: string } | null>(null);
   const [success, setSuccess] = useState(false);
 
   const passwordStrength = getPasswordStrength(password);
-  const passwordsMatch = password && confirmPassword && password === confirmPassword;
-  const isFormValid = firstName && lastName && psn && email && password && confirmPassword && passwordsMatch;
+  const trimmedEmail = email.trim();
+  const cleanFirst = firstName.trim();
+  const cleanLast = lastName.trim();
+  const cleanPsn = psn.trim();
+
+  const emailValid = EMAIL_RE.test(trimmedEmail);
+  const passwordMinValid = password.length >= 8;
+  const passwordHasNumber = /\d/.test(password);
+  const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
+
+  const isFormValid =
+    cleanFirst.length > 0 &&
+    cleanLast.length > 0 &&
+    cleanPsn.length > 0 &&
+    emailValid &&
+    passwordMinValid &&
+    passwordHasNumber &&
+    passwordsMatch;
+
+  const canSubmit = isFormValid && !submitting && !loading;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
+    if (!cleanPsn) {
+      setError({
+        title: 'PSN is required.',
+        detail: 'Enter your PSN ID to create your account.',
+      });
       return;
     }
 
-    if (!passwordStrength || passwordStrength === 'weak') {
-      setError('Password must be at least 8 characters and include a number');
+    if (!isFormValid) {
+      setError({
+        title: 'Check your details before continuing.',
+        detail: 'First name, last name, PSN, valid email, and matching password are required.',
+      });
       return;
     }
 
-    const cleanFirst = firstName.trim();
-    const cleanLast = lastName.trim();
-    const cleanPsn = psn.trim();
     const displayName = `${cleanFirst} ${cleanLast}`.trim();
 
-    if (!cleanFirst || !cleanLast || !cleanPsn) {
-      setError('First name, last name, and PSN are required.');
-      return;
-    }
-
+    setSubmitting(true);
     try {
       const createdUser = await signUp({
-        email: email.trim(),
+        email: trimmedEmail,
         password,
         firstName: cleanFirst,
         lastName: cleanLast,
@@ -101,7 +146,7 @@ export default function SignUpPage() {
 
       await upsertProfileForUser({
         userId: createdUser?.id,
-        email: email.trim(),
+        email: trimmedEmail,
         firstName: cleanFirst,
         lastName: cleanLast,
         displayName,
@@ -110,7 +155,7 @@ export default function SignUpPage() {
 
       setSuccess(true);
 
-      setTimeout(() => {
+      window.setTimeout(() => {
         if (isSupabase) {
           nav('/auth/sign-in', {
             replace: true,
@@ -119,11 +164,12 @@ export default function SignUpPage() {
         } else {
           nav('/preseason-registration', { replace: true });
         }
-      }, 1500);
+      }, 1400);
     } catch (err: any) {
-      const errMsg = err?.message || 'Could not create account. Please try again.';
-      setError(errMsg);
+      setError(toFriendlyCreateMessage(String(err?.message || 'Could not create account.')));
       setSuccess(false);
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -131,254 +177,197 @@ export default function SignUpPage() {
     return <Navigate to="/preseason-registration" replace />;
   }
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.08,
-        delayChildren: 0.15,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
-  };
-
   return (
-    <div className="auth-screen">
-      <motion.div className="auth-top" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-        <motion.button
-          type="button"
-          className="auth-back"
-          onClick={() => nav('/auth/sign-in')}
-          aria-label="Back to sign in"
-          whileHover={{ scale: 1.05, x: -4 }}
-          whileTap={{ scale: 0.95 }}
-        >
+    <div className="auth-screen auth-screen--premium">
+      <div className="auth-top">
+        <button type="button" className="auth-back" onClick={() => nav('/auth/sign-in')} aria-label="Back to sign in">
           <ChevronLeft size={18} />
           <span>Sign in</span>
-        </motion.button>
-      </motion.div>
+        </button>
+      </div>
 
-      <motion.div
-        className="auth-card auth-card--wide"
-        initial={{ opacity: 0, y: 20, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
-        variants={containerVariants}
-      >
+      <div className="auth-card auth-card--wide auth-card--premium">
         {success ? (
-          <>
-            <motion.div className="auth-success-card" variants={itemVariants}>
-              <CheckCircle2 size={40} className="auth-success-icon" />
-              <div className="auth-success-title">Account Created!</div>
-              <div className="auth-success-text">
-                {isSupabase ? 'Sign in next to complete Knockout Preseason registration.' : 'Welcome to Elite Gaming! Redirecting…'}
-              </div>
-            </motion.div>
-          </>
+          <div className="auth-success-card">
+            <div className="auth-success-title">Account created</div>
+            <div className="auth-success-text">Taking you to sign in…</div>
+          </div>
         ) : (
           <>
-            <motion.div className="auth-badge" variants={itemVariants}>
-              KNOCKOUT PRESEASON
-            </motion.div>
+            <div className="auth-badge">KNOCKOUT PRESEASON</div>
 
-            <motion.div variants={itemVariants}>
-              <div className="auth-title">Create your account</div>
-              <div className="auth-sub">Step 1 of 2: account setup. Team preferences come after sign in.</div>
-            </motion.div>
+            <div className="auth-head">
+              <div className="auth-title">Create account</div>
+              <div className="auth-step">Step 1 of 2</div>
+              <div className="auth-sub">Account setup first. Team preferences are selected after sign in.</div>
+            </div>
 
-            {!isSupabase ? (
-              <motion.div className="auth-note" variants={itemVariants}>
-                <strong>Local mode:</strong> Supabase env vars aren't set, so this account lives on this device only.
-              </motion.div>
-            ) : null}
-
-            <motion.form onSubmit={onSubmit} className="auth-form" variants={itemVariants}>
-              <motion.label className="auth-field" whileHover={{ scale: 1.01 }}>
+            <form onSubmit={onSubmit} className="auth-form auth-form--compact" noValidate>
+              <label className="auth-field">
                 <span className="auth-label">First Name</span>
-                <motion.div className="auth-inputWrap">
+                <div className="auth-inputWrap">
                   <UserRound size={16} className="auth-icon" />
                   <input
                     className="auth-input"
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Zach"
+                    placeholder="First name"
                     autoComplete="given-name"
                     required
-                    disabled={loading}
+                    disabled={submitting || loading}
                   />
-                </motion.div>
-              </motion.label>
+                </div>
+              </label>
 
-              <motion.label className="auth-field" whileHover={{ scale: 1.01 }}>
+              <label className="auth-field">
                 <span className="auth-label">Last Name</span>
-                <motion.div className="auth-inputWrap">
+                <div className="auth-inputWrap">
                   <UserRound size={16} className="auth-icon" />
                   <input
                     className="auth-input"
                     type="text"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Pendlebury"
+                    placeholder="Last name"
                     autoComplete="family-name"
                     required
-                    disabled={loading}
+                    disabled={submitting || loading}
                   />
-                </motion.div>
-              </motion.label>
+                </div>
+              </label>
 
-              <motion.label className="auth-field" whileHover={{ scale: 1.01 }}>
+              <label className="auth-field">
                 <span className="auth-label">PSN</span>
-                <motion.div className="auth-inputWrap">
+                <div className="auth-inputWrap">
                   <Gamepad2 size={16} className="auth-icon" />
                   <input
                     className="auth-input"
                     type="text"
                     value={psn}
                     onChange={(e) => setPsn(e.target.value)}
-                    placeholder="EliteYoda10"
+                    placeholder="PSN ID"
                     autoCapitalize="none"
                     required
-                    disabled={loading}
+                    disabled={submitting || loading}
                   />
-                </motion.div>
-              </motion.label>
+                </div>
+              </label>
 
-              <motion.div className="auth-divider" />
+              <div className="auth-divider" />
 
-              <motion.label className="auth-field" whileHover={{ scale: 1.01 }}>
+              <label className="auth-field">
                 <span className="auth-label">Email</span>
-                <motion.div className="auth-inputWrap">
+                <div className="auth-inputWrap">
                   <Mail size={16} className="auth-icon" />
                   <input
                     className="auth-input"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="coach@email.com"
+                    placeholder="Email address"
                     autoComplete="email"
                     required
-                    disabled={loading}
+                    disabled={submitting || loading}
                   />
-                </motion.div>
-              </motion.label>
+                </div>
+                {email.length > 0 && !emailValid ? (
+                  <span className="auth-inlineHint auth-inlineHint--error">Enter a valid email format.</span>
+                ) : null}
+              </label>
 
-              <motion.label className="auth-field" whileHover={{ scale: 1.01 }}>
+              <label className="auth-field">
                 <span className="auth-label">Password</span>
-                <motion.div className="auth-inputWrap">
+                <div className="auth-inputWrap">
                   <Lock size={16} className="auth-icon" />
                   <input
                     className="auth-input"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="Password"
                     autoComplete="new-password"
                     required
-                    disabled={loading}
+                    disabled={submitting || loading}
                   />
-                  <motion.button
+                  <button
                     type="button"
                     className="auth-eye"
                     onClick={() => setShowPassword((s) => !s)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    disabled={loading}
+                    disabled={submitting || loading}
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </motion.button>
-                </motion.div>
-                {password && (
-                  <motion.div className={`auth-strength-wrap auth-strength-${passwordStrength}`} initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}>
-                    <div className="auth-strength-meter">
-                      <div className="auth-strength-bar" />
-                    </div>
-                    <div className="auth-strength-text">
-                      {passwordStrength === 'strong' && '✓ Strong'}
-                      {passwordStrength === 'fair' && '◐ Fair'}
-                      {passwordStrength === 'weak' && '✗ Weak'}
-                    </div>
-                  </motion.div>
-                )}
-              </motion.label>
+                  </button>
+                </div>
+                <div className="auth-inlineStack">
+                  {!passwordMinValid && password.length > 0 ? (
+                    <span className="auth-inlineHint auth-inlineHint--error">Minimum 8 characters.</span>
+                  ) : null}
+                  {password.length > 0 && !passwordHasNumber ? (
+                    <span className="auth-inlineHint auth-inlineHint--error">Include at least 1 number.</span>
+                  ) : null}
+                  {password.length > 0 && passwordStrength ? (
+                    <span className={`auth-inlineHint auth-inlineHint--${passwordStrength}`}>
+                      Strength: {passwordStrength}
+                    </span>
+                  ) : null}
+                </div>
+              </label>
 
-              <motion.label className="auth-field auth-confirm-field" whileHover={{ scale: 1.01 }}>
+              <label className="auth-field">
                 <span className="auth-label">Confirm password</span>
-                <motion.div className="auth-inputWrap">
+                <div className="auth-inputWrap">
                   <Lock size={16} className="auth-icon" />
                   <input
                     className="auth-input"
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="Confirm password"
                     autoComplete="new-password"
                     required
-                    disabled={loading}
+                    disabled={submitting || loading}
                   />
-                  <motion.button
+                  <button
                     type="button"
                     className="auth-eye"
                     onClick={() => setShowConfirmPassword((s) => !s)}
                     aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    disabled={loading}
+                    disabled={submitting || loading}
                   >
                     {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </motion.button>
-                </motion.div>
-                {confirmPassword && password !== confirmPassword && (
-                  <motion.div className="auth-error" initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: 6 }}>
-                    Passwords don't match
-                  </motion.div>
-                )}
-              </motion.label>
+                  </button>
+                </div>
+                {confirmPassword.length > 0 && !passwordsMatch ? (
+                  <span className="auth-inlineHint auth-inlineHint--error">Passwords must match.</span>
+                ) : null}
+              </label>
 
               {error ? (
-                <motion.div className="auth-error" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-                  {error}
-                </motion.div>
+                <div className="auth-message auth-message--error" role="alert" aria-live="assertive">
+                  <div className="auth-message__title">{error.title}</div>
+                  <details className="auth-message__details">
+                    <summary>Details</summary>
+                    <div className="auth-message__body">{error.detail}</div>
+                  </details>
+                </div>
               ) : null}
 
-              <motion.button
-                type="submit"
-                className="auth-primary"
-                disabled={loading || !isFormValid}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-              >
-                {loading ? (
-                  <>
-                    <span className="auth-button-spinner" />
-                    <span style={{ marginLeft: 8 }}>Creating…</span>
-                  </>
-                ) : (
-                  'Create account'
-                )}
-              </motion.button>
+              <button type="submit" className="auth-primary" disabled={!canSubmit}>
+                {submitting || loading ? 'Creating account…' : 'Create account'}
+              </button>
 
-              <motion.div className="auth-footer" variants={itemVariants}>
+              <div className="auth-footer">
                 <span>Already have an account?</span>
                 <Link className="auth-link" to="/auth/sign-in">
                   Sign in
                 </Link>
-              </motion.div>
-
-              <motion.div className="auth-note" variants={itemVariants} style={{ fontSize: 11, marginTop: 8, textAlign: 'center' }}>
-                By creating an account, you agree to coach results submitted via Elite Gaming for league use.
-              </motion.div>
-            </motion.form>
+              </div>
+            </form>
           </>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 }

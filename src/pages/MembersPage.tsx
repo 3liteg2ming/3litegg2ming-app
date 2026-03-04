@@ -8,20 +8,38 @@ import SmartImg from '../components/SmartImg';
 import { afl26LocalRounds } from '../data/afl26LocalRounds';
 import { getAfl26RoundsFromSupabase, type AflMatch, type AflRound } from '../data/afl26Supabase';
 import { fetchCoachBadges, groupCoachBadgesByCategory, type CoachBadgeModel } from '../lib/badges';
+import { getStoredCompetitionKey, getUiCompetition } from '../lib/competitionRegistry';
+import { supabase } from '../lib/supabaseClient';
 import { TEAM_ASSETS, assetUrl, type TeamKey } from '../lib/teamAssets';
 import { useAuth } from '../state/auth/AuthProvider';
 
+import '../styles/members-hub.css';
+
 type TeamRecord = {
-  rank: number;
-  peakRank: number;
-  wins: number;
-  losses: number;
-  draws: number;
-  goals: number;
-  pointsFor: number;
-  winPct: number;
-  streak: string;
-  played: number;
+  rank: number | null;
+  peakRank: number | null;
+  wins: number | null;
+  losses: number | null;
+  draws: number | null;
+  goals: number | null;
+  pointsFor: number | null;
+  winPct: number | null;
+  streak: string | null;
+  played: number | null;
+};
+
+type RegistrationState = {
+  loading: boolean;
+  registered: boolean;
+  prefCount: number;
+  coachPsn: string;
+  prefTeamNames: string;
+};
+
+type ProfileRow = {
+  display_name?: string | null;
+  psn?: string | null;
+  email?: string | null;
 };
 
 function normalize(v: string) {
@@ -29,6 +47,10 @@ function normalize(v: string) {
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '');
+}
+
+function text(v: unknown): string {
+  return String(v ?? '').trim();
 }
 
 function teamKeyFromMatchSlug(slug: string): TeamKey {
@@ -84,7 +106,6 @@ function computeTeamRecord(rounds: AflRound[], teamKey: TeamKey): TeamRecord {
     const hs = totalOf(match.homeScore);
     const as = totalOf(match.awayScore);
     const hg = Number(match.homeScore?.goals || 0);
-    const ag = Number(match.awayScore?.goals || 0);
 
     homeRow.played += 1;
     awayRow.played += 1;
@@ -104,14 +125,9 @@ function computeTeamRecord(rounds: AflRound[], teamKey: TeamKey): TeamRecord {
       const isHome = homeKey === teamKey;
       const teamPts = isHome ? hs : as;
       const oppPts = isHome ? as : hs;
-      const teamGoals = isHome ? hg : ag;
+      const teamGoals = isHome ? hg : Number(match.awayScore?.goals || 0);
       const result: 'W' | 'L' | 'D' = teamPts > oppPts ? 'W' : teamPts < oppPts ? 'L' : 'D';
-      teamResults.push({
-        round: 0,
-        result,
-        goals: teamGoals,
-        points: teamPts,
-      });
+      teamResults.push({ round: 0, result, goals: teamGoals, points: teamPts });
     }
   };
 
@@ -151,7 +167,7 @@ function computeTeamRecord(rounds: AflRound[], teamKey: TeamKey): TeamRecord {
     .sort((a, b) => b.round - a.round)
     .map((r) => r.result);
 
-  let streak = 'No streak';
+  let streak = '—';
   if (streakFromLatest.length > 0) {
     const first = streakFromLatest[0];
     let count = 1;
@@ -163,8 +179,8 @@ function computeTeamRecord(rounds: AflRound[], teamKey: TeamKey): TeamRecord {
   }
 
   return {
-    rank: currentRank,
-    peakRank,
+    rank: Number.isFinite(currentRank) ? currentRank : null,
+    peakRank: Number.isFinite(peakRank) ? peakRank : null,
     wins,
     losses,
     draws,
@@ -176,8 +192,99 @@ function computeTeamRecord(rounds: AflRound[], teamKey: TeamKey): TeamRecord {
   };
 }
 
-function clampPct(v: number) {
-  return Math.max(0, Math.min(100, Number.isFinite(v) ? v : 0));
+function clampPct(v: number | null) {
+  if (v === null || !Number.isFinite(v)) return null;
+  return Math.max(0, Math.min(100, v));
+}
+
+function readPrefCount(row: any): number {
+  const ids = new Set<string>();
+
+  if (Array.isArray(row?.pref_team_ids)) {
+    for (const value of row.pref_team_ids) {
+      const id = String(value || '').trim();
+      if (id) ids.add(id);
+    }
+  }
+
+  if (Array.isArray(row?.preferences)) {
+    for (const value of row.preferences) {
+      const id = String(value || '').trim();
+      if (id) ids.add(id);
+    }
+  } else if (typeof row?.preferences === 'string') {
+    try {
+      const parsed = JSON.parse(row.preferences);
+      if (Array.isArray(parsed)) {
+        for (const value of parsed) {
+          const id = String(value || '').trim();
+          if (id) ids.add(id);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  for (const key of ['pref_team_1', 'pref_team_2', 'pref_team_3', 'pref_team_4']) {
+    const id = String(row?.[key] || '').trim();
+    if (id) ids.add(id);
+  }
+
+  return ids.size;
+}
+
+function statValue(value: string | number | null | undefined): string {
+  if (value === null || value === undefined || String(value).trim() === '') return '—';
+  return String(value);
+}
+
+function cleanProfileText(v: unknown): string {
+  return String(v ?? '').trim();
+}
+
+async function loadProfileForUser(userId: string): Promise<ProfileRow | null> {
+  const primary = await supabase
+    .from('profiles')
+    .select('display_name,psn,email')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  const fallback = await supabase
+    .from('eg_profiles')
+    .select('display_name,psn,email')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (primary.error && fallback.error) {
+    console.error('[Members] profile load failed', { profiles: primary.error, egProfiles: fallback.error });
+    return null;
+  }
+
+  return {
+    display_name: cleanProfileText(primary.data?.display_name) || cleanProfileText(fallback.data?.display_name) || null,
+    psn: cleanProfileText(primary.data?.psn) || cleanProfileText(fallback.data?.psn) || null,
+    email: cleanProfileText(primary.data?.email) || cleanProfileText(fallback.data?.email) || null,
+  };
+}
+
+async function upsertProfileForUser(userId: string, payload: ProfileRow) {
+  const writePayload = {
+    user_id: userId,
+    display_name: payload.display_name ?? null,
+    psn: payload.psn ?? null,
+    email: payload.email ?? null,
+  };
+
+  const profilesRes = await supabase.from('profiles').upsert(writePayload, { onConflict: 'user_id' });
+  if (profilesRes.error) {
+    console.error('[Members] profiles upsert failed', profilesRes.error);
+  }
+
+  const egProfilesRes = await supabase.from('eg_profiles').upsert(writePayload, { onConflict: 'user_id' });
+  if (egProfilesRes.error) {
+    console.error('[Members] eg_profiles upsert failed', egProfilesRes.error);
+  }
 }
 
 export default function MembersPage() {
@@ -189,6 +296,17 @@ export default function MembersPage() {
   const [badges, setBadges] = useState<CoachBadgeModel[]>([]);
   const [loadingBadges, setLoadingBadges] = useState(true);
   const [selectedBadge, setSelectedBadge] = useState<CoachBadgeModel | null>(null);
+  const [registration, setRegistration] = useState<RegistrationState>({
+    loading: true,
+    registered: false,
+    prefCount: 0,
+    coachPsn: '',
+    prefTeamNames: '',
+  });
+  const [profileRow, setProfileRow] = useState<ProfileRow | null>(null);
+  const [psnDraft, setPsnDraft] = useState('');
+  const [savingPsn, setSavingPsn] = useState(false);
+  const [psnStatus, setPsnStatus] = useState<string | null>(null);
 
   const team = useMemo(() => {
     const k = user?.teamKey as TeamKey | undefined;
@@ -236,21 +354,154 @@ export default function MembersPage() {
     };
   }, [user?.id]);
 
-  const displayName = user?.displayName || (user?.email ? user.email.split('@')[0] : 'Coach');
+  useEffect(() => {
+    let alive = true;
+
+    (async () => {
+      if (!user?.id) {
+        if (alive) setRegistration({ loading: false, registered: false, prefCount: 0, coachPsn: '', prefTeamNames: '' });
+        return;
+      }
+
+      setRegistration((prev) => ({ ...prev, loading: true }));
+
+      const scoped = await supabase
+        .from('eg_preseason_registrations_pretty')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('season_slug', 'preseason')
+        .maybeSingle();
+
+      let prettyData: any = scoped.data || null;
+
+      if (scoped.error || !prettyData) {
+        const altScoped = await supabase
+          .from('eg_preseason_registrations_pretty')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('season_slug', 'preseason-2026')
+          .maybeSingle();
+        if (!altScoped.error && altScoped.data) {
+          prettyData = altScoped.data;
+        }
+      }
+
+      if ((scoped.error && String(scoped.error.message || '').toLowerCase().includes('does not exist')) || !prettyData) {
+        const userScoped = await supabase
+          .from('eg_preseason_registrations_pretty')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (!userScoped.error && userScoped.data) {
+          prettyData = userScoped.data;
+        }
+      }
+
+      if (prettyData) {
+        if (!alive) return;
+        setRegistration({
+          loading: false,
+          registered: true,
+          prefCount: readPrefCount(prettyData),
+          coachPsn: text(prettyData?.coach_psn || ''),
+          prefTeamNames: text(prettyData?.pref_team_names || ''),
+        });
+        return;
+      }
+
+      const missingPrettyView = String(scoped.error?.message || '').toLowerCase().includes('does not exist');
+      if (!missingPrettyView) {
+        const missingSeasonSlug = String(scoped.error?.message || '').toLowerCase().includes('season_slug');
+        if (!missingSeasonSlug) {
+          if (!alive) return;
+          setRegistration({ loading: false, registered: false, prefCount: 0, coachPsn: '', prefTeamNames: '' });
+          return;
+        }
+
+        const scopedBase = await supabase
+          .from('eg_preseason_registrations')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('season_slug', 'preseason')
+          .maybeSingle();
+
+        if (!scopedBase.error) {
+          if (!alive) return;
+          setRegistration({
+            loading: false,
+            registered: Boolean(scopedBase.data),
+            prefCount: scopedBase.data ? readPrefCount(scopedBase.data) : 0,
+            coachPsn: text((scopedBase.data as any)?.coach_psn || (scopedBase.data as any)?.psn_name || (scopedBase.data as any)?.psn || ''),
+            prefTeamNames: text((scopedBase.data as any)?.pref_team_names || ''),
+          });
+          return;
+        }
+
+        if (!alive) return;
+        setRegistration({ loading: false, registered: false, prefCount: 0, coachPsn: '', prefTeamNames: '' });
+        return;
+      }
+
+      const fallback = await supabase
+        .from('eg_preseason_registrations')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!alive) return;
+      setRegistration({
+        loading: false,
+        registered: Boolean(fallback.data),
+        prefCount: fallback.data ? readPrefCount(fallback.data) : 0,
+        coachPsn: text((fallback.data as any)?.coach_psn || (fallback.data as any)?.psn_name || (fallback.data as any)?.psn || ''),
+        prefTeamNames: text((fallback.data as any)?.pref_team_names || ''),
+      });
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (!user?.id) {
+        if (alive) {
+          setProfileRow(null);
+          setPsnDraft('');
+        }
+        return;
+      }
+      const row = await loadProfileForUser(user.id);
+      if (!alive) return;
+      setProfileRow(row);
+      const resolvedPsn = cleanProfileText(row?.psn) || cleanProfileText(user.psn);
+      setPsnDraft(resolvedPsn);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [user?.id, user?.psn]);
+
+  const displayName =
+    cleanProfileText(profileRow?.display_name) || user?.displayName || (user?.email ? user.email.split('@')[0] : 'Coach');
+  const resolvedPsn = cleanProfileText(profileRow?.psn) || cleanProfileText(user?.psn);
+  const resolvedEmail = cleanProfileText(profileRow?.email) || cleanProfileText(user?.email);
   const record = useMemo<TeamRecord>(() => {
     const teamKey = user?.teamKey as TeamKey | undefined;
     if (!teamKey) {
       return {
-        rank: 18,
-        peakRank: 18,
-        wins: 0,
-        losses: 0,
-        draws: 0,
-        goals: 0,
-        pointsFor: 0,
-        winPct: 0,
-        streak: 'No streak',
-        played: 0,
+        rank: null,
+        peakRank: null,
+        wins: null,
+        losses: null,
+        draws: null,
+        goals: null,
+        pointsFor: null,
+        winPct: null,
+        streak: null,
+        played: null,
       };
     }
     return computeTeamRecord(rounds, teamKey);
@@ -261,11 +512,67 @@ export default function MembersPage() {
 
   const teamLogo = team ? assetUrl(team.logoFile ?? '') : assetUrl('elite-gaming-logo.png');
   const heroGradient = team
-    ? `linear-gradient(135deg, ${team.colour}66 0%, rgba(9,11,16,0.86) 55%, rgba(14,26,48,0.92) 100%)`
-    : 'linear-gradient(135deg, rgba(245,196,0,0.18) 0%, rgba(9,11,16,0.88) 50%, rgba(14,26,48,0.92) 100%)';
+    ? `linear-gradient(135deg, ${team.colour}5a 0%, rgba(9,11,16,0.9) 56%, rgba(14,26,48,0.94) 100%)`
+    : 'linear-gradient(135deg, rgba(245,196,0,0.16) 0%, rgba(9,11,16,0.9) 50%, rgba(14,26,48,0.94) 100%)';
+
+  const currentCompetition = getUiCompetition(getStoredCompetitionKey());
+  const seasonChip = currentCompetition.key === 'preseason' ? 'Preseason 2026' : currentCompetition.label;
+
+  const quickStats = [
+    { label: 'Current Rank', value: record.rank ? `#${record.rank}` : '—' },
+    {
+      label: 'W-L',
+      value: record.wins === null || record.losses === null ? '—' : `${record.wins}-${record.losses}${record.draws ? `-${record.draws}` : ''}`,
+    },
+    { label: 'Win %', value: clampPct(record.winPct) === null ? '—' : `${clampPct(record.winPct)!.toFixed(1)}%` },
+    { label: 'Streak', value: statValue(record.streak) },
+  ];
+
+  async function handleSavePsn() {
+    if (!user?.id) return;
+    const nextPsn = cleanProfileText(psnDraft);
+    if (!nextPsn) {
+      setPsnStatus('PSN cannot be empty.');
+      return;
+    }
+
+    setSavingPsn(true);
+    setPsnStatus(null);
+
+    try {
+      await upsertProfileForUser(user.id, {
+        display_name: cleanProfileText(profileRow?.display_name) || cleanProfileText(user?.displayName) || null,
+        email: resolvedEmail || null,
+        psn: nextPsn,
+      });
+
+      const authUpdate = await supabase.auth.updateUser({
+        data: {
+          psn: nextPsn,
+          display_name: cleanProfileText(profileRow?.display_name) || cleanProfileText(user?.displayName) || undefined,
+        },
+      });
+      if (authUpdate.error) {
+        console.error('[Members] auth user metadata update failed', authUpdate.error);
+      }
+
+      setProfileRow((prev) => ({
+        ...(prev || {}),
+        display_name: cleanProfileText(prev?.display_name) || cleanProfileText(user?.displayName) || null,
+        email: resolvedEmail || null,
+        psn: nextPsn,
+      }));
+      setPsnStatus('PSN saved.');
+    } catch (err: any) {
+      console.error('[Members] PSN save failed', err);
+      setPsnStatus('Could not save PSN right now.');
+    } finally {
+      setSavingPsn(false);
+    }
+  }
 
   return (
-    <div className="auth-screen">
+    <div className="auth-screen auth-screen--premium member-screen">
       <div className="auth-top">
         <button type="button" className="auth-back" onClick={() => nav('/')} aria-label="Back to home">
           <ChevronLeft size={18} />
@@ -273,132 +580,175 @@ export default function MembersPage() {
         </button>
       </div>
 
-      <div className="auth-card auth-card--wide">
-        <div className="member-head">
-          <div className="member-title">
-            <div className="auth-badge">MEMBERS</div>
-            <div className="auth-title">Hi {displayName}</div>
-            <div className="auth-sub">Coach performance dashboard and season profile.</div>
-          </div>
-
-          <button type="button" className="member-signout" onClick={() => signOut()} aria-label="Sign out">
-            Sign out
-          </button>
-        </div>
-
-        <section className="profileHero" style={{ background: heroGradient }}>
-          <SmartImg className="profileHero__watermark" src={teamLogo} alt="Team watermark" fallbackText="EG" />
-
-          <div className="profileHero__head">
-            <div className="teamBadge">
-              <div className="teamBadgeLogo">
-                <SmartImg className="teamBadgeImg" src={teamLogo} alt={team?.name || 'Team'} fallbackText={team?.shortName || 'EG'} />
-              </div>
-              <div className="teamBadgeMeta">
-                <div className="teamBadgeName">{team?.name || 'Unassigned Team'}</div>
-                <div className="teamBadgeHint">Coach PSN: {user?.psn || 'Not linked yet'}</div>
-              </div>
+      <div className="auth-card auth-card--wide member-card">
+        <section className="coachHubHero" style={{ background: heroGradient }}>
+          <div className="coachHubHero__left">
+            <div className="coachHubHero__logoWrap">
+              <SmartImg className="coachHubHero__logo" src={teamLogo} alt={team?.name || 'Team'} fallbackText={team?.shortName || 'EG'} />
             </div>
-
-            <div className="profileHero__rankChip">
-              <span className="profileHero__rankLabel">Current Rank</span>
-              <span className="profileHero__rankValue">#{record.rank}</span>
+            <div className="coachHubHero__meta">
+              <div className="coachHubHero__kicker">Coach Hub</div>
+              <h1 className="coachHubHero__name">{displayName}</h1>
+              <p className="coachHubHero__team">{team?.name || 'Unassigned Team'}</p>
+              <div className="coachHubHero__sub">
+                <span>{resolvedPsn || 'PSN not set'}</span>
+                <span>•</span>
+                <span>{resolvedEmail || '—'}</span>
+              </div>
             </div>
           </div>
 
-          <div className="profileHero__stats">
-            <div className="profileHero__metric">
-              <span className="profileHero__metricLabel">W-L</span>
-              <span className="profileHero__metricValue">
-                {record.wins}-{record.losses}{record.draws ? `-${record.draws}` : ''}
-              </span>
-            </div>
-            <div className="profileHero__metric">
-              <span className="profileHero__metricLabel">Win %</span>
-              <span className="profileHero__metricValue">{clampPct(record.winPct).toFixed(1)}%</span>
-            </div>
-            <div className="profileHero__metric">
-              <span className="profileHero__metricLabel">Streak</span>
-              <span className="profileHero__metricValue">{record.streak}</span>
-            </div>
+          <div className="coachHubHero__chips">
+            <span className="coachHubChip">{seasonChip}</span>
+            <span className="coachHubChip coachHubChip--muted">{currentCompetition.label}</span>
           </div>
         </section>
 
-        <section className="member-panel">
+        <section className="coachQuickStats" aria-label="Quick stats">
+          {quickStats.map((item) => (
+            <article className="coachQuickStats__item" key={item.label}>
+              <span className="coachQuickStats__label">{item.label}</span>
+              <strong className="coachQuickStats__value">{item.value}</strong>
+            </article>
+          ))}
+        </section>
+
+        <section className="member-panel member-panel--tight">
           <div className="member-panelTitle">
             <Trophy size={16} style={{ opacity: 0.75 }} /> Performance Dashboard
           </div>
           <div className="profileMiniGrid">
             <article className="profileMiniCard">
-              <div className="profileMiniCard__label">Wins</div>
-              <div className="profileMiniCard__value">{record.wins}</div>
+              <div className="profileMiniCard__label">Matches</div>
+              <div className="profileMiniCard__value">{statValue(record.played)}</div>
             </article>
             <article className="profileMiniCard">
               <div className="profileMiniCard__label">Goals</div>
-              <div className="profileMiniCard__value">{record.goals}</div>
+              <div className="profileMiniCard__value">{statValue(record.goals)}</div>
             </article>
             <article className="profileMiniCard">
               <div className="profileMiniCard__label">Points For</div>
-              <div className="profileMiniCard__value">{record.pointsFor}</div>
+              <div className="profileMiniCard__value">{statValue(record.pointsFor)}</div>
             </article>
             <article className="profileMiniCard">
-              <div className="profileMiniCard__label">Ladder Peak</div>
-              <div className="profileMiniCard__value">#{record.peakRank}</div>
+              <div className="profileMiniCard__label">Peak Rank</div>
+              <div className="profileMiniCard__value">{record.peakRank ? `#${record.peakRank}` : '—'}</div>
             </article>
           </div>
-          {loadingStats ? <div className="profileDashHint">Refreshing season numbers…</div> : null}
+          {loadingStats ? <div className="profileDashHint">Refreshing latest stats…</div> : null}
         </section>
 
-        <section className="member-panel">
+        <section className="member-panel member-panel--tight">
           <div className="member-panelTitle">
-            <Shield size={16} style={{ opacity: 0.75 }} /> Badge Collection
+            <Shield size={16} style={{ opacity: 0.75 }} /> Badges
           </div>
           <div className="profileBadgeSummary">
-            <span>{unlockedCount}/{badges.length} unlocked</span>
-            <span>Tap a badge to view details</span>
+            <span>{unlockedCount}/{badges.length || 0} unlocked</span>
+            <span>Tap a badge for details</span>
           </div>
-          {loadingBadges ? <div className="badgeGrid__loading">Loading badges…</div> : <BadgeGrid groups={badgeGroups} onSelect={setSelectedBadge} />}
+          {loadingBadges ? (
+            <div className="badgeGrid__loading">Loading badges…</div>
+          ) : badges.length === 0 ? (
+            <div className="badgeGrid__empty coachEmptyBadges">
+              <div className="coachEmptyBadges__icon">🏅</div>
+              <div className="coachEmptyBadges__text">Badges unlock as the season progresses.</div>
+            </div>
+          ) : (
+            <BadgeGrid groups={badgeGroups} onSelect={setSelectedBadge} />
+          )}
         </section>
 
-        <div className="member-grid">
-          <div className="member-panel">
-            <div className="member-panelTitle">
-              <Mail size={16} style={{ opacity: 0.75 }} /> Account
+        <section className="member-panel member-panel--tight">
+          <div className="member-panelTitle">
+            <Mail size={16} style={{ opacity: 0.75 }} /> Account
+          </div>
+
+          <div className="member-mini">
+            <div className="member-miniRow">
+              <Mail size={16} className="member-ico" />
+              <div>
+                <div className="member-miniLabel">Email</div>
+                <div className="member-miniValue">{resolvedEmail || '—'}</div>
+              </div>
             </div>
-            <div className="member-mini">
-              <div className="member-miniRow">
-                <Mail size={16} className="member-ico" />
-                <div>
-                  <div className="member-miniLabel">Email</div>
-                  <div className="member-miniValue">{user?.email || '—'}</div>
-                </div>
-              </div>
 
-              <div className="member-miniRow">
-                <Gamepad2 size={16} className="member-ico" />
-                <div>
-                  <div className="member-miniLabel">PSN</div>
-                  <div className="member-miniValue">{user?.psn || 'Not set'}</div>
-                </div>
+            <div className="member-miniRow">
+              <Gamepad2 size={16} className="member-ico" />
+              <div>
+                <div className="member-miniLabel">PSN</div>
+                <div className="member-miniValue">{resolvedPsn || 'Not set'}</div>
               </div>
+            </div>
 
-              <div className="member-miniRow">
-                <KeyRound size={16} className="member-ico" />
-                <div>
-                  <div className="member-miniLabel">Account</div>
-                  <div className="member-miniValue">Name locked • Email/password editable soon</div>
+            <div className="member-miniRow member-miniRow--manage" style={{ alignItems: 'flex-start' }}>
+              <KeyRound size={16} className="member-ico" style={{ marginTop: 8 }} />
+              <div className="member-miniRow__grow" style={{ width: '100%' }}>
+                <div className="member-miniLabel">Manage account</div>
+                <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
+                  <input
+                    type="text"
+                    value={psnDraft}
+                    onChange={(e) => setPsnDraft(e.target.value)}
+                    placeholder="PSN ID"
+                    autoCapitalize="none"
+                    disabled={savingPsn}
+                    style={{
+                      width: '100%',
+                      borderRadius: 10,
+                      border: '1px solid rgba(255,255,255,0.18)',
+                      background: 'rgba(4, 9, 22, 0.72)',
+                      color: '#e8ecf8',
+                      padding: '10px 12px',
+                      fontSize: 13,
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSavePsn}
+                    disabled={savingPsn || !cleanProfileText(psnDraft)}
+                    className="coachSoonChip"
+                    style={{
+                      justifySelf: 'start',
+                      border: '1px solid rgba(245, 196, 0, 0.38)',
+                      background: 'rgba(245, 196, 0, 0.14)',
+                      color: '#f5c400',
+                      cursor: savingPsn ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {savingPsn ? 'Saving…' : 'Save PSN'}
+                  </button>
+                  {psnStatus ? (
+                    <div className="member-miniValue" style={{ fontSize: 12, opacity: 0.85 }}>
+                      {psnStatus}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>
           </div>
+        </section>
 
-          <div className="member-next">
-            <div className="member-nextTitle">Next up</div>
-            <div className="member-nextText">
-              Keep submitting clean match results to improve rank, unlock performance badges, and push toward finals seeding.
+        <section className="coachActions">
+          {!registration.loading && !registration.registered ? (
+            <button type="button" className="auth-primary coachActions__primary" onClick={() => nav('/preseason-registration')}>
+              Go to Registration
+            </button>
+          ) : null}
+
+          <button type="button" className="member-signout coachActions__secondary" onClick={() => signOut()} aria-label="Sign out">
+            Sign out
+          </button>
+
+          {registration.loading ? (
+            <div className="coachActions__hint">Checking preseason registration…</div>
+          ) : registration.registered ? (
+            <div className="coachActions__hint">
+              Registered for preseason • {registration.coachPsn || 'PSN TBC'} • {registration.prefTeamNames || `${registration.prefCount}/4 preferences set`}
             </div>
-          </div>
-        </div>
+          ) : (
+            <div className="coachActions__hint">Not registered yet</div>
+          )}
+        </section>
       </div>
 
       <BadgeModal badge={selectedBadge} onClose={() => setSelectedBadge(null)} />
