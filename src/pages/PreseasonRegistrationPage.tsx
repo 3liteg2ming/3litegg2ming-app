@@ -583,8 +583,8 @@ export default function PreseasonRegistrationPage() {
         if (profileRes) {
           setProfileLoadError(null);
         } else {
-          console.error('[PreseasonRegistration] profile not found for user', user.id);
-          setProfileLoadError('Profile not found. Please sign out/in.');
+          console.warn('[PreseasonRegistration] profile row missing, using auth metadata fallback for user', user.id);
+          setProfileLoadError('Profile sync pending. Using account metadata for now.');
         }
 
         const existingPrefs = readPrefs((regRes || null) as RegistrationRow | null).slice(0, 4);
@@ -690,12 +690,6 @@ export default function PreseasonRegistrationPage() {
       return;
     }
 
-    if (!profile) {
-      console.error('[PreseasonRegistration] submit blocked: profile not found for user', user.id);
-      setInlineError('Profile not found. Please sign out/in.');
-      return;
-    }
-
     if (!selectedTeamIds.length) {
       setInlineError('Select at least one team preference.');
       return;
@@ -710,12 +704,9 @@ export default function PreseasonRegistrationPage() {
     if (freshProfile) setProfile(freshProfile);
     setAuthMetaUser(freshAuthUser);
     if (!freshProfile && !profile) {
-      console.error('[PreseasonRegistration] refresh profile missing for user', user.id);
-      setProfileLoadError('Profile not found. Please sign out/in.');
-      setInlineError('Profile not found. Please sign out/in.');
-      return;
+      console.warn('[PreseasonRegistration] profile still missing after refresh, continuing with auth metadata fallback', user.id);
     }
-    setProfileLoadError(freshProfile ? null : 'We could not refresh your profile right now. Using last known profile data.');
+    setProfileLoadError(freshProfile ? null : 'Profile sync pending. Using account metadata for now.');
 
     const resolvedTag = resolveGamerTag({
       profile: freshProfile || profile,
@@ -862,8 +853,8 @@ export default function PreseasonRegistrationPage() {
                       setProfile(freshProfile);
                       setAuthMetaUser((authUserRes.data?.user as unknown as AuthMetaUser) || null);
                       if (!freshProfile) {
-                        console.error('[PreseasonRegistration] retry profile load failed for user', user.id);
-                        setProfileLoadError('Profile not found. Please sign out/in.');
+                        console.warn('[PreseasonRegistration] retry profile load failed, metadata fallback still active for user', user.id);
+                        setProfileLoadError('Profile sync pending. Using account metadata for now.');
                       } else {
                         setProfileLoadError(null);
                       }
