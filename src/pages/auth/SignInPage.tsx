@@ -1,10 +1,24 @@
 import { ChevronLeft, Eye, EyeOff, Lock, Mail } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../state/auth/AuthProvider';
 import '../../styles/auth-premium.css';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const SESSION_PERSIST_BLOCKED_MESSAGE =
+  'Signed in, but your browser blocked saving the session. If you’re using Brave or an ad blocker, disable Shields for this site, or clear site data and reload.';
+
+function isNetworkErrorMessage(raw: string): boolean {
+  const lower = String(raw || '').toLowerCase();
+  return (
+    lower.includes('failed to fetch') ||
+    lower.includes('network request failed') ||
+    lower.includes('networkerror') ||
+    lower.includes('could not reach server') ||
+    lower.includes('authtimeouterror') ||
+    lower.includes('timeout')
+  );
+}
 
 function toFriendlyAuthMessage(message: string): { title: string; detail: string } {
   const raw = String(message || '').trim();
@@ -31,7 +45,14 @@ function toFriendlyAuthMessage(message: string): { title: string; detail: string
     };
   }
 
-  if (lower.includes('could not reach server')) {
+  if (lower.includes('eg_session_persist_blocked') || lower.includes('browser blocked saving the session')) {
+    return {
+      title: SESSION_PERSIST_BLOCKED_MESSAGE,
+      detail: raw || SESSION_PERSIST_BLOCKED_MESSAGE,
+    };
+  }
+
+  if (isNetworkErrorMessage(raw)) {
     return {
       title: 'Could not reach server. Please try again.',
       detail: raw,
@@ -57,6 +78,8 @@ export default function SignInPage() {
   const nav = useNavigate();
   const location = useLocation() as any;
   const { signIn, user, loading, booting, actionLoading } = useAuth();
+  const passwordRef = useRef<HTMLInputElement | null>(null);
+  const emailAutoFocusTimerRef = useRef<number | null>(null);
 
   const redirectTo = useMemo(() => sanitizeRedirectPath(location?.state?.from), [location]);
   const [email, setEmail] = useState('');
@@ -70,6 +93,39 @@ export default function SignInPage() {
   const emailValid = EMAIL_RE.test(trimmedEmail);
   const passwordValid = password.length >= 8;
   const canSubmit = emailValid && passwordValid && !submitting && !actionLoading;
+
+  useEffect(() => {
+    return () => {
+      if (emailAutoFocusTimerRef.current !== null) {
+        window.clearTimeout(emailAutoFocusTimerRef.current);
+        emailAutoFocusTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  function schedulePasswordAutoFocus(nextEmailValue: string) {
+    if (emailAutoFocusTimerRef.current !== null) {
+      window.clearTimeout(emailAutoFocusTimerRef.current);
+      emailAutoFocusTimerRef.current = null;
+    }
+
+    const candidate = String(nextEmailValue || '').trim();
+    const lower = candidate.toLowerCase();
+    const atIndex = candidate.indexOf('@');
+    const hasAt = atIndex > 0;
+    const hasDotAfterAt = hasAt && candidate.slice(atIndex + 1).includes('.');
+    const looksCompleteCom = lower.endsWith('.com');
+
+    if (!hasAt || !hasDotAfterAt || !looksCompleteCom) return;
+
+    emailAutoFocusTimerRef.current = window.setTimeout(() => {
+      const active = document.activeElement as HTMLElement | null;
+      if (active && active instanceof HTMLInputElement && active.type === 'email') {
+        passwordRef.current?.focus();
+      }
+      emailAutoFocusTimerRef.current = null;
+    }, 1000);
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -139,9 +195,15 @@ export default function SignInPage() {
                 className="auth-input"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setEmail(next);
+                  schedulePasswordAutoFocus(next);
+                }}
                 placeholder="Email address"
                 autoComplete="email"
+                inputMode="email"
+                enterKeyHint="next"
                 required
                 disabled={submitting || actionLoading}
               />
@@ -156,12 +218,14 @@ export default function SignInPage() {
             <div className="auth-inputWrap">
               <Lock size={16} className="auth-icon" />
               <input
+                ref={passwordRef}
                 className="auth-input"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
                 autoComplete="current-password"
+                enterKeyHint="done"
                 required
                 disabled={submitting || actionLoading}
               />

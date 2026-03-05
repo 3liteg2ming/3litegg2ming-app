@@ -23,6 +23,8 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 const AUTH_TIMEOUT_MS = 10_000;
 const SIGN_IN_TIMEOUT_MS = 25_000;
 const SUPABASE_ENV_ERROR = 'App misconfigured: missing server keys. Please contact support.';
+const SESSION_PERSIST_BLOCKED_ERROR =
+  'Signed in, but your browser blocked saving the session. If you’re using Brave or an ad blocker, disable Shields for this site, or clear site data and reload.';
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim() || '';
 const SUPABASE_ANON_PRESENT = Boolean((import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim());
 
@@ -104,11 +106,15 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: s
 
 function isReachabilityError(error: unknown): boolean {
   const message = String((error as any)?.message || '').toLowerCase();
+  const code = String((error as any)?.code || '').toLowerCase();
+  const name = String((error as any)?.name || '').toLowerCase();
   return (
     message.includes('could not reach server') ||
     message.includes('failed to fetch') ||
     message.includes('network request failed') ||
-    message.includes('networkerror')
+    message.includes('networkerror') ||
+    code === 'auth_timeout' ||
+    name === 'authtimeouterror'
   );
 }
 
@@ -292,9 +298,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (error) throw error;
+      if (!data?.session?.access_token) {
+        debugLog('signin.no_access_token', { hasSession: Boolean(data?.session), hasUser: Boolean(data?.user) });
+      }
+
+      let verifiedSessionUser: any = null;
+      try {
+        const sessionCheck = await withTimeout(
+          supabase!.auth.getSession(),
+          AUTH_TIMEOUT_MS,
+          'Could not reach server. Please try again.',
+        );
+        if (sessionCheck.error) {
+          throw sessionCheck.error;
+        }
+        verifiedSessionUser = sessionCheck.data.session?.user || null;
+        debugLog('signin.session_check', {
+          hasSession: Boolean(sessionCheck.data.session),
+          hasUser: Boolean(verifiedSessionUser),
+        });
+      } catch (sessionErr) {
+        debugLog('signin.session_check_failed', toLoggableError(sessionErr));
+        throw sessionErr;
+      }
+
+      if (!verifiedSessionUser?.id) {
+        debugLog('signin.session_persist_blocked');
+        const persistError = new Error(SESSION_PERSIST_BLOCKED_ERROR);
+        (persistError as any).code = 'EG_SESSION_PERSIST_BLOCKED';
+        throw persistError;
+      }
+
       await ensureProfileFromAuthUser(supabase, data.user);
-      setUser(toCoachUserFromSupabase(data.user));
-      debugLog('signin.success', { hasUser: Boolean(data.user) });
+      setUser(toCoachUserFromSupabase(verifiedSessionUser || data.user));
+      debugLog('signin.success', { hasUser: Boolean(verifiedSessionUser || data.user) });
     } catch (error) {
       debugLog('signin.failed', toLoggableError(error));
       throw error;
