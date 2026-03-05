@@ -109,6 +109,11 @@ function formatErrorDetails(err: any): string {
   return [message, code ? `code ${code}` : '', status ? `status ${status}` : ''].filter(Boolean).join(' • ');
 }
 
+function isDatabaseSaveNewUserError(err: any): boolean {
+  const message = String(err?.message || '').toLowerCase();
+  return message.includes('database error saving new user');
+}
+
 export default function SignUpPage() {
   const nav = useNavigate();
   const { signUp, user, loading, isSupabase } = useAuth();
@@ -236,6 +241,35 @@ export default function SignUpPage() {
         }
       }, 1400);
     } catch (err: any) {
+      if (isDatabaseSaveNewUserError(err)) {
+        try {
+          const supabase = requireSupabaseClient();
+          const signInRes = await supabase.auth.signInWithPassword({ email: trimmedEmail, password });
+          if (!signInRes.error && signInRes.data?.user?.id) {
+            const recoveredUserId = signInRes.data.user.id;
+            const profileFailures = await upsertProfileForUser({
+              supabase,
+              userId: recoveredUserId,
+              email: trimmedEmail,
+              firstName: cleanFirst,
+              lastName: cleanLast,
+              displayName,
+              psn: cleanPsn,
+            });
+            if (profileFailures.length) {
+              console.error('[SignUp] recovery profile upsert failures', profileFailures);
+            }
+            setSuccess(true);
+            window.setTimeout(() => {
+              nav('/preseason-registration', { replace: true });
+            }, 1200);
+            return;
+          }
+        } catch (recoveryErr) {
+          console.error('[SignUp] database-error recovery failed', recoveryErr);
+        }
+      }
+
       console.error('[SignUp] create account failed', {
         code: err?.code,
         status: err?.status,
