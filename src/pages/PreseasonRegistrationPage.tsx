@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-const supabase = requireSupabaseClient();
-
 import RegistrationHeroCard from '../components/RegistrationHeroCard';
 import TeamLogoGrid from '../components/TeamLogoGrid';
 import { resolveGamerTag } from '../lib/gamerTag';
@@ -11,6 +9,8 @@ import { getTeamAssets } from '../lib/teamAssets';
 import { useAuth } from '../state/auth/AuthProvider';
 import { requireSupabaseClient } from '../lib/supabaseClient';
 import '../styles/preseason-registration.css';
+
+const supabase = requireSupabaseClient();
 
 type TeamRow = {
   id: string;
@@ -61,7 +61,7 @@ type PrettyRegistrationSummary = {
 };
 
 const REG_UNLOCK_AT =
-  import.meta.env.VITE_REG_UNLOCK_AT?.trim() || '2026-03-05T20:30:00+11:00'; // 8:30pm Melbourne (AEDT)
+  import.meta.env.VITE_REG_UNLOCK_AT?.trim() || '2026-03-05T17:30:00+11:00'; // 5:30pm Melbourne (AEDT)
 
 function text(v: unknown): string {
   return String(v || '').trim();
@@ -676,7 +676,7 @@ export default function PreseasonRegistrationPage() {
     event.preventDefault();
 
     if (lockActive) {
-      setInlineError('Unlocks at half-time — Swans vs Carlton (8:30pm).');
+      setInlineError('Unlocks at half-time — Swans vs Carlton (5:30pm).');
       return;
     }
 
@@ -897,9 +897,9 @@ export default function PreseasonRegistrationPage() {
           <div className="prLockModal">
             <div className="prLockKicker">Preseason Knockout</div>
             <h2 className="prLockTitle">Registrations open at half-time</h2>
-            <p className="prLockSub">Swans vs Carlton — unlocks at 8:30pm</p>
+            <p className="prLockSub">Swans vs Carlton — unlocks at 5:30pm</p>
             <div className="prLockCountdown">{countdown}</div>
-            <p className="prLockHint">Check back at 8:30pm AEDT.</p>
+            <p className="prLockHint">Check back at 5:30pm AEDT.</p>
             {!isLoggedIn ? (
               <>
                 <p className="prLockHint">Create your account now and come back when the timer hits zero.</p>
