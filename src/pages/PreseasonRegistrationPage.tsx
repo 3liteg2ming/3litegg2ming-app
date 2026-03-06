@@ -11,6 +11,11 @@ import { requireSupabaseClient } from '../lib/supabaseClient';
 import '../styles/preseason-registration.css';
 
 const supabase = requireSupabaseClient();
+const TEAMS_CACHE_KEY = 'eg:preseason:teams:v1';
+const TEAMS_CACHE_TTL_MS = 10 * 60 * 1000;
+
+const REG_UNLOCK_AT =
+  import.meta.env.VITE_REG_UNLOCK_AT?.trim() || '2026-03-05T17:30:00+11:00'; // 5:30pm Melbourne (AEDT)
 
 type TeamRow = {
   id: string;
@@ -60,8 +65,28 @@ type PrettyRegistrationSummary = {
   prefTeamNames: string;
 };
 
-const REG_UNLOCK_AT =
-  import.meta.env.VITE_REG_UNLOCK_AT?.trim() || '2026-03-05T17:30:00+11:00'; // 5:30pm Melbourne (AEDT)
+const AFL_CANONICAL_KEYS = [
+  'adelaide',
+  'brisbane',
+  'carlton',
+  'collingwood',
+  'essendon',
+  'fremantle',
+  'geelong',
+  'goldcoast',
+  'gws',
+  'hawthorn',
+  'melbourne',
+  'northmelbourne',
+  'portadelaide',
+  'richmond',
+  'stkilda',
+  'sydney',
+  'westcoast',
+  'westernbulldogs',
+] as const;
+
+type CanonicalKey = (typeof AFL_CANONICAL_KEYS)[number];
 
 function text(v: unknown): string {
   return String(v || '').trim();
@@ -125,29 +150,6 @@ function assetKeyFromSlugOrName(slug: string, rawName: string): string {
   }
   return n;
 }
-
-const AFL_CANONICAL_KEYS = [
-  'adelaide',
-  'brisbane',
-  'carlton',
-  'collingwood',
-  'essendon',
-  'fremantle',
-  'geelong',
-  'goldcoast',
-  'gws',
-  'hawthorn',
-  'melbourne',
-  'northmelbourne',
-  'portadelaide',
-  'richmond',
-  'stkilda',
-  'sydney',
-  'westcoast',
-  'westernbulldogs',
-] as const;
-
-type CanonicalKey = (typeof AFL_CANONICAL_KEYS)[number];
 
 function canonicalTeamKey(slug: string | null | undefined, name: string | null | undefined): CanonicalKey | '' {
   const s = text(slug).toLowerCase();
@@ -279,6 +281,63 @@ function seasonSlugCandidates(): string[] {
   return ['preseason-2026', 'preseason'];
 }
 
+function mapTeamRows(rows: TeamFetchRow[]): TeamRow[] {
+  const deduped = dedupeTeams(rows);
+  const mapped = deduped
+    .map((team) => {
+      const id = text(team.id);
+      const rawName = text(team.name);
+      if (!id || !rawName) return null;
+      return {
+        id,
+        slug: text(team.slug) || null,
+        name: shortTeamName(rawName),
+        logo_url: normalizeLogoUrl(team.logo_url || null, team.slug || null, rawName),
+      } as TeamRow;
+    })
+    .filter((team): team is TeamRow => Boolean(team));
+
+  const sourceById = new Map(deduped.map((row) => [text(row.id), row]));
+  const canonicalRows = new Map<CanonicalKey, TeamRow>();
+  for (const team of mapped) {
+    const source = sourceById.get(team.id);
+    const canonical = canonicalTeamKey(source?.slug || null, source?.name || team.name);
+    if (!canonical) continue;
+    if (!canonicalRows.has(canonical)) canonicalRows.set(canonical, team);
+  }
+
+  const finalRows = AFL_CANONICAL_KEYS.map((key) => canonicalRows.get(key)).filter((row): row is TeamRow => Boolean(row));
+  if (import.meta.env.DEV && finalRows.length !== 18) {
+    console.warn(
+      '[PreseasonRegistration] Team count not 18 after dedupe:',
+      finalRows.length,
+      finalRows.map((team) => team.name),
+    );
+  }
+  return finalRows;
+}
+
+function readTeamCache(): TeamRow[] | null {
+  try {
+    const raw = sessionStorage.getItem(TEAMS_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { ts?: number; teams?: TeamRow[] };
+    if (!parsed?.ts || !Array.isArray(parsed?.teams)) return null;
+    if (Date.now() - parsed.ts > TEAMS_CACHE_TTL_MS) return null;
+    return parsed.teams;
+  } catch {
+    return null;
+  }
+}
+
+function writeTeamCache(nextTeams: TeamRow[]) {
+  try {
+    sessionStorage.setItem(TEAMS_CACHE_KEY, JSON.stringify({ ts: Date.now(), teams: nextTeams }));
+  } catch {
+    // ignore cache write failures
+  }
+}
+
 async function loadProfile(userId: string): Promise<ProfileRow | null> {
   const primaryWithXbox = await supabase
     .from('profiles')
@@ -378,7 +437,6 @@ async function insertRegistration(args: {
     user_id: args.userId,
     coach_name: args.coachName,
     psn: args.coachPsn,
-    // Backward compatibility for legacy views/functions still reading psn_name.
     psn_name: args.coachPsn,
     pref_team_ids: args.selectedTeamIds,
     pref_team_1: args.selectedTeamIds[0] ?? null,
@@ -396,12 +454,7 @@ async function insertRegistration(args: {
 
   const duplicate = String(inserted.error.message || '').toLowerCase();
   if (duplicate.includes('duplicate key') || duplicate.includes('unique')) {
-    const updated = await supabase
-      .from('eg_preseason_registrations')
-      .update(payload)
-      .eq('user_id', args.userId);
-    if (!updated.error) return;
-    throw new Error(updated.error.message || 'Unable to save registration.');
+    throw new Error('You are already registered for preseason.');
   }
 
   throw new Error(inserted.error.message || 'Unable to save registration.');
@@ -435,7 +488,6 @@ export default function PreseasonRegistrationPage() {
   const isRegistrationRoute =
     location.pathname === '/preseason-registration' || location.pathname === '/preseason/register';
 
-  const [loading, setLoading] = useState(true);
   const [teamsLoading, setTeamsLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -466,73 +518,63 @@ export default function PreseasonRegistrationPage() {
   }, []);
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!user?.id) {
-      let alive = true;
-      (async () => {
-        setLoading(true);
-        setTeamsLoading(true);
-        setProfileLoading(false);
-        setProfile(null);
-        setAuthMetaUser(null);
-        try {
-          const teamsRes = await supabase.from('eg_teams').select('id,name,logo_url,slug').order('name', { ascending: true });
-          if (!alive) return;
-          if (teamsRes.error) throw new Error(teamsRes.error.message || 'Unable to load teams.');
+    let alive = true;
 
-          const deduped = dedupeTeams((teamsRes.data || []) as TeamFetchRow[]);
-          const rows = deduped
-            .map((team) => {
-              const id = text(team.id);
-              const rawName = text(team.name);
-              if (!id || !rawName) return null;
-              return {
-                id,
-                slug: text(team.slug) || null,
-                name: shortTeamName(rawName),
-                logo_url: normalizeLogoUrl(team.logo_url || null, team.slug || null, rawName),
-              } as TeamRow;
-            })
-            .filter((team): team is TeamRow => Boolean(team));
+    const cached = readTeamCache();
+    if (cached?.length) {
+      setTeams(cached);
+      setTeamsLoading(false);
+    } else {
+      setTeamsLoading(true);
+    }
 
-          const sourceById = new Map(deduped.map((row) => [text(row.id), row]));
-          const canonicalRows = new Map<CanonicalKey, TeamRow>();
-          for (const team of rows) {
-            const source = sourceById.get(team.id);
-            const canonical = canonicalTeamKey(source?.slug || null, source?.name || team.name);
-            if (!canonical) continue;
-            if (!canonicalRows.has(canonical)) canonicalRows.set(canonical, team);
-          }
+    (async () => {
+      try {
+        const teamsRes = await supabase.from('eg_teams').select('id,name,logo_url,slug').order('name', { ascending: true });
+        if (!alive) return;
+        if (teamsRes.error) throw new Error(teamsRes.error.message || 'Unable to load teams.');
 
-          const finalRows = AFL_CANONICAL_KEYS.map((key) => canonicalRows.get(key)).filter((row): row is TeamRow => Boolean(row));
-          setTeams(finalRows);
-          setProfileLoadError(null);
-        } catch (error: any) {
-          console.error('[EG CRASH] PreseasonRegistration team load failed', error);
-          if (!alive) return;
+        const finalRows = mapTeamRows((teamsRes.data || []) as TeamFetchRow[]);
+        setTeams(finalRows);
+        writeTeamCache(finalRows);
+      } catch (error: any) {
+        console.error('[EG CRASH] PreseasonRegistration team load failed', error);
+        if (!alive) return;
+        if (!cached?.length) {
           setFatalError(String(error?.message || 'Unable to load registration page.'));
-        } finally {
-          if (alive) {
-            setLoading(false);
-            setTeamsLoading(false);
-          }
         }
-      })();
+      } finally {
+        if (alive) setTeamsLoading(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    let alive = true;
+    setFatalError(null);
+
+    if (!user?.id) {
+      setProfileLoading(false);
+      setProfile(null);
+      setAuthMetaUser(null);
+      setSubmitted(false);
+      setSubmittedSummary(null);
+      setProfileLoadError(null);
       return () => {
         alive = false;
       };
     }
 
-    let alive = true;
-
+    setProfileLoading(true);
     (async () => {
-      setLoading(true);
-      setFatalError(null);
-      setProfileLoading(true);
-
       try {
-        const [teamsRes, profileRes, regRes, prettyRes, authUserRes] = await Promise.all([
-          supabase.from('eg_teams').select('id,name,logo_url,slug').order('name', { ascending: true }),
+        const [profileRes, regRes, prettyRes, authUserRes] = await Promise.all([
           loadProfile(user.id),
           loadRegistrationFromTable(user.id),
           loadPrettyRegistration(user.id),
@@ -541,45 +583,9 @@ export default function PreseasonRegistrationPage() {
 
         if (!alive) return;
 
-        if (teamsRes.error) throw new Error(teamsRes.error.message || 'Unable to load teams.');
-
-        const deduped = dedupeTeams((teamsRes.data || []) as TeamFetchRow[]);
-        const rows = deduped
-          .map((team) => {
-            const id = text(team.id);
-            const rawName = text(team.name);
-            if (!id || !rawName) return null;
-            return {
-              id,
-              slug: text(team.slug) || null,
-              name: shortTeamName(rawName),
-              logo_url: normalizeLogoUrl(team.logo_url || null, team.slug || null, rawName),
-            } as TeamRow;
-          })
-          .filter((team): team is TeamRow => Boolean(team));
-
-        const sourceById = new Map(deduped.map((row) => [text(row.id), row]));
-        const canonicalRows = new Map<CanonicalKey, TeamRow>();
-        for (const team of rows) {
-          const source = sourceById.get(team.id);
-          const canonical = canonicalTeamKey(source?.slug || null, source?.name || team.name);
-          if (!canonical) continue;
-          if (!canonicalRows.has(canonical)) canonicalRows.set(canonical, team);
-        }
-
-        const finalRows = AFL_CANONICAL_KEYS.map((key) => canonicalRows.get(key)).filter((row): row is TeamRow => Boolean(row));
-
-        setTeams(finalRows);
-        if (import.meta.env.DEV && finalRows.length !== 18) {
-          console.warn(
-            '[PreseasonRegistration] Team count not 18 after dedupe:',
-            finalRows.length,
-            finalRows.map((team) => team.name),
-          );
-        }
-
         setProfile(profileRes);
         setAuthMetaUser((authUserRes.data?.user as unknown as AuthMetaUser) || null);
+
         if (profileRes) {
           setProfileLoadError(null);
         } else {
@@ -601,15 +607,11 @@ export default function PreseasonRegistrationPage() {
           });
         }
       } catch (error: any) {
-        console.error('[EG CRASH] PreseasonRegistration load failed', error);
+        console.error('[EG CRASH] PreseasonRegistration profile/registration load failed', error);
         if (!alive) return;
         setFatalError(String(error?.message || 'Unable to load registration page.'));
       } finally {
-        if (alive) {
-          setTeamsLoading(false);
-          setProfileLoading(false);
-          setLoading(false);
-        }
+        if (alive) setProfileLoading(false);
       }
     })();
 
@@ -695,6 +697,15 @@ export default function PreseasonRegistrationPage() {
       return;
     }
 
+    const existingReg = await loadRegistrationFromTable(user.id).catch(() => null);
+    if (existingReg) {
+      const existingPrefs = readPrefs(existingReg).slice(0, 4);
+      if (existingPrefs.length) setSelectedTeamIds(existingPrefs);
+      setSubmitted(true);
+      setInlineError('You are already registered for preseason.');
+      return;
+    }
+
     const freshProfile = await loadProfile(user.id).catch((error) => {
       console.error('[EG CRASH] Registration profile refresh failed', error);
       return null;
@@ -703,6 +714,7 @@ export default function PreseasonRegistrationPage() {
     const freshAuthUser = (authUserRes.data?.user as unknown as AuthMetaUser) || null;
     if (freshProfile) setProfile(freshProfile);
     setAuthMetaUser(freshAuthUser);
+
     if (!freshProfile && !profile) {
       console.warn('[PreseasonRegistration] profile still missing after refresh, continuing with auth metadata fallback', user.id);
     }
@@ -727,7 +739,7 @@ export default function PreseasonRegistrationPage() {
       await insertRegistration({
         userId: user.id,
         selectedTeamIds,
-          coachName:
+        coachName:
           text(freshProfile?.display_name || profile?.display_name) ||
           text(freshAuthUser?.user_metadata?.display_name) ||
           text(freshAuthUser?.user_metadata?.name) ||
@@ -736,6 +748,7 @@ export default function PreseasonRegistrationPage() {
         prefTeamNames: selectedTeamRows.map((team) => team.name),
         prefTeamSlugs: selectedTeamRows.map((team) => text(team.slug)).filter(Boolean),
       });
+
       const pretty = await loadPrettyRegistration(user.id);
       if (pretty) {
         setSubmittedSummary({
@@ -750,6 +763,7 @@ export default function PreseasonRegistrationPage() {
           prefTeamNames: selectedNames.join(', '),
         });
       }
+
       await saveProfileFlag(user.id, nowIso);
       setSubmitted(true);
     } catch (error: any) {
@@ -802,12 +816,7 @@ export default function PreseasonRegistrationPage() {
             helper={<span>Signed in as {signedInName}</span>}
           />
 
-          {loading ? (
-            <section className="prLoading" aria-label="Loading registration">
-              <div className="prSkeleton" />
-              <div className="prSkeleton" />
-            </section>
-          ) : submitted ? (
+          {submitted ? (
             <section className="prConfirmCard">
               <div className="prConfirmCard__icon">
                 <CheckCircle2 size={22} />
@@ -873,7 +882,7 @@ export default function PreseasonRegistrationPage() {
                 <button
                   type="submit"
                   className="prBtn prBtn--primary prBtn--confirm"
-                  disabled={lockActive || profileLoading || teamsLoading || submitting || !selectedTeamIds.length}
+                  disabled={lockActive || profileLoading || teamsLoading || submitting || !selectedTeamIds.length || submitted}
                 >
                   {submitting ? 'Submitting…' : 'Confirm Registration'}
                 </button>

@@ -22,6 +22,12 @@ function toCrashMessage(value: unknown) {
   return text || 'Unknown error';
 }
 
+function isBenignLockStealError(reason: unknown): boolean {
+  const msg = toCrashMessage(reason).toLowerCase();
+  // This is the exact class of error you showed: not a real “app is broken” crash.
+  return msg.includes('lock broken') && msg.includes('steal');
+}
+
 if (!window.__egCrashListenersAttached) {
   window.__egCrashListenersAttached = true;
 
@@ -40,6 +46,14 @@ if (!window.__egCrashListenersAttached) {
 
   window.addEventListener('unhandledrejection', (event) => {
     const reason = event.reason || 'Unknown promise rejection';
+
+    // ✅ Do NOT hard-crash the UI for this one.
+    if (isBenignLockStealError(reason)) {
+      console.warn('[EG WARN] benign lock rejection (ignored)', reason);
+      event.preventDefault();
+      return;
+    }
+
     console.error('[EG CRASH] unhandledrejection', reason);
     window.dispatchEvent(
       new CustomEvent(GLOBAL_CRASH_EVENT, {

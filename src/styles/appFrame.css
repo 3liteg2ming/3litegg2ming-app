@@ -7,7 +7,18 @@
   --eg-bottom-nav-height: 108px;
 }
 
+/* Critical guardrail: prevent any horizontal “100vw” scrollbar bleed */
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 .eg-viewport {
+  width: 100%;
+  max-width: 100%;
   min-height: 100vh;
   min-height: 100svh;
   min-height: 100dvh;
@@ -17,17 +28,26 @@
   background: transparent;
   margin: 0;
   padding: 0;
+  overflow-x: hidden; /* extra safety */
 }
 
 .eg-device {
-  width: 100vw;
+  /* ✅ FIX: never use 100vw here (causes clipping). */
+  width: 100%;
+  max-width: 100vw;
+  max-width: 100dvw;
+
   height: 100vh;
   height: 100svh;
   height: 100dvh;
+
   position: relative;
   display: flex;
   flex-direction: column;
+
+  /* keep the clean “app frame” clipping inside the device */
   overflow: hidden;
+
   background: radial-gradient(900px 700px at 50% -10%, rgba(245, 200, 75, 0.12), transparent 55%),
     radial-gradient(900px 700px at 0% 30%, rgba(154, 92, 255, 0.14), transparent 60%),
     radial-gradient(900px 700px at 100% 40%, rgba(46, 141, 255, 0.14), transparent 60%),
@@ -76,8 +96,12 @@
 }
 
 .eg-content-scroll > * {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
   padding-left: max(12px, env(safe-area-inset-left, 0px));
   padding-right: max(12px, env(safe-area-inset-right, 0px));
+  overflow-x: hidden;
 }
 
 .eg-app-loading {
@@ -94,7 +118,8 @@
   }
 
   .eg-device {
-    width: 430px;
+    width: min(430px, 100%);
+    max-width: min(430px, 100%);
     height: 100vh;
     height: 100svh;
     height: 100dvh;
@@ -104,8 +129,9 @@
   }
 
   .eg-device.eg-device--admin {
-    width: 100vw;
+    width: 100%;
     max-width: 100vw;
+    max-width: 100dvw;
   }
 }
 

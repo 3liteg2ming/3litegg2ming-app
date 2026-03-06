@@ -1,22 +1,31 @@
 :root {
-  --home-gold: var(--eg-gold, #F5C400);
-  --home-gold-2: var(--eg-gold-2, #FFDD72);
+  --season-radius: 14px;
+  --home-gold: var(--eg-gold, #f5c400);
+  --home-gold-2: var(--eg-gold-2, #ffdd72);
   --home-text: var(--eg-text, rgba(246, 249, 255, 0.94));
   --home-dim: var(--eg-muted, rgba(210, 220, 240, 0.72));
   --home-border: var(--eg-border, rgba(255, 255, 255, 0.12));
 }
 
+/* Guardrails */
+.homePage,
+.homePage * {
+  box-sizing: border-box;
+}
+
 .homePage {
   position: relative;
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
   width: 100%;
+  max-width: 100%;
   min-height: 100%;
   color: var(--home-text);
   background:
     linear-gradient(180deg, rgba(7, 10, 18, 0.96), rgba(10, 16, 32, 0.94)),
     radial-gradient(92% 72% at 14% 0%, rgba(124, 92, 255, 0.14), transparent 62%),
     radial-gradient(86% 78% at 88% 12%, rgba(74, 43, 255, 0.11), transparent 66%),
-    url('https://zohtixrgskbzosgfluni.supabase.co/storage/v1/object/public/Assets/mcg-stadium.jpg');
+    url('https://zohtixrgskbzosgfluni.supabase.co/storage/v1/object/public/Assets/mcg.png');
   background-size: cover, 145% 145%, 150% 150%, cover;
   background-position: center, left top, right top, center;
   padding-bottom: calc(var(--bottom-nav-h, 108px) + env(safe-area-inset-bottom, 0px) + 2px);
@@ -47,61 +56,310 @@
 .homeShell {
   position: relative;
   z-index: 1;
-  width: min(980px, 100%);
+
+  width: 100%;
+  max-width: 980px;
   margin: 0 auto;
-  padding: 12px 10px 0;
+
+  padding: 16px;
   display: grid;
+  gap: 16px;
+  overflow: visible;
+
+  container-type: inline-size;
+  container-name: home;
+}
+
+/* Top row */
+.homeTopRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
   gap: 12px;
+  min-width: 0;
 }
 
-.homeHero {
-  position: relative;
+.homeDashLabel {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  color: rgba(208, 220, 242, 0.7);
+  text-transform: uppercase;
+}
+
+.homeSignedInTag {
+  font-size: 11px;
+  color: rgba(206, 218, 240, 0.66);
+  font-weight: 700;
+  min-width: 0;
+  max-width: 56vw;
+  white-space: nowrap;
   overflow: hidden;
-  border-radius: 22px;
-  border: 1px solid var(--eg-border);
-  background:
-    linear-gradient(135deg, rgba(7,7,12,0.88), rgba(11,11,22,0.84)),
-    radial-gradient(70% 90% at 12% 12%, rgba(124,92,255,0.16), transparent 70%),
-    radial-gradient(80% 100% at 85% 20%, rgba(74,43,255,0.10), transparent 65%),
-    linear-gradient(180deg, rgba(4,7,12,0.40), rgba(4,7,12,0.16) 48%, rgba(4,7,12,0.44)),
-    url('https://zohtixrgskbzosgfluni.supabase.co/storage/v1/object/public/Assets/mcg-stadium.jpg');
-  background-size: cover, 140% 140%, 160% 160%, cover, cover;
-  background-position: center, left top, right top, center;
-  box-shadow:
-    0 16px 50px rgba(0, 0, 0, 0.45),
-    0 0 0 1px rgba(124,92,255,0.08),
-    0 14px 40px rgba(124,92,255,0.14);
-  padding: 24px 20px;
+  text-overflow: ellipsis;
 }
 
-.homeHero__bolt {
+/* Seasons */
+.homeSeasonRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.homeSeasonCard {
+  scroll-snap-align: start;
+  position: relative;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  height: clamp(96px, 12vw, 112px);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--season-radius);
+  background-size: cover;
+  background-position: center;
+  padding: 12px;
+  text-align: left;
+  color: var(--home-text);
+  cursor: pointer;
+  box-shadow:
+    0 9px 20px rgba(0, 0, 0, 0.32),
+    0 16px 38px rgba(0, 0, 0, 0.24);
+  transition: transform 0.16s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  overflow: hidden;
+}
+
+.homeSeasonCard:hover {
+  transform: translateY(-1px);
+}
+
+.homeSeasonCard:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.homeSeasonCard::before,
+.homeSeasonCard::after {
+  content: '';
   position: absolute;
-  right: -26px;
-  top: -34px;
-  width: 230px;
-  height: 230px;
-  background: linear-gradient(
-    132deg,
-    transparent 39%,
-    rgba(124,92,255,0.15) 43%,
-    rgba(74,43,255,0.06) 56%,
-    transparent 60%
-  );
-  filter: blur(0.8px);
-  opacity: 0.62;
+  inset: 2px; /* keep the border/glow visible */
+  pointer-events: none;
+  border-radius: calc(var(--season-radius) - 2px);
+}
+
+.homeSeasonCard::before {
+  background: linear-gradient(135deg, rgba(8, 10, 16, 0.88), rgba(11, 14, 24, 0.82));
+}
+
+.homeSeasonCard--preseason::after {
+  background: linear-gradient(145deg, rgba(20, 100, 72, 0.34), rgba(12, 18, 28, 0.12) 62%, transparent 100%);
+}
+
+.homeSeasonCard--seasonTwo::after {
+  background: linear-gradient(145deg, rgba(48, 94, 188, 0.34), rgba(12, 18, 28, 0.12) 62%, transparent 100%);
+}
+
+.homeSeasonCard > * {
+  position: relative;
+  z-index: 1;
+}
+
+.homeSeasonCard--tile {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto 1fr;
+  align-items: start;
+  column-gap: 8px;
+}
+
+.homeSeasonCard--preseason {
+  border-color: rgba(63, 186, 128, 0.66);
+  box-shadow:
+    0 0 0 1px rgba(63, 186, 128, 0.22),
+    0 9px 18px rgba(0, 0, 0, 0.35),
+    0 0 18px rgba(63, 186, 128, 0.22),
+    0 0 46px rgba(63, 186, 128, 0.18),
+    0 0 74px rgba(63, 186, 128, 0.12);
+}
+
+.homeSeasonCard--seasonTwo {
+  border-color: rgba(82, 160, 255, 0.66);
+  box-shadow:
+    0 0 0 1px rgba(82, 160, 255, 0.22),
+    0 9px 18px rgba(0, 0, 0, 0.35),
+    0 0 18px rgba(82, 160, 255, 0.22),
+    0 0 46px rgba(82, 160, 255, 0.17),
+    0 0 74px rgba(82, 160, 255, 0.11);
+}
+
+.homeSeasonCard.is-active {
+  border-width: 3px;
+}
+
+.homeSeasonCard__status {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+.homeSeasonCard__status.is-open {
+  border: 1px solid rgba(245, 196, 0, 0.4);
+  background: rgba(245, 196, 0, 0.14);
+  color: rgba(255, 232, 154, 0.96);
+}
+
+.homeSeasonCard__status.is-soon {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.09);
+  color: rgba(229, 235, 248, 0.88);
+}
+
+.homeSeasonCard__title {
+  margin-top: 8px;
+  display: block;
+  font-size: 15px;
+  line-height: 1.12;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  grid-column: 1 / 2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.homeSeasonCard__endTag {
+  grid-column: 2 / 3;
+  grid-row: 1 / 3;
+  align-self: center;
+  justify-self: end;
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  align-items: center;
+  justify-content: center;
+  color: rgba(234, 240, 252, 0.84);
+}
+
+/* Shared cards */
+.homeEventBar,
+.homeRegAction,
+.homeCard,
+.homeAnnouncementItem,
+.homeLeaderCard,
+.homeTable__row {
+  position: relative;
+}
+
+.homeEventBar,
+.homeCard,
+.homeRegAction {
+  border: 1px solid var(--home-border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03));
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.36);
+}
+
+.homeEventBar::before,
+.homeCard::before,
+.homeRegAction::before,
+.homeLeaderCard::before,
+.homeAnnouncementItem::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   pointer-events: none;
 }
 
-.homeHero__chip {
+/* Event bar */
+.homeEventBar {
+  min-height: 48px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.homeEventBar__left,
+.homeEventBar__right {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  flex: 1;
+}
+
+.homeEventBar__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: rgba(205, 216, 238, 0.74);
+  white-space: nowrap;
+}
+
+.homeEventBar__value {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  color: rgba(255, 222, 124, 0.95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.homeEventBar__right {
+  text-align: right;
+  justify-items: end;
+}
+
+/* Registration action */
+.homeRegAction {
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(7, 7, 12, 0.88), rgba(11, 11, 22, 0.84)),
+    radial-gradient(70% 90% at 12% 12%, rgba(124, 92, 255, 0.16), transparent 70%),
+    radial-gradient(80% 100% at 85% 20%, rgba(74, 43, 255, 0.1), transparent 65%);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(124, 92, 255, 0.08);
+  padding: 14px;
+}
+
+.homeRegAction__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.homeRegAction__chip {
   width: fit-content;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   border-radius: 999px;
-  border: 1px solid rgba(124,92,255,0.40);
-  background: rgba(124,92,255,0.10);
-  color: rgba(246,249,255,0.92);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10);
+  border: 1px solid rgba(124, 92, 255, 0.4);
+  background: rgba(124, 92, 255, 0.1);
+  color: rgba(246, 249, 255, 0.92);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
   padding: 6px 10px;
   font-size: 10px;
   font-weight: 900;
@@ -109,44 +367,45 @@
   text-transform: uppercase;
 }
 
-.homeHero__title {
-  margin: 18px 0 0;
-  font-size: clamp(38px, 9vw, 56px);
-  line-height: 0.95;
-  letter-spacing: -0.045em;
-}
-
-.homeHero__subtitle {
-  margin: 14px 0 0;
-  max-width: 62ch;
-  color: var(--eg-text);
-  font-size: clamp(15px, 2.8vw, 18px);
-  font-weight: 700;
-  line-height: 1.4;
-}
-
-.homeHero__subtext {
-  margin: 6px 0 0;
-  color: var(--eg-muted);
-  font-size: 12px;
-  font-weight: 600;
+.homeRegAction__status {
+  border-radius: 999px;
+  border: 1px solid rgba(245, 196, 0, 0.36);
+  background: rgba(245, 196, 0, 0.14);
+  color: rgba(255, 235, 160, 0.96);
+  font-size: 10px;
+  font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  padding: 5px 10px;
 }
 
-.homeHero__signed {
-  margin: 14px 0 0;
-  color: var(--home-dim);
+.homeRegAction__subtitle {
+  margin: 8px 0 0;
+  max-width: 48ch;
+  color: var(--eg-text);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.homeRegAction__meta {
+  margin: 7px 0 0;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
+  color: rgba(206, 218, 240, 0.78);
 }
 
-.homeHero__cta {
-  margin-top: 16px;
+.homeRegAction__ctaRow {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.homeRegAction__cta {
   border: 1px solid transparent;
-  border-radius: 14px;
+  border-radius: 12px;
   min-height: 44px;
-  padding: 0 18px;
+  padding: 0 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -156,175 +415,513 @@
   font-weight: 900;
   letter-spacing: 0.01em;
   cursor: pointer;
-  box-shadow: var(--eg-glow-gold), inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -1px 0 rgba(90,56,0,0.22);
-  transition: transform 0.14s ease, box-shadow 0.16s ease;
+  box-shadow: var(--eg-glow-gold), inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -1px 0 rgba(90, 56, 0, 0.22);
+  transition: transform 0.12s ease, box-shadow 0.14s ease;
 }
 
-.homeHero__cta:active {
+.homeRegAction__cta:hover {
+  transform: translateY(-1px);
+}
+
+.homeRegAction__cta:active {
   transform: scale(0.99);
 }
 
-.homeFeatureSection {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 10px;
-  align-items: stretch;
-}
-
-.homeFeaturePanel,
-.homeComingSoon {
-  border-radius: 18px;
-  border: 1px solid var(--eg-border);
-  background: linear-gradient(180deg, var(--eg-card), var(--eg-card-2));
-  box-shadow: 0 16px 50px rgba(0,0,0,0.45);
-  padding: 12px;
-}
-
-.homeFeaturePanel {
-  box-shadow:
-    0 16px 50px rgba(0,0,0,0.45),
-    0 0 0 1px rgba(124,92,255,0.10),
-    0 14px 40px rgba(124,92,255,0.14);
-}
-
-.homeFeaturePanel__header h2 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 900;
-  color: var(--eg-text);
-  letter-spacing: 0.01em;
-  text-align: center;
-}
-
-.homeFeatureList {
-  margin-top: 10px;
-  display: flex;
-  flex-wrap: wrap;
+.homeRegAction__ctaSecondary {
+  border-radius: 12px;
+  min-height: 44px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  background: rgba(124, 92, 255, 0.12);
+  border: 1px solid rgba(124, 92, 255, 0.38);
+  color: rgba(245, 248, 255, 0.92);
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.homeRegAction__ctaSecondary:active {
+  transform: scale(0.99);
+}
+
+/* Section cards */
+.homeCard {
+  padding: 14px;
+  overflow: hidden;
+}
+
+.homeSectionHead {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.homeSectionHead__left {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.homeSectionHead__icon {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(240, 246, 255, 0.88);
+}
+
+.homeSectionHead h2 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: rgba(245, 248, 255, 0.93);
+  text-transform: uppercase;
+}
+
+.homeSectionHead__action {
+  border: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(205, 216, 238, 0.55);
+  opacity: 0.72;
+  padding: 0;
+  cursor: default;
+}
+
+.homeSectionHead__action:disabled {
+  pointer-events: none;
+}
+
+/* Featured players carousel */
+.homeLeadersCarousel {
+  margin-top: 10px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(204px, 1fr);
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: visible;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.homeLeadersCarousel::-webkit-scrollbar {
+  display: none;
+}
+
+.homeLeaderCard {
+  scroll-snap-align: start;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.03)),
+    radial-gradient(120% 120% at 0% 0%, rgba(124, 92, 255, 0.1), transparent 65%);
+  padding: 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 10px 24px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+}
+
+.homeLeaderCard__head {
+  margin-bottom: 8px;
+}
+
+.homeLeaderCard__label {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  color: rgba(197, 212, 239, 0.72);
+  text-transform: uppercase;
+}
+
+.homeLeaderCard__body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.homeLeaderCard__photo,
+.homeLeaderCard__placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.homeLeaderCard__photo {
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 6px 14px rgba(0, 0, 0, 0.24);
+}
+
+.homeLeaderCard__placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(210, 220, 240, 0.74);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.homeLeaderCard__meta {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.homeLeaderCard__name {
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(245, 249, 255, 0.93);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.homeLeaderCard__footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.homeLeaderCard__value {
+  font-size: 13px;
+  font-weight: 900;
+  color: rgba(255, 220, 118, 0.94);
+}
+
+.homeLeaderCard__teamLogo {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.homeLeaderCard__teamPill {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 1px 7px;
+  font-size: 10px;
+  color: rgba(219, 229, 246, 0.84);
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Announcements */
+.homeAnnouncements {
+  margin-top: 8px;
+  display: grid;
   gap: 8px;
 }
 
-.homeFeatureItem {
-  width: min(290px, 100%);
+.homeAnnouncementItem {
   border-radius: 12px;
-  border: 1px solid var(--eg-border);
-  background: linear-gradient(180deg, var(--eg-card), var(--eg-card-2));
-  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.03)),
+    radial-gradient(120% 120% at 0% 0%, rgba(124, 92, 255, 0.08), transparent 70%);
+  padding: 10px;
   display: grid;
-  gap: 3px;
-  transition: transform .12s ease, box-shadow .14s ease;
+  gap: 4px;
+  overflow: hidden;
 }
 
-.homeFeatureItem:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 28px rgba(0,0,0,0.36), 0 0 0 1px rgba(124,92,255,0.18);
-}
-
-.homeFeatureItem strong {
-  display: block;
-  color: var(--eg-text);
+.homeAnnouncementItem h3 {
+  margin: 0;
   font-size: 13px;
   font-weight: 800;
+  color: rgba(244, 248, 255, 0.92);
 }
 
-.homeFeatureItem small {
-  color: var(--eg-muted);
-  font-size: 11px;
-  line-height: 1.35;
+.homeAnnouncementItem p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.42;
+  color: rgba(206, 218, 240, 0.78);
 }
 
-.homeComingSoon {
-  position: relative;
-  overflow: hidden;
-  background:
-    radial-gradient(72% 92% at 10% 0%, rgba(124,92,255,0.14), transparent 80%),
-    linear-gradient(180deg, var(--eg-card), var(--eg-card-2));
-  box-shadow:
-    0 16px 50px rgba(0,0,0,0.45),
-    0 0 0 1px rgba(124,92,255,0.10),
-    0 14px 40px rgba(124,92,255,0.14);
+/* -------------------------------------------------------
+   CONTAINER QUERIES
+-------------------------------------------------------- */
+@container home (max-width: 520px) {
+  .homeShell {
+    padding: 14px;
+    gap: 14px;
+  }
+
+  /* Season tiles become a swipeable row (like AFL app). */
+  .homeSeasonRow {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(280px, 86%);
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: visible;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+
+  .homeSeasonRow::-webkit-scrollbar { display: none; }
+  .homeSeasonRow { scrollbar-width: none; }
+
+  .homeSeasonCard {
+    height: 96px;
+    padding: 10px;
+  }
+
+  .homeEventBar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    min-height: unset;
+  }
+
+  .homeEventBar__right {
+    text-align: left;
+    justify-items: start;
+  }
+
+  .homeEventBar__value {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    line-height: 1.12;
+  }
+
+  .homeSignedInTag {
+    max-width: 100%;
+  }
+
+  .homeLeadersCarousel {
+    grid-auto-columns: minmax(190px, 1fr);
+  }
 }
 
-.homeComingSoon::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  background: linear-gradient(135deg, rgba(124,92,255,0.08), transparent 45%);
-}
+@container home (max-width: 420px) {
+  .homeDashLabel {
+    font-size: 9px;
+  }
 
-.homeComingSoon__chip {
-  width: fit-content;
-  border-radius: 999px;
-  border: 1px solid rgba(124,92,255,0.40);
-  background: rgba(124,92,255,0.10);
-  color: rgba(246,249,255,0.92);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10);
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 6px 10px;
+  .homeSectionHead h2 {
+    font-size: 11px;
+  }
 }
-
-.homeComingSoon__title {
-  margin: 10px 0 0;
-  font-size: clamp(18px, 4.6vw, 24px);
-  line-height: 1.15;
-  letter-spacing: -0.015em;
-  color: var(--eg-text);
-}
-
-.homeComingSoon__copy {
+/* Home coaches overlay + rows */
+.homeMiniFixture {
   margin-top: 10px;
   display: grid;
   gap: 6px;
+}
+
+.homeMiniFixture__teams {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 14px;
+}
+
+.homeMiniFixture__teams strong {
+  font-weight: 800;
+  color: rgba(247, 250, 255, 0.94);
+}
+
+.homeMiniFixture__teams span {
+  color: rgba(202, 214, 238, 0.72);
+  font-weight: 700;
+}
+
+.homeMiniFixture__meta {
+  font-size: 12px;
+  color: rgba(206, 217, 238, 0.74);
+}
+
+.homePendingState {
+  margin-top: 10px;
+  display: grid;
+  gap: 4px;
+}
+
+.homePendingState__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: rgba(244, 248, 255, 0.92);
+}
+
+.homePendingState__sub {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(203, 216, 240, 0.74);
+}
+
+.homeModal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.homeModal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: radial-gradient(80% 90% at 50% 20%, rgba(8, 10, 14, 0.35), rgba(8, 10, 14, 0.78));
+  backdrop-filter: blur(8px);
+}
+
+.homeModal__panel {
   position: relative;
   z-index: 1;
+  width: min(520px, 100%);
+  max-height: min(80vh, 680px);
+  border-radius: 16px;
+  border: 1px solid rgba(63, 186, 128, 0.42);
+  background:
+    linear-gradient(180deg, rgba(8, 10, 16, 0.92), rgba(9, 12, 20, 0.94)),
+    url('https://zohtixrgskbzosgfluni.supabase.co/storage/v1/object/public/Assets/mcg.png');
+  background-size: cover;
+  background-position: center;
+  box-shadow:
+    0 0 0 1px rgba(63, 186, 128, 0.2),
+    0 20px 60px rgba(0, 0, 0, 0.58);
+  overflow: hidden;
 }
 
-.homeComingSoon__copy p {
-  margin: 0;
-  color: var(--eg-muted);
-  font-size: 13px;
-  line-height: 1.45;
+.homeModal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.homeComingSoon__cta {
-  margin-top: 12px;
-  border: 1px solid rgba(245, 196, 0, 0.42);
+.homeModal__title {
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(243, 248, 255, 0.94);
+}
+
+.homeModal__close {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(241, 246, 255, 0.9);
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.homeModal__body {
+  padding: 12px;
+  max-height: min(70vh, 590px);
+  overflow: auto;
+}
+
+.homeModal__loading,
+.homeModal__empty {
+  padding: 14px;
   border-radius: 12px;
-  min-height: 40px;
-  padding: 0 14px;
-  background: linear-gradient(180deg, var(--eg-gold-2), var(--eg-gold));
-  color: rgba(10, 12, 18, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(215, 226, 245, 0.84);
+  font-size: 13px;
+}
+
+.homeModal__list {
+  display: grid;
+  gap: 10px;
+}
+
+.homeCoachRow {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03));
+  padding: 10px;
+}
+
+.homeCoachRow__team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.homeCoachRow__logo,
+.homeCoachRow__logoPlaceholder {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.homeCoachRow__logo {
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.homeCoachRow__logoPlaceholder {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.homeCoachRow__teamName {
   font-size: 13px;
   font-weight: 800;
-  letter-spacing: 0.01em;
-  cursor: pointer;
-  box-shadow: var(--eg-glow-gold), inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -1px 0 rgba(90,56,0,0.22);
-  transition: transform 0.14s ease, box-shadow 0.16s ease;
+  color: rgba(245, 249, 255, 0.94);
 }
 
-.homeComingSoon__cta:active {
-  transform: scale(0.99);
+.homeCoachRow__coach {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
 }
 
-@media (max-width: 760px) {
-  .homeShell {
-    padding: 10px 8px 0;
-    gap: 10px;
-  }
+.homeCoachRow__coachName {
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(245, 249, 255, 0.94);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-  .homeHero {
-    border-radius: 18px;
-    padding: 18px 14px;
-  }
-
-  .homeFeaturePanel,
-  .homeComingSoon {
-    border-radius: 14px;
-    padding: 10px;
-  }
+.homeCoachRow__coachMeta {
+  font-size: 11px;
+  color: rgba(206, 218, 240, 0.76);
 }

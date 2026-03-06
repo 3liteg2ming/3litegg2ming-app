@@ -108,6 +108,13 @@ function AppRoutes() {
     const onGlobalCrash = (event: Event) => {
       const custom = event as CustomEvent<CrashDetail>;
       const message = toCrashMessage(custom.detail?.message);
+
+      // Ignore a noisy browser-lock error that can happen when the tab is backgrounded
+      // or when multiple tabs race the same storage lock. It should not hard-crash the UI.
+      if (message.toLowerCase().includes("lock broken by another request") && message.toLowerCase().includes("steal")) {
+        return;
+      }
+
       const source = toCrashMessage(custom.detail?.source || 'runtime');
       setGlobalCrash({ message, source });
     };

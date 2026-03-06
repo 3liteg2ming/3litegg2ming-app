@@ -40,10 +40,14 @@ type RegistrationState = {
 };
 
 type ProfileRow = {
+  user_id?: string | null;
   display_name?: string | null;
   psn?: string | null;
   xbox_gamertag?: string | null;
   email?: string | null;
+  team_id?: string | null;
+  team_name?: string | null;
+  team_logo_url?: string | null;
 };
 
 type AuthMetaUser = {
@@ -255,34 +259,50 @@ function cleanProfileText(v: unknown): string {
 async function loadProfileForUser(userId: string): Promise<ProfileRow | null> {
   const primaryWithXbox = await supabase
     .from('profiles')
-    .select('display_name,psn,xbox_gamertag,email')
+    .select('user_id,display_name,psn,xbox_gamertag,email,team_id')
     .eq('user_id', userId)
     .maybeSingle();
   const primary =
     primaryWithXbox.error && String(primaryWithXbox.error.message || '').toLowerCase().includes('xbox_gamertag')
-      ? await supabase.from('profiles').select('display_name,psn,email').eq('user_id', userId).maybeSingle()
+      ? await supabase.from('profiles').select('user_id,display_name,psn,email,team_id').eq('user_id', userId).maybeSingle()
       : primaryWithXbox;
 
-  const fallbackWithXbox = await supabase
-    .from('eg_profiles')
-    .select('display_name,psn,xbox_gamertag,email')
-    .eq('user_id', userId)
-    .maybeSingle();
-  const fallback =
-    fallbackWithXbox.error && String(fallbackWithXbox.error.message || '').toLowerCase().includes('xbox_gamertag')
-      ? await supabase.from('eg_profiles').select('display_name,psn,email').eq('user_id', userId).maybeSingle()
-      : fallbackWithXbox;
-
-  if (primary.error && fallback.error) {
-    console.error('[Members] profile load failed', { profiles: primary.error, egProfiles: fallback.error });
+  if (primary.error) {
+    console.error('[Members] profile load failed', { profiles: primary.error });
     return null;
   }
 
+  const sourceRow: any = primary.data || null;
+
+  if (!sourceRow) return null;
+
+  if (import.meta.env.DEV) {
+    console.log('[Members][Profile] profiles row', sourceRow);
+  }
+
+  let teamName: string | null = null;
+  let teamLogoUrl: string | null = null;
+  const teamId = cleanProfileText(sourceRow.team_id);
+  if (teamId) {
+    const teamRes = await supabase.from('eg_teams').select('id,name,logo_url').eq('id', teamId).maybeSingle();
+    if (import.meta.env.DEV) {
+      console.log('[Members][Profile] eg_teams row', teamRes.data || null);
+    }
+    if (!teamRes.error && teamRes.data) {
+      teamName = cleanProfileText(teamRes.data.name) || 'Team assigned';
+      teamLogoUrl = cleanProfileText(teamRes.data.logo_url) || null;
+    }
+  }
+
   return {
-    display_name: cleanProfileText(primary.data?.display_name) || cleanProfileText(fallback.data?.display_name) || null,
-    psn: cleanProfileText(primary.data?.psn) || cleanProfileText(fallback.data?.psn) || null,
-    xbox_gamertag: cleanProfileText((primary.data as any)?.xbox_gamertag) || cleanProfileText((fallback.data as any)?.xbox_gamertag) || null,
-    email: cleanProfileText(primary.data?.email) || cleanProfileText(fallback.data?.email) || null,
+    user_id: cleanProfileText(sourceRow.user_id) || null,
+    display_name: cleanProfileText(sourceRow.display_name) || null,
+    psn: cleanProfileText(sourceRow.psn) || null,
+    xbox_gamertag: cleanProfileText(sourceRow.xbox_gamertag) || null,
+    email: cleanProfileText(sourceRow.email) || null,
+    team_id: teamId || null,
+    team_name: teamName,
+    team_logo_url: teamLogoUrl,
   };
 }
 
@@ -356,9 +376,16 @@ export default function MembersPage() {
   const [psnStatus, setPsnStatus] = useState<string | null>(null);
 
   const team = useMemo(() => {
-    const k = user?.teamKey as TeamKey | undefined;
-    return k ? TEAM_ASSETS[k] : null;
-  }, [user?.teamKey]);
+    if (cleanProfileText(profileRow?.team_name)) {
+      return {
+        name: cleanProfileText(profileRow?.team_name),
+        logoFile: '',
+        shortName: cleanProfileText(profileRow?.team_name),
+        colour: '#2f66ff',
+      };
+    }
+    return null;
+  }, [profileRow?.team_name]);
 
   useEffect(() => {
     let cancelled = false;
@@ -577,7 +604,7 @@ export default function MembersPage() {
   const badgeGroups = useMemo(() => groupCoachBadgesByCategory(badges), [badges]);
   const unlockedCount = useMemo(() => badges.filter((b) => b.earned).length, [badges]);
 
-  const teamLogo = team ? assetUrl(team.logoFile ?? '') : assetUrl('elite-gaming-logo.png');
+  const teamLogo = cleanProfileText(profileRow?.team_logo_url) || (team ? assetUrl(team.logoFile ?? '') : assetUrl('elite-gaming-logo.png'));
   const heroGradient = team
     ? `linear-gradient(135deg, ${team.colour}5a 0%, rgba(9,11,16,0.9) 56%, rgba(14,26,48,0.94) 100%)`
     : 'linear-gradient(135deg, rgba(245,196,0,0.16) 0%, rgba(9,11,16,0.9) 50%, rgba(14,26,48,0.94) 100%)';
