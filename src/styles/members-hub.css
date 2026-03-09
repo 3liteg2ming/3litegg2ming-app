@@ -17,15 +17,15 @@
   overflow: hidden;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  padding: 14px;
+  padding: 12px 14px 11px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
+  gap: 7px;
 }
 
 .coachHubHero__left {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: flex-start;
   min-width: 0;
 }
@@ -51,7 +51,7 @@
 .coachHubHero__meta {
   min-width: 0;
   display: grid;
-  gap: 2px;
+  gap: 1px;
 }
 
 .coachHubHero__kicker {
@@ -80,10 +80,10 @@
 }
 
 .coachHubHero__sub {
-  margin-top: 3px;
+  margin-top: 1px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   color: rgba(205, 217, 239, 0.72);
   font-size: 11px;
   font-weight: 600;
@@ -93,7 +93,8 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 6px;
+  gap: 4px;
+  padding-top: 0;
 }
 
 .coachHubChip {
@@ -222,7 +223,7 @@
 @media (max-width: 640px) {
   .coachHubHero {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 7px;
   }
 
   .coachHubHero__chips {

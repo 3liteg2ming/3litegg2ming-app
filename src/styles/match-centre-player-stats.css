@@ -1,521 +1,273 @@
-/* Player Stats Table
-   ==================
-   - Elite Gaming dark glass design
-   - Sticky header
-   - Player headshots with yellow badges
-   - No horizontal overflow on mobile
-   - Clean stat layout
-*/
-
-.mcPlayerStats {
+.mc-playerstats {
   width: 100%;
-  padding: 24px 0;
+  padding: 14px 0 24px;
 }
 
-.mcPlayerStats__header {
-  text-align: center;
-  margin-bottom: 24px;
-  padding: 0 16px;
-}
-
-.mcPlayerStats__title {
-  font-size: 28px;
-  font-weight: 950;
-  letter-spacing: -0.02em;
-  color: rgba(255,255,255,0.95);
-  margin: 0;
-}
-
-.mcPlayerStats__desc {
-  font-size: 13px;
-  font-weight: 550;
-  color: rgba(255,255,255,0.45);
-  margin: 6px 0 0 0;
-}
-
-/* Controls */
-.mcPlayerStats__controls {
+.mc-playerstats__header {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
-  padding: 0 16px 20px 16px;
+  gap: 12px;
+  margin: 0 16px 12px;
+}
+
+.mc-playerstats__titleWrap {
+  min-width: 0;
+}
+
+.mc-playerstats__kicker {
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(197, 211, 236, 0.7);
+}
+
+.mc-playerstats__title {
+  margin-top: 3px;
+  font-size: 22px;
+  font-weight: 900;
+  color: rgba(246, 250, 255, 0.96);
+}
+
+.mc-playerstats__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mc-playerstats__sortBtn {
+  height: 34px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(230, 238, 251, 0.84);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mc-playerstats__sortGrid {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
-.mcPlayerStats__left {
-  display: flex;
-  gap: 12px;
-}
-
-.mcPlayerStats__filterDropdown {
-  position: relative;
-}
-
-.mcPlayerStats__label {
-  display: block;
+.mc-playerstats__sortOpt {
+  height: 30px;
+  min-width: 42px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(226, 236, 252, 0.72);
   font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.45);
-  margin-bottom: 4px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }
 
-.mcPlayerStats__dropdownButton {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.10);
-  color: rgba(255,255,255,0.75);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.mc-playerstats__sortOpt.is-active {
+  border-color: rgba(245, 196, 0, 0.6);
+  background: linear-gradient(180deg, rgba(255, 221, 114, 0.2), rgba(245, 196, 0, 0.14));
+  color: rgba(255, 238, 191, 0.98);
 }
 
-.mcPlayerStats__dropdownButton:hover {
-  background: rgba(255,255,255,0.10);
-  border-color: rgba(255,255,255,0.15);
-}
-
-.mcPlayerStats__dropdownIcon {
-  width: 16px;
-  height: 16px;
-  flex: 0 0 auto;
-  opacity: 0.6;
-}
-
-.mcPlayerStats__dropdownMenu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  margin-top: 4px;
-  min-width: 160px;
-  background:
-    linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)),
-    linear-gradient(to bottom, rgba(20,24,40,0.95), rgba(12,14,24,0.95));
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 12px;
-  overflow: hidden;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  z-index: 50;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-}
-
-.mcPlayerStats__dropdownItem {
-  display: block;
-  width: 100%;
-  padding: 10px 12px;
-  border: none;
-  background: transparent;
-  color: rgba(255,255,255,0.65);
-  font-size: 13px;
-  font-weight: 700;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-.mcPlayerStats__dropdownItem:last-child {
-  border-bottom: none;
-}
-
-.mcPlayerStats__dropdownItem:hover {
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.85);
-}
-
-.mcPlayerStats__dropdownItem--active {
-  background: linear-gradient(135deg, #f5c400, #ffd54a);
-  color: #0c0e16;
-  font-weight: 900;
-}
-
-.mcPlayerStats__right {
-  display: flex;
-  gap: 8px;
-}
-
-.mcPlayerStats__toggle {
-  display: flex;
-  gap: 4px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 999px;
-  padding: 4px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-.mcPlayerStats__toggleBtn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: rgba(255,255,255,0.55);
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
-
-.mcPlayerStats__toggleBtn:hover:not(.mcPlayerStats__toggleBtn--active) {
-  color: rgba(255,255,255,0.75);
-}
-
-.mcPlayerStats__toggleBtn--active {
-  background: linear-gradient(135deg, #f5c400, #ffd54a);
-  color: #0c0e16;
-  font-weight: 950;
-  box-shadow: 0 4px 12px rgba(245,196,0,0.25);
-}
-
-/* Table wrapper & scroll */
-.mcPlayerStats__tableWrapper {
+.mc-playerstats__tableWrap {
   margin: 0 16px;
-  border-radius: 24px;
-  overflow: hidden;
+  border-radius: 18px;
+  overflow: auto;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   background:
-    linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)),
-    linear-gradient(to bottom, rgba(20,24,40,0.8), rgba(12,14,24,0.9));
-  border: 1px solid rgba(255,255,255,0.12);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+    radial-gradient(140% 120% at 0% 0%, rgba(124, 92, 255, 0.13) 0%, transparent 46%),
+    linear-gradient(180deg, rgba(20, 26, 42, 0.9), rgba(9, 13, 24, 0.95));
   box-shadow:
-    0 12px 32px rgba(0,0,0,0.35),
-    inset 0 1px 0 rgba(255,255,255,0.08);
+    0 14px 32px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-.mcPlayerStats__placeholder {
-  padding: 48px 24px;
-  text-align: center;
-}
-
-.mcPlayerStats__placeholderText {
-  font-size: 18px;
-  font-weight: 900;
-  color: rgba(255,255,255,0.65);
-}
-
-.mcPlayerStats__placeholderDesc {
-  font-size: 13px;
-  font-weight: 550;
-  color: rgba(255,255,255,0.35);
-  margin: 8px 0 0 0;
-}
-
-.mcPlayerStats__scroll {
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.10) transparent;
-}
-
-.mcPlayerStats__scroll::-webkit-scrollbar {
-  height: 6px;
-}
-
-.mcPlayerStats__scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.mcPlayerStats__scroll::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.10);
-  border-radius: 999px;
-}
-
-.mcPlayerStats__scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,255,255,0.15);
-}
-
-/* Table */
-.mcPlayerStats__table {
+.mc-playerstats__table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  min-width: 620px;
 }
 
-.mcPlayerStats__head {
+.mc-playerstats__table thead th {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 2;
+  background: rgba(13, 18, 31, 0.96);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
-.mcPlayerStats__headerRow {
-  background:
-    linear-gradient(180deg, 
-      rgba(255,255,255,0.08),
-      rgba(255,255,255,0.04)
-    );
-  border-bottom: 1px solid rgba(255,255,255,0.10);
-}
-
-.mcPlayerStats__headerCell {
-  padding: 12px 8px;
-  text-align: center;
+.mc-playerstats__colPlayer,
+.mc-playerstats__colStat {
+  padding: 12px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.1em;
+  font-weight: 850;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.60);
-  border-right: 1px solid rgba(255,255,255,0.05);
-  cursor: pointer;
-  user-select: none;
-  transition: color 0.2s ease;
-  white-space: nowrap;
+  color: rgba(199, 214, 240, 0.72);
 }
 
-.mcPlayerStats__headerCell:hover {
-  color: rgba(255,255,255,0.80);
-}
-
-.mcPlayerStats__headerCell:last-child {
-  border-right: none;
-}
-
-.mcPlayerStats__headerCell--number {
-  width: 48px;
-  padding: 12px 4px;
-}
-
-.mcPlayerStats__headerCell--player {
+.mc-playerstats__colPlayer {
   text-align: left;
-  min-width: 200px;
-  padding: 12px 12px;
 }
 
-.mcPlayerStats__headerCell--stat {
-  width: 52px;
-  padding: 12px 6px;
+.mc-playerstats__colStat {
+  text-align: center;
 }
 
-.mcPlayerStats__sortIndicator {
-  display: inline-block;
-  margin-left: 4px;
-  font-size: 9px;
+.mc-playerstats__table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background 0.16s ease;
 }
 
-/* Table body */
-.mcPlayerStats__body {
-  display: contents;
+.mc-playerstats__table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
 }
 
-.mcPlayerStats__row {
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  transition: background 0.2s ease;
-}
-
-.mcPlayerStats__row:hover {
-  background: rgba(255,255,255,0.03);
-}
-
-.mcPlayerStats__row:last-child {
+.mc-playerstats__table tbody tr:last-child {
   border-bottom: none;
 }
 
-.mcPlayerStats__cell {
-  padding: 10px 8px;
-  border-right: 1px solid rgba(255,255,255,0.04);
-  color: rgba(255,255,255,0.85);
+.mc-playerstats__playerCell {
+  padding: 10px;
 }
 
-.mcPlayerStats__cell:last-child {
-  border-right: none;
-}
-
-.mcPlayerStats__cell--number {
-  width: 48px;
-  text-align: center;
-  padding: 10px 4px;
-}
-
-.mcPlayerStats__badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 950;
-  color: rgba(255,255,255,0.95);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  font-variant-numeric: tabular-nums;
-}
-
-.mcPlayerStats__cell--player {
-  width: auto;
-  min-width: 200px;
-  padding: 8px 12px;
-}
-
-.mcPlayerStats__playerInfo {
+.mc-playerstats__player {
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
 }
 
-.mcPlayerStats__avatar {
-  width: 36px;
-  height: 36px;
+.mc-playerstats__avatar {
+  width: 40px;
+  height: 40px;
   border-radius: 999px;
   overflow: hidden;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.10);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 0 0 2px rgba(124, 92, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
 }
 
-.mcPlayerStats__avatarImg {
+.mc-playerstats__avatarImg,
+.mc-playerstats__avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center top;
 }
 
-.mcPlayerStats__avatarFallback {
+.mc-playerstats__avatarFallback {
   font-size: 11px;
   font-weight: 900;
-  color: rgba(255,255,255,0.40);
-  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(212, 225, 247, 0.72);
 }
 
-.mcPlayerStats__playerName {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.mc-playerstats__meta {
   min-width: 0;
 }
 
-.mcPlayerStats__firstName {
-  font-size: 12px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.65);
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
+.mc-playerstats__nameRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
 }
 
-.mcPlayerStats__lastName {
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.95);
+.mc-playerstats__name {
+  font-size: 14px;
+  font-weight: 800;
+  color: rgba(246, 250, 255, 0.94);
   white-space: nowrap;
-  text-overflow: ellipsis;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.mcPlayerStats__cell--stat {
-  width: 52px;
+.mc-playerstats__number {
+  font-size: 11px;
+  font-weight: 850;
+  color: rgba(255, 226, 136, 0.95);
+}
+
+.mc-playerstats__subRow {
+  margin-top: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mc-playerstats__team,
+.mc-playerstats__pos {
+  font-size: 11px;
+  font-weight: 650;
+  color: rgba(200, 214, 238, 0.7);
+  white-space: nowrap;
+}
+
+.mc-playerstats__statCell {
+  padding: 12px 10px;
   text-align: center;
-  padding: 10px 6px;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
+  color: rgba(243, 248, 255, 0.9);
   font-variant-numeric: tabular-nums;
 }
 
-.mcPlayerStats__statValue {
-  display: block;
+.mc-playerstats__empty {
+  padding: 18px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 650;
+  color: rgba(194, 210, 236, 0.74);
 }
 
-/* Mobile optimizations */
-@media (max-width: 480px) {
-  .mcPlayerStats {
-    padding: 16px 0;
+@media (max-width: 640px) {
+  .mc-playerstats {
+    padding: 10px 0 20px;
   }
 
-  .mcPlayerStats__header {
-    padding: 0 12px;
-    margin-bottom: 16px;
+  .mc-playerstats__header,
+  .mc-playerstats__tableWrap {
+    margin-left: 12px;
+    margin-right: 12px;
   }
 
-  .mcPlayerStats__title {
-    font-size: 24px;
-  }
-
-  .mcPlayerStats__desc {
-    font-size: 12px;
-  }
-
-  .mcPlayerStats__controls {
-    padding: 0 12px 12px 12px;
-    gap: 12px;
-  }
-
-  .mcPlayerStats__tableWrapper {
-    margin: 0 12px;
-  }
-
-  .mcPlayerStats__headerCell--player {
-    min-width: 160px;
-  }
-
-  .mcPlayerStats__cell--player {
-    min-width: 160px;
-    padding: 8px 10px;
-  }
-
-  .mcPlayerStats__avatar {
-    width: 32px;
-    height: 32px;
-  }
-
-  .mcPlayerStats__firstName {
-    font-size: 11px;
-  }
-
-  .mcPlayerStats__lastName {
-    font-size: 12px;
-  }
-
-  .mcPlayerStats__badge {
-    width: 28px;
-    height: 28px;
-    font-size: 11px;
-  }
-
-  .mcPlayerStats__cell--stat {
-    width: 44px;
-    font-size: 11px;
-    padding: 8px 4px;
-  }
-
-  .mcPlayerStats__headerCell--stat {
-    width: 44px;
-    padding: 10px 4px;
-    font-size: 10px;
-  }
-}
-
-@media (max-width: 360px) {
-  .mcPlayerStats__controls {
+  .mc-playerstats__header {
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
   }
 
-  .mcPlayerStats__dropdownButton {
-    width: 100%;
+  .mc-playerstats__sort {
+    flex-wrap: wrap;
   }
 
-  .mcPlayerStats__toggle {
-    width: 100%;
+  .mc-playerstats__table {
+    min-width: 560px;
   }
 
-  .mcPlayerStats__toggleBtn {
-    flex: 1;
+  .mc-playerstats__avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .mc-playerstats__name {
+    font-size: 13px;
   }
 }

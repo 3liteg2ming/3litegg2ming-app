@@ -45,15 +45,18 @@
 .mcTrust {
   width: 100%;
   max-width: 760px;
-  margin: 10px auto 4px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  margin: -6px auto 8px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
   background:
-    linear-gradient(120deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
-    rgba(8, 12, 24, 0.78);
-  padding: 12px 14px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+    radial-gradient(130% 85% at 50% 0%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03) 58%, rgba(255, 255, 255, 0.01) 100%),
+    rgba(8, 12, 24, 0.8);
+  padding: 12px 14px 13px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 16px 30px -20px rgba(0, 0, 0, 0.64),
+    inset 0 1px 0 rgba(255, 255, 255, 0.11);
 }
 
 .mcTrust__head {
@@ -72,27 +75,39 @@
 }
 
 .mcTrust__state {
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-weight: 900;
-  color: rgba(255, 255, 255, 0.96);
+  color: rgba(240, 247, 255, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.06);
+  white-space: nowrap;
 }
 
 .mcTrust__summary {
   margin-top: 6px;
   font-size: 13px;
   font-weight: 650;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(236, 243, 255, 0.9);
 }
 
 .mcTrust__meta {
   margin-top: 8px;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 14px;
+  gap: 7px;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.62);
+  color: rgba(205, 218, 242, 0.74);
+}
+
+.mcTrust__meta span {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px 8px;
 }
 
 .mcTrust__links {
@@ -103,11 +118,11 @@
   color: rgba(245, 196, 0, 0.9);
 }
 
-.mcTrust--scheduled .mcTrust__state { color: rgba(255, 214, 74, 0.95); }
-.mcTrust--submitted .mcTrust__state { color: rgba(112, 194, 255, 0.96); }
-.mcTrust--verified .mcTrust__state { color: rgba(88, 232, 149, 0.96); }
-.mcTrust--disputed .mcTrust__state { color: rgba(255, 130, 130, 0.96); }
-.mcTrust--corrected .mcTrust__state { color: rgba(232, 189, 108, 0.96); }
+.mcTrust--scheduled .mcTrust__state { color: rgba(255, 214, 74, 0.95); border-color: rgba(245, 196, 0, 0.34); background: rgba(245, 196, 0, 0.14); }
+.mcTrust--submitted .mcTrust__state { color: rgba(112, 194, 255, 0.96); border-color: rgba(112, 194, 255, 0.34); background: rgba(112, 194, 255, 0.14); }
+.mcTrust--verified .mcTrust__state { color: rgba(88, 232, 149, 0.96); border-color: rgba(88, 232, 149, 0.34); background: rgba(88, 232, 149, 0.13); }
+.mcTrust--disputed .mcTrust__state { color: rgba(255, 130, 130, 0.96); border-color: rgba(255, 130, 130, 0.34); background: rgba(255, 130, 130, 0.13); }
+.mcTrust--corrected .mcTrust__state { color: rgba(232, 189, 108, 0.96); border-color: rgba(232, 189, 108, 0.34); background: rgba(232, 189, 108, 0.13); }
 
 .mcPage__inner::before {
   content: '';

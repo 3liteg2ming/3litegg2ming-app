@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import SmartImg from './SmartImg';
 import { assetUrl, TEAM_ASSETS, type TeamKey } from '../lib/teamAssets';
+import '../styles/fixture-broadcast-shared.css';
 import '../styles/fixture-poster-card.css';
 
 export type FixtureScore = { total: number; goals: number; behinds: number };
@@ -221,9 +222,9 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
       <div className="fxPosterCard__main">
         <div className="fxPosterCard__side fxPosterCard__side--home">
           <div className="fxPosterCard__teamGlow" />
-          <div className="fxPosterCard__teamBox">
+          <div className="fxPosterCard__teamBox fxBroadcastLogoFrame">
             <SmartImg
-              className="fxPosterCard__logo"
+              className="fxPosterCard__logo fxSafeLogo"
               src={homeLogoSrc}
               alt={home.name}
               fallbackText={teamShort(home)}
@@ -239,13 +240,19 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
 
         <div className="fxPosterCard__center">
           {isUpcoming ? (
-            <div className="fxPosterCard__vsOnly">VS</div>
+            <>
+              <div className="fxPosterCard__matchupKicker">MATCHUP</div>
+              <div className="fxPosterCard__vsOnly">VS</div>
+            </>
           ) : (
             <>
-              <div className="fxPosterCard__scoreRow">
+              {m.status === 'LIVE' ? <div className="fxPosterCard__liveState">LIVE NOW</div> : null}
+              {m.status === 'FINAL' ? <div className="fxPosterCard__finalState">FULL TIME</div> : null}
+
+              <div className={`fxPosterCard__scoreRow ${m.status === 'FINAL' ? 'is-final' : m.status === 'LIVE' ? 'is-live' : ''}`}>
                 <div
                   className={[
-                    'fxPosterCard__score',
+                    'fxPosterCard__score fxMetalText fxScoreTier--hero',
                     !showScore ? 'fxPosterCard__score--placeholder' : '',
                     showScore && m.status === 'FINAL' && !homeWins && awayWins ? 'fxPosterCard__score--dim' : '',
                   ].join(' ')}
@@ -257,7 +264,7 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
 
                 <div
                   className={[
-                    'fxPosterCard__score',
+                    'fxPosterCard__score fxMetalText fxScoreTier--hero',
                     !showScore ? 'fxPosterCard__score--placeholder' : '',
                     showScore && m.status === 'FINAL' && !awayWins && homeWins ? 'fxPosterCard__score--dim' : '',
                   ].join(' ')}
@@ -266,7 +273,7 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
                 </div>
               </div>
 
-              <div className="fxPosterCard__minor">
+              <div className="fxPosterCard__minor fxScoreTier--minor">
                 <div className={`fxPosterCard__minorVal ${!showScore ? 'fxPosterCard__minorVal--placeholder' : ''}`}>
                   {showScore ? `${m.homeScore!.goals}.${m.homeScore!.behinds}` : '—.—'}
                 </div>
@@ -281,9 +288,9 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
 
         <div className="fxPosterCard__side fxPosterCard__side--away">
           <div className="fxPosterCard__teamGlow" />
-          <div className="fxPosterCard__teamBox">
+          <div className="fxPosterCard__teamBox fxBroadcastLogoFrame">
             <SmartImg
-              className="fxPosterCard__logo"
+              className="fxPosterCard__logo fxSafeLogo"
               src={awayLogoSrc}
               alt={away.name}
               fallbackText={teamShort(away)}

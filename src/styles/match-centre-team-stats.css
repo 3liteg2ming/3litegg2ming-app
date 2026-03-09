@@ -1,68 +1,58 @@
-/* Team Stats - Side-by-side comparison
-   ====================================
-   - Elite Gaming dark glass design
-   - Animated comparison bars
-   - Team-coloured indicators
-   - Premium typography
-*/
-
 .mcTeamStats {
   width: 100%;
-  padding: 24px 0;
+  padding: 14px 0 24px;
 }
 
 .mcTeamStats__header {
-  text-align: center;
-  margin-bottom: 24px;
-  padding: 0 16px;
+  text-align: left;
+  margin: 0 16px 14px;
 }
 
 .mcTeamStats__title {
-  font-size: 28px;
-  font-weight: 950;
-  letter-spacing: -0.02em;
-  color: rgba(255,255,255,0.95);
   margin: 0;
+  font-size: 21px;
+  font-weight: 900;
+  color: rgba(245, 249, 255, 0.96);
 }
 
 .mcTeamStats__desc {
-  font-size: 13px;
-  font-weight: 550;
-  color: rgba(255,255,255,0.45);
-  margin: 6px 0 0 0;
+  margin: 5px 0 0;
+  font-size: 12px;
+  font-weight: 650;
+  color: rgba(201, 214, 238, 0.72);
 }
 
 .mcTeamStats__empty {
-  padding: 40px 16px;
+  padding: 28px 16px;
   text-align: center;
 }
 
 .mcTeamStats__emptyText {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 900;
-  color: rgba(255,255,255,0.65);
+  color: rgba(239, 245, 255, 0.84);
 }
 
 .mcTeamStats__emptyDesc {
-  font-size: 13px;
-  font-weight: 550;
-  color: rgba(255,255,255,0.35);
-  margin: 8px 0 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(191, 207, 234, 0.62);
+  margin: 8px 0 0;
 }
 
-/* Team headers */
 .mcTeamStats__teams {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0;
-  padding: 0 16px;
-  margin-bottom: 24px;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin: 0 16px 12px;
 }
 
 .mcTeamStats__team {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
 }
 
 .mcTeamStats__team--away {
@@ -74,43 +64,56 @@
   width: 40px;
   height: 40px;
   object-fit: contain;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.25));
+  filter: drop-shadow(0 5px 12px rgba(0, 0, 0, 0.34));
+  flex: 0 0 auto;
 }
 
 .mcTeamStats__teamName {
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.75);
+  color: rgba(235, 242, 254, 0.76);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Main stats card */
+.mcTeamStats__versus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 250, 255, 0.9);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
 .mcTeamStats__card {
   margin: 0 16px;
-  border-radius: 24px;
+  border-radius: 20px;
   overflow: hidden;
   background:
-    linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)),
-    linear-gradient(to bottom, rgba(20,24,40,0.8), rgba(12,14,24,0.9));
-  border: 1px solid rgba(255,255,255,0.12);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+    radial-gradient(130% 120% at 0% 0%, rgba(124, 92, 255, 0.14) 0%, transparent 48%),
+    linear-gradient(180deg, rgba(20, 26, 42, 0.9), rgba(9, 13, 24, 0.94));
+  border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow:
-    0 12px 32px rgba(0,0,0,0.35),
-    inset 0 1px 0 rgba(255,255,255,0.08);
-  display: flex;
-  flex-direction: column;
+    0 14px 32px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-/* Individual stat row */
 .mcTeamStatRow {
   display: grid;
-  grid-template-columns: 60px 1fr 60px;
-  gap: 16px;
+  grid-template-columns: 58px minmax(0, 1fr) 58px;
+  gap: 14px;
   align-items: center;
-  padding: 20px 18px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding: 16px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .mcTeamStatRow:last-child {
@@ -121,7 +124,6 @@
 .mcTeamStatRow__away {
   display: flex;
   align-items: center;
-  justify-content: center;
   min-width: 0;
 }
 
@@ -134,92 +136,82 @@
 }
 
 .mcTeamStatRow__value {
-  font-size: 32px;
+  font-size: 29px;
   line-height: 1;
   font-weight: 950;
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 8px 16px rgba(0,0,0,0.3);
-  letter-spacing: -0.02em;
+  text-shadow: 0 8px 16px rgba(0, 0, 0, 0.32);
 }
 
-/* Centre: label + comparison bar */
 .mcTeamStatRow__centre {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
 }
 
 .mcTeamStatRow__label {
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.55);
   text-align: center;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(206, 219, 243, 0.68);
 }
 
 .mcTeamStatRow__bar {
   display: flex;
   align-items: center;
-  gap: 0;
   height: 6px;
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 999px;
-  background: rgba(255,255,255,0.05);
   overflow: hidden;
 }
 
-.mcTeamStatRow__barHome {
-  height: 100%;
-  border-radius: 999px 0 0 999px;
-  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
+.mcTeamStatRow__barHome,
 .mcTeamStatRow__barAway {
   height: 100%;
-  border-radius: 0 999px 999px 0;
-  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: width 0.3s ease;
 }
 
 .mcTeamStatRow__barDivider {
   width: 1px;
   height: 100%;
-  background: rgba(255,255,255,0.10);
-  margin: 0 0;
+  background: rgba(255, 255, 255, 0.18);
   flex: 0 0 auto;
 }
 
-/* Footer */
 .mcTeamStats__footer {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  padding: 12px 16px;
-  gap: 16px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  gap: 14px;
+  margin: 10px 16px 0;
 }
 
-/* Mobile optimizations */
-@media (max-width: 480px) {
+.mcTeamStats__footerLabel {
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(194, 209, 234, 0.62);
+}
+
+.mcTeamStats__footerLabel:last-child {
+  text-align: right;
+}
+
+@media (max-width: 520px) {
   .mcTeamStats {
-    padding: 16px 0;
+    padding: 10px 0 20px;
   }
 
-  .mcTeamStats__header {
-    padding: 0 12px;
-    margin-bottom: 16px;
-  }
-
-  .mcTeamStats__title {
-    font-size: 24px;
-  }
-
-  .mcTeamStats__desc {
-    font-size: 12px;
-  }
-
-  .mcTeamStats__teams {
-    padding: 0 12px;
-    margin-bottom: 16px;
+  .mcTeamStats__header,
+  .mcTeamStats__teams,
+  .mcTeamStats__card,
+  .mcTeamStats__footer {
+    margin-left: 12px;
+    margin-right: 12px;
   }
 
   .mcTeamStats__logo {
@@ -228,44 +220,16 @@
   }
 
   .mcTeamStats__teamName {
-    font-size: 13px;
-  }
-
-  .mcTeamStats__card {
-    margin: 0 12px;
-  }
-
-  .mcTeamStatRow {
-    grid-template-columns: 48px 1fr 48px;
-    gap: 12px;
-    padding: 16px 12px;
-  }
-
-  .mcTeamStatRow__value {
-    font-size: 26px;
-  }
-
-  .mcTeamStatRow__label {
     font-size: 12px;
   }
 
-  .mcTeamStats__footer {
-    padding: 10px 12px;
-    gap: 12px;
-  }
-}
-
-@media (max-width: 360px) {
   .mcTeamStatRow {
-    grid-template-columns: 42px 1fr 42px;
-    padding: 14px 8px;
+    grid-template-columns: 48px minmax(0, 1fr) 48px;
+    padding: 14px 10px;
+    gap: 10px;
   }
 
   .mcTeamStatRow__value {
-    font-size: 22px;
-  }
-
-  .mcTeamStats__card {
-    margin: 0 8px;
+    font-size: 24px;
   }
 }

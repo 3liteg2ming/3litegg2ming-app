@@ -20,15 +20,18 @@ export default function MatchCentreTabs({
   return (
     <div className="mcTabs">
       <div className="mcTabs__container">
-        <div className="mcTabs__track">
+        <div className="mcTabs__track" role="tablist" aria-label="Match centre sections">
           {TABS.map((t) => {
             const isActive = active === t.key;
             return (
               <button
                 key={t.key}
+                id={`mc-tab-${t.key}`}
                 type="button"
+                role="tab"
                 onClick={() => onChange(t.key)}
-                aria-pressed={isActive}
+                aria-selected={isActive}
+                aria-controls={`mc-panel-${t.key}`}
                 aria-label={t.label}
                 title={t.label}
                 className={`mcTabs__button ${isActive ? 'mcTabs__button--active' : ''}`}

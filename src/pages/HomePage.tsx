@@ -9,7 +9,7 @@ import {
   UserCircle2,
   Zap,
 } from 'lucide-react';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -19,6 +19,7 @@ import {
   type CompetitionKey,
 } from '../lib/competitionRegistry';
 import { getSupabaseClient } from '../lib/supabaseClient';
+import { assetUrl, getTeamAssets } from '../lib/teamAssets';
 import { useAuth } from '../state/auth/AuthProvider';
 import '../styles/home.css';
 
@@ -81,7 +82,10 @@ const PRESEASON_START_AT = '2026-03-20T00:00:00+11:00';
 const unlockAt = import.meta.env.VITE_REG_UNLOCK_AT ?? '2026-03-05T17:30:00+11:00';
 const FIXTURES_DROP_TEXT = 'FRI 20 MAR • 10:00AM';
 const CARD_BG = 'https://zohtixrgskbzosgfluni.supabase.co/storage/v1/object/public/Assets/mcg.png';
-const SECTION_TIMEOUT_MS = 2300;
+const SECTION_TIMEOUT_MS = 8000;
+const FEATURED_TIMEOUT_MS = 9000;
+const COACHES_TIMEOUT_MS = 9000;
+const COACHES_CACHE_KEY = 'eg_home_current_coaches_cache';
 
 const FEATURED_TARGETS: Array<{ key: 'goals' | 'disposals'; label: 'GOALS' | 'DISPOSALS'; name: string }> = [
   { key: 'goals', label: 'GOALS', name: 'Jeremy Cameron' },
@@ -103,6 +107,46 @@ const ANNOUNCEMENT_FALLBACK: AnnouncementRow[] = [
 
 function text(value: unknown): string {
   return String(value || '').trim();
+}
+
+function sanitizeCoachRow(row: unknown): CoachListItem | null {
+  const candidate = row as Partial<CoachListItem> | null;
+  if (!candidate) return null;
+  const userId = text(candidate.user_id);
+  const teamId = text(candidate.team_id);
+  if (!userId || !teamId) return null;
+
+  const teamName = text(candidate.team_name) || 'Team assigned';
+  return {
+    user_id: userId,
+    display_name: text(candidate.display_name) || text(candidate.psn) || 'Coach',
+    psn: text(candidate.psn) || null,
+    team_id: teamId,
+    team_name: teamName,
+    team_logo_url: text(candidate.team_logo_url) || getTeamAssets(teamName).logo || null,
+  };
+}
+
+function readCachedCoaches(): CoachListItem[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.sessionStorage.getItem(COACHES_CACHE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map(sanitizeCoachRow).filter(Boolean) as CoachListItem[];
+  } catch {
+    return [];
+  }
+}
+
+function writeCachedCoaches(rows: CoachListItem[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.setItem(COACHES_CACHE_KEY, JSON.stringify(rows));
+  } catch {
+    // ignore cache write failures
+  }
 }
 
 function toFinite(value: unknown): number {
@@ -306,16 +350,10 @@ async function fetchMyTeamId(userId: string): Promise<string | null> {
   const supabase = getSupabaseClient();
   if (!supabase) return null;
 
-  const primary = await supabase.from('profiles').select('team_id').eq('user_id', userId).maybeSingle();
-  if (import.meta.env.DEV) {
-    console.log('[Home][MyTeam] profiles row', primary.data || null);
-  }
+  const primary = await supabase.from('eg_profiles').select('team_id').eq('user_id', userId).maybeSingle();
   if (!primary.error && primary.data?.team_id) return text(primary.data.team_id);
 
-  const fallback = await supabase.from('eg_profiles').select('team_id').eq('user_id', userId).maybeSingle();
-  if (import.meta.env.DEV) {
-    console.log('[Home][MyTeam] eg_profiles fallback row', fallback.data || null);
-  }
+  const fallback = await supabase.from('profiles').select('team_id').eq('user_id', userId).maybeSingle();
   if (!fallback.error && fallback.data?.team_id) return text(fallback.data.team_id);
 
   return null;
@@ -368,91 +406,174 @@ async function fetchCurrentCoaches(): Promise<CoachListItem[]> {
   const supabase = getSupabaseClient();
   if (!supabase) return [];
 
-  const profilesRes = await supabase
-    .from('profiles')
-    .select('user_id,display_name,psn,email,team_id')
-    .not('team_id', 'is', null)
-    .limit(200);
+  const resolveLogoFromTeam = (teamName: string, logoUrl: string, logoPath: string): string | null => {
+    const direct = text(logoUrl);
+    if (direct) return direct;
 
-  if (profilesRes.error || !Array.isArray(profilesRes.data)) {
-    return [];
-  }
-
-  if (import.meta.env.DEV) {
-    console.log('[Home][Coaches] profiles rows', profilesRes.data);
-  }
-
-  const profiles = (profilesRes.data as Array<{ user_id?: string; display_name?: string; psn?: string; email?: string; team_id?: string }>)
-    .map((row) => {
-      const email = text(row.email);
-      const emailPrefix = email.includes('@') ? email.split('@')[0] : '';
-      const displayName = text(row.display_name) || text(row.psn) || emailPrefix || 'Coach';
-      return {
-        user_id: text(row.user_id),
-        display_name: displayName,
-        psn: text(row.psn) || null,
-        team_id: text(row.team_id) || null,
-      };
-    })
-    .filter((row) => row.user_id && row.team_id);
-
-  const teamIds = Array.from(new Set(profiles.map((p) => p.team_id).filter(Boolean))) as string[];
-  const teamMap = new Map<string, { name: string; logo_url: string | null }>();
-
-  if (teamIds.length) {
-    const teamsRes = await supabase.from('eg_teams').select('id,name,logo_url').in('id', teamIds);
-    if (!teamsRes.error && Array.isArray(teamsRes.data)) {
-      if (import.meta.env.DEV) {
-        console.log('[Home][Coaches] eg_teams rows', teamsRes.data);
-      }
-      for (const team of teamsRes.data as Array<{ id?: string; name?: string; logo_url?: string }>) {
-        const id = text(team.id);
-        if (!id) continue;
-        teamMap.set(id, {
-          name: text(team.name) || 'Team assigned',
-          logo_url: text(team.logo_url) || null,
-        });
+    const path = text(logoPath);
+    if (path) {
+      const directPath = assetUrl(path);
+      if (directPath) return directPath;
+      if (!path.startsWith('teams/') && !path.startsWith('teams_pro/')) {
+        return assetUrl(`teams/${path}`);
       }
     }
-  }
 
-  const merged = profiles
-    .map((profile) => {
-      const team = profile.team_id ? teamMap.get(profile.team_id) : null;
-      return {
-        user_id: profile.user_id,
-        display_name: profile.display_name,
-        psn: profile.psn,
-        team_id: profile.team_id,
-        team_name: team?.name ?? 'Team assigned',
-        team_logo_url: team?.logo_url ?? null,
-      };
-    })
-    .sort((a, b) => {
+    return getTeamAssets(teamName).logo || null;
+  };
+
+  const mapRows = (
+    rows: Array<{
+      user_id?: string | null;
+      display_name?: string | null;
+      psn?: string | null;
+      team_id?: string | null;
+      team_name?: string | null;
+      team_logo_url?: string | null;
+    }>,
+  ): CoachListItem[] =>
+    rows
+      .map(sanitizeCoachRow)
+      .filter(Boolean)
+      .map((row) => row as CoachListItem)
+      .sort((a, b) => {
+        const teamCmp = text(a.team_name).localeCompare(text(b.team_name));
+        if (teamCmp !== 0) return teamCmp;
+        return text(a.display_name).localeCompare(text(b.display_name));
+      });
+
+  const fetchFromProfileTable = async (table: 'eg_profiles' | 'profiles'): Promise<CoachListItem[]> => {
+    const profileRes = await supabase
+      .from(table)
+      .select('user_id,display_name,psn,team_id')
+      .not('team_id', 'is', null);
+
+    if (profileRes.error || !Array.isArray(profileRes.data) || !profileRes.data.length) {
+      if (import.meta.env.DEV && profileRes.error) {
+        console.log(`[Home][Coaches] ${table} fallback failed`, profileRes.error);
+      }
+      return [];
+    }
+
+    const profiles = profileRes.data as Array<{
+      user_id?: string | null;
+      display_name?: string | null;
+      psn?: string | null;
+      team_id?: string | null;
+    }>;
+
+    const teamIds = Array.from(new Set(profiles.map((row) => text(row.team_id)).filter(Boolean)));
+    const teamsMap = new Map<string, { name: string; logo_url: string | null }>();
+
+    if (teamIds.length) {
+      const teamsRes = await supabase.from('eg_teams').select('id,name,logo_url,logo_path').in('id', teamIds);
+      if (!teamsRes.error && Array.isArray(teamsRes.data)) {
+        for (const team of teamsRes.data as Array<{ id?: string; name?: string; logo_url?: string; logo_path?: string }>) {
+          const id = text(team.id);
+          if (!id) continue;
+          const teamName = text(team.name) || 'Team assigned';
+          teamsMap.set(id, {
+            name: teamName,
+            logo_url: resolveLogoFromTeam(teamName, text(team.logo_url), text(team.logo_path)),
+          });
+        }
+      }
+    }
+
+    const merged = profiles
+      .map((row) => {
+        const teamId = text(row.team_id);
+        if (!teamId) return null;
+        const team = teamsMap.get(teamId);
+        const teamName = team?.name || 'Team assigned';
+        return {
+          user_id: text(row.user_id),
+          display_name: text(row.display_name) || text(row.psn) || 'Coach',
+          psn: text(row.psn) || null,
+          team_id: teamId,
+          team_name: teamName,
+          team_logo_url: team?.logo_url || getTeamAssets(teamName).logo || null,
+        };
+      })
+      .filter(Boolean) as CoachListItem[];
+
+    return merged.sort((a, b) => {
       const teamCmp = text(a.team_name).localeCompare(text(b.team_name));
       if (teamCmp !== 0) return teamCmp;
       return text(a.display_name).localeCompare(text(b.display_name));
     });
+  };
 
-  if (import.meta.env.DEV) {
-    console.log('[Home][Coaches] merged rows', merged);
+  const rpcRes = await supabase.rpc('eg_list_current_coaches');
+  if (!rpcRes.error && Array.isArray(rpcRes.data) && rpcRes.data.length > 0) {
+    const mapped = mapRows(
+      (rpcRes.data as Array<{
+        user_id?: string | null;
+        display_name?: string | null;
+        psn?: string | null;
+        team_id?: string | null;
+        team_name?: string | null;
+        team_logo_url?: string | null;
+      }>).map((row) => {
+        const teamName = text(row.team_name) || 'Team assigned';
+        return {
+          ...row,
+          team_name: teamName,
+          team_logo_url: text(row.team_logo_url) || getTeamAssets(teamName).logo || null,
+        };
+      }),
+    );
+    if (mapped.length) return mapped;
   }
 
-  return merged;
+  if (rpcRes.error || !Array.isArray(rpcRes.data) || !rpcRes.data.length) {
+    if (import.meta.env.DEV) {
+      console.log('[Home][Coaches] rpc failed', rpcRes.error);
+    }
+  }
+
+  const egProfilesRows = await fetchFromProfileTable('eg_profiles');
+  if (egProfilesRows.length) return egProfilesRows;
+
+  const profilesRows = await fetchFromProfileTable('profiles');
+  if (profilesRows.length) return profilesRows;
+
+  return [];
 }
 
 async function fetchFeaturedPlayers(): Promise<FeaturedPlayerCard[]> {
   const supabase = getSupabaseClient();
   if (!supabase) return buildFeaturedFallback();
 
-  // IMPORTANT: Do NOT rely on a nested join that may not exist in schema cache.
-  // Pull headshot_url directly from eg_players first, then fetch team logo separately if possible.
   const raw = await Promise.all(
     FEATURED_TARGETS.map(async (target) => {
-      const pattern = `%${target.name.replace(/\s+/g, '%')}%`;
-      const { data, error } = await supabase.from('eg_players').select('name,headshot_url,team_id').ilike('name', pattern).limit(1);
+      const exact = await supabase
+        .from('eg_players')
+        .select('name,headshot_url,photo_url,team_id')
+        .eq('name', target.name)
+        .limit(1)
+        .maybeSingle();
 
-      if (error || !Array.isArray(data) || !data[0]) {
+      let row: any = exact.data || null;
+      if (!row) {
+        const likeByFullName = await supabase
+          .from('eg_players')
+          .select('name,headshot_url,photo_url,team_id')
+          .ilike('name', `%${target.name.replace(/\s+/g, '%')}%`)
+          .limit(1);
+        row = likeByFullName.data?.[0] || null;
+      }
+      if (!row) {
+        const surname = target.name.split(' ').slice(-1)[0];
+        const likeBySurname = await supabase
+          .from('eg_players')
+          .select('name,headshot_url,photo_url,team_id')
+          .ilike('name', `%${surname}%`)
+          .limit(1);
+        row = likeBySurname.data?.[0] || null;
+      }
+
+      if (!row) {
         return {
           key: target.key,
           label: target.label,
@@ -465,9 +586,9 @@ async function fetchFeaturedPlayers(): Promise<FeaturedPlayerCard[]> {
       return {
         key: target.key,
         label: target.label,
-        name: text((data[0] as any).name) || target.name,
-        headshotUrl: text((data[0] as any).headshot_url) || null,
-        teamId: text((data[0] as any).team_id) || null,
+        name: text((row as any).name) || target.name,
+        headshotUrl: text((row as any).headshot_url) || text((row as any).photo_url) || null,
+        teamId: text((row as any).team_id) || null,
       };
     }),
   );
@@ -476,20 +597,22 @@ async function fetchFeaturedPlayers(): Promise<FeaturedPlayerCard[]> {
   const teamMap = new Map<string, { name: string; logo_url: string | null }>();
 
   if (teamIds.length) {
-    const teamsRes = await supabase.from('eg_teams').select('id,name,logo_url').in('id', teamIds);
+    const teamsRes = await supabase.from('eg_teams').select('id,name,logo_url,logo_path').in('id', teamIds);
     if (!teamsRes.error && Array.isArray(teamsRes.data)) {
-      for (const team of teamsRes.data as Array<{ id?: string; name?: string; logo_url?: string }>) {
+      for (const team of teamsRes.data as Array<{ id?: string; name?: string; logo_url?: string; logo_path?: string }>) {
         const id = text(team.id);
         if (!id) continue;
+        const name = text(team.name) || 'AFL26';
+        const logoPath = text(team.logo_path);
         teamMap.set(id, {
-          name: text(team.name) || 'AFL26',
-          logo_url: text(team.logo_url) || null,
+          name,
+          logo_url: text(team.logo_url) || (logoPath ? `https://zohtixrgskbzosgfluni.supabase.co/storage/v1/object/public/Assets/${logoPath.split('/').map(encodeURIComponent).join('/')}` : null) || getTeamAssets(name).logo || null,
         });
       }
     }
   }
 
-  const cards: FeaturedPlayerCard[] = raw.map((r) => {
+  return raw.map((r) => {
     const team = r.teamId ? teamMap.get(r.teamId) : null;
     return {
       key: r.key,
@@ -500,8 +623,6 @@ async function fetchFeaturedPlayers(): Promise<FeaturedPlayerCard[]> {
       teamLogoUrl: team?.logo_url ?? null,
     };
   });
-
-  return cards.length ? cards : buildFeaturedFallback();
 }
 
 async function fetchHasCompletedFixture(seasonId: string): Promise<boolean> {
@@ -571,7 +692,11 @@ export default function HomePage() {
   });
 
   const [coachesOpen, setCoachesOpen] = useState(false);
-  const [coachesState, setCoachesState] = useState<SectionState<CoachListItem[]>>({ status: 'idle', data: [] });
+  const [coachesState, setCoachesState] = useState<SectionState<CoachListItem[]>>(() => {
+    const cached = readCachedCoaches();
+    return cached.length ? { status: 'ready', data: cached } : { status: 'idle', data: [] };
+  });
+  const coachesRequestIdRef = useRef(0);
 
   const [hasCompletedFixture, setHasCompletedFixture] = useState(false);
 
@@ -580,6 +705,7 @@ export default function HomePage() {
     () => text(user?.displayName) || text(user?.email).split('@')[0] || 'Coach',
     [user?.displayName, user?.email],
   );
+  const signedTag = user ? `Signed in as ${signedAs}` : 'Viewing as guest';
 
   const regStatus = useMemo(() => getRegistrationStatus(Date.now()), [countdownCompact]);
 
@@ -651,7 +777,7 @@ export default function HomePage() {
   useEffect(() => {
     let alive = true;
 
-    withTimeout(fetchFeaturedPlayers(), SECTION_TIMEOUT_MS)
+    withTimeout(fetchFeaturedPlayers(), FEATURED_TIMEOUT_MS)
       .then((rows) => {
         if (!alive) return;
         setFeaturedState({ status: 'ready', data: rows.length ? rows : buildFeaturedFallback() });
@@ -833,16 +959,33 @@ export default function HomePage() {
       };
     }
 
-    setCoachesState({ status: 'loading', data: [] });
+    const requestId = ++coachesRequestIdRef.current;
+    setCoachesState((prev) => {
+      if (prev.data.length > 0) {
+        return prev.status === 'ready' ? prev : { status: 'ready', data: prev.data };
+      }
+      return { status: 'loading', data: [] };
+    });
 
-    withTimeout(fetchCurrentCoaches(), SECTION_TIMEOUT_MS)
+    withTimeout(fetchCurrentCoaches(), COACHES_TIMEOUT_MS)
       .then((rows) => {
-        if (!alive) return;
-        setCoachesState({ status: rows.length ? 'ready' : 'empty', data: rows });
+        if (!alive || requestId !== coachesRequestIdRef.current) return;
+        if (rows.length) {
+          writeCachedCoaches(rows);
+          setCoachesState({ status: 'ready', data: rows });
+          return;
+        }
+        setCoachesState((prev) => {
+          if (prev.data.length > 0) return { status: 'ready', data: prev.data };
+          return { status: 'empty', data: [] };
+        });
       })
       .catch(() => {
-        if (!alive) return;
-        setCoachesState({ status: 'error', data: [] });
+        if (!alive || requestId !== coachesRequestIdRef.current) return;
+        setCoachesState((prev) => {
+          if (prev.data.length > 0) return { status: 'ready', data: prev.data };
+          return { status: 'error', data: [] };
+        });
       });
 
     return () => {
@@ -873,7 +1016,7 @@ export default function HomePage() {
       <div className="homeShell">
         <div className="homeDashLabel">LEAGUE DASHBOARD</div>
         <div className="homeSignedInTag" aria-live="polite">
-          Signed in as {signedAs}
+          {signedTag}
         </div>
 
         <section className="homeSeasonRow" aria-label="Season selection">
@@ -936,6 +1079,16 @@ export default function HomePage() {
               View current coaches
             </button>
           </div>
+        </section>
+
+        <section className="homeCard homeCoachesPanel" aria-label="Current coaches">
+          <HomeSectionHeader icon={<ShieldCheck size={15} />} title="Current Coaches" actionText="Live assignments" />
+          <p className="homeCoachesPanel__text">
+            View the latest preseason coach assignments by team.
+          </p>
+          <button type="button" className="homeCoachesPanel__cta" onClick={() => setCoachesOpen(true)}>
+            View current coaches
+          </button>
         </section>
 
         {user ? (
@@ -1060,7 +1213,7 @@ export default function HomePage() {
             </div>
 
             <div className="homeModal__body">
-              {coachesState.status === 'loading' ? (
+              {coachesState.status === 'loading' && !coachesState.data.length ? (
                 <div className="homeModal__loading">Loading coaches…</div>
               ) : coachesState.data.length ? (
                 <div className="homeModal__list">

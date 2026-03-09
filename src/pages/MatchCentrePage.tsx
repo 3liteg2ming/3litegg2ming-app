@@ -13,6 +13,12 @@ import { fetchLatestMatchCentre, fetchMatchCentre, type MatchCentreModel } from 
 
 import '@/styles/match-centre-page.css';
 
+function normalizeTrustState(input?: string | null): string {
+  const raw = String(input || '').trim().toLowerCase();
+  if (!raw) return 'scheduled';
+  return raw.replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+}
+
 export default function MatchCentrePage() {
   const navigate = useNavigate();
   const { fixtureId } = useParams();
@@ -22,8 +28,6 @@ export default function MatchCentrePage() {
   const [model, setModel] = useState<MatchCentreModel | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tabDataLoaded, setTabDataLoaded] = useState<Set<MatchCentreTabKey>>(new Set(['summary']));
-  const [tabLoading, setTabLoading] = useState<Set<MatchCentreTabKey>>(new Set());
 
   const topRef = useRef<HTMLDivElement>(null);
   const didMount = useRef(false);
@@ -40,21 +44,18 @@ export default function MatchCentrePage() {
     topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [tab]);
 
-  // Initial load (summary data only, but keep the same model for all tabs)
   useEffect(() => {
     let alive = true;
+
     (async () => {
       setLoading(true);
       setErr(null);
       setModel(null);
 
       try {
-        const data = resolvedFixtureId
-          ? await fetchMatchCentre(resolvedFixtureId)
-          : await fetchLatestMatchCentre();
+        const data = resolvedFixtureId ? await fetchMatchCentre(resolvedFixtureId) : await fetchLatestMatchCentre();
         if (!alive) return;
         setModel(data);
-        setTabDataLoaded(new Set(['summary']));
       } catch (e: any) {
         if (!alive) return;
         setErr(e?.message || 'Failed to load match centre.');
@@ -67,20 +68,6 @@ export default function MatchCentrePage() {
       alive = false;
     };
   }, [resolvedFixtureId]);
-
-  // Lazy-load tab data when switching tabs
-  const handleTabChange = (newTab: MatchCentreTabKey) => {
-    setTab(newTab);
-
-    // If data already loaded, don't reload
-    if (tabDataLoaded.has(newTab)) {
-      return;
-    }
-
-    // Mark as needing to load (optional: add loading state per tab)
-    setTabLoading((prev) => new Set(prev).add(newTab));
-    setTabDataLoaded((prev) => new Set(prev).add(newTab));
-  };
 
   const formatMetaTime = (iso?: string) => {
     if (!iso) return '—';
@@ -98,19 +85,20 @@ export default function MatchCentrePage() {
   const renderTrustStrip = () => {
     const trust = model?.trust;
     if (!trust) return null;
+
+    const trustClass = normalizeTrustState(trust.state);
+    const hasSubmissionMeta =
+      trust.state === 'Submitted' || trust.state === 'Verified' || trust.state === 'Disputed' || trust.state === 'Corrected';
+
     return (
-      <section className={`mcTrust mcTrust--${trust.state.toLowerCase()}`}>
+      <section className={`mcTrust mcTrust--${trustClass}`}>
         <div className="mcTrust__head">
-          <div className="mcTrust__title">Match Status</div>
+          <div className="mcTrust__title">Match Review</div>
           <div className="mcTrust__state">{trust.label}</div>
         </div>
         <div className="mcTrust__summary">{trust.summary}</div>
         <div className="mcTrust__meta">
-          {trust.state === 'Submitted' || trust.state === 'Verified' || trust.state === 'Disputed' || trust.state === 'Corrected' ? (
-            <span>Submitted by: {trust.submittedBy || 'Coach'}</span>
-          ) : (
-            <span>Submitted by: —</span>
-          )}
+          {hasSubmissionMeta ? <span>Submitted by: {trust.submittedBy || 'Coach'}</span> : <span>Submitted by: —</span>}
           <span>Evidence: {trust.evidenceCount}</span>
           <span>Last updated: {formatMetaTime(trust.lastUpdated)}</span>
         </div>
@@ -127,16 +115,13 @@ export default function MatchCentrePage() {
   return (
     <div className="mcPage">
       <div className="mcPage__inner">
-        <HeroHeader
-          key={model?.fixtureId || resolvedFixtureId || 'latest'}
-          onBack={() => navigate(-1)}
-          model={model}
-          loading={loading}
-        />
+        <HeroHeader key={model?.fixtureId || resolvedFixtureId || 'latest'} onBack={() => navigate(-1)} model={model} loading={loading} />
+
+        {renderTrustStrip()}
 
         <div ref={topRef} />
 
-        <MatchCentreTabs active={tab} onChange={handleTabChange} />
+        <MatchCentreTabs active={tab} onChange={setTab} />
 
         {err ? (
           <div className="mcPage__error">
@@ -144,11 +129,7 @@ export default function MatchCentrePage() {
               <div className="mcPage__errorTitle">Match Centre Unavailable</div>
               <div className="mcPage__errorMsg">{err}</div>
 
-              <button
-                type="button"
-                onClick={() => navigate(-1)}
-                className="mcPage__errorBtn"
-              >
+              <button type="button" onClick={() => navigate(-1)} className="mcPage__errorBtn">
                 Go Back
               </button>
             </div>
@@ -156,24 +137,23 @@ export default function MatchCentrePage() {
         ) : (
           <>
             {tab === 'summary' && (
-              <div className="mcPage__content">
-                {renderTrustStrip()}
+              <section id="mc-panel-summary" role="tabpanel" aria-labelledby="mc-tab-summary" className="mcPage__content">
                 <MatchLeaders model={model} loading={loading} />
                 <MatchTimeline model={model} loading={loading} />
                 <KeyMatchStats model={model} loading={loading} />
-              </div>
+              </section>
             )}
 
             {tab === 'team' && (
-              <div className="mcPage__content">
+              <section id="mc-panel-team" role="tabpanel" aria-labelledby="mc-tab-team" className="mcPage__content">
                 <TeamStats model={model} loading={loading} />
-              </div>
+              </section>
             )}
 
             {tab === 'players' && (
-              <div className="mcPage__content">
+              <section id="mc-panel-players" role="tabpanel" aria-labelledby="mc-tab-players" className="mcPage__content">
                 <PlayerStatsTable model={model} />
-              </div>
+              </section>
             )}
 
             <div className="mcPage__footer" />

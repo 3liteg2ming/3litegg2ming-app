@@ -6,6 +6,12 @@ import { getSupabaseClient } from '@/lib/supabaseClient';
 // (Kept local so Ladder doesn't depend on the fixture hook implementation.)
 const seasonIdCache = new Map<string, string>();
 const seasonIdInFlight = new Map<string, Promise<string>>();
+const SEASON_SLUG_ALIASES: Record<string, string> = {
+  afl26: 'afl26-season-two',
+  'afl-26': 'afl26-season-two',
+  'preseason-2026': 'preseason',
+  'knockout-preseason': 'preseason',
+};
 
 function normSlug(input: string) {
   return String(input || '').trim().toLowerCase();
@@ -25,12 +31,19 @@ async function resolveSeasonId(seasonSlug: string): Promise<string> {
   if (inflight) return inflight;
 
   const job = (async () => {
-    const exact = await supabase.from('eg_seasons').select('id,slug').eq('slug', slug).maybeSingle();
-    if (exact.data?.id) {
-      const id = String(exact.data.id);
-      seasonIdCache.set(slug, id);
-      seasonIdCache.set(String((exact.data as any).slug || slug).toLowerCase(), id);
-      return id;
+    const reverseAlias = Object.entries(SEASON_SLUG_ALIASES).find(([, value]) => value === slug)?.[0] || null;
+    const attempts = [slug, SEASON_SLUG_ALIASES[slug], reverseAlias].filter(
+      (v, i, arr): v is string => !!v && arr.indexOf(v) === i,
+    );
+
+    for (const attempt of attempts) {
+      const exact = await supabase.from('eg_seasons').select('id,slug').eq('slug', attempt).maybeSingle();
+      if (exact.data?.id) {
+        const id = String(exact.data.id);
+        seasonIdCache.set(slug, id);
+        seasonIdCache.set(String((exact.data as any).slug || attempt).toLowerCase(), id);
+        return id;
+      }
     }
 
     const fuzzy = await supabase.from('eg_seasons').select('id,slug').ilike('slug', `%${slug}%`).limit(1);

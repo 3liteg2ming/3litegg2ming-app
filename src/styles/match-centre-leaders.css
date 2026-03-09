@@ -1,62 +1,59 @@
-/* Match Centre Leaders */
-
 .mcLeaders {
   width: 100%;
-  padding: 24px 0;
+  padding: 18px 0 24px;
 }
 
 .mcLeaders__header {
-  text-align: center;
-  margin-bottom: 20px;
-  padding: 0 16px;
+  text-align: left;
+  margin: 0 16px 14px;
 }
 
 .mcLeaders__title {
-  font-size: 28px;
-  font-weight: 950;
-  letter-spacing: -0.02em;
-  color: rgba(255,255,255,0.95);
   margin: 0;
+  font-size: 21px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  color: rgba(247, 250, 255, 0.96);
 }
 
 .mcLeaders__desc {
-  font-size: 13px;
-  font-weight: 550;
-  color: rgba(255,255,255,0.45);
-  margin: 6px 0 0 0;
+  margin: 5px 0 0;
+  font-size: 12px;
+  font-weight: 650;
+  color: rgba(201, 213, 236, 0.72);
 }
 
 .mcLeaders__empty {
-  padding: 34px 16px;
+  padding: 30px 16px;
   text-align: center;
-  border-radius: 22px;
+  border-radius: 20px;
   margin: 0 16px;
   background:
-    linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03)),
-    rgba(11,15,28,0.82);
-  border: 1px solid rgba(255,255,255,0.12);
+    radial-gradient(110% 120% at 12% 0%, rgba(124, 92, 255, 0.18) 0%, transparent 50%),
+    linear-gradient(180deg, rgba(22, 28, 44, 0.88), rgba(10, 14, 26, 0.92));
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .mcLeaders__emptyText {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 900;
-  color: rgba(255,255,255,0.72);
+  color: rgba(244, 248, 255, 0.88);
 }
 
 .mcLeaders__emptyDesc {
-  font-size: 13px;
-  font-weight: 550;
-  color: rgba(255,255,255,0.42);
-  margin: 8px 0 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(194, 208, 232, 0.62);
+  margin: 8px 0 0;
 }
 
 .mcLeaders__scroll {
   display: flex;
-  gap: 16px;
+  gap: 14px;
   overflow-x: auto;
   overflow-y: hidden;
   scroll-snap-type: x mandatory;
-  padding: 0 16px 14px;
+  padding: 0 16px 12px;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -77,36 +74,33 @@
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.20);
+  background: rgba(255, 255, 255, 0.22);
   border: none;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
 }
 
 .mcLeaders__dot--active {
-  width: 24px;
-  background: linear-gradient(135deg, #f5c400, #ffd54a);
-  box-shadow: 0 4px 12px rgba(245,196,0,0.3);
+  width: 22px;
+  background: linear-gradient(180deg, #ffdd72, #f5c400);
+  box-shadow: 0 4px 10px rgba(245, 196, 0, 0.35);
 }
 
 .mcLeaderCard {
   flex: 0 0 auto;
-  width: 336px;
-  min-height: 360px;
-  border-radius: 24px;
+  width: 334px;
+  min-height: 300px;
+  border-radius: 22px;
   overflow: hidden;
-  scroll-snap-align: center;
-  scroll-snap-stop: always;
+  scroll-snap-align: start;
   background:
-    radial-gradient(70% 80% at 50% 30%, rgba(var(--mlR), var(--mlG), var(--mlB), 0.16) 0%, transparent 80%),
-    linear-gradient(135deg, rgba(20,24,40,0.9) 0%, rgba(12,14,24,0.95) 100%);
-  border: 1px solid rgba(255,255,255,0.12);
-  backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
+    radial-gradient(75% 85% at 50% 22%, rgba(var(--mlR), var(--mlG), var(--mlB), 0.16) 0%, transparent 80%),
+    linear-gradient(160deg, rgba(18, 24, 38, 0.94), rgba(8, 12, 24, 0.97));
+  border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow:
-    0 16px 40px rgba(0,0,0,0.4),
-    inset 0 1px 0 rgba(255,255,255,0.08),
-    0 0 28px rgba(var(--mlR), var(--mlG), var(--mlB), 0.12);
+    0 16px 34px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 24px rgba(var(--mlR), var(--mlG), var(--mlB), 0.1);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -114,11 +108,11 @@
 
 .mcLeaderCard__watermark {
   position: absolute;
-  top: 62%;
-  right: -10px;
-  width: 200px;
-  height: 200px;
+  right: -16px;
+  top: 56%;
   transform: translateY(-50%);
+  width: 190px;
+  height: 190px;
   opacity: 0.05;
   z-index: 1;
   pointer-events: none;
@@ -133,13 +127,10 @@
 .mcLeaderCard__bar {
   position: relative;
   z-index: 3;
-  padding: 11px 14px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   background:
-    linear-gradient(90deg,
-      rgba(var(--mlR), var(--mlG), var(--mlB), 0.88),
-      rgba(var(--mlR), var(--mlG), var(--mlB), 0.68)
-    );
-  border-bottom: 1px solid rgba(255,255,255,0.10);
+    linear-gradient(90deg, rgba(var(--mlR), var(--mlG), var(--mlB), 0.84), rgba(var(--mlR), var(--mlG), var(--mlB), 0.64));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -147,10 +138,10 @@
 
 .mcLeaderCard__barText {
   font-size: 11px;
-  font-weight: 950;
-  letter-spacing: 0.18em;
+  font-weight: 900;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.92);
+  color: rgba(244, 249, 255, 0.95);
 }
 
 .mcLeaderCard__barLogos {
@@ -160,8 +151,8 @@
 }
 
 .mcLeaderCard__crest {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   object-fit: contain;
   opacity: 0.92;
 }
@@ -170,7 +161,7 @@
   position: relative;
   z-index: 2;
   flex: 1;
-  padding: 14px;
+  padding: 12px;
 }
 
 .mcLeaderCard__content--split {
@@ -181,24 +172,25 @@
 
 .mcLeaderSide {
   border-radius: 14px;
-  overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   background:
-    linear-gradient(135deg, rgba(var(--lsR), var(--lsG), var(--lsB), 0.12), rgba(8,10,16,0.6));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+    linear-gradient(160deg, rgba(var(--lsR), var(--lsG), var(--lsB), 0.15), rgba(10, 12, 22, 0.84));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  overflow: hidden;
 }
 
 .mcLeaderSide--away {
   background:
-    linear-gradient(135deg, rgba(var(--lsR), var(--lsG), var(--lsB), 0.10), rgba(8,10,16,0.6));
+    linear-gradient(160deg, rgba(var(--lsR), var(--lsG), var(--lsB), 0.12), rgba(10, 12, 22, 0.86));
 }
 
 .mcLeaderSide__head {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 10px 12px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 11px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .mcLeaderSide__label {
@@ -206,33 +198,36 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   font-weight: 800;
-  color: rgba(255,255,255,0.64);
+  color: rgba(230, 238, 251, 0.72);
 }
 
 .mcLeaderSide__value {
-  font-size: 28px;
+  font-size: 32px;
   line-height: 1;
   font-weight: 950;
-  letter-spacing: -0.03em;
-  color: rgba(255,255,255,0.97);
+  letter-spacing: -0.02em;
+  color: rgba(250, 253, 255, 0.98);
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.2),
+    0 9px 20px rgba(0, 0, 0, 0.42);
 }
 
 .mcLeaderSide__body {
   display: grid;
-  grid-template-columns: 52px 1fr;
+  grid-template-columns: 54px 1fr;
   gap: 10px;
   align-items: center;
-  padding: 10px 12px 12px;
+  padding: 10px 11px 11px;
 }
 
 .mcLeaderSide__photo,
 .mcLeaderSide__photoFallback {
-  width: 52px;
-  height: 52px;
+  width: 54px;
+  height: 54px;
   border-radius: 12px;
   object-fit: cover;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(0,0,0,0.28);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.28);
 }
 
 .mcLeaderSide__meta {
@@ -243,7 +238,7 @@
   margin: 0;
   font-size: 14px;
   font-weight: 850;
-  color: rgba(255,255,255,0.92);
+  color: rgba(245, 250, 255, 0.94);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -252,30 +247,33 @@
 .mcLeaderSide__sub {
   margin: 2px 0 0;
   font-size: 11px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.58);
+  font-weight: 650;
+  color: rgba(206, 220, 242, 0.65);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-@media (max-width: 480px) {
-  .mcLeaderCard {
-    width: 292px;
-    min-height: 332px;
+@media (max-width: 520px) {
+  .mcLeaders {
+    padding: 14px 0 20px;
   }
 
-  .mcLeaders__title {
-    font-size: 24px;
+  .mcLeaders__header {
+    margin: 0 12px 12px;
   }
 
   .mcLeaders__scroll {
-    padding: 0 12px 12px;
-    gap: 14px;
+    padding: 0 12px 10px;
+    gap: 12px;
   }
 
-  .mcLeaders__header,
-  .mcLeaders__dots {
-    padding: 0 12px;
+  .mcLeaderCard {
+    width: 292px;
+    min-height: 288px;
+  }
+
+  .mcLeaderSide__value {
+    font-size: 29px;
   }
 }

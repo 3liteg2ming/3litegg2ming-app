@@ -1,8 +1,6 @@
 import { ChevronLeft, Gamepad2, KeyRound, Mail, Shield, Trophy } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const supabase = requireSupabaseClient();
 
 import BadgeGrid from '../components/BadgeGrid';
 import BadgeModal from '../components/BadgeModal';
@@ -13,10 +11,12 @@ import { fetchCoachBadges, groupCoachBadgesByCategory, type CoachBadgeModel } fr
 import { getStoredCompetitionKey, getUiCompetition } from '../lib/competitionRegistry';
 import { resolveGamerTag } from '../lib/gamerTag';
 import { requireSupabaseClient } from '../lib/supabaseClient';
-import { TEAM_ASSETS, assetUrl, type TeamKey } from '../lib/teamAssets';
+import { TEAM_ASSETS, assetUrl, getTeamAssets, type TeamKey } from '../lib/teamAssets';
 import { useAuth } from '../state/auth/AuthProvider';
 
 import '../styles/members-hub.css';
+
+const supabase = requireSupabaseClient();
 
 type TeamRecord = {
   rank: number | null;
@@ -256,41 +256,98 @@ function cleanProfileText(v: unknown): string {
   return String(v ?? '').trim();
 }
 
-async function loadProfileForUser(userId: string): Promise<ProfileRow | null> {
-  const primaryWithXbox = await supabase
-    .from('profiles')
-    .select('user_id,display_name,psn,xbox_gamertag,email,team_id')
-    .eq('user_id', userId)
-    .maybeSingle();
-  const primary =
-    primaryWithXbox.error && String(primaryWithXbox.error.message || '').toLowerCase().includes('xbox_gamertag')
-      ? await supabase.from('profiles').select('user_id,display_name,psn,email,team_id').eq('user_id', userId).maybeSingle()
-      : primaryWithXbox;
+function getProfileCacheKey(userId: string): string {
+  return `eg_members_profile_cache_${userId}`;
+}
 
-  if (primary.error) {
-    console.error('[Members] profile load failed', { profiles: primary.error });
+function hasAssignedTeam(row: ProfileRow | null | undefined): boolean {
+  return Boolean(cleanProfileText(row?.team_id) && cleanProfileText(row?.team_name) && cleanProfileText(row?.team_logo_url));
+}
+
+function readCachedProfile(userId: string): ProfileRow | null {
+  if (!userId || typeof window === 'undefined') return null;
+  try {
+    const raw = window.sessionStorage.getItem(getProfileCacheKey(userId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as ProfileRow;
+    if (!parsed || cleanProfileText(parsed.user_id) !== userId) return null;
+    return parsed;
+  } catch {
     return null;
   }
+}
 
-  const sourceRow: any = primary.data || null;
+function writeCachedProfile(userId: string, row: ProfileRow): void {
+  if (!userId || typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.setItem(getProfileCacheKey(userId), JSON.stringify(row));
+  } catch {
+    // ignore cache write issues
+  }
+}
+
+async function loadProfileForUser(userId: string): Promise<ProfileRow | null> {
+  const loadFromTable = async (table: 'eg_profiles' | 'profiles') => {
+    const wide = await supabase
+      .from(table)
+      .select('user_id,display_name,psn,xbox_gamertag,email,team_id,first_name,last_name,updated_at')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (!wide.error) return wide;
+
+    const msg = String(wide.error.message || '').toLowerCase();
+    if (
+      msg.includes('xbox_gamertag') ||
+      msg.includes('first_name') ||
+      msg.includes('last_name') ||
+      msg.includes('updated_at') ||
+      msg.includes('email')
+    ) {
+      return await supabase.from(table).select('user_id,display_name,psn,team_id').eq('user_id', userId).maybeSingle();
+    }
+
+    return wide;
+  };
+
+  const primary = await loadFromTable('eg_profiles');
+  let sourceRow: any = primary.data || null;
+
+  if (primary.error || !sourceRow) {
+    if (import.meta.env.DEV && primary.error) {
+      console.log('[Members][Profile] eg_profiles query failed, falling back to profiles', primary.error);
+    }
+    const fallback = await loadFromTable('profiles');
+    if (fallback.error) {
+      console.error('[Members] profile load failed', { eg_profiles: primary.error, profiles: fallback.error });
+      return null;
+    }
+    sourceRow = fallback.data || null;
+    if (import.meta.env.DEV) {
+      console.log('[Members][Profile] profiles row (fallback)', sourceRow);
+    }
+  } else if (import.meta.env.DEV) {
+    console.log('[Members][Profile] eg_profiles row', sourceRow);
+  }
 
   if (!sourceRow) return null;
-
-  if (import.meta.env.DEV) {
-    console.log('[Members][Profile] profiles row', sourceRow);
-  }
 
   let teamName: string | null = null;
   let teamLogoUrl: string | null = null;
   const teamId = cleanProfileText(sourceRow.team_id);
   if (teamId) {
-    const teamRes = await supabase.from('eg_teams').select('id,name,logo_url').eq('id', teamId).maybeSingle();
+    const teamRes = await supabase.from('eg_teams').select('id,name,logo_url,logo_path').eq('id', teamId).maybeSingle();
     if (import.meta.env.DEV) {
       console.log('[Members][Profile] eg_teams row', teamRes.data || null);
     }
     if (!teamRes.error && teamRes.data) {
       teamName = cleanProfileText(teamRes.data.name) || 'Team assigned';
-      teamLogoUrl = cleanProfileText(teamRes.data.logo_url) || null;
+      const logoUrl = cleanProfileText((teamRes.data as any).logo_url);
+      const logoPath = cleanProfileText((teamRes.data as any).logo_path);
+      const pathDirect = logoPath ? assetUrl(logoPath) : null;
+      const pathWithTeamsPrefix =
+        logoPath && !logoPath.startsWith('teams/') && !logoPath.startsWith('teams_pro/') ? assetUrl(`teams/${logoPath}`) : null;
+      teamLogoUrl = logoUrl || pathDirect || pathWithTeamsPrefix || getTeamAssets(teamName).logo || assetUrl('elite-gaming-logo.png');
     }
   }
 
@@ -374,6 +431,7 @@ export default function MembersPage() {
   const [psnDraft, setPsnDraft] = useState('');
   const [savingPsn, setSavingPsn] = useState(false);
   const [psnStatus, setPsnStatus] = useState<string | null>(null);
+  const profileRequestIdRef = useRef(0);
 
   const team = useMemo(() => {
     if (cleanProfileText(profileRow?.team_name)) {
@@ -539,10 +597,10 @@ export default function MembersPage() {
 
   useEffect(() => {
     let alive = true;
+    const requestId = ++profileRequestIdRef.current;
     (async () => {
-      setProfileLoading(true);
       if (!user?.id) {
-        if (alive) {
+        if (alive && requestId === profileRequestIdRef.current) {
           setProfileRow(null);
           setAuthMetaUser(null);
           setPsnDraft('');
@@ -550,21 +608,69 @@ export default function MembersPage() {
         }
         return;
       }
+
+      const cachedProfile = readCachedProfile(user.id);
+      if (cachedProfile && alive && requestId === profileRequestIdRef.current) {
+        setProfileRow(cachedProfile);
+        const cachedResolved = resolveGamerTag({
+          profile: cachedProfile,
+          user: ({ psn: user.psn, user_metadata: { psn: user.psn } } as unknown) as AuthMetaUser,
+        });
+        setPsnDraft(cachedResolved.value || '');
+      }
+      setProfileLoading(!hasAssignedTeam(cachedProfile));
+
       try {
         const [row, authUserRes] = await Promise.all([loadProfileForUser(user.id), supabase.auth.getUser()]);
-        if (!alive) return;
-        setProfileRow(row);
+        if (!alive || requestId !== profileRequestIdRef.current) return;
+
+        const authUser = (authUserRes.data?.user as unknown as AuthMetaUser) || null;
+        let resolvedRow = row;
+
+        if (!resolvedRow && cachedProfile) {
+          resolvedRow = cachedProfile;
+        } else if (resolvedRow && cachedProfile && cleanProfileText(cachedProfile.user_id) === cleanProfileText(resolvedRow.user_id)) {
+          const sameTeam = cleanProfileText(cachedProfile.team_id) && cleanProfileText(cachedProfile.team_id) === cleanProfileText(resolvedRow.team_id);
+          if (sameTeam) {
+            if (!cleanProfileText(resolvedRow.team_name) && cleanProfileText(cachedProfile.team_name)) {
+              resolvedRow.team_name = cachedProfile.team_name;
+            }
+            if (!cleanProfileText(resolvedRow.team_logo_url) && cleanProfileText(cachedProfile.team_logo_url)) {
+              resolvedRow.team_logo_url = cachedProfile.team_logo_url;
+            }
+          }
+
+          if (hasAssignedTeam(cachedProfile) && !hasAssignedTeam(resolvedRow)) {
+            resolvedRow = {
+              ...resolvedRow,
+              team_id: resolvedRow.team_id || cachedProfile.team_id,
+              team_name: resolvedRow.team_name || cachedProfile.team_name,
+              team_logo_url: resolvedRow.team_logo_url || cachedProfile.team_logo_url,
+            };
+          }
+        }
+
+        setProfileRow(resolvedRow);
         setAuthMetaUser((authUserRes.data?.user as unknown as AuthMetaUser) || null);
         const resolved = resolveGamerTag({
-          profile: row,
-          user: ((authUserRes.data?.user as unknown as AuthMetaUser) || {
+          profile: resolvedRow,
+          user: (authUser || {
             psn: user.psn,
             user_metadata: { psn: user.psn },
           }) as AuthMetaUser,
         });
         setPsnDraft(resolved.value || '');
+
+        if (resolvedRow && hasAssignedTeam(resolvedRow)) {
+          writeCachedProfile(user.id, resolvedRow);
+        }
+      } catch {
+        if (!alive || requestId !== profileRequestIdRef.current) return;
+        if (cachedProfile && hasAssignedTeam(cachedProfile)) {
+          setProfileRow(cachedProfile);
+        }
       } finally {
-        if (alive) setProfileLoading(false);
+        if (alive && requestId === profileRequestIdRef.current) setProfileLoading(false);
       }
     })();
     return () => {

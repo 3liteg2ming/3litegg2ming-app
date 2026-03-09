@@ -95,12 +95,15 @@ export default function PlayerStatsTable({ model }: { model: MatchCentreModel | 
   };
 
   return (
-    <div className="mc-playerstats">
+    <section className="mc-playerstats">
       <div className="mc-playerstats__header">
-        <div className="mc-playerstats__title">PLAYER STATS</div>
+        <div className="mc-playerstats__titleWrap">
+          <div className="mc-playerstats__kicker">Live Match Data</div>
+          <div className="mc-playerstats__title">Player Stats</div>
+        </div>
 
         <div className="mc-playerstats__sort">
-          <button className="mc-playerstats__sortBtn" type="button">
+          <button className="mc-playerstats__sortBtn" type="button" aria-label="Sort player stats columns">
             SORT <ChevronDown size={16} />
           </button>
           <div className="mc-playerstats__sortGrid">
@@ -147,7 +150,7 @@ export default function PlayerStatsTable({ model }: { model: MatchCentreModel | 
                     <div className="mc-playerstats__player">
                       <div className="mc-playerstats__avatar">
                         {r.photoUrl ? (
-                          <SmartImg src={r.photoUrl} alt={r.name} />
+                          <SmartImg src={r.photoUrl} alt={r.name} className="mc-playerstats__avatarImg" />
                         ) : (
                           <div className="mc-playerstats__avatarFallback">{initials(r.name)}</div>
                         )}
@@ -184,6 +187,6 @@ export default function PlayerStatsTable({ model }: { model: MatchCentreModel | 
           </tbody>
         </table>
       </div>
-    </div>
+    </section>
   );
 }

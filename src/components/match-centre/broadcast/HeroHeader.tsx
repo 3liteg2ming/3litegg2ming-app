@@ -5,6 +5,7 @@ import SmartImg from '@/components/SmartImg';
 import { TEAM_ASSETS, type TeamKey } from '@/lib/teamAssets';
 import type { MatchCentreModel } from '@/lib/matchCentreRepo';
 import { resolveTeamKey, resolveTeamLogoUrl } from '@/lib/entityResolvers';
+import '@/styles/fixture-broadcast-shared.css';
 import '@/styles/match-centre-hero.css';
 
 type Props = {
@@ -33,7 +34,7 @@ function hexToRgb(hex: string) {
 }
 
 function pickTeamTint(key: TeamKey | undefined, asset: any): string {
-  if (!key) return '#0B3A8D';
+  if (!key) return '#1D4ED8';
   if (String(key) === 'collingwood') return '#B88A00';
   if (String(key) === 'adelaide') return '#C81E2A';
 
@@ -41,7 +42,29 @@ function pickTeamTint(key: TeamKey | undefined, asset: any): string {
   for (const c of candidates) {
     if (typeof c === 'string' && c.startsWith('#') && (c.length === 7 || c.length === 4)) return c;
   }
-  return asset?.colour || '#0B3A8D';
+  return asset?.colour || '#1D4ED8';
+}
+
+function getStatusTone(statusLabel: string, trustState?: string) {
+  const trust = String(trustState || '').toLowerCase();
+  const status = String(statusLabel || '').toLowerCase();
+
+  if (trust === 'verified') return 'verified';
+  if (trust === 'corrected') return 'corrected';
+  if (trust === 'disputed') return 'disputed';
+  if (trust === 'submitted') return 'submitted';
+
+  if (status === 'final' || status === 'full time') return 'final';
+  if (status === 'live') return 'live';
+  return 'upcoming';
+}
+
+function abbreviation(teamName?: string, fallback = 'TBC') {
+  const raw = String(teamName || '').trim();
+  if (!raw) return fallback;
+  const words = raw.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) return `${words[0][0] || ''}${words[1][0] || ''}`.toUpperCase();
+  return raw.slice(0, 3).toUpperCase();
 }
 
 export default function HeroHeader({ onBack, model, loading }: Props) {
@@ -54,23 +77,21 @@ export default function HeroHeader({ onBack, model, loading }: Props) {
   const homeAsset = homeKey ? TEAM_ASSETS[homeKey] : null;
   const awayAsset = awayKey ? TEAM_ASSETS[awayKey] : null;
 
-  const homeLogo =
-    resolveTeamLogoUrl({
-      logoUrl: home?.logoUrl,
-      slug: home?.slug,
-      teamKey: homeKey || undefined,
-      name: home?.fullName,
-      fallbackPath: homeKey ? TEAM_ASSETS[homeKey]?.logoFile || TEAM_ASSETS[homeKey]?.logoPath : 'elite-gaming-logo.png',
-    });
+  const homeLogo = resolveTeamLogoUrl({
+    logoUrl: home?.logoUrl,
+    slug: home?.slug,
+    teamKey: homeKey || undefined,
+    name: home?.fullName,
+    fallbackPath: homeKey ? TEAM_ASSETS[homeKey]?.logoFile || TEAM_ASSETS[homeKey]?.logoPath : 'elite-gaming-logo.png',
+  });
 
-  const awayLogo =
-    resolveTeamLogoUrl({
-      logoUrl: away?.logoUrl,
-      slug: away?.slug,
-      teamKey: awayKey || undefined,
-      name: away?.fullName,
-      fallbackPath: awayKey ? TEAM_ASSETS[awayKey]?.logoFile || TEAM_ASSETS[awayKey]?.logoPath : 'elite-gaming-logo.png',
-    });
+  const awayLogo = resolveTeamLogoUrl({
+    logoUrl: away?.logoUrl,
+    slug: away?.slug,
+    teamKey: awayKey || undefined,
+    name: away?.fullName,
+    fallbackPath: awayKey ? TEAM_ASSETS[awayKey]?.logoFile || TEAM_ASSETS[awayKey]?.logoPath : 'elite-gaming-logo.png',
+  });
 
   const homeTint = pickTeamTint(homeKey ?? undefined, homeAsset);
   const awayTint = pickTeamTint(awayKey ?? undefined, awayAsset);
@@ -87,124 +108,107 @@ export default function HeroHeader({ onBack, model, loading }: Props) {
       ['--mcAwayG' as any]: String(awayRgb.g),
       ['--mcAwayB' as any]: String(awayRgb.b),
     }),
-    [homeRgb, awayRgb]
+    [homeRgb, awayRgb],
   );
 
-  const round = model?.round ?? 0;
-  const dateText = model?.dateText ?? 'TBC';
-  const venue = model?.venue ?? 'TBC';
-  const status = model?.statusLabel ?? '—';
-  const confidence = model?.dataConfidence;
-  const margin = model?.margin ?? 0;
-  const hasTripleDigitScore = Math.max(home?.score ?? 0, away?.score ?? 0) >= 100;
-  const hasBothTripleDigitScores = (home?.score ?? 0) >= 100 && (away?.score ?? 0) >= 100;
+  const statusLabel = model?.statusLabel || (loading ? 'LOADING' : 'UPCOMING');
+  const trust = model?.trust;
+  const tone = getStatusTone(statusLabel, trust?.state);
+  const statusText = trust?.label || statusLabel;
 
-  // Status pill styling
-  const statusDot =
-    status === 'FULL TIME'
-      ? 'mcHero__dot--final'
-      : status === 'LIVE'
-        ? 'mcHero__dot--live'
-        : 'mcHero__dot--upcoming';
+  const isUpcoming = statusLabel === 'UPCOMING';
+  const hasScoreValues = Number.isFinite(home?.score) && Number.isFinite(away?.score) && ((home?.score || 0) > 0 || (away?.score || 0) > 0);
+  const showScore = !isUpcoming || hasScoreValues;
+
+  const homeScore = showScore ? String(home?.score ?? 0) : '—';
+  const awayScore = showScore ? String(away?.score ?? 0) : '—';
+  const hasTripleDigits = showScore && (Number(homeScore) >= 100 || Number(awayScore) >= 100);
+
+  const round = model?.round ?? 0;
+  const dateText = model?.dateText || 'Time TBA';
+  const venue = model?.venue || 'Venue TBA';
+
+  const homeAbbr = home?.abbreviation || home?.shortName || abbreviation(home?.fullName, 'H');
+  const awayAbbr = away?.abbreviation || away?.shortName || abbreviation(away?.fullName, 'A');
 
   return (
-    <section className="mcHero" style={cssVars}>
-      <div className="mcHero__halo" />
+    <section className={`mcHero mcHero--${tone}`} style={cssVars}>
+      <div className="mcHero__atmo" aria-hidden="true" />
 
-      {/* Back button */}
-      {onBack && (
-        <button
-          type="button"
-          onClick={onBack}
-          className="mcHero__back"
-          aria-label="Back"
-        >
-          <ChevronLeft className="w-5 h-5" />
+      <div className="mcHero__ghostScore" aria-hidden="true">
+        {showScore ? `${homeScore} ${awayScore}` : 'VS'}
+      </div>
+
+      {onBack ? (
+        <button type="button" onClick={onBack} className="mcHero__back" aria-label="Back">
+          <ChevronLeft size={20} />
         </button>
-      )}
+      ) : null}
 
-      <div className="mcHero__content">
-        {/* Round + Date */}
+      <div className="mcHero__inner">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mcHero__header"
+          transition={{ duration: 0.3 }}
+          className="mcHero__metaTop"
         >
-          <span className="mcHero__round">ROUND {round}</span>
+          <span className="mcHero__round">ROUND {round || '—'}</span>
+          <span className="mcHero__metaDot" aria-hidden="true">•</span>
           <span className="mcHero__date">{dateText}</span>
+          <span className="mcHero__metaDot" aria-hidden="true">•</span>
+          <span className="mcHero__venue">{venue}</span>
         </motion.div>
 
-        {/* Team Logos + Scores */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.08 }}
-          className="mcHero__main"
-        >
-          {/* HOME */}
-          <div className="mcHero__side">
-            <div className="mcHero__logoBox">
-              <SmartImg
-                key={`home-${homeLogo}`}
-                src={homeLogo}
-                alt={home?.fullName || 'Home'}
-                className="mcHero__logo"
-                fallbackText={home?.abbreviation || 'H'}
-              />
-            </div>
-            <span className="mcHero__teamName">{home?.fullName || (loading ? '—' : '—')}</span>
-          </div>
-
-          {/* SCORES */}
-          <div
-            className={`mcHero__scores${hasTripleDigitScore ? ' mcHero__scores--compact' : ''}${hasBothTripleDigitScores ? ' mcHero__scores--compactBoth' : ''}`}
-          >
-            <div className="mcHero__scoreLine">
-              <span className="mcHero__score">{home?.score || 0}</span>
-              <span className="mcHero__dash">–</span>
-              <span className="mcHero__score">{away?.score || 0}</span>
-            </div>
-            <div className="mcHero__minors">
-              <span className="mcHero__minor">{home ? `${home.goals}.${home.behinds}` : '0.0'}</span>
-              <span className="mcHero__pipe">|</span>
-              <span className="mcHero__minor">{away ? `${away.goals}.${away.behinds}` : '0.0'}</span>
-            </div>
-            <div className={`mcHero__confidence mcHero__confidence--${confidence?.tone || 'neutral'}`}>
-              {confidence?.label || 'Scheduled'}
-            </div>
-          </div>
-
-          {/* AWAY */}
-          <div className="mcHero__side">
-            <div className="mcHero__logoBox">
-              <SmartImg
-                key={`away-${awayLogo}`}
-                src={awayLogo}
-                alt={away?.fullName || 'Away'}
-                className="mcHero__logo"
-                fallbackText={away?.abbreviation || 'A'}
-              />
-            </div>
-            <span className="mcHero__teamName">{away?.fullName || (loading ? '—' : '—')}</span>
-          </div>
-        </motion.div>
-
-        {/* Status + Venue */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.16 }}
-          className="mcHero__footer"
+          transition={{ duration: 0.38, delay: 0.05 }}
+          className="mcHero__main"
         >
-          <div className="mcHero__statusPill">
-            <span className={`mcHero__dot ${statusDot}`} />
-            <span className="mcHero__statusText">{status}</span>
+          <div className="mcHero__team mcHero__team--home">
+            <div className="mcHero__logoFrame fxBroadcastLogoFrame">
+              <SmartImg
+                src={homeLogo}
+                alt={home?.fullName || 'Home'}
+                className="mcHero__logo fxSafeLogo"
+                fallbackText={homeAbbr}
+              />
+            </div>
+            <div className="mcHero__teamName">{home?.fullName || 'Home Team'}</div>
+            <div className="mcHero__teamAbbr">{homeAbbr}</div>
           </div>
-          <p className="mcHero__venueText">
-            {venue}
-            {status === 'FULL TIME' && home && away ? <> • {home.fullName} by {margin}</> : null}
-          </p>
+
+          <div className={`mcHero__scoreWrap ${hasTripleDigits ? 'is-compact' : ''}`}>
+            <div className="mcHero__statusPill">
+              <span className={`mcHero__statusDot mcHero__statusDot--${tone}`} />
+              <span className="mcHero__statusLabel">{statusText}</span>
+            </div>
+
+            <div className="mcHero__scoreLine">
+              <span className="mcHero__score fxMetalText">{homeScore}</span>
+              <span className="mcHero__scoreDash">-</span>
+              <span className="mcHero__score fxMetalText">{awayScore}</span>
+            </div>
+
+            <div className="mcHero__minorLine">
+              <span className="mcHero__minorVal">{home ? `${home.goals}.${home.behinds}` : '—.—'}</span>
+              <span className="mcHero__minorSep" aria-hidden="true">|</span>
+              <span className="mcHero__minorVal">{away ? `${away.goals}.${away.behinds}` : '—.—'}</span>
+            </div>
+          </div>
+
+          <div className="mcHero__team mcHero__team--away">
+            <div className="mcHero__logoFrame fxBroadcastLogoFrame">
+              <SmartImg
+                src={awayLogo}
+                alt={away?.fullName || 'Away'}
+                className="mcHero__logo fxSafeLogo"
+                fallbackText={awayAbbr}
+              />
+            </div>
+            <div className="mcHero__teamName">{away?.fullName || 'Away Team'}</div>
+            <div className="mcHero__teamAbbr">{awayAbbr}</div>
+          </div>
         </motion.div>
       </div>
     </section>

@@ -66,31 +66,31 @@ async function fetchFromTable(table: CoachProfile['source_table'], userId: strin
 
 /**
  * Fetches the signed-in coach profile.
- * - Prefers profiles (live source of truth)
- * - Falls back to eg_profiles (legacy mirror)
+ * - Prefers eg_profiles (primary source)
+ * - Falls back to profiles (legacy mirror)
  */
 export async function fetchCoachProfile(userId: string): Promise<CoachProfile | null> {
   const uid = String(userId || '').trim();
   if (!uid) return null;
 
-  const primary = await fetchFromTable('profiles', uid);
+  const primary = await fetchFromTable('eg_profiles', uid);
   if (import.meta.env.DEV) {
-    console.log('[profileRepo] profiles row', primary);
+    console.log('[profileRepo] eg_profiles row', primary);
   }
   if (primary) return primary;
 
-  const legacy = await fetchFromTable('eg_profiles', uid);
+  const legacy = await fetchFromTable('profiles', uid);
   if (import.meta.env.DEV) {
-    console.log('[profileRepo] eg_profiles fallback row', legacy);
+    console.log('[profileRepo] profiles fallback row', legacy);
   }
   if (legacy) return legacy;
 
-  // Some older builds used eg_profiles.id = auth.users.id.
+  // Some older builds used profiles.id = auth.users.id.
   // Try that shape as a last resort (no crash, just best effort).
-  const { data, error } = await supabase.from('eg_profiles').select('*').eq('id', uid).maybeSingle();
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
   if (!error && data) {
     const row = { ...data, user_id: (data as any).user_id || (data as any).id || uid };
-    const profile = normalizeProfile(row, 'eg_profiles');
+    const profile = normalizeProfile(row, 'profiles');
     if (profile.user_id) return profile;
   }
 

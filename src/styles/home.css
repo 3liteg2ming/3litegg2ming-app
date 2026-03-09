@@ -453,6 +453,47 @@
   overflow: hidden;
 }
 
+.homeCoachesPanel {
+  display: grid;
+  gap: 10px;
+}
+
+.homeCoachesPanel__text {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.42;
+  color: rgba(207, 219, 240, 0.78);
+}
+
+.homeCoachesPanel__cta {
+  border-radius: 12px;
+  min-height: 44px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  background: linear-gradient(180deg, rgba(86, 136, 255, 0.28), rgba(64, 106, 215, 0.22));
+  border: 1px solid rgba(123, 168, 255, 0.44);
+  color: rgba(245, 249, 255, 0.94);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.14s ease;
+  box-shadow:
+    0 10px 24px rgba(8, 16, 34, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.homeCoachesPanel__cta:hover {
+  transform: translateY(-1px);
+}
+
+.homeCoachesPanel__cta:active {
+  transform: scale(0.99);
+}
+
 .homeSectionHead {
   margin-bottom: 10px;
   padding-bottom: 8px;
@@ -785,7 +826,10 @@
   z-index: 1200;
   display: grid;
   place-items: center;
-  padding: 16px;
+  padding-top: max(14px, env(safe-area-inset-top, 0px));
+  padding-right: max(14px, env(safe-area-inset-right, 0px));
+  padding-bottom: max(14px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(14px, env(safe-area-inset-left, 0px));
 }
 
 .homeModal__backdrop {
@@ -799,18 +843,20 @@
 .homeModal__panel {
   position: relative;
   z-index: 1;
-  width: min(520px, 100%);
-  max-height: min(80vh, 680px);
-  border-radius: 16px;
-  border: 1px solid rgba(63, 186, 128, 0.42);
+  width: min(640px, calc(100vw - 18px));
+  max-height: min(84vh, 720px);
+  margin: 0 auto;
+  border-radius: 18px;
+  border: 1px solid rgba(63, 186, 128, 0.46);
   background:
-    linear-gradient(180deg, rgba(8, 10, 16, 0.92), rgba(9, 12, 20, 0.94)),
+    linear-gradient(180deg, rgba(8, 10, 16, 0.94), rgba(9, 12, 20, 0.96)),
     url('https://zohtixrgskbzosgfluni.supabase.co/storage/v1/object/public/Assets/mcg.png');
   background-size: cover;
   background-position: center;
   box-shadow:
-    0 0 0 1px rgba(63, 186, 128, 0.2),
-    0 20px 60px rgba(0, 0, 0, 0.58);
+    0 0 0 1px rgba(63, 186, 128, 0.22),
+    0 20px 60px rgba(0, 0, 0, 0.58),
+    0 0 42px rgba(63, 186, 128, 0.16);
   overflow: hidden;
 }
 
@@ -819,7 +865,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 14px 10px;
+  padding: 16px 16px 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -832,20 +878,21 @@
 }
 
 .homeModal__close {
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(241, 246, 255, 0.9);
-  min-height: 34px;
-  padding: 0 12px;
+  border: 1px solid rgba(123, 168, 255, 0.36);
+  border-radius: 11px;
+  background: linear-gradient(180deg, rgba(86, 136, 255, 0.24), rgba(64, 106, 215, 0.16));
+  color: rgba(241, 246, 255, 0.96);
+  min-height: 36px;
+  padding: 0 13px;
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 .homeModal__body {
-  padding: 12px;
-  max-height: min(70vh, 590px);
+  padding: 14px;
+  max-height: min(75vh, 620px);
   overflow: auto;
 }
 
@@ -861,49 +908,58 @@
 
 .homeModal__list {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .homeCoachRow {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
   align-items: center;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03));
-  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04)),
+    radial-gradient(120% 120% at 0% 0%, rgba(124, 92, 255, 0.09), transparent 66%);
+  padding: 12px;
 }
 
 .homeCoachRow__team {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
 }
 
 .homeCoachRow__logo,
 .homeCoachRow__logoPlaceholder {
-  width: 30px;
-  height: 30px;
+  width: 38px;
+  height: 38px;
   border-radius: 999px;
   flex: 0 0 auto;
 }
 
 .homeCoachRow__logo {
   object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 8px 18px rgba(0, 0, 0, 0.3);
 }
 
 .homeCoachRow__logoPlaceholder {
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.06));
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 8px 18px rgba(0, 0, 0, 0.24);
 }
 
 .homeCoachRow__teamName {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
   color: rgba(245, 249, 255, 0.94);
+  line-height: 1.2;
 }
 
 .homeCoachRow__coach {
@@ -913,15 +969,37 @@
 }
 
 .homeCoachRow__coachName {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
   color: rgba(245, 249, 255, 0.94);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .homeCoachRow__coachMeta {
-  font-size: 11px;
+  font-size: 12px;
   color: rgba(206, 218, 240, 0.76);
+}
+
+@media (max-width: 620px) {
+  .homeModal__panel {
+    width: calc(100vw - 8px);
+    max-height: min(88vh, 760px);
+  }
+
+  .homeModal__body {
+    padding: 12px;
+    max-height: min(79vh, 640px);
+  }
+
+  .homeCoachRow {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 8px;
+  }
+
+  .homeCoachRow__teamName,
+  .homeCoachRow__coachName {
+    font-size: 13px;
+  }
 }

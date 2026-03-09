@@ -11,6 +11,8 @@ interface FixturesParams {
 const SEASON_SLUG_ALIASES: Record<string, string> = {
   afl26: 'afl26-season-two',
   'afl-26': 'afl26-season-two',
+  'preseason-2026': 'preseason',
+  'knockout-preseason': 'preseason',
 };
 
 const seasonIdCache = new Map<string, string>();
@@ -71,8 +73,12 @@ async function getSeasonId(seasonSlug: string): Promise<string> {
     exactAttemptError = exact.error;
 
     // 2) Alias match
-    const alias = SEASON_SLUG_ALIASES[requested];
-    if (alias && alias !== requested) {
+    const aliasCandidates = [
+      SEASON_SLUG_ALIASES[requested],
+      Object.entries(SEASON_SLUG_ALIASES).find(([, value]) => value === requested)?.[0] || null,
+    ].filter((v, i, arr): v is string => !!v && arr.indexOf(v) === i && v !== requested);
+
+    for (const alias of aliasCandidates) {
       const aliasRes = await supabase
         .from('eg_seasons')
         .select('id, slug')
@@ -103,12 +109,12 @@ async function getSeasonId(seasonSlug: string): Promise<string> {
     fuzzyAttemptError = fuzzy.error;
 
     const err = new Error(
-      `Season not found for slug "${requested}". Attempts: exact="${requested}", alias="${alias || 'n/a'}", fuzzy="%${requested}%".`
+      `Season not found for slug "${requested}". Attempts: exact="${requested}", aliases="${aliasCandidates.join(',') || 'n/a'}", fuzzy="%${requested}%".`
     );
     console.error('Error resolving season id:', {
       message: err.message,
       requestedSlug: requested,
-      aliasAttempt: alias || null,
+      aliasAttempt: aliasCandidates,
       exactAttemptError,
       aliasAttemptError,
       fuzzyAttemptError,

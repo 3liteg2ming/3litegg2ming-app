@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import SmartImg from '@/components/SmartImg';
 import { assetUrl, TEAM_ASSETS, type TeamKey } from '@/lib/teamAssets';
 import type { MatchCentreModel, TeamStatRow } from '@/lib/matchCentreRepo';
@@ -40,7 +39,6 @@ function tintForStatValue(hex: string, fallback: string) {
   const g = parseInt(full.slice(2, 4), 16);
   const b = parseInt(full.slice(4, 6), 16);
   if (![r, g, b].every(Number.isFinite)) return fallback;
-  // Lift dark colors so numbers remain readable on dark glass.
   const lift = (v: number) => Math.max(120, Math.min(255, v + 35));
   return `rgb(${lift(r)}, ${lift(g)}, ${lift(b)})`;
 }
@@ -54,32 +52,21 @@ function StatRow({ stat, homeColor, awayColor }: { stat: TeamStatRow; homeColor:
 
   return (
     <div className="mcTeamStatRow">
-      {/* Home value */}
       <div className="mcTeamStatRow__home">
         <span className="mcTeamStatRow__value" style={{ color: homeTint }}>
           {stat.homeMatch}
         </span>
       </div>
 
-      {/* Stat label centre */}
       <div className="mcTeamStatRow__centre">
         <span className="mcTeamStatRow__label">{stat.label}</span>
         <div className="mcTeamStatRow__bar">
-          <div
-            className="mcTeamStatRow__barHome"
-            style={{ width: `${homePercent}%`, background: homeColor }}
-          />
-          <div
-            className="mcTeamStatRow__barDivider"
-          />
-          <div
-            className="mcTeamStatRow__barAway"
-            style={{ width: `${awayPercent}%`, background: awayColor }}
-          />
+          <div className="mcTeamStatRow__barHome" style={{ width: `${homePercent}%`, background: homeColor }} />
+          <div className="mcTeamStatRow__barDivider" />
+          <div className="mcTeamStatRow__barAway" style={{ width: `${awayPercent}%`, background: awayColor }} />
         </div>
       </div>
 
-      {/* Away value */}
       <div className="mcTeamStatRow__away">
         <span className="mcTeamStatRow__value" style={{ color: awayTint }}>
           {stat.awayMatch}
@@ -108,7 +95,7 @@ export default function TeamStats({ model, loading }: { model: MatchCentreModel 
     <section className="mcTeamStats">
       <div className="mcTeamStats__header">
         <h2 className="mcTeamStats__title">Team Stats</h2>
-        <p className="mcTeamStats__desc">Detailed comparison</p>
+        <p className="mcTeamStats__desc">Side-by-side match comparison</p>
       </div>
 
       {isEmpty ? (
@@ -131,6 +118,7 @@ export default function TeamStats({ model, loading }: { model: MatchCentreModel 
               />
               <span className="mcTeamStats__teamName">{home?.fullName || '—'}</span>
             </div>
+            <div className="mcTeamStats__versus">VS</div>
             <div className="mcTeamStats__team mcTeamStats__team--away">
               <span className="mcTeamStats__teamName">{away?.fullName || '—'}</span>
               <SmartImg
@@ -154,10 +142,9 @@ export default function TeamStats({ model, loading }: { model: MatchCentreModel 
             ))}
           </div>
 
-          {/* Logos footer */}
           <div className="mcTeamStats__footer">
-            <div />
-            <div />
+            <div className="mcTeamStats__footerLabel">{home?.abbreviation || home?.name || 'HOME'}</div>
+            <div className="mcTeamStats__footerLabel">{away?.abbreviation || away?.name || 'AWAY'}</div>
           </div>
         </>
       )}
