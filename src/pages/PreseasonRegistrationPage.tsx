@@ -17,6 +17,7 @@ const TEAMS_CACHE_TTL_MS = 10 * 60 * 1000;
 const REG_UNLOCK_AT =
   import.meta.env.VITE_REG_UNLOCK_AT?.trim() || '2026-03-05T17:30:00+11:00'; // 5:30pm Melbourne (AEDT)
 const PRESEASON_FORMAT_NOTE = 'Format: 2 home-and-away matches, followed by knockout finals.';
+const AFL26_LOGO_URL = 'https://zohtixrgskbzosgfluni.supabase.co/storage/v1/object/public/Assets/afl26-logo.png';
 
 type TeamRow = {
   id: string;
@@ -818,9 +819,9 @@ export default function PreseasonRegistrationPage() {
                 </div>
               </div>
               <p className="prConfirmCard__note">{PRESEASON_FORMAT_NOTE}</p>
-              <button type="button" className="prBtn prBtn--primary" onClick={() => navigate('/preseason-registration')}>
-                Review entry
-              </button>
+              <div className="prConfirmCard__state" role="status" aria-live="polite">
+                Registration complete
+              </div>
             </section>
           ) : (
             <>
@@ -833,6 +834,11 @@ export default function PreseasonRegistrationPage() {
                 leftLogoUrl={heroLogos.left}
                 rightLogoUrl={heroLogos.right}
                 fallbackMark="EG"
+                rightContent={
+                  <div className="prHeroLogoTile" aria-hidden="true">
+                    <img className="prHeroLogoTile__img" src={AFL26_LOGO_URL} alt="" loading="lazy" />
+                  </div>
+                }
                 cta={
                   <div className="prHeroActions">
                     {!isLoggedIn ? (

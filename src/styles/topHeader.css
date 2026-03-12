@@ -1,6 +1,6 @@
 :root {
-  --eg-header-h: 68px;
-  --eg-announce-h: 28px;
+  --eg-header-h: 70px;
+  --eg-announce-h: 26px;
 }
 
 .egAnnounceBar {
@@ -33,21 +33,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 12px;
+  padding: 0 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.012)),
-    radial-gradient(90% 140% at 50% 0%, rgba(245, 196, 0, 0.085), transparent 72%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01)),
+    radial-gradient(90% 140% at 50% 0%, rgba(245, 196, 0, 0.07), transparent 72%);
 }
 
 .egTopHeader__announceInner {
   width: min(1120px, 100%);
   text-align: center;
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 900;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(255, 236, 177, 0.92);
+  color: rgba(255, 236, 177, 0.88);
 }
 
 .egTopHeader__inner {
@@ -87,9 +87,9 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  min-height: 27px;
+  min-height: 29px;
   max-width: 100%;
-  padding: 0 8px 0 6px;
+  padding: 0 10px 0 7px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
@@ -103,8 +103,8 @@
 }
 
 .egTopHeader__compPillMark {
-  width: 16px;
-  height: 16px;
+  width: 17px;
+  height: 17px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
@@ -113,15 +113,15 @@
   border: 1px solid rgba(245, 196, 0, 0.28);
   background: linear-gradient(180deg, rgba(245, 196, 0, 0.2), rgba(245, 196, 0, 0.1));
   color: rgba(255, 240, 197, 0.98);
-  font-size: 8px;
+  font-size: 8.25px;
   font-weight: 900;
   letter-spacing: 0.08em;
 }
 
 .egTopHeader__compPillLabel {
-  font-size: 9px;
+  font-size: 9.5px;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -141,16 +141,29 @@
   height: 52px;
   display: grid;
   place-items: center;
+  align-content: center;
+  gap: 2px;
 }
 
 .egTopHeader__brandLogo {
   width: 100%;
   max-width: 236px;
   height: auto;
-  max-height: 52px;
+  max-height: 42px;
   object-fit: contain;
   object-position: center;
+  transform: scale(1.12);
+  transform-origin: center;
   filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.22));
+}
+
+.egTopHeader__brandLabel {
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 233, 167, 0.84);
+  white-space: nowrap;
 }
 
 .egTopHeader .authPillMenu--header {
@@ -171,9 +184,9 @@
 }
 
 .egTopHeader .authPill--signedOut {
-  min-height: 29px;
-  padding: 0 10px;
-  font-size: 9.5px;
+  min-height: 31px;
+  padding: 0 11px;
+  font-size: 10px;
   font-weight: 800;
   color: rgba(248, 250, 255, 0.96);
 }
@@ -182,20 +195,20 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  min-height: 30px;
+  min-height: 31px;
   max-width: 100%;
-  padding: 0 6px 0 3px;
+  padding: 0 7px 0 4px;
 }
 
 .egTopHeader .authPill--loading {
-  min-height: 30px;
+  min-height: 31px;
   padding: 0 10px 0 4px;
   color: rgba(214, 224, 242, 0.44);
 }
 
 .egTopHeader .authPillAvatar {
-  width: 22px;
-  height: 22px;
+  width: 23px;
+  height: 23px;
   border-radius: 999px;
   overflow: hidden;
   flex: 0 0 auto;
@@ -221,8 +234,8 @@
 
 .egTopHeader .authPillText {
   min-width: 0;
-  max-width: 92px;
-  font-size: 9.5px;
+  max-width: 94px;
+  font-size: 10px;
   font-weight: 800;
   color: rgba(248, 250, 255, 0.96);
   white-space: nowrap;
@@ -277,13 +290,13 @@
 
 @media (max-width: 640px) {
   :root {
-    --eg-header-h: 62px;
-    --eg-announce-h: 26px;
+    --eg-header-h: 64px;
+    --eg-announce-h: 24px;
   }
 
   .egTopHeader__inner {
-    padding: 0 11px;
-    gap: 8px;
+    padding: 0 10px;
+    gap: 7px;
   }
 
   .egTopHeader__announce {
@@ -291,40 +304,47 @@
   }
 
   .egTopHeader__announceInner {
-    font-size: 8px;
-    letter-spacing: 0.06em;
+    font-size: 7.75px;
+    letter-spacing: 0.05em;
   }
 
   .egTopHeader__compPill {
-    min-height: 25px;
-    padding: 0 7px 0 5px;
+    min-height: 29px;
+    padding: 0 9px 0 7px;
   }
 
   .egTopHeader__compPillMark {
-    width: 14px;
-    height: 14px;
-    font-size: 7px;
+    width: 16px;
+    height: 16px;
+    font-size: 7.75px;
   }
 
   .egTopHeader__compPillLabel {
-    font-size: 8.5px;
+    font-size: 9px;
     letter-spacing: 0.06em;
   }
 
   .egTopHeader__brandLockup {
-    width: 202px;
-    height: 44px;
+    width: 214px;
+    height: 46px;
+    gap: 1px;
   }
 
   .egTopHeader__brandLogo {
-    max-width: 202px;
-    max-height: 44px;
+    max-width: 214px;
+    max-height: 36px;
+    transform: scale(1.28);
+  }
+
+  .egTopHeader__brandLabel {
+    font-size: 6.25px;
+    letter-spacing: 0.2em;
   }
 
   .egTopHeader .authPill--account {
     gap: 4px;
-    padding: 0 5px 0 3px;
-    min-height: 29px;
+    padding: 0 6px 0 3px;
+    min-height: 31px;
   }
 
   .egTopHeader .authPillAvatar {
@@ -333,40 +353,55 @@
   }
 
   .egTopHeader .authPillText {
-    max-width: 70px;
-    font-size: 9.5px;
+    max-width: 72px;
+    font-size: 9.75px;
   }
 }
 
 @media (max-width: 430px) {
   .egTopHeader__inner {
-    gap: 7px;
-    grid-template-columns: minmax(96px, 102px) minmax(0, 1fr) minmax(74px, 82px);
+    gap: 6px;
+    grid-template-columns: minmax(96px, 108px) minmax(0, 1fr) minmax(82px, 92px);
   }
 
   .egTopHeader__brandLockup {
-    width: 184px;
-    height: 38px;
+    width: clamp(180px, 50vw, 202px);
+    height: 42px;
   }
 
   .egTopHeader__brandLogo {
-    max-width: 184px;
-    max-height: 38px;
+    max-width: clamp(180px, 50vw, 202px);
+    max-height: 33px;
+    transform: scale(1.4);
+  }
+
+  .egTopHeader__brandLabel {
+    font-size: 5.6px;
+    letter-spacing: 0.18em;
   }
 
   .egTopHeader .authPillText {
-    max-width: 48px;
-    font-size: 9px;
+    max-width: 56px;
+    font-size: 9.25px;
   }
 
   .egTopHeader .authPill--signedOut {
-    min-height: 28px;
-    padding: 0 7px;
-    font-size: 9px;
+    min-height: 30px;
+    padding: 0 9px;
+    font-size: 9.4px;
   }
 
   .egTopHeader__announceInner {
-    font-size: 7px;
+    font-size: 6.9px;
     letter-spacing: 0.03em;
+  }
+
+  .egTopHeader__compPill {
+    min-height: 28px;
+    padding: 0 8px 0 6px;
+  }
+
+  .egTopHeader__compPillLabel {
+    font-size: 8.9px;
   }
 }

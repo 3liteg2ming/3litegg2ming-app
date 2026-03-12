@@ -1,0 +1,44 @@
+- application "Elite Gaming App" [ref=e4]:
+  - banner [ref=e5]:
+    - status [ref=e6]:
+      - generic [ref=e7]: Preseason registrations are now open.
+    - generic [ref=e8]:
+      - button "Open preseason registration" [ref=e10] [cursor=pointer]:
+        - generic [ref=e11]: "26"
+        - generic [ref=e12]: Preseason
+      - button "Go to preseason registration" [ref=e14] [cursor=pointer]:
+        - img [ref=e53]
+      - button "Sign in" [ref=e17] [cursor=pointer]
+  - main [ref=e18]:
+    - generic [ref=e19]:
+      - button "Back to preseason registration" [ref=e21] [cursor=pointer]:
+        - img [ref=e22]
+        - generic [ref=e24]: Preseason
+      - generic [ref=e25]:
+        - generic [ref=e26]: Coach access
+        - generic [ref=e27]:
+          - generic [ref=e28]: Sign in
+          - generic [ref=e29]: Continue your preseason registration.
+        - generic [ref=e30]:
+          - generic [ref=e31]:
+            - generic [ref=e32]: Email
+            - generic [ref=e33]:
+              - img [ref=e34]
+              - textbox "Email" [ref=e37]:
+                - /placeholder: coach@email.com
+                - text: test@example.com
+          - generic [ref=e38]:
+            - generic [ref=e39]: Password
+            - generic [ref=e40]:
+              - img [ref=e41]
+              - textbox "Password Hide password" [ref=e54]:
+                - /placeholder: Password
+                - text: "12345678"
+              - button "Hide password" [active] [ref=e55] [cursor=pointer]:
+                - img [ref=e56]
+          - button "Sign in" [ref=e49] [cursor=pointer]
+        - generic [ref=e50]:
+          - link "Create account" [ref=e51] [cursor=pointer]:
+            - /url: /auth/sign-up
+          - link "Forgot password" [ref=e52] [cursor=pointer]:
+            - /url: /auth/forgot-password

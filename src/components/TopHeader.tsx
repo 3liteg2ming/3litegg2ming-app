@@ -42,6 +42,7 @@ export default function TopHeader() {
                 alt="Elite Gaming"
                 loading="eager"
               />
+              <span className="egTopHeader__brandLabel">Elite Gaming</span>
             </span>
           </button>
         </div>

@@ -135,7 +135,10 @@
 }
 
 .prPage .regHeroCard__top {
-  display: block;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
 }
 
 .prPage .regHeroCard__kicker {
@@ -153,16 +156,47 @@
 .prPage .regHeroCard__subtitle {
   max-width: 34ch;
   font-size: clamp(14px, 1.8vw, 15px);
-  line-height: 1.55;
+  line-height: 1.5;
   color: rgba(233, 239, 250, 0.85);
 }
 
 .prPage .regHeroCard__seed {
   max-width: 40ch;
-  margin-top: 2px;
+  margin-top: 1px;
   font-size: 11px;
   line-height: 1.5;
   color: rgba(255, 229, 157, 0.7);
+}
+
+.prPage .regHeroCard__side {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+.prHeroLogoTile {
+  width: 72px;
+  min-width: 72px;
+  height: 72px;
+  padding: 10px;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+    rgba(7, 11, 18, 0.62);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 14px 28px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.prHeroLogoTile__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .prPage .regHeroCard__ctaArea {
@@ -178,7 +212,7 @@
 .prFormatNote {
   display: grid;
   gap: 3px;
-  padding: 11px 13px;
+  padding: 10px 13px;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
@@ -432,6 +466,25 @@
   font-size: 12px;
   line-height: 1.55;
   color: rgba(220, 229, 244, 0.68);
+}
+
+.prConfirmCard__state {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  border: 1px solid rgba(245, 196, 0, 0.16);
+  background:
+    linear-gradient(180deg, rgba(245, 196, 0, 0.18), rgba(245, 196, 0, 0.09)),
+    rgba(255, 255, 255, 0.03);
+  color: rgba(20, 18, 8, 0.94);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 14px 26px rgba(245, 196, 0, 0.16);
 }
 
 .prPage .tlgWrap {
@@ -720,6 +773,18 @@
     width: 100%;
   }
 
+  .prPage .regHeroCard__top {
+    gap: 10px;
+  }
+
+  .prHeroLogoTile {
+    width: 64px;
+    min-width: 64px;
+    height: 64px;
+    padding: 9px;
+    border-radius: 18px;
+  }
+
   .prPage .tlgSlots,
   .prPage .tlgGrid,
   .prPage .tlgGrid--loading {
@@ -740,6 +805,23 @@
     width: 100%;
     justify-content: center;
     text-align: center;
+  }
+
+  .prPage .regHeroCard__top {
+    grid-template-columns: minmax(0, 1fr) 60px;
+    gap: 9px;
+  }
+
+  .prPage .regHeroCard__subtitle {
+    max-width: 28ch;
+  }
+
+  .prHeroLogoTile {
+    width: 60px;
+    min-width: 60px;
+    height: 60px;
+    padding: 8px;
+    border-radius: 16px;
   }
 
   .prPage .tlgSlots,

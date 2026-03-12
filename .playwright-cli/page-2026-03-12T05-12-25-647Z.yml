@@ -1,0 +1,113 @@
+- application "Elite Gaming App" [ref=e4]:
+  - banner [ref=e5]:
+    - status [ref=e6]:
+      - generic [ref=e7]: Preseason registrations are now open.
+    - generic [ref=e8]:
+      - button "Open preseason registration" [ref=e10] [cursor=pointer]:
+        - generic [ref=e11]: "26"
+        - generic [ref=e12]: Preseason
+      - button "Go to preseason registration" [ref=e14] [cursor=pointer]:
+        - generic [ref=e15]:
+          - img [ref=e63]
+          - generic [ref=e16]: Elite Gaming
+      - button "Sign in" [ref=e18] [cursor=pointer]
+  - main [ref=e19]:
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic:
+          - generic: EG
+        - generic:
+          - generic: EG
+        - generic [ref=e24]:
+          - generic [ref=e26]:
+            - generic [ref=e27]:
+              - img [ref=e28]
+              - text: AFL 26 PRESEASON
+            - heading "AFL 26 preseason" [level=1] [ref=e31]
+            - paragraph [ref=e32]: Choose up to four preferred clubs, then confirm your entry.
+            - paragraph [ref=e33]: Your confirmed order becomes your preseason entry.
+          - generic [ref=e36]:
+            - generic [ref=e38]:
+              - button "Create account" [ref=e39] [cursor=pointer]
+              - button "Sign in" [ref=e40] [cursor=pointer]
+            - generic [ref=e43]: Registrations are live now.
+      - region "Competition format" [ref=e44]:
+        - generic [ref=e45]: Competition format
+        - generic [ref=e46]: "Format: 2 home-and-away matches, followed by knockout finals."
+      - generic [ref=e48]:
+        - generic [ref=e50]:
+          - paragraph [ref=e51]: Team preferences
+          - paragraph [ref=e52]: Choose up to four clubs in order. Your saved list becomes your preseason entry.
+        - generic [ref=e64]:
+          - generic [ref=e65]:
+            - generic [ref=e66]: Team Preferences
+            - generic [ref=e67]: 0/4
+          - generic "Preference order" [ref=e68]:
+            - generic [ref=e69]:
+              - generic [ref=e70]: "1"
+              - generic [ref=e71]: —
+            - generic [ref=e72]:
+              - generic [ref=e73]: "2"
+              - generic [ref=e74]: —
+            - generic [ref=e75]:
+              - generic [ref=e76]: "3"
+              - generic [ref=e77]: —
+            - generic [ref=e78]:
+              - generic [ref=e79]: "4"
+              - generic [ref=e80]: —
+          - generic [ref=e81]:
+            - button "Adelaide" [ref=e82] [cursor=pointer]:
+              - img "Adelaide" [ref=e84]
+              - generic [ref=e85]: Adelaide
+            - button "Brisbane" [ref=e86] [cursor=pointer]:
+              - img "Brisbane" [ref=e88]
+              - generic [ref=e89]: Brisbane
+            - button "Carlton" [ref=e90] [cursor=pointer]:
+              - img "Carlton" [ref=e92]
+              - generic [ref=e93]: Carlton
+            - button "Collingwood Magpies" [ref=e94] [cursor=pointer]:
+              - img "Collingwood Magpies" [ref=e96]
+              - generic [ref=e97]: Collingwood Magpies
+            - button "Essendon" [ref=e98] [cursor=pointer]:
+              - img "Essendon" [ref=e100]
+              - generic [ref=e101]: Essendon
+            - button "Fremantle Dockers" [ref=e102] [cursor=pointer]:
+              - img "Fremantle Dockers" [ref=e104]
+              - generic [ref=e105]: Fremantle Dockers
+            - button "Geelong Cats" [ref=e106] [cursor=pointer]:
+              - img "Geelong Cats" [ref=e108]
+              - generic [ref=e109]: Geelong Cats
+            - button "Gold Coast" [ref=e110] [cursor=pointer]:
+              - img "Gold Coast" [ref=e112]
+              - generic [ref=e113]: Gold Coast
+            - button "GWS Giants" [ref=e114] [cursor=pointer]:
+              - img "GWS Giants" [ref=e116]
+              - generic [ref=e117]: GWS Giants
+            - button "Hawthorn Hawks" [ref=e118] [cursor=pointer]:
+              - img "Hawthorn Hawks" [ref=e120]
+              - generic [ref=e121]: Hawthorn Hawks
+            - button "Melbourne Demons" [ref=e122] [cursor=pointer]:
+              - img "Melbourne Demons" [ref=e124]
+              - generic [ref=e125]: Melbourne Demons
+            - button "North Melbourne Kangaroos" [ref=e126] [cursor=pointer]:
+              - img "North Melbourne Kangaroos" [ref=e128]
+              - generic [ref=e129]: North Melbourne Kangaroos
+            - button "Port Adelaide Power" [ref=e130] [cursor=pointer]:
+              - img "Port Adelaide Power" [ref=e132]
+              - generic [ref=e133]: Port Adelaide Power
+            - button "Richmond Tigers" [ref=e134] [cursor=pointer]:
+              - img "Richmond Tigers" [ref=e136]
+              - generic [ref=e137]: Richmond Tigers
+            - button "St Kilda Saints" [ref=e138] [cursor=pointer]:
+              - img "St Kilda Saints" [ref=e140]
+              - generic [ref=e141]: St Kilda Saints
+            - button "Sydney Swans" [ref=e142] [cursor=pointer]:
+              - img "Sydney Swans" [ref=e144]
+              - generic [ref=e145]: Sydney Swans
+            - button "West Coast Eagles" [ref=e146] [cursor=pointer]:
+              - img "West Coast Eagles" [ref=e148]
+              - generic [ref=e149]: West Coast Eagles
+            - button "Bulldogs" [ref=e150] [cursor=pointer]:
+              - img "Bulldogs" [ref=e152]
+              - generic [ref=e153]: Bulldogs
+        - button "Sign in to confirm" [disabled] [ref=e62]
