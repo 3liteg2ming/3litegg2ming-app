@@ -1,6 +1,13 @@
 :root {
-  --eg-header-h: 70px;
-  --eg-announce-h: 26px;
+  --eg-announce-h: 27px;
+  --eg-header-h: 74px;
+  --eg-header-side-col: 132px;
+  --eg-header-badge-size: 46px;
+  --eg-header-brand-w: 140px;
+  --eg-header-brand-h: 40px;
+  --eg-header-brand-img-h: 108px;
+  --eg-header-brand-shift-y: -18px;
+  --eg-header-pill-h: 34px;
 }
 
 .egAnnounceBar {
@@ -12,11 +19,13 @@
   top: 0;
   z-index: 900;
   width: 100%;
-  background: rgba(5, 9, 15, 0.94);
+  background:
+    linear-gradient(180deg, rgba(8, 11, 17, 0.975), rgba(7, 10, 15, 0.94)),
+    rgba(7, 10, 15, 0.96);
   border-bottom: 1px solid rgba(245, 196, 0, 0.12);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
 }
 
 .egTopHeader::after {
@@ -24,7 +33,7 @@
   position: absolute;
   inset: auto 0 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(245, 196, 0, 0.28), transparent);
+  background: linear-gradient(90deg, transparent, rgba(245, 196, 0, 0.2), transparent);
   pointer-events: none;
 }
 
@@ -34,20 +43,20 @@
   align-items: center;
   justify-content: center;
   padding: 0 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.035);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01)),
-    radial-gradient(90% 140% at 50% 0%, rgba(245, 196, 0, 0.07), transparent 72%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
+    rgba(10, 13, 18, 0.9);
 }
 
 .egTopHeader__announceInner {
   width: min(1120px, 100%);
   text-align: center;
-  font-size: 8.5px;
-  font-weight: 900;
+  font-size: 8px;
+  font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(255, 236, 177, 0.88);
+  color: rgba(255, 235, 187, 0.82);
 }
 
 .egTopHeader__inner {
@@ -56,157 +65,196 @@
   min-height: var(--eg-header-h);
   padding: 0 12px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: var(--eg-header-side-col) minmax(0, 1fr) var(--eg-header-side-col);
   align-items: center;
-  gap: 10px;
+  column-gap: 6px;
 }
 
 .egTopHeader__left,
+.egTopHeader__center,
 .egTopHeader__right {
+  width: 100%;
+  min-width: 0;
   display: flex;
   align-items: center;
-  flex: 1 1 0;
-  min-width: 0;
 }
 
 .egTopHeader__left {
   justify-content: flex-start;
 }
 
-.egTopHeader__right {
-  justify-content: flex-end;
-}
-
 .egTopHeader__center {
-  display: flex;
   justify-content: center;
   min-width: 0;
 }
 
+.egTopHeader__right {
+  justify-content: flex-end;
+}
+
+.egTopHeader__compPill,
+.egTopHeader__brand,
+.egTopHeader .authPill--signedOut,
+.egTopHeader .authPill--account,
+.egTopHeader .authPillPopover__item {
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.egTopHeader__compPill,
+.egTopHeader__brand {
+  cursor: pointer;
+}
+
 .egTopHeader__compPill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-height: 29px;
-  max-width: 100%;
-  padding: 0 10px 0 7px;
+  position: relative;
+  width: var(--eg-header-badge-size);
+  height: var(--eg-header-badge-size);
+  padding: 0;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(245, 196, 0, 0.26);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
-    rgba(8, 12, 19, 0.92);
-  color: rgba(232, 239, 251, 0.88);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)),
+    rgba(10, 14, 20, 0.95);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 8px 16px rgba(0, 0, 0, 0.14);
-  cursor: pointer;
+    0 5px 12px rgba(0, 0, 0, 0.16);
+}
+
+.egTopHeader__compPill::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 196, 0, 0.14);
+  pointer-events: none;
+}
+
+.egTopHeader__compPill:hover,
+.egTopHeader__compPill:focus-visible {
+  border-color: rgba(245, 196, 0, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 8px 16px rgba(0, 0, 0, 0.18);
 }
 
 .egTopHeader__compPillMark {
-  width: 17px;
-  height: 17px;
-  border-radius: 999px;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 auto;
-  border: 1px solid rgba(245, 196, 0, 0.28);
-  background: linear-gradient(180deg, rgba(245, 196, 0, 0.2), rgba(245, 196, 0, 0.1));
-  color: rgba(255, 240, 197, 0.98);
-  font-size: 8.25px;
+  color: rgba(255, 237, 190, 0.95);
+  font-size: 14px;
   font-weight: 900;
-  letter-spacing: 0.08em;
-}
-
-.egTopHeader__compPillLabel {
-  font-size: 9.5px;
-  font-weight: 800;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  white-space: nowrap;
+  letter-spacing: 0.04em;
+  text-indent: 0.04em;
 }
 
 .egTopHeader__brand {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  width: var(--eg-header-brand-w);
   padding: 0;
   border: 0;
   background: transparent;
-  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.egTopHeader__brandLockup {
-  width: 236px;
-  height: 52px;
+.egTopHeader__brandCrop {
+  width: var(--eg-header-brand-w);
+  height: var(--eg-header-brand-h);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  overflow: hidden;
+  transform: translateY(-4px);
 }
 
 .egTopHeader__brandLogo {
-  width: 100%;
-  max-width: 236px;
-  height: auto;
-  max-height: 50px;
+  width: auto;
+  height: var(--eg-header-brand-img-h);
+  max-width: none;
+  max-height: none;
   object-fit: contain;
-  object-position: center;
-  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.22));
+  object-position: center top;
+  transform: translateY(var(--eg-header-brand-shift-y));
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
 }
 
 .egTopHeader .authPillMenu--header {
   position: relative;
+  max-width: 100%;
 }
 
 .egTopHeader .authPill--signedOut,
 .egTopHeader .authPill--account,
 .egTopHeader .authPill--loading {
+  min-height: var(--eg-header-pill-h);
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025)),
-    rgba(8, 12, 19, 0.92);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)),
+    rgba(10, 14, 20, 0.94);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    0 5px 12px rgba(0, 0, 0, 0.16);
+}
+
+.egTopHeader .authPill--signedOut:hover,
+.egTopHeader .authPill--signedOut:focus-visible,
+.egTopHeader .authPill--account:hover,
+.egTopHeader .authPill--account:focus-visible {
+  border-color: rgba(245, 196, 0, 0.18);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.045),
-    0 8px 18px rgba(0, 0, 0, 0.14);
+    0 8px 16px rgba(0, 0, 0, 0.18);
 }
 
 .egTopHeader .authPill--signedOut {
-  min-height: 31px;
-  padding: 0 11px;
+  padding: 0 13px;
   font-size: 10px;
   font-weight: 800;
   color: rgba(248, 250, 255, 0.96);
+  white-space: nowrap;
 }
 
 .egTopHeader .authPill--account {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  min-height: 31px;
-  max-width: 100%;
-  padding: 0 7px 0 4px;
+  gap: 5px;
+  max-width: 108px;
+  padding: 0 8px 0 5px;
 }
 
 .egTopHeader .authPill--loading {
-  min-height: 31px;
-  padding: 0 10px 0 4px;
-  color: rgba(214, 224, 242, 0.44);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 108px;
+  padding: 0 8px 0 5px;
+  color: rgba(214, 224, 242, 0.46);
 }
 
 .egTopHeader .authPillAvatar {
-  width: 23px;
-  height: 23px;
+  width: 22px;
+  height: 22px;
   border-radius: 999px;
   overflow: hidden;
   flex: 0 0 auto;
-  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .egTopHeader .authPillTeamLogo {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .egTopHeader .authPillInitials {
@@ -215,15 +263,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
   color: rgba(248, 250, 255, 0.96);
 }
 
 .egTopHeader .authPillText {
   min-width: 0;
-  max-width: 94px;
-  font-size: 10px;
+  max-width: 50px;
+  font-size: 9.8px;
   font-weight: 800;
   color: rgba(248, 250, 255, 0.96);
   white-space: nowrap;
@@ -233,61 +281,71 @@
 
 .egTopHeader .authPillChevron {
   flex: 0 0 auto;
-  color: rgba(219, 229, 245, 0.66);
+  color: rgba(219, 229, 245, 0.56);
   transition: transform 150ms ease, color 150ms ease;
 }
 
 .egTopHeader .authPillChevron.is-open {
   transform: rotate(180deg);
-  color: rgba(248, 250, 255, 0.9);
+  color: rgba(248, 250, 255, 0.82);
 }
 
 .egTopHeader .authPillPopover {
   position: absolute;
-  top: calc(100% + 7px);
+  top: calc(100% + 6px);
   right: 0;
-  width: 150px;
+  width: 146px;
   padding: 5px;
   border-radius: 14px;
-  background: rgba(10, 14, 21, 0.96);
+  background: rgba(9, 13, 19, 0.97);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.34);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .egTopHeader .authPillPopover__item {
   width: 100%;
+  min-height: 34px;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 9px 10px;
-  border-radius: 9px;
+  padding: 0 10px;
+  border-radius: 10px;
   background: transparent;
   border: 0;
   color: rgba(238, 243, 252, 0.94);
-  font-size: 12px;
+  font-size: 11.4px;
   font-weight: 700;
   text-align: left;
   cursor: pointer;
 }
 
-.egTopHeader .authPillPopover__item:hover {
-  background: rgba(255, 255, 255, 0.08);
+.egTopHeader .authPillPopover__item:hover,
+.egTopHeader .authPillPopover__item:focus-visible {
+  background: rgba(255, 255, 255, 0.07);
 }
 
-@media (max-width: 640px) {
-  :root {
-    --eg-header-h: 64px;
-    --eg-announce-h: 24px;
-  }
+.egTopHeader__compPill:focus-visible,
+.egTopHeader__brand:focus-visible,
+.egTopHeader .authPill--signedOut:focus-visible,
+.egTopHeader .authPill--account:focus-visible,
+.egTopHeader .authPillPopover__item:focus-visible {
+  outline: 2px solid rgba(245, 196, 0, 0.34);
+  outline-offset: 2px;
+}
 
-  .egTopHeader__inner {
-    position: relative;
-    padding: 0 10px;
-    display: flex;
-    justify-content: space-between;
-    gap: 0;
+@media (max-width: 760px) {
+  :root {
+    --eg-announce-h: 26px;
+    --eg-header-h: 72px;
+    --eg-header-side-col: 96px;
+    --eg-header-badge-size: 44px;
+    --eg-header-brand-w: 120px;
+    --eg-header-brand-h: 34px;
+    --eg-header-brand-img-h: 94px;
+    --eg-header-brand-shift-y: -16px;
+    --eg-header-pill-h: 32px;
   }
 
   .egTopHeader__announce {
@@ -295,135 +353,46 @@
   }
 
   .egTopHeader__announceInner {
-    font-size: 7.75px;
-    letter-spacing: 0.05em;
+    font-size: 7.3px;
+    letter-spacing: 0.1em;
   }
 
-  .egTopHeader__compPill {
-    min-height: 28px;
-    min-width: 112px;
-    gap: 5px;
-    padding: 0 10px 0 7px;
-    border-color: rgba(255, 255, 255, 0.07);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.035),
-      0 6px 14px rgba(0, 0, 0, 0.12);
+  .egTopHeader__brandCrop {
+    transform: translateY(-3px);
+  }
+
+  .egTopHeader__inner {
+    padding: 0 8px;
+    column-gap: 4px;
   }
 
   .egTopHeader__compPillMark {
-    width: 16px;
-    height: 16px;
-    font-size: 7.75px;
+    font-size: 13px;
   }
 
-  .egTopHeader__compPillLabel {
-    font-size: 8.6px;
-    letter-spacing: 0.04em;
+  .egTopHeader .authPill--signedOut {
+    padding: 0 11px;
+    font-size: 9.4px;
   }
 
-  .egTopHeader__center {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-  }
-
-  .egTopHeader__brand {
-    pointer-events: auto;
-  }
-
-  .egTopHeader__brandLockup {
-    width: 276px;
-    height: 58px;
-  }
-
-  .egTopHeader__brandLogo {
-    width: 100%;
-    max-width: 276px;
-    height: auto;
-    max-height: 58px;
-    object-fit: contain;
-    object-position: center;
-  }
-
-  .egTopHeader__left,
-  .egTopHeader__right {
-    position: relative;
-    z-index: 1;
-    flex: 0 0 auto;
-    min-width: 0;
-  }
-
-  .egTopHeader .authPill--signedOut,
-  .egTopHeader .authPill--account {
+  .egTopHeader .authPill--account,
+  .egTopHeader .authPill--loading {
+    max-width: 92px;
     gap: 4px;
-    padding: 0 6px 0 3px;
-    min-height: 29px;
+    padding: 0 7px 0 4px;
   }
 
   .egTopHeader .authPillAvatar {
-    width: 22px;
-    height: 22px;
+    width: 21px;
+    height: 21px;
   }
 
   .egTopHeader .authPillText {
-    max-width: 68px;
-    font-size: 9.35px;
+    max-width: 38px;
+    font-size: 9px;
   }
 
-  .egTopHeader .authPill--signedOut {
-    min-height: 28px;
-    padding: 0 9px;
-    font-size: 9.1px;
-  }
-}
-
-@media (max-width: 430px) {
-  .egTopHeader__inner {
-    padding: 0 9px;
-  }
-
-  .egTopHeader__brandLockup {
-    width: clamp(232px, 64vw, 252px);
-    height: 54px;
-  }
-
-  .egTopHeader__brandLogo {
-    width: 100%;
-    max-width: clamp(232px, 64vw, 252px);
-    height: auto;
-    max-height: 54px;
-    object-fit: contain;
-    object-position: center;
-  }
-
-  .egTopHeader .authPillText {
-    max-width: 44px;
-    font-size: 8.9px;
-  }
-
-  .egTopHeader .authPill--signedOut {
-    min-height: 27px;
-    padding: 0 8px;
-    font-size: 8.9px;
-  }
-
-  .egTopHeader__announceInner {
-    font-size: 6.9px;
-    letter-spacing: 0.03em;
-  }
-
-  .egTopHeader__compPill {
-    min-height: 27px;
-    min-width: 106px;
-    gap: 5px;
-    padding: 0 8px 0 6px;
-  }
-
-  .egTopHeader__compPillLabel {
-    font-size: 8.2px;
-    letter-spacing: 0.03em;
+  .egTopHeader .authPillPopover {
+    width: 138px;
   }
 }

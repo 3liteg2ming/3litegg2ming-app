@@ -19,12 +19,11 @@ export default function TopHeader() {
             type="button"
             className="egTopHeader__compPill"
             onClick={() => nav('/preseason-registration')}
-            aria-label="Open preseason registration"
+            aria-label="Open AFL 26 preseason registration"
           >
             <span className="egTopHeader__compPillMark" aria-hidden="true">
               26
             </span>
-            <span className="egTopHeader__compPillLabel">Preseason</span>
           </button>
         </div>
 
@@ -35,11 +34,11 @@ export default function TopHeader() {
             onClick={() => nav('/preseason-registration')}
             aria-label="Go to preseason registration"
           >
-            <span className="egTopHeader__brandLockup" aria-hidden="true">
+            <span className="egTopHeader__brandCrop" aria-hidden="true">
               <img
                 className="egTopHeader__brandLogo"
                 src={assetUrl('elite-gaming-logo.png')}
-                alt="Elite Gaming"
+                alt=""
                 loading="eager"
               />
             </span>

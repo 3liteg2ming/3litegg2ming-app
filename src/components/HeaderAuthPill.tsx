@@ -1,4 +1,4 @@
-import { ChevronDown, LogOut } from 'lucide-react';
+import { ChevronDown, LayoutDashboard, LogOut } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { assetUrl, TEAM_ASSETS, type TeamKey } from '../lib/teamAssets';
@@ -76,7 +76,7 @@ export function HeaderAuthPill() {
         type="button"
         className={`authPill authPill--account authPill--header ${open ? 'is-open' : ''}`}
         onClick={() => setOpen((current) => !current)}
-        aria-label="Open account menu"
+        aria-label={`${coachFirstName} account menu`}
         aria-haspopup="menu"
         aria-expanded={open}
       >
@@ -92,14 +92,24 @@ export function HeaderAuthPill() {
             <span className="authPillInitials">{coachFirstName.slice(0, 1)}</span>
           )}
         </span>
-        <span className="authPillText">
-          Hi, {coachFirstName}
-        </span>
+        <span className="authPillText">{coachFirstName}</span>
         <ChevronDown size={14} className={`authPillChevron ${open ? 'is-open' : ''}`} aria-hidden="true" />
       </button>
 
       {open ? (
         <div className="authPillPopover" role="menu" aria-label="Account actions">
+          <button
+            type="button"
+            className="authPillPopover__item"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              nav('/members');
+            }}
+          >
+            <LayoutDashboard size={15} />
+            <span>Coach Hub</span>
+          </button>
           <button
             type="button"
             className="authPillPopover__item"

@@ -11,7 +11,7 @@ import { requireSupabaseClient } from '../lib/supabaseClient';
 import '../styles/preseason-registration.css';
 
 const supabase = requireSupabaseClient();
-const TEAMS_CACHE_KEY = 'eg:preseason:teams:v1';
+const TEAMS_CACHE_KEY = 'eg:preseason:teams:v2';
 const TEAMS_CACHE_TTL_MS = 10 * 60 * 1000;
 
 const REG_UNLOCK_AT =
@@ -22,6 +22,7 @@ const AFL26_LOGO_URL = 'https://zohtixrgskbzosgfluni.supabase.co/storage/v1/obje
 type TeamRow = {
   id: string;
   name: string;
+  displayName: string;
   logo_url?: string | null;
   slug?: string | null;
 };
@@ -29,6 +30,11 @@ type TeamRow = {
 type TeamFetchRow = {
   id: string | null;
   name: string | null;
+  short_name?: string | null;
+  shortName?: string | null;
+  short_label?: string | null;
+  shortLabel?: string | null;
+  nickname?: string | null;
   logo_url?: string | null;
   slug?: string | null;
 };
@@ -247,6 +253,23 @@ function shortTeamName(name: string): string {
   return stripped || raw;
 }
 
+function getTeamDisplayName(team: Pick<TeamFetchRow, 'name' | 'short_name' | 'shortName' | 'short_label' | 'shortLabel' | 'nickname'>): string {
+  const candidates = [
+    text(team.short_name),
+    text(team.shortName),
+    text(team.short_label),
+    text(team.shortLabel),
+    text(team.nickname),
+    text(team.name),
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate) return shortTeamName(candidate);
+  }
+
+  return 'Team';
+}
+
 function dedupeTeams(rows: TeamFetchRow[]): TeamFetchRow[] {
   const byKey = new Map<string, TeamFetchRow>();
 
@@ -294,6 +317,7 @@ function mapTeamRows(rows: TeamFetchRow[]): TeamRow[] {
         id,
         slug: text(team.slug) || null,
         name: shortTeamName(rawName),
+        displayName: getTeamDisplayName(team),
         logo_url: normalizeLogoUrl(team.logo_url || null, team.slug || null, rawName),
       } as TeamRow;
     })
@@ -532,7 +556,7 @@ export default function PreseasonRegistrationPage() {
 
     (async () => {
       try {
-        const teamsRes = await supabase.from('eg_teams').select('id,name,logo_url,slug').order('name', { ascending: true });
+        const teamsRes = await supabase.from('eg_teams').select('id,name,short_name,logo_url,slug').order('name', { ascending: true });
         if (!alive) return;
         if (teamsRes.error) throw new Error(teamsRes.error.message || 'Unable to load teams.');
 
@@ -676,6 +700,10 @@ export default function PreseasonRegistrationPage() {
     });
   }
 
+  function scrollToSection(id: string) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   async function submitRegistration(event: React.FormEvent) {
     event.preventDefault();
 
@@ -797,7 +825,7 @@ export default function PreseasonRegistrationPage() {
       <div className={`prLockable ${lockActive ? 'is-locked' : ''}`}>
         <div className="prShell">
           {submitted ? (
-            <section className="prConfirmCard prConfirmCard--standalone">
+            <section className="prConfirmCard prConfirmCard--standalone" id="pr-confirm-card">
               <div className="prConfirmCard__icon">
                 <CheckCircle2 size={22} />
               </div>
@@ -822,15 +850,20 @@ export default function PreseasonRegistrationPage() {
               <div className="prConfirmCard__state" role="status" aria-live="polite">
                 Registration complete
               </div>
+              <div className="prConfirmCard__actions">
+                <button type="button" className="prBtn prBtn--ghost" onClick={() => scrollToSection('pr-confirm-card')}>
+                  View registration
+                </button>
+              </div>
             </section>
           ) : (
             <>
               <RegistrationHeroCard
                 className="prHeroCard"
-                title="AFL 26 preseason"
-                subtitle="Choose up to four preferred clubs, then confirm your entry."
-                seedNote="Your confirmed order becomes your preseason entry."
-                kicker="AFL 26 PRESEASON"
+                title="Register for AFL 26 preseason"
+                subtitle="Lock in up to four preferred clubs, then confirm your place before opening bounce."
+                seedNote="Your saved order becomes your official preseason entry."
+                kicker="Official preseason entry"
                 leftLogoUrl={heroLogos.left}
                 rightLogoUrl={heroLogos.right}
                 fallbackMark="EG"
@@ -855,7 +888,7 @@ export default function PreseasonRegistrationPage() {
                         type="button"
                         className="prBtn prBtn--primary"
                         disabled={lockActive}
-                        onClick={() => document.getElementById('pr-form')?.scrollIntoView({ behavior: 'smooth' })}
+                        onClick={() => scrollToSection('pr-form')}
                       >
                         Choose clubs
                       </button>

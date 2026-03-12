@@ -6,6 +6,7 @@ import '../styles/registration-hero.css';
 type TeamRow = {
   id: string;
   name: string;
+  displayName?: string;
   logo_url?: string | null;
 };
 
@@ -76,6 +77,7 @@ export default function TeamLogoGrid({
         {teams.map((team) => {
           const active = selected.has(team.id);
           const order = orderById.get(team.id) ?? 0;
+          const displayName = team.displayName || team.name;
           return (
             <button
               key={team.id}
@@ -84,8 +86,8 @@ export default function TeamLogoGrid({
               onClick={() => onToggle(team.id)}
               disabled={disabled}
               aria-pressed={active}
-              aria-label={team.name}
-              title={team.name}
+              aria-label={displayName}
+              title={displayName}
             >
               {active ? (
                 <div className="tlgCard__order" aria-hidden="true">
@@ -104,7 +106,7 @@ export default function TeamLogoGrid({
                   <Check size={12} />
                 </span>
               ) : null}
-              <span className="tlgCard__name">{team.name}</span>
+              <span className="tlgCard__name">{displayName}</span>
             </button>
           );
         })}
