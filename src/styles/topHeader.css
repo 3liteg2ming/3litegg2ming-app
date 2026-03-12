@@ -164,6 +164,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  transform: translateY(-1px);
 }
 
 .egTopHeader__brandCrop {
@@ -173,7 +174,7 @@
   align-items: flex-start;
   justify-content: center;
   overflow: hidden;
-  transform: translateY(-4px);
+  transform: translateY(-2px);
 }
 
 .egTopHeader__brandLogo {
@@ -358,7 +359,11 @@
   }
 
   .egTopHeader__brandCrop {
-    transform: translateY(-3px);
+    transform: translateY(-1px);
+  }
+
+  .egTopHeader__brand {
+    transform: translateY(-1px);
   }
 
   .egTopHeader__inner {
