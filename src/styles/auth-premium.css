@@ -20,7 +20,7 @@
 .auth-card--premium {
   width: 100%;
   max-width: 500px;
-  padding: 28px 26px 22px;
+  padding: 28px 24px 22px;
   border-radius: 30px;
   border: 1px solid rgba(255, 255, 255, 0.11);
   background:
@@ -37,12 +37,12 @@
 }
 
 .auth-card--premium.auth-card--wide {
-  max-width: 660px;
+  max-width: 680px;
 }
 
 .auth-card--premium.auth-card--signin,
 .auth-card--premium.auth-card--forgot {
-  max-width: 460px;
+  max-width: 470px;
 }
 
 .auth-screen--premium .auth-back {
@@ -112,8 +112,10 @@
 }
 
 .auth-form--premium {
-  gap: 16px;
+  gap: 17px;
   margin-top: 24px;
+  position: relative;
+  z-index: 1;
 }
 
 .auth-form--signup {
@@ -149,6 +151,8 @@
   padding: 12px 14px;
   background: rgba(3, 7, 13, 0.58);
   border-color: rgba(255, 255, 255, 0.11);
+  position: relative;
+  z-index: 1;
 }
 
 .auth-card--premium .auth-inputWrap:focus-within {
@@ -183,6 +187,8 @@
   place-items: center;
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.12);
+  touch-action: manipulation;
+  pointer-events: auto;
 }
 
 .auth-inlineStack {
@@ -253,6 +259,10 @@
 .auth-card--premium .auth-primary {
   min-height: 52px;
   border-radius: 18px;
+  position: relative;
+  z-index: 1;
+  touch-action: manipulation;
+  pointer-events: auto;
   box-shadow:
     0 16px 28px rgba(245, 196, 0, 0.22),
     inset 0 1px 0 rgba(255, 255, 255, 0.38),
@@ -347,7 +357,7 @@ html {
 
 @media (max-width: 760px) {
   .auth-card--premium {
-    padding: 24px 20px 20px;
+    padding: 24px 18px 20px;
     border-radius: 26px;
   }
 
@@ -369,6 +379,11 @@ html {
   .auth-card--premium {
     padding: 20px 16px 16px;
     border-radius: 22px;
+  }
+
+  .auth-footerLinks,
+  .auth-footerLinks--single {
+    justify-content: flex-start;
   }
 
   .auth-card--premium .auth-title {

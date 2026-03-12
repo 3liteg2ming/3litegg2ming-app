@@ -10,7 +10,7 @@ export default function TopHeader() {
   return (
     <header className="egTopHeader" role="banner">
       <div className="egTopHeader__announce" role="status" aria-live="polite">
-        <div className="egTopHeader__announceInner">Elite Gaming AFL 26 preseason registrations are live.</div>
+        <div className="egTopHeader__announceInner">Preseason registrations are now open.</div>
       </div>
 
       <div className="egTopHeader__inner">

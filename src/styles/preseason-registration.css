@@ -111,14 +111,14 @@
 
 .prPage .regHeroCard {
   border-radius: 28px;
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.11);
   background:
-    linear-gradient(135deg, rgba(4, 9, 16, 0.94), rgba(6, 11, 18, 0.82)),
-    radial-gradient(80% 110% at 15% 15%, rgba(245, 196, 0, 0.16), transparent 64%),
-    radial-gradient(84% 114% at 88% 16%, rgba(73, 147, 255, 0.18), transparent 70%);
+    linear-gradient(135deg, rgba(4, 9, 16, 0.96), rgba(6, 11, 18, 0.84)),
+    radial-gradient(84% 114% at 15% 15%, rgba(245, 196, 0, 0.14), transparent 64%),
+    radial-gradient(88% 118% at 88% 16%, rgba(73, 147, 255, 0.16), transparent 70%);
   box-shadow:
     0 0 0 1px rgba(245, 196, 0, 0.06),
-    0 30px 70px rgba(1, 5, 14, 0.48);
+    0 24px 56px rgba(1, 5, 14, 0.42);
 }
 
 .prPage .regHeroCard::after {
@@ -131,7 +131,7 @@
 }
 
 .prPage .regHeroCard__content {
-  padding: 15px;
+  padding: 14px;
 }
 
 .prPage .regHeroCard__top {
@@ -151,7 +151,7 @@
 }
 
 .prPage .regHeroCard__subtitle {
-  max-width: 40ch;
+  max-width: 34ch;
   font-size: clamp(14px, 1.8vw, 15px);
   line-height: 1.55;
   color: rgba(233, 239, 250, 0.85);
@@ -177,25 +177,27 @@
 
 .prFormatNote {
   display: grid;
-  gap: 4px;
-  padding: 13px 15px;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.045);
+  gap: 3px;
+  padding: 11px 13px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
+    rgba(7, 11, 18, 0.62);
 }
 
 .prFormatNote__label {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 900;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgba(229, 216, 163, 0.74);
 }
 
 .prFormatNote__text {
-  font-size: 13px;
-  line-height: 1.5;
-  color: rgba(230, 237, 248, 0.82);
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(230, 237, 248, 0.78);
 }
 
 .prHeroActions {
@@ -213,7 +215,7 @@
 }
 
 .prFormCard {
-  padding: 15px;
+  padding: 14px;
 }
 
 .prForm {
@@ -368,7 +370,7 @@
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
     radial-gradient(120% 120% at 0% 0%, rgba(245, 196, 0, 0.1), transparent 66%);
-  gap: 12px;
+  gap: 11px;
 }
 
 .prConfirmCard--standalone {
@@ -396,18 +398,18 @@
 
 .prConfirmCard__summary {
   display: grid;
-  gap: 8px;
+  gap: 7px;
 }
 
 .prConfirmCard__row {
   display: grid;
   grid-template-columns: minmax(0, 92px) minmax(0, 1fr);
   align-items: start;
-  gap: 10px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
+  gap: 9px;
+  padding: 11px 13px;
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .prConfirmCard__row span {
@@ -505,7 +507,7 @@
   position: relative;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.04);
   min-height: 128px;
   padding: 12px 10px;
   display: grid;
@@ -524,10 +526,11 @@
 }
 
 .prPage .tlgCard.is-active {
-  border-color: rgba(245, 196, 0, 0.34);
-  background: linear-gradient(180deg, rgba(245, 196, 0, 0.14), rgba(255, 255, 255, 0.05));
+  border-color: rgba(245, 196, 0, 0.52);
+  background: linear-gradient(180deg, rgba(245, 196, 0, 0.12), rgba(255, 255, 255, 0.04));
   box-shadow:
-    0 18px 30px rgba(245, 196, 0, 0.1),
+    0 0 0 1px rgba(245, 196, 0, 0.14),
+    0 18px 32px rgba(245, 196, 0, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
@@ -557,12 +560,10 @@
 }
 
 .prPage .tlgCard__check {
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  border: 1px solid rgba(245, 196, 0, 0.34);
-  background: rgba(245, 196, 0, 0.16);
-  color: rgba(255, 237, 181, 0.98);
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 .prPage .tlgCard__order {

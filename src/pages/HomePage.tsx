@@ -6,6 +6,7 @@ import { useAuth } from '../state/auth/AuthProvider';
 import '../styles/home.css';
 
 const FORMAT_NOTE = 'Format: 2 home-and-away matches, followed by knockout finals.';
+const AFL26_LOGO_URL = 'https://zohtixrgskbzosgfluni.supabase.co/storage/v1/object/public/Assets/afl26-logo.png';
 
 function firstName(value?: string | null, email?: string | null) {
   const name = String(value || '').trim();
@@ -44,7 +45,7 @@ export default function HomePage() {
   const secondaryLabel = user ? 'Update preferences' : 'Sign in';
   const statusLine = user
     ? `Signed in as ${coachFirstName}. Continue to confirm your club order.`
-    : 'Create your account, set your club order, and lock in your entry today.';
+    : 'Create your account, choose your clubs, and lock in your entry today.';
 
   return (
     <div className="homePage">
@@ -63,11 +64,12 @@ export default function HomePage() {
               <span className="homeHeroCard__kicker">
                 <Zap size={14} /> Coach registration
               </span>
+              <img className="homeHeroCard__heroLogo" src={AFL26_LOGO_URL} alt="AFL 26" loading="lazy" />
             </div>
 
             <div className="homeHeroCard__copy">
               <h2>Lock in your club order for AFL 26.</h2>
-              <p>Choose up to four preferred clubs, confirm your preseason entry, and keep everything in one clean public flow.</p>
+              <p>Choose up to four preferred clubs, confirm your entry, and keep everything inside one clean public microsite.</p>
             </div>
 
             <div className="homeHeroCard__actions">
@@ -104,7 +106,7 @@ export default function HomePage() {
 
         <section className="homeCard homeCard--compact homeCard--quiet homeCoachesPanel" aria-label="Current coaches">
           <HomeSectionHeader icon={<ShieldCheck size={15} />} title="Current Coaches" actionText="Registration board" />
-          <p className="homeCoachesPanel__text">Confirmed coaches and team allocations will appear here as registrations are processed.</p>
+          <p className="homeCoachesPanel__text">Confirmed coaches and club allocations will appear here as registrations are processed.</p>
           <button type="button" className="homeCoachesPanel__cta" onClick={() => navigate('/preseason-registration')}>
             View registration
           </button>

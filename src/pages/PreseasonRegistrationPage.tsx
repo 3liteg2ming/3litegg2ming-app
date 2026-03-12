@@ -819,7 +819,7 @@ export default function PreseasonRegistrationPage() {
               </div>
               <p className="prConfirmCard__note">{PRESEASON_FORMAT_NOTE}</p>
               <button type="button" className="prBtn prBtn--primary" onClick={() => navigate('/preseason-registration')}>
-                Back to registration
+                Review entry
               </button>
             </section>
           ) : (
@@ -827,8 +827,8 @@ export default function PreseasonRegistrationPage() {
               <RegistrationHeroCard
                 className="prHeroCard"
                 title="AFL 26 preseason"
-                subtitle="Choose up to four preferred clubs and confirm your entry."
-                seedNote="One confirmed entry locks your preference order."
+                subtitle="Choose up to four preferred clubs, then confirm your entry."
+                seedNote="Your confirmed order becomes your preseason entry."
                 kicker="AFL 26 PRESEASON"
                 leftLogoUrl={heroLogos.left}
                 rightLogoUrl={heroLogos.right}
