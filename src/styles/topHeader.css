@@ -141,29 +141,18 @@
   height: 52px;
   display: grid;
   place-items: center;
-  align-content: center;
-  gap: 2px;
 }
 
 .egTopHeader__brandLogo {
   width: 100%;
   max-width: 236px;
   height: auto;
-  max-height: 42px;
+  max-height: 50px;
   object-fit: contain;
   object-position: center;
-  transform: scale(1.12);
+  transform: scale(1.28);
   transform-origin: center;
   filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.22));
-}
-
-.egTopHeader__brandLabel {
-  font-size: 7px;
-  font-weight: 900;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: rgba(255, 233, 167, 0.84);
-  white-space: nowrap;
 }
 
 .egTopHeader .authPillMenu--header {
@@ -327,18 +316,12 @@
   .egTopHeader__brandLockup {
     width: 214px;
     height: 46px;
-    gap: 1px;
   }
 
   .egTopHeader__brandLogo {
     max-width: 214px;
-    max-height: 36px;
-    transform: scale(1.28);
-  }
-
-  .egTopHeader__brandLabel {
-    font-size: 6.25px;
-    letter-spacing: 0.2em;
+    max-height: 44px;
+    transform: scale(1.42);
   }
 
   .egTopHeader .authPill--account {
@@ -371,13 +354,8 @@
 
   .egTopHeader__brandLogo {
     max-width: clamp(180px, 50vw, 202px);
-    max-height: 33px;
-    transform: scale(1.4);
-  }
-
-  .egTopHeader__brandLabel {
-    font-size: 5.6px;
-    letter-spacing: 0.18em;
+    max-height: 40px;
+    transform: scale(1.58);
   }
 
   .egTopHeader .authPillText {
