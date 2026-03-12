@@ -1,0 +1,238 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+      - generic "Elite Gaming" [ref=e14]:
+        - button "Go to home" [ref=e15] [cursor=pointer]:
+          - img [ref=e59]
+      - button "Sign in" [ref=e60] [cursor=pointer]:
+        - img [ref=e61]
+        - generic [ref=e64]: Sign in
+  - main [ref=e19]:
+    - generic [ref=e21]:
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]: Fixtures
+          - generic [ref=e25]: 9 matches
+        - generic [ref=e26]:
+          - button "Change competition" [ref=e27]:
+            - generic [ref=e28]: Competition
+            - generic [ref=e29]: Knockout Preseason
+            - img [ref=e30]
+          - button "Open fixtures filters" [ref=e32]:
+            - img [ref=e33]
+            - text: Filter
+        - generic "Preseason format" [ref=e35]:
+          - generic [ref=e36]: "Format:"
+          - generic [ref=e37]: 2 Rounds guaranteed
+          - generic [ref=e38]: •
+          - generic [ref=e39]: Top 8 seeded finals
+          - generic [ref=e40]: •
+          - generic [ref=e41]: Grand Final
+        - generic "Round selector" [ref=e42]:
+          - button "R1" [ref=e43]
+          - button "R2" [ref=e44]
+        - generic "Status filters" [ref=e45]:
+          - button "All 9" [ref=e65]:
+            - generic [ref=e47]: All
+            - generic [ref=e48]: "9"
+          - button "Scheduled 8" [ref=e66]:
+            - generic [ref=e50]: Scheduled
+            - generic [ref=e51]: "8"
+          - button "Final 1" [ref=e67]:
+            - generic [ref=e53]: Final
+            - generic [ref=e54]: "1"
+        - generic [ref=e55]: Scheduled 8 • Final 1 • 6/9
+      - generic [ref=e68]:
+        - generic [ref=e69]:
+          - generic [ref=e70]:
+            - generic [ref=e71]: Knockout • Round 1
+            - generic [ref=e74]: SCHEDULED
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic [ref=e75]:
+            - generic [ref=e76]:
+              - img "Western Bulldogs" [ref=e78]
+              - generic [ref=e79]: DOGS
+              - generic [ref=e80]: Western Bulldogs
+            - generic [ref=e82]: Match Day
+            - generic [ref=e83]:
+              - img "Brisbane" [ref=e85]
+              - generic [ref=e86]: LIONS
+              - generic [ref=e87]: Brisbane
+          - generic [ref=e88]:
+            - generic [ref=e89]:
+              - generic [ref=e90]: Coach
+              - generic [ref=e91]: Jacob Merrett
+              - generic [ref=e92]: PSN
+              - generic [ref=e93]: Jmerrett04
+            - generic [ref=e94]:
+              - generic [ref=e95]: Coach
+              - generic [ref=e96]: Coach TBC
+              - generic [ref=e97]: PSN
+              - generic [ref=e98]: PSN TBC
+          - button "MATCH CENTRE" [ref=e99] [cursor=pointer]
+        - generic [ref=e100]:
+          - generic [ref=e101]:
+            - generic [ref=e102]: Knockout • Round 1
+            - generic [ref=e105]: SCHEDULED
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic [ref=e106]:
+            - generic [ref=e107]:
+              - img "Fremantle" [ref=e109]
+              - generic [ref=e110]: DOCKERS
+              - generic [ref=e111]: Fremantle
+            - generic [ref=e113]: Match Day
+            - generic [ref=e114]:
+              - img "Sydney" [ref=e116]
+              - generic [ref=e117]: SWANS
+              - generic [ref=e118]: Sydney
+          - generic [ref=e119]:
+            - generic [ref=e120]:
+              - generic [ref=e121]: Coach
+              - generic [ref=e122]: Coach TBC
+              - generic [ref=e123]: PSN
+              - generic [ref=e124]: PSN TBC
+            - generic [ref=e125]:
+              - generic [ref=e126]: Coach
+              - generic [ref=e127]: Dale Finch
+              - generic [ref=e128]: PSN
+              - generic [ref=e129]: inchfinch
+          - button "MATCH CENTRE" [ref=e130] [cursor=pointer]
+        - generic [ref=e131]:
+          - generic [ref=e132]:
+            - generic [ref=e133]: Knockout • Round 1
+            - generic [ref=e136]: FULL TIME
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic [ref=e137]:
+            - generic [ref=e138]:
+              - img "Gold Coast" [ref=e140]
+              - generic [ref=e141]: SUNS
+              - generic [ref=e142]: Gold Coast
+            - generic [ref=e143]:
+              - generic [ref=e144]: FULL TIME
+              - generic [ref=e145]:
+                - generic [ref=e146]: "34"
+                - generic [ref=e147]: "-"
+                - generic [ref=e148]: "13"
+              - generic [ref=e149]:
+                - generic [ref=e150]: "5.4"
+                - generic [ref=e152]: "2.1"
+            - generic [ref=e153]:
+              - img "GWS" [ref=e155]
+              - generic [ref=e156]: GIANTS
+              - generic [ref=e157]: GWS
+          - generic [ref=e158]: Gold Coast by 21
+          - generic [ref=e159]:
+            - generic [ref=e160]:
+              - generic [ref=e161]: Coach
+              - generic [ref=e162]: Zach
+              - generic [ref=e163]: PSN
+              - generic [ref=e164]: ELITEYODA10
+            - generic [ref=e165]:
+              - generic [ref=e166]: Coach
+              - generic [ref=e167]: Coach TBC
+              - generic [ref=e168]: PSN
+              - generic [ref=e169]: PSN TBC
+          - button "MATCH CENTRE" [ref=e170] [cursor=pointer]
+        - generic [ref=e171]:
+          - generic [ref=e172]:
+            - generic [ref=e173]: Knockout • Round 1
+            - generic [ref=e176]: SCHEDULED
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic [ref=e177]:
+            - generic [ref=e178]:
+              - img "St Kilda" [ref=e180]
+              - generic [ref=e181]: SAINTS
+              - generic [ref=e182]: St Kilda
+            - generic [ref=e184]: Match Day
+            - generic [ref=e185]:
+              - img "Collingwood" [ref=e187]
+              - generic [ref=e188]: MAGPIES
+              - generic [ref=e189]: Collingwood
+          - generic [ref=e190]:
+            - generic [ref=e191]:
+              - generic [ref=e192]: Coach
+              - generic [ref=e193]: Motchell Palma
+              - generic [ref=e194]: PSN
+              - generic [ref=e195]: IloveuaddirE69
+            - generic [ref=e196]:
+              - generic [ref=e197]: Coach
+              - generic [ref=e198]: Coach TBC
+              - generic [ref=e199]: PSN
+              - generic [ref=e200]: PSN TBC
+          - button "MATCH CENTRE" [ref=e201] [cursor=pointer]
+        - generic [ref=e202]:
+          - generic [ref=e203]:
+            - generic [ref=e204]: Knockout • Round 1
+            - generic [ref=e207]: SCHEDULED
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic [ref=e208]:
+            - generic [ref=e209]:
+              - img "Adelaide" [ref=e211]
+              - generic [ref=e212]: CROWS
+              - generic [ref=e213]: Adelaide
+            - generic [ref=e215]: Match Day
+            - generic [ref=e216]:
+              - img "Port Adelaide" [ref=e218]
+              - generic [ref=e219]: POWER
+              - generic [ref=e220]: Port Adelaide
+          - generic [ref=e221]:
+            - generic [ref=e222]:
+              - generic [ref=e223]: Coach
+              - generic [ref=e224]: Dean Ravenhall
+              - generic [ref=e225]: PSN
+              - generic [ref=e226]: ravenmad8
+            - generic [ref=e227]:
+              - generic [ref=e228]: Coach
+              - generic [ref=e229]: Coach TBC
+              - generic [ref=e230]: PSN
+              - generic [ref=e231]: PSN TBC
+          - button "MATCH CENTRE" [ref=e232] [cursor=pointer]
+        - generic [ref=e233]:
+          - generic [ref=e234]:
+            - generic [ref=e235]: Knockout • Round 1
+            - generic [ref=e238]: SCHEDULED
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic [ref=e239]:
+            - generic [ref=e240]:
+              - img "North Melbourne" [ref=e242]
+              - generic [ref=e243]: ROOS
+              - generic [ref=e244]: North Melbourne
+            - generic [ref=e246]: Match Day
+            - generic [ref=e247]:
+              - img "Essendon" [ref=e249]
+              - generic [ref=e250]: BOMBERS
+              - generic [ref=e251]: Essendon
+          - generic [ref=e252]:
+            - generic [ref=e253]:
+              - generic [ref=e254]: Coach
+              - generic [ref=e255]: Coach TBC
+              - generic [ref=e256]: PSN
+              - generic [ref=e257]: PSN TBC
+            - generic [ref=e258]:
+              - generic [ref=e259]: Coach
+              - generic [ref=e260]: Coach TBC
+              - generic [ref=e261]: PSN
+              - generic [ref=e262]: PSN TBC
+          - button "MATCH CENTRE" [ref=e263] [cursor=pointer]

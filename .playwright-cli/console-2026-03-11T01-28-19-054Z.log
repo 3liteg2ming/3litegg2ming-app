@@ -1,0 +1,138 @@
+[     344ms] [ERROR] Warning: React does not recognize the `%s` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `%s` instead. If you accidentally passed it from a parent component, remove it from the DOM element.%s fetchPriority fetchpriority 
+    at img
+    at SmartImg (http://127.0.0.1:5173/src/components/SmartImg.tsx:20:3)
+    at div
+    at div
+    at div
+    at MotionComponent (http://127.0.0.1:5173/node_modules/.vite/deps/framer-motion.js?v=47aa2e9b:946:40)
+    at div
+    at section
+    at HeroHeader (http://127.0.0.1:5173/src/components/match-centre/broadcast/HeroHeader.tsx:70:38)
+    at div
+    at div
+    at MatchCentrePage (http://127.0.0.1:5173/src/pages/MatchCentrePage.tsx:36:20)
+    at RenderedRoute (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4130:5)
+    at Routes (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4600:5)
+    at Suspense
+    at ErrorBoundary (http://127.0.0.1:5173/src/components/ErrorBoundary.tsx:11:5)
+    at main
+    at AppRoutes (http://127.0.0.1:5173/src/App.tsx?t=1773192089824:146:20)
+    at QueryClientProvider (http://127.0.0.1:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=47aa2e9b:3103:3)
+    at div
+    at div
+    at AppShell (http://127.0.0.1:5173/src/App.tsx?t=1773192089824:582:20)
+    at App
+    at Router (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4543:15)
+    at BrowserRouter (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:5289:5)
+    at AuthProvider (http://127.0.0.1:5173/src/state/auth/AuthProvider.tsx:156:32) @ http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:520
+[     385ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[     385ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[     478ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:5173/favicon.ico:0
+[ 4038587ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_players?select=id%2Cfirst_name%2Clast_name%2Cteam_id%2Cposition%2Cnumber%2Cheadshot_url%2Cphoto_url&limit=5000&team_id=in.%280ceb3e8b-4504-4ddd-b7c6-e2bf4215eada%2C501a05f7-174e-4a86-8cea-db048be8b646%2C0a73bf79-7321-4fd5-8b67-90fffabdcf01%2C5a697f25-65ef-4a40-9446-c813bbd624dc%2C8953891c-6af3-4f31-8386-7340f0c27f9c%2C0d8207f2-c6ac-43c7-b3b1-154eb1648fe5%2C914ab50f-d78d-4a28-aaef-6e4db1410600%2C4a0822e2-ed7a-4fc4-8e70-bd1d1b92d3f8%2C6d7d39fb-1136-4cc8-a68c-bb6a284f2245%2C70c32ca0-2bec-4db6-9b70-b8c8327f51c1%2C85de4282-cc6a-4db6-b4f6-8520b69c38de%2C38694aa4-7f1c-4a5f-b306-d094532ae24a%2C6689e156-49a9-4066-a22e-259375fa9b04%2C7fddbede-9cbf-4436-9845-1db1739b2476%2C82880eac-b132-4b23-93d7-0ec25ff0a023%2C6e06405b-7cff-4d56-b852-48cc980c21bb%2Cd991371b-e2f7-4c95-ad7c-52ea89b07d7b%2Cf70ca36c-612b-439f-850f-4a31fd2df499%29:0
+[ 4038702ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_players?select=id%2Cfirst_name%2Clast_name%2Cteam_id%2Cheadshot_url%2Cphoto_url&limit=5000&team_id=in.%280ceb3e8b-4504-4ddd-b7c6-e2bf4215eada%2C501a05f7-174e-4a86-8cea-db048be8b646%2C0a73bf79-7321-4fd5-8b67-90fffabdcf01%2C5a697f25-65ef-4a40-9446-c813bbd624dc%2C8953891c-6af3-4f31-8386-7340f0c27f9c%2C0d8207f2-c6ac-43c7-b3b1-154eb1648fe5%2C914ab50f-d78d-4a28-aaef-6e4db1410600%2C4a0822e2-ed7a-4fc4-8e70-bd1d1b92d3f8%2C6d7d39fb-1136-4cc8-a68c-bb6a284f2245%2C70c32ca0-2bec-4db6-9b70-b8c8327f51c1%2C85de4282-cc6a-4db6-b4f6-8520b69c38de%2C38694aa4-7f1c-4a5f-b306-d094532ae24a%2C6689e156-49a9-4066-a22e-259375fa9b04%2C7fddbede-9cbf-4436-9845-1db1739b2476%2C82880eac-b132-4b23-93d7-0ec25ff0a023%2C6e06405b-7cff-4d56-b852-48cc980c21bb%2Cd991371b-e2f7-4c95-ad7c-52ea89b07d7b%2Cf70ca36c-612b-439f-850f-4a31fd2df499%29:0
+[ 4039063ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_players?select=id%2Cfirst_name%2Clast_name%2Cposition%2Cnumber%2Cheadshot_url%2Cphoto_url&limit=5000&team_id=in.%280ceb3e8b-4504-4ddd-b7c6-e2bf4215eada%2C501a05f7-174e-4a86-8cea-db048be8b646%2C0a73bf79-7321-4fd5-8b67-90fffabdcf01%2C5a697f25-65ef-4a40-9446-c813bbd624dc%2C8953891c-6af3-4f31-8386-7340f0c27f9c%2C0d8207f2-c6ac-43c7-b3b1-154eb1648fe5%2C914ab50f-d78d-4a28-aaef-6e4db1410600%2C4a0822e2-ed7a-4fc4-8e70-bd1d1b92d3f8%2C6d7d39fb-1136-4cc8-a68c-bb6a284f2245%2C70c32ca0-2bec-4db6-9b70-b8c8327f51c1%2C85de4282-cc6a-4db6-b4f6-8520b69c38de%2C38694aa4-7f1c-4a5f-b306-d094532ae24a%2C6689e156-49a9-4066-a22e-259375fa9b04%2C7fddbede-9cbf-4436-9845-1db1739b2476%2C82880eac-b132-4b23-93d7-0ec25ff0a023%2C6e06405b-7cff-4d56-b852-48cc980c21bb%2Cd991371b-e2f7-4c95-ad7c-52ea89b07d7b%2Cf70ca36c-612b-439f-850f-4a31fd2df499%29:0
+[ 4039187ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_players?select=id%2Cfirst_name%2Clast_name%2Cheadshot_url%2Cphoto_url&limit=5000&team_id=in.%280ceb3e8b-4504-4ddd-b7c6-e2bf4215eada%2C501a05f7-174e-4a86-8cea-db048be8b646%2C0a73bf79-7321-4fd5-8b67-90fffabdcf01%2C5a697f25-65ef-4a40-9446-c813bbd624dc%2C8953891c-6af3-4f31-8386-7340f0c27f9c%2C0d8207f2-c6ac-43c7-b3b1-154eb1648fe5%2C914ab50f-d78d-4a28-aaef-6e4db1410600%2C4a0822e2-ed7a-4fc4-8e70-bd1d1b92d3f8%2C6d7d39fb-1136-4cc8-a68c-bb6a284f2245%2C70c32ca0-2bec-4db6-9b70-b8c8327f51c1%2C85de4282-cc6a-4db6-b4f6-8520b69c38de%2C38694aa4-7f1c-4a5f-b306-d094532ae24a%2C6689e156-49a9-4066-a22e-259375fa9b04%2C7fddbede-9cbf-4436-9845-1db1739b2476%2C82880eac-b132-4b23-93d7-0ec25ff0a023%2C6e06405b-7cff-4d56-b852-48cc980c21bb%2Cd991371b-e2f7-4c95-ad7c-52ea89b07d7b%2Cf70ca36c-612b-439f-850f-4a31fd2df499%29:0
+[ 5538666ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_players?select=id%2Cfirst_name%2Clast_name%2Cteam_id%2Cposition%2Cnumber%2Cheadshot_url%2Cphoto_url&limit=5000&team_id=in.%280ceb3e8b-4504-4ddd-b7c6-e2bf4215eada%2C501a05f7-174e-4a86-8cea-db048be8b646%2C0a73bf79-7321-4fd5-8b67-90fffabdcf01%2C5a697f25-65ef-4a40-9446-c813bbd624dc%2C8953891c-6af3-4f31-8386-7340f0c27f9c%2C0d8207f2-c6ac-43c7-b3b1-154eb1648fe5%2C914ab50f-d78d-4a28-aaef-6e4db1410600%2C4a0822e2-ed7a-4fc4-8e70-bd1d1b92d3f8%2C6d7d39fb-1136-4cc8-a68c-bb6a284f2245%2C70c32ca0-2bec-4db6-9b70-b8c8327f51c1%2C85de4282-cc6a-4db6-b4f6-8520b69c38de%2C38694aa4-7f1c-4a5f-b306-d094532ae24a%2C6689e156-49a9-4066-a22e-259375fa9b04%2C7fddbede-9cbf-4436-9845-1db1739b2476%2C82880eac-b132-4b23-93d7-0ec25ff0a023%2C6e06405b-7cff-4d56-b852-48cc980c21bb%2Cd991371b-e2f7-4c95-ad7c-52ea89b07d7b%2Cf70ca36c-612b-439f-850f-4a31fd2df499%29:0
+[ 5538732ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_players?select=id%2Cfirst_name%2Clast_name%2Cteam_id%2Cheadshot_url%2Cphoto_url&limit=5000&team_id=in.%280ceb3e8b-4504-4ddd-b7c6-e2bf4215eada%2C501a05f7-174e-4a86-8cea-db048be8b646%2C0a73bf79-7321-4fd5-8b67-90fffabdcf01%2C5a697f25-65ef-4a40-9446-c813bbd624dc%2C8953891c-6af3-4f31-8386-7340f0c27f9c%2C0d8207f2-c6ac-43c7-b3b1-154eb1648fe5%2C914ab50f-d78d-4a28-aaef-6e4db1410600%2C4a0822e2-ed7a-4fc4-8e70-bd1d1b92d3f8%2C6d7d39fb-1136-4cc8-a68c-bb6a284f2245%2C70c32ca0-2bec-4db6-9b70-b8c8327f51c1%2C85de4282-cc6a-4db6-b4f6-8520b69c38de%2C38694aa4-7f1c-4a5f-b306-d094532ae24a%2C6689e156-49a9-4066-a22e-259375fa9b04%2C7fddbede-9cbf-4436-9845-1db1739b2476%2C82880eac-b132-4b23-93d7-0ec25ff0a023%2C6e06405b-7cff-4d56-b852-48cc980c21bb%2Cd991371b-e2f7-4c95-ad7c-52ea89b07d7b%2Cf70ca36c-612b-439f-850f-4a31fd2df499%29:0
+[ 5538940ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_players?select=id%2Cfirst_name%2Clast_name%2Cposition%2Cnumber%2Cheadshot_url%2Cphoto_url&limit=5000&team_id=in.%280ceb3e8b-4504-4ddd-b7c6-e2bf4215eada%2C501a05f7-174e-4a86-8cea-db048be8b646%2C0a73bf79-7321-4fd5-8b67-90fffabdcf01%2C5a697f25-65ef-4a40-9446-c813bbd624dc%2C8953891c-6af3-4f31-8386-7340f0c27f9c%2C0d8207f2-c6ac-43c7-b3b1-154eb1648fe5%2C914ab50f-d78d-4a28-aaef-6e4db1410600%2C4a0822e2-ed7a-4fc4-8e70-bd1d1b92d3f8%2C6d7d39fb-1136-4cc8-a68c-bb6a284f2245%2C70c32ca0-2bec-4db6-9b70-b8c8327f51c1%2C85de4282-cc6a-4db6-b4f6-8520b69c38de%2C38694aa4-7f1c-4a5f-b306-d094532ae24a%2C6689e156-49a9-4066-a22e-259375fa9b04%2C7fddbede-9cbf-4436-9845-1db1739b2476%2C82880eac-b132-4b23-93d7-0ec25ff0a023%2C6e06405b-7cff-4d56-b852-48cc980c21bb%2Cd991371b-e2f7-4c95-ad7c-52ea89b07d7b%2Cf70ca36c-612b-439f-850f-4a31fd2df499%29:0
+[ 5539012ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_players?select=id%2Cfirst_name%2Clast_name%2Cheadshot_url%2Cphoto_url&limit=5000&team_id=in.%280ceb3e8b-4504-4ddd-b7c6-e2bf4215eada%2C501a05f7-174e-4a86-8cea-db048be8b646%2C0a73bf79-7321-4fd5-8b67-90fffabdcf01%2C5a697f25-65ef-4a40-9446-c813bbd624dc%2C8953891c-6af3-4f31-8386-7340f0c27f9c%2C0d8207f2-c6ac-43c7-b3b1-154eb1648fe5%2C914ab50f-d78d-4a28-aaef-6e4db1410600%2C4a0822e2-ed7a-4fc4-8e70-bd1d1b92d3f8%2C6d7d39fb-1136-4cc8-a68c-bb6a284f2245%2C70c32ca0-2bec-4db6-9b70-b8c8327f51c1%2C85de4282-cc6a-4db6-b4f6-8520b69c38de%2C38694aa4-7f1c-4a5f-b306-d094532ae24a%2C6689e156-49a9-4066-a22e-259375fa9b04%2C7fddbede-9cbf-4436-9845-1db1739b2476%2C82880eac-b132-4b23-93d7-0ec25ff0a023%2C6e06405b-7cff-4d56-b852-48cc980c21bb%2Cd991371b-e2f7-4c95-ad7c-52ea89b07d7b%2Cf70ca36c-612b-439f-850f-4a31fd2df499%29:0
+[ 5763031ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_players?select=id%2Cfirst_name%2Clast_name%2Cteam_id%2Cposition%2Cnumber%2Cheadshot_url%2Cphoto_url&limit=5000:0
+[ 5763139ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_players?select=id%2Cfirst_name%2Clast_name%2Cteam_id%2Cheadshot_url%2Cphoto_url&limit=5000:0
+[ 5763487ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_players?select=id%2Cfirst_name%2Clast_name%2Cposition%2Cnumber%2Cheadshot_url%2Cphoto_url&limit=5000:0
+[ 5763596ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_players?select=id%2Cfirst_name%2Clast_name%2Cheadshot_url%2Cphoto_url&limit=5000:0
+[17140735ms] [ERROR] [EG CRASH] window.error Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:5173/src/state/auth/AuthProvider.tsx:381:19)
+    at TopHeader (http://127.0.0.1:5173/src/components/TopHeader.tsx:43:20)
+    at renderWithHooks (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20) @ http://127.0.0.1:5173/src/main.tsx?t=1773192089824:22
+[17140747ms] [ERROR] Warning: Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render%s AppRoutes TopHeader TopHeader 
+    at TopHeader (http://127.0.0.1:5173/src/components/TopHeader.tsx:42:15)
+    at AppRoutes (http://127.0.0.1:5173/src/App.tsx?t=1773192089824:146:20)
+    at QueryClientProvider (http://127.0.0.1:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=47aa2e9b:3103:3)
+    at div
+    at div
+    at AppShell (http://127.0.0.1:5173/src/App.tsx?t=1773192089824:582:20)
+    at App
+    at Router (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4543:15)
+    at BrowserRouter (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:5289:5)
+    at AuthProvider (http://127.0.0.1:5173/src/state/auth/AuthProvider.tsx?t=1773209639152:175:32) @ http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:520
+[17140832ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:5173/src/state/auth/AuthProvider.tsx:381:19)
+    at TopHeader (http://127.0.0.1:5173/src/components/TopHeader.tsx:43:20)
+    at renderWithHooks (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+[17140846ms] [ERROR] [EG CRASH] window.error Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:5173/src/state/auth/AuthProvider.tsx:381:19)
+    at TopHeader (http://127.0.0.1:5173/src/components/TopHeader.tsx:43:20)
+    at renderWithHooks (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20) @ http://127.0.0.1:5173/src/main.tsx?t=1773192089824:22
+[17140881ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:5173/src/state/auth/AuthProvider.tsx:381:19)
+    at TopHeader (http://127.0.0.1:5173/src/components/TopHeader.tsx:43:20)
+    at renderWithHooks (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+[17140882ms] [ERROR] The above error occurred in the <TopHeader> component:
+
+    at TopHeader (http://127.0.0.1:5173/src/components/TopHeader.tsx:42:15)
+    at AppRoutes (http://127.0.0.1:5173/src/App.tsx?t=1773192089824:146:20)
+    at QueryClientProvider (http://127.0.0.1:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=47aa2e9b:3103:3)
+    at div
+    at div
+    at AppShell (http://127.0.0.1:5173/src/App.tsx?t=1773192089824:582:20)
+    at App
+    at Router (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4543:15)
+    at BrowserRouter (http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:5289:5)
+    at AuthProvider (http://127.0.0.1:5173/src/state/auth/AuthProvider.tsx?t=1773209639152:175:32)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. @ http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14079
+[17140911ms] [ERROR] [EG CRASH] unhandledrejection Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:5173/src/state/auth/AuthProvider.tsx:381:19)
+    at TopHeader (http://127.0.0.1:5173/src/components/TopHeader.tsx:43:20)
+    at renderWithHooks (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at beginWork$1 (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19806:22)
+    at performUnitOfWork (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+    at workLoopSync (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19190:13)
+    at renderRootSync (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19169:15)
+    at recoverFromConcurrentError (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:18786:28) @ http://127.0.0.1:5173/src/main.tsx?t=1773192089824:39
+[17140944ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:5173/src/state/auth/AuthProvider.tsx:381:19)
+    at TopHeader (http://127.0.0.1:5173/src/components/TopHeader.tsx:43:20)
+    at renderWithHooks (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at beginWork$1 (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19806:22)
+    at performUnitOfWork (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+    at workLoopSync (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19190:13)
+    at renderRootSync (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19169:15)
+    at recoverFromConcurrentError (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:18786:28)
+[17144670ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[17144670ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[17168534ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[17168534ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://127.0.0.1:5173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434

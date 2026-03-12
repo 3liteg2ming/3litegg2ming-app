@@ -1,0 +1,162 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+      - generic "Elite Gaming" [ref=e14]:
+        - button "Go to home" [ref=e15] [cursor=pointer]:
+          - img [ref=e205]
+      - button "Account" [ref=e18] [cursor=pointer]:
+        - img [ref=e19]
+  - main [ref=e22]:
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - generic: 34 13
+        - button "Back" [ref=e26] [cursor=pointer]:
+          - img [ref=e27]
+        - generic [ref=e29]:
+          - generic [ref=e31]: ROUND 1
+          - generic [ref=e32]:
+            - generic [ref=e33]:
+              - img "Gold Coast Suns" [ref=e206]
+              - generic [ref=e36]: Gold Coast Suns
+              - generic [ref=e37]: GOL
+            - generic [ref=e38]:
+              - generic [ref=e41]: FINAL
+              - generic [ref=e42]:
+                - generic [ref=e43]: "34"
+                - generic [ref=e44]: "-"
+                - generic [ref=e45]: "13"
+              - generic [ref=e46]:
+                - generic [ref=e47]: "5.4"
+                - generic [ref=e48]: "|"
+                - generic [ref=e49]: "2.1"
+            - generic [ref=e50]:
+              - img "GWS Giants" [ref=e207]
+              - generic [ref=e53]: GWS Giants
+              - generic [ref=e54]: GWS
+      - generic [ref=e208]:
+        - generic [ref=e209]:
+          - generic [ref=e210]:
+            - generic [ref=e211]: Data Status
+            - generic [ref=e212]: Result is live across the app
+          - generic [ref=e213]: Live
+        - generic [ref=e214]:
+          - generic [ref=e215]: Coach published the result
+          - generic [ref=e216]: 1 evidence file
+          - generic [ref=e217]: Updated 11 Mar 2026, 10:27 am
+        - generic [ref=e218]: This result is live across Fixtures, Match Centre, Ladder, and Stats. Corrections will appear here automatically if admins update it later.
+      - tablist "Match centre sections" [ref=e57]:
+        - tab "Summary" [selected] [ref=e58] [cursor=pointer]:
+          - img [ref=e59]
+          - generic [ref=e64]: Summary
+        - tab "Team Stats" [ref=e65] [cursor=pointer]:
+          - img [ref=e66]
+          - generic [ref=e68]: Team Stats
+        - tab "Player Stats" [ref=e69] [cursor=pointer]:
+          - img [ref=e70]
+          - generic [ref=e75]: Player Stats
+      - tabpanel "Summary" [ref=e76]:
+        - generic [ref=e77]:
+          - generic [ref=e78]:
+            - heading "Match Leaders" [level=2] [ref=e79]
+            - paragraph [ref=e80]: Top performers this match
+          - generic [ref=e82]:
+            - generic:
+              - img "Gold Coast Suns"
+            - generic [ref=e83]:
+              - generic [ref=e84]: GOALS
+              - generic [ref=e85]:
+                - img "Gold Coast Suns" [ref=e219]
+                - img "GWS Giants" [ref=e220]
+            - generic [ref=e86]:
+              - generic [ref=e87]:
+                - generic [ref=e88]:
+                  - generic [ref=e89]: Gold Coast Suns
+                  - generic [ref=e90]: "5"
+                - generic [ref=e91]:
+                  - img "Gold Coast Suns" [ref=e221]
+                  - generic [ref=e92]:
+                    - paragraph [ref=e93]: Mac Andrew
+                    - paragraph [ref=e94]: Gold Coast Suns
+              - generic [ref=e95]:
+                - generic [ref=e96]:
+                  - generic [ref=e97]: GWS Giants
+                  - generic [ref=e98]: "2"
+                - generic [ref=e99]:
+                  - img "GWS Giants" [ref=e222]
+                  - generic [ref=e100]:
+                    - paragraph [ref=e101]: Harvey Thomas
+                    - paragraph [ref=e102]: GWS Giants
+          - button [ref=e146] [cursor=pointer]
+        - generic [ref=e149]:
+          - generic [ref=e150]:
+            - heading "Momentum Worm" [level=2] [ref=e151]
+            - paragraph [ref=e152]: Score progression through the match
+          - generic [ref=e153]:
+            - generic [ref=e154]:
+              - generic [ref=e156]: Q1
+              - generic [ref=e158]: Q2
+              - generic [ref=e160]: Q3
+              - generic [ref=e162]: Q4
+            - generic [ref=e163]:
+              - img "Gold Coast Suns" [ref=e223]
+              - img "Momentum worm chart" [ref=e225]
+              - img "GWS Giants" [ref=e232]
+            - generic [ref=e171]:
+              - generic [ref=e172]: Gold Coast Suns
+              - generic [ref=e173]: GWS Giants
+        - generic [ref=e174]:
+          - generic [ref=e175]:
+            - heading "Key Moments" [level=2] [ref=e176]
+            - paragraph [ref=e177]: Submission and publish checkpoints for this fixture
+          - list [ref=e233]:
+            - listitem [ref=e234]:
+              - generic [ref=e236]:
+                - generic [ref=e237]:
+                  - generic [ref=e238]: Score posted
+                  - generic [ref=e239]: 11 Mar, 10:27 am
+                - generic [ref=e240]: Gold Coast 34 - 13 GWS
+            - listitem [ref=e241]:
+              - generic [ref=e243]:
+                - generic [ref=e244]:
+                  - generic [ref=e245]: Coach submission published
+                  - generic [ref=e246]: 11 Mar, 10:27 am
+                - generic [ref=e247]: Submitted by coach • 1 screenshot
+            - listitem [ref=e248]:
+              - generic [ref=e250]:
+                - generic [ref=e251]:
+                  - generic [ref=e252]: Fixture scheduled
+                  - generic [ref=e253]: Awaiting first bounce
+                - generic [ref=e254]: Kick-off time has not been locked yet.
+        - generic [ref=e180]:
+          - generic [ref=e181]:
+            - heading "Key Match Stats" [level=2] [ref=e182]
+            - paragraph [ref=e183]: Live team comparisons from the submitted result
+          - generic [ref=e184]:
+            - generic [ref=e186]:
+              - paragraph [ref=e188]: Score
+              - generic [ref=e255]:
+                - generic [ref=e256]: "34"
+                - generic [ref=e257]: vs
+                - generic [ref=e258]: "13"
+            - generic [ref=e191]:
+              - paragraph [ref=e193]: Goals
+              - generic [ref=e262]:
+                - generic [ref=e263]: "5"
+                - generic [ref=e264]: vs
+                - generic [ref=e265]: "2"
+            - generic [ref=e196]:
+              - paragraph [ref=e198]: Behinds
+              - generic [ref=e269]:
+                - generic [ref=e270]: "4"
+                - generic [ref=e271]: vs
+                - generic [ref=e272]: "1"
+            - generic [ref=e201]:
+              - paragraph [ref=e203]: Goal Kickers
+              - generic [ref=e276]:
+                - generic [ref=e277]: "1"
+                - generic [ref=e278]: vs
+                - generic [ref=e279]: "1"

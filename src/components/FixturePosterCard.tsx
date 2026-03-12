@@ -75,29 +75,85 @@ function teamShort(asset: any) {
   return (n.slice(0, 3) || '—').toUpperCase();
 }
 
+function normalizeTeamLabel(value: unknown): string {
+  const normalized = String(value || '').trim();
+  return normalized || 'Unknown';
+}
+
+function resolveTeamAsset(team: unknown) {
+  const key = String(team || '').trim();
+  const asset = (key ? TEAM_ASSETS[key as TeamKey] : null) || null;
+  return {
+    key,
+    asset: asset || {
+      name: normalizeTeamLabel(key),
+      shortName: normalizeTeamLabel(key).slice(0, 3).toUpperCase(),
+      colour: '#2a2f38',
+      logoPath: '',
+      logoFile: '',
+    },
+  };
+}
+
+function normalizeScore(score?: FixtureScore): FixtureScore | null {
+  if (!score) return null;
+  const total = Number(score.total);
+  const goals = Number(score.goals);
+  const behinds = Number(score.behinds);
+  if (!Number.isFinite(total) || !Number.isFinite(goals) || !Number.isFinite(behinds)) return null;
+  return { total, goals, behinds };
+}
+
+function resolveLogoSrc(asset: any): string {
+  const raw = String(asset?.logoFile || asset?.logoPath || '').trim();
+  return raw ? assetUrl(raw) : '';
+}
+
+function isMeaningfulMeta(value?: string | null) {
+  const normalized = String(value || '').trim().toUpperCase();
+  if (!normalized) return false;
+  return normalized !== 'TBA' && normalized !== 'TBC' && normalized !== 'TIME TBA';
+}
+
+function displayCoach(name?: string | null) {
+  const normalized = String(name || '').trim();
+  return normalized || 'Coach TBC';
+}
+
+function displayPsn(primary?: string | null, fallback?: string | null) {
+  const normalized = String(primary || fallback || '').trim();
+  return normalized || 'PSN TBC';
+}
+
 function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
-  const home = TEAM_ASSETS[m.home as TeamKey] || {
-    name: 'TBC',
-    shortName: 'TBC',
-    colour: '#2a2f38',
-    logoPath: '',
+  const safeMatch = m || ({
+    status: 'SCHEDULED',
+    home: 'Unknown',
+    away: 'Unknown',
+  } satisfies FixturePosterMatch);
+
+  const { key: homeKey, asset: resolvedHome } = resolveTeamAsset(safeMatch.home);
+  const { key: awayKey, asset: resolvedAway } = resolveTeamAsset(safeMatch.away);
+  const home = {
+    ...resolvedHome,
+    name: normalizeTeamLabel(resolvedHome?.name || homeKey),
   };
-  const away = TEAM_ASSETS[m.away as TeamKey] || {
-    name: 'TBC',
-    shortName: 'TBC',
-    colour: '#2a2f38',
-    logoPath: '',
+  const away = {
+    ...resolvedAway,
+    name: normalizeTeamLabel(resolvedAway?.name || awayKey),
   };
 
-  const isUpcoming = m.status === 'SCHEDULED';
+  const isUpcoming = safeMatch.status === 'SCHEDULED';
+  const homeScore = normalizeScore(safeMatch.homeScore);
+  const awayScore = normalizeScore(safeMatch.awayScore);
 
-  const hasScores = !!m.homeScore && !!m.awayScore;
-  const showScore = !isUpcoming && (m.status === 'LIVE' || m.status === 'FINAL') && hasScores;
+  const hasScores = !!homeScore && !!awayScore;
+  const showScore = !isUpcoming && (safeMatch.status === 'LIVE' || safeMatch.status === 'FINAL') && hasScores;
   const compactScore =
-    showScore && Math.max(Number(m.homeScore?.total || 0), Number(m.awayScore?.total || 0)) >= 100;
+    showScore && Math.max(Number(homeScore?.total || 0), Number(awayScore?.total || 0)) >= 100;
 
-  const homeTint = pickTeamTint(m.home, home);
-  const awayTint = pickTeamTint(m.away, away);
+  const homeTint = pickTeamTint(homeKey || home.name, home);
+  const awayTint = pickTeamTint(awayKey || away.name, away);
 
   const homeRgb = hexToRgb(homeTint);
   const awayRgb = hexToRgb(awayTint);
@@ -115,46 +171,31 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
   );
 
   const winner = useMemo(() => {
-    if (!(m.status === 'FINAL' && showScore)) return '';
-    const ht = Number(m.homeScore!.total);
-    const at = Number(m.awayScore!.total);
+    if (!(safeMatch.status === 'FINAL' && showScore && homeScore && awayScore)) return '';
+    const ht = Number(homeScore.total);
+    const at = Number(awayScore.total);
     if (!Number.isFinite(ht) || !Number.isFinite(at)) return '';
     if (ht === at) return 'Draw';
     const winName = ht > at ? home.name : away.name;
     return `${winName} by ${Math.abs(ht - at)}`;
-  }, [m.status, showScore, m.homeScore, m.awayScore, home.name, away.name]);
+  }, [safeMatch.status, showScore, homeScore, awayScore, home.name, away.name]);
 
   const venueLine = useMemo(() => {
-    const v = String(m.venue || '').trim();
-    return v || 'TBA';
-  }, [m.venue]);
+    const v = String(safeMatch.venue || '').trim();
+    return isMeaningfulMeta(v) ? v : '';
+  }, [safeMatch.venue]);
 
-  const dateLine = useMemo(() => {
-    const v = String(m.dateText || '').trim();
-    return v || 'Time TBA';
-  }, [m.dateText]);
+  const homeWins = showScore && homeScore && awayScore ? Number(homeScore.total) > Number(awayScore.total) : false;
+  const awayWins = showScore && homeScore && awayScore ? Number(awayScore.total) > Number(homeScore.total) : false;
 
-  const homeCoachName = String(m.homeCoachName || 'TBC').trim() || 'TBC';
-  const awayCoachName = String(m.awayCoachName || 'TBC').trim() || 'TBC';
-  const homeCoachNameIsTbc = homeCoachName.toUpperCase() === 'TBC';
-  const awayCoachNameIsTbc = awayCoachName.toUpperCase() === 'TBC';
-
-  const homeCoachPsn = String(m.homeCoachPsn || m.homePsn || '').trim();
-  const awayCoachPsn = String(m.awayCoachPsn || m.awayPsn || '').trim();
-  const homeCoachPsnText = homeCoachPsn || 'TBC';
-  const awayCoachPsnText = awayCoachPsn || 'TBC';
-  const homeCoachPsnIsTbc = !homeCoachPsn;
-  const awayCoachPsnIsTbc = !awayCoachPsn;
-
-  const psLogo = assetUrl('PlayStation-Logo.wine.png');
-  const competitionLogo = assetUrl('afl26-logo.png');
-
-  const homeWins = showScore ? Number(m.homeScore!.total) > Number(m.awayScore!.total) : false;
-  const awayWins = showScore ? Number(m.awayScore!.total) > Number(m.homeScore!.total) : false;
-
-  const statusClass = m.status === 'FINAL' ? 'final' : m.status === 'LIVE' ? 'live' : 'upcoming';
-  const homeLogoSrc = home.logoFile || home.logoPath ? assetUrl(home.logoFile || home.logoPath || '') : '';
-  const awayLogoSrc = away.logoFile || away.logoPath ? assetUrl(away.logoFile || away.logoPath || '') : '';
+  const statusClass = safeMatch.status === 'FINAL' ? 'final' : safeMatch.status === 'LIVE' ? 'live' : 'upcoming';
+  const homeLogoSrc = resolveLogoSrc(home);
+  const awayLogoSrc = resolveLogoSrc(away);
+  const headerMeta = String(safeMatch.headerTag || (safeMatch.round ? `Round ${safeMatch.round}` : 'Fixture')).trim();
+  const homeCoach = displayCoach(safeMatch.homeCoachName);
+  const awayCoach = displayCoach(safeMatch.awayCoachName);
+  const homePsn = displayPsn(safeMatch.homePsn, safeMatch.homeCoachPsn);
+  const awayPsn = displayPsn(safeMatch.awayPsn, safeMatch.awayCoachPsn);
 
   return (
     <motion.section
@@ -165,16 +206,11 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
       transition={{ duration: 0.22 }}
       whileTap={{ scale: 0.997 }}
     >
-      {m.headerTag ? (
-        <div className="fxPosterCard__formatTag" aria-label={m.headerTag}>
-          {m.headerTag}
-        </div>
-      ) : null}
-
-      <div className="fxPosterCard__statusWrap" aria-hidden>
+      <div className="fxPosterCard__topBar">
+        <div className="fxPosterCard__headerBadge">{headerMeta}</div>
         <div className="fxPosterCard__statusPill">
           <span className="fxPosterCard__statusDot" />
-          <span className="fxPosterCard__statusText">{statusText(m.status)}</span>
+          <span className="fxPosterCard__statusText">{statusText(safeMatch.status)}</span>
         </div>
       </div>
 
@@ -185,7 +221,6 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
             alt={`${home.name} watermark`}
             loading="lazy"
             decoding="async"
-            fetchPriority="low"
             width={256}
             height={256}
           />
@@ -198,23 +233,8 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
             alt={`${away.name} watermark`}
             loading="lazy"
             decoding="async"
-            fetchPriority="low"
             width={256}
             height={256}
-          />
-        </div>
-      ) : null}
-
-      {competitionLogo ? (
-        <div className="fxPosterCard__compBadge" aria-hidden="true">
-          <img
-            src={competitionLogo}
-            alt="AFL 26"
-            loading="lazy"
-            decoding="async"
-            fetchPriority="low"
-            width={104}
-            height={42}
           />
         </div>
       ) : null}
@@ -222,7 +242,7 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
       <div className="fxPosterCard__main">
         <div className="fxPosterCard__side fxPosterCard__side--home">
           <div className="fxPosterCard__teamGlow" />
-          <div className="fxPosterCard__teamBox fxBroadcastLogoFrame">
+          <div className="fxPosterCard__teamBox">
             <SmartImg
               className="fxPosterCard__logo fxSafeLogo"
               src={homeLogoSrc}
@@ -230,34 +250,34 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
               fallbackText={teamShort(home)}
               loading="lazy"
               decoding="async"
-              fetchPriority="low"
               width={72}
               height={72}
             />
           </div>
           <div className="fxPosterCard__abbr">{teamShort(home)}</div>
+          <div className="fxPosterCard__teamName">{home.name}</div>
         </div>
 
         <div className="fxPosterCard__center">
           {isUpcoming ? (
             <>
-              <div className="fxPosterCard__matchupKicker">MATCHUP</div>
-              <div className="fxPosterCard__vsOnly">VS</div>
+              <div className="fxPosterCard__fixtureState">Match Day</div>
+              {venueLine ? <div className="fxPosterCard__fixtureMeta">{venueLine}</div> : null}
             </>
           ) : (
             <>
-              {m.status === 'LIVE' ? <div className="fxPosterCard__liveState">LIVE NOW</div> : null}
-              {m.status === 'FINAL' ? <div className="fxPosterCard__finalState">FULL TIME</div> : null}
+              {safeMatch.status === 'LIVE' ? <div className="fxPosterCard__liveState">LIVE NOW</div> : null}
+              {safeMatch.status === 'FINAL' ? <div className="fxPosterCard__finalState">FULL TIME</div> : null}
 
-              <div className={`fxPosterCard__scoreRow ${m.status === 'FINAL' ? 'is-final' : m.status === 'LIVE' ? 'is-live' : ''}`}>
+              <div className={`fxPosterCard__scoreRow ${safeMatch.status === 'FINAL' ? 'is-final' : safeMatch.status === 'LIVE' ? 'is-live' : ''}`}>
                 <div
                   className={[
                     'fxPosterCard__score fxMetalText fxScoreTier--hero',
                     !showScore ? 'fxPosterCard__score--placeholder' : '',
-                    showScore && m.status === 'FINAL' && !homeWins && awayWins ? 'fxPosterCard__score--dim' : '',
+                    showScore && safeMatch.status === 'FINAL' && !homeWins && awayWins ? 'fxPosterCard__score--dim' : '',
                   ].join(' ')}
                 >
-                  {showScore ? m.homeScore!.total : '—'}
+                  {showScore && homeScore ? homeScore.total : '—'}
                 </div>
 
                 <div className="fxPosterCard__dash">-</div>
@@ -266,20 +286,20 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
                   className={[
                     'fxPosterCard__score fxMetalText fxScoreTier--hero',
                     !showScore ? 'fxPosterCard__score--placeholder' : '',
-                    showScore && m.status === 'FINAL' && !awayWins && homeWins ? 'fxPosterCard__score--dim' : '',
+                    showScore && safeMatch.status === 'FINAL' && !awayWins && homeWins ? 'fxPosterCard__score--dim' : '',
                   ].join(' ')}
                 >
-                  {showScore ? m.awayScore!.total : '—'}
+                  {showScore && awayScore ? awayScore.total : '—'}
                 </div>
               </div>
 
               <div className="fxPosterCard__minor fxScoreTier--minor">
                 <div className={`fxPosterCard__minorVal ${!showScore ? 'fxPosterCard__minorVal--placeholder' : ''}`}>
-                  {showScore ? `${m.homeScore!.goals}.${m.homeScore!.behinds}` : '—.—'}
+                  {showScore && homeScore ? `${homeScore.goals}.${homeScore.behinds}` : '—.—'}
                 </div>
                 <div className="fxPosterCard__minorDivider" />
                 <div className={`fxPosterCard__minorVal ${!showScore ? 'fxPosterCard__minorVal--placeholder' : ''}`}>
-                  {showScore ? `${m.awayScore!.goals}.${m.awayScore!.behinds}` : '—.—'}
+                  {showScore && awayScore ? `${awayScore.goals}.${awayScore.behinds}` : '—.—'}
                 </div>
               </div>
             </>
@@ -288,7 +308,7 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
 
         <div className="fxPosterCard__side fxPosterCard__side--away">
           <div className="fxPosterCard__teamGlow" />
-          <div className="fxPosterCard__teamBox fxBroadcastLogoFrame">
+          <div className="fxPosterCard__teamBox">
             <SmartImg
               className="fxPosterCard__logo fxSafeLogo"
               src={awayLogoSrc}
@@ -296,41 +316,40 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
               fallbackText={teamShort(away)}
               loading="lazy"
               decoding="async"
-              fetchPriority="low"
               width={72}
               height={72}
             />
           </div>
           <div className="fxPosterCard__abbr">{teamShort(away)}</div>
+          <div className="fxPosterCard__teamName">{away.name}</div>
         </div>
       </div>
 
-      <div className="fxPosterCard__metaBlock">
-        <div className={`fxPosterCard__date ${dateLine.toUpperCase().includes('TBA') ? 'is-tbc' : ''}`}>{dateLine}</div>
-        <div className={`fxPosterCard__venue ${venueLine.toUpperCase() === 'TBA' ? 'is-tbc' : ''}`}>{venueLine}</div>
-      </div>
-
-      <div className="fxPosterCard__coachRow">
-        <div className="fxPosterCard__coachCard fxPosterCard__coachCard--home">
-          <div className={`fxPosterCard__coachName ${homeCoachNameIsTbc ? 'is-tbc' : ''}`}>{homeCoachName}</div>
-          <div className="fxPosterCard__coachPsnRow">
-            <img className="fxPosterCard__psIconImg fxPosterCard__psIconImg--white" src={psLogo} alt="PlayStation" />
-            <div className={`fxPosterCard__coachPsn ${homeCoachPsnIsTbc ? 'is-tbc' : ''}`}>{homeCoachPsnText}</div>
-          </div>
+      {venueLine && !isUpcoming ? (
+        <div className="fxPosterCard__metaBlock">
+          <div className="fxPosterCard__venue">{venueLine}</div>
         </div>
-
-        <div className="fxPosterCard__coachCard fxPosterCard__coachCard--away">
-          <div className={`fxPosterCard__coachName ${awayCoachNameIsTbc ? 'is-tbc' : ''}`}>{awayCoachName}</div>
-          <div className="fxPosterCard__coachPsnRow">
-            <img className="fxPosterCard__psIconImg fxPosterCard__psIconImg--white" src={psLogo} alt="PlayStation" />
-            <div className={`fxPosterCard__coachPsn ${awayCoachPsnIsTbc ? 'is-tbc' : ''}`}>{awayCoachPsnText}</div>
-          </div>
-        </div>
-      </div>
+      ) : null}
 
       {winner ? <div className="fxPosterCard__result">{winner}</div> : null}
 
-      <button className="fxPosterCard__cta" type="button" onClick={m.onMatchCentreClick}>
+      <div className="fxPosterCard__infoGrid">
+        <div className="fxPosterCard__infoCard">
+          <div className="fxPosterCard__infoLabel">Coach</div>
+          <div className={`fxPosterCard__infoValue ${homeCoach === 'Coach TBC' ? 'is-tbc' : ''}`}>{homeCoach}</div>
+          <div className="fxPosterCard__infoLabel">PSN</div>
+          <div className={`fxPosterCard__coachPsn ${homePsn === 'PSN TBC' ? 'is-tbc' : ''}`}>{homePsn}</div>
+        </div>
+
+        <div className="fxPosterCard__infoCard fxPosterCard__infoCard--away">
+          <div className="fxPosterCard__infoLabel">Coach</div>
+          <div className={`fxPosterCard__infoValue ${awayCoach === 'Coach TBC' ? 'is-tbc' : ''}`}>{awayCoach}</div>
+          <div className="fxPosterCard__infoLabel">PSN</div>
+          <div className={`fxPosterCard__coachPsn ${awayPsn === 'PSN TBC' ? 'is-tbc' : ''}`}>{awayPsn}</div>
+        </div>
+      </div>
+
+      <button className="fxPosterCard__cta" type="button" onClick={safeMatch.onMatchCentreClick}>
         MATCH CENTRE
       </button>
     </motion.section>

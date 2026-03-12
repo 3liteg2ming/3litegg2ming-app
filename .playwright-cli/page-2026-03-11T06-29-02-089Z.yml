@@ -1,0 +1,44 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+      - generic "Elite Gaming" [ref=e14]:
+        - button "Go to home" [ref=e15] [cursor=pointer]
+      - generic [ref=e18] [cursor=pointer]: Account
+  - main [ref=e19]:
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e24]: Fixtures
+        - generic [ref=e25]: Loading…
+      - generic [ref=e26]:
+        - button "Change competition" [ref=e27]:
+          - generic [ref=e28]: Competition
+          - generic [ref=e29]: Knockout Preseason
+          - img [ref=e30]
+        - button "Open fixtures filters" [ref=e32]:
+          - img [ref=e33]
+          - text: Filter
+      - generic "Preseason format" [ref=e35]:
+        - generic [ref=e36]: "Format:"
+        - generic [ref=e37]: 2 Rounds guaranteed
+        - generic [ref=e38]: •
+        - generic [ref=e39]: Top 8 seeded finals
+        - generic [ref=e40]: •
+        - generic [ref=e41]: Grand Final
+      - generic "Round selector" [ref=e42]:
+        - button "R1" [ref=e43]
+        - button "R2" [ref=e44]
+      - generic "Status filters" [ref=e45]:
+        - button "All —" [ref=e46]:
+          - generic [ref=e47]: All
+          - generic [ref=e48]: —
+        - button "Scheduled —" [ref=e49]:
+          - generic [ref=e50]: Scheduled
+          - generic [ref=e51]: —
+        - button "Final —" [ref=e52]:
+          - generic [ref=e53]: Final
+          - generic [ref=e54]: —
+      - generic [ref=e55]: Loading fixtures…

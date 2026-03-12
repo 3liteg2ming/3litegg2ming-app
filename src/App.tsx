@@ -130,7 +130,7 @@ function AppRoutes() {
       {!hideTopHeader ? (
         <>
           <div className="egAnnounceBar" role="status" aria-live="polite">
-            <div className="egAnnounceBar__inner">App is in beta mode. Please contact us for any issues.</div>
+            <div className="egAnnounceBar__inner">Website is in development. Thanks for understanding.</div>
           </div>
           <TopHeader />
         </>

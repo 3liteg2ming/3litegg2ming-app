@@ -1,5 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  clearAdminPreseasonFixtures,
+  deleteAdminFixture,
+  exchangeAdminPasscode,
+  fetchAdminConsoleBootstrap,
+  fetchCurrentAuthUserId,
+  pingAdminSession,
+  regenerateAdminPreseason,
+  saveAdminFixture,
+  saveAdminProfile,
+  setAdminProfileFlag,
+  updateAdminRegistration,
+  type AdminConsoleCompetition,
+  type AdminConsoleHealth,
+  type AdminConsoleMetric,
+  type AdminConsoleProfile,
+  type AdminConsoleSeasonMap,
+  type AdminConsoleTeam,
+  type PasscodeAttemptResult,
+  type PasscodeResponse,
+} from '../lib/adminConsoleRepo';
+import {
   AlertTriangle,
   Check,
   CircleOff,
@@ -13,10 +34,8 @@ import {
   Wrench,
 } from 'lucide-react';
 
-import { requireSupabaseClient } from '../lib/supabaseClient';
+import { fetchSeasonFixturesBySeasonId } from '../lib/fixturesRepo';
 import '../styles/admin-console.css';
-
-const supabase = requireSupabaseClient();
 
 type AdminTab = 'overview' | 'fixtures' | 'users' | 'registrations' | 'diagnostics';
 type CompetitionKey = 'preseason' | 'afl26';
@@ -77,111 +96,10 @@ const ADMIN_TOKEN_KEY = 'eg_admin_token';
 const ADMIN_TOKEN_EXPIRES_AT_KEY = 'eg_admin_token_expires_at';
 const REG_TABLE_CANDIDATES = ['eg_preseason_registrations_pretty'] as const;
 
-const competitions: Array<{ key: CompetitionKey; label: string; slug: string }> = [
+const competitions: Array<AdminConsoleCompetition> = [
   { key: 'preseason', label: 'Knockout Preseason', slug: 'preseason' },
   { key: 'afl26', label: 'AFL26 Season Two', slug: 'afl26-season-two' },
 ];
-
-type PasscodeResponse = {
-  ok?: boolean;
-  token?: string;
-  expires_at?: string;
-  expires_in?: number;
-  error?: string;
-};
-
-type PasscodeAttemptResult = {
-  response: PasscodeResponse;
-  diagnostics: string[];
-};
-
-type SessionPingResponse = {
-  ok?: boolean;
-};
-
-function parsePasscodePayload(data: any): PasscodeResponse {
-  if (typeof data === 'string') {
-    return { ok: Boolean(data.trim()), token: data.trim() };
-  }
-  if (Array.isArray(data)) {
-    const first = data[0];
-    if (typeof first === 'string') return { ok: Boolean(first.trim()), token: first.trim() };
-    return (first || {}) as PasscodeResponse;
-  }
-  if (data && typeof data === 'object' && typeof data.token === 'string') {
-    return data as PasscodeResponse;
-  }
-  return (data || {}) as PasscodeResponse;
-}
-
-function parseSessionPing(data: any): boolean {
-  if (typeof data === 'boolean') return data;
-  if (typeof data === 'string') return data.toLowerCase() === 'true';
-  if (Array.isArray(data)) {
-    const first = data[0];
-    if (typeof first === 'boolean') return first;
-    if (typeof first === 'string') return first.toLowerCase() === 'true';
-    return Boolean((first as SessionPingResponse | undefined)?.ok);
-  }
-  return Boolean((data as SessionPingResponse | undefined)?.ok);
-}
-
-async function callSessionPing(token: string): Promise<{ ok: boolean; diagnostics: string[] }> {
-  const diagnostics: string[] = [];
-  const normalized = String(token || '').trim();
-  if (!normalized) return { ok: false, diagnostics: ['[Ping] empty token'] };
-
-  const pingAttempts: Array<{ fn: string; args: Record<string, string>; label: string }> = [
-    { fn: 'eg_admin_session_ping', args: { token: normalized }, label: 'eg_admin_session_ping(token)' },
-    { fn: 'eg_admin_session_ping', args: { p_token: normalized }, label: 'eg_admin_session_ping(p_token)' },
-    { fn: 'eg_is_admin_session_valid', args: { p_token: normalized }, label: 'eg_is_admin_session_valid(p_token)' },
-    { fn: 'eg_is_admin_session_valid', args: { token: normalized }, label: 'eg_is_admin_session_valid(token)' },
-  ];
-
-  for (const attempt of pingAttempts) {
-    const res = await supabase.rpc(attempt.fn, attempt.args);
-    if (res.error) {
-      diagnostics.push(`[Ping] ${attempt.label} ${res.error.message || 'failed'}`);
-      continue;
-    }
-
-    const ok = parseSessionPing(res.data);
-    diagnostics.push(`[Ping] ${attempt.label} ${ok ? 'ok' : 'false'}`);
-    return { ok, diagnostics };
-  }
-
-  return { ok: false, diagnostics };
-}
-
-async function callAdminPasscode(code: string): Promise<PasscodeAttemptResult> {
-  const diagnostics: string[] = [];
-  const normalizedCode = String(code || '').trim();
-  const attempts: Array<{ label: string; args: Record<string, string> }> = [
-    { label: 'passcode', args: { passcode: normalizedCode } },
-    { label: 'code', args: { code: normalizedCode } },
-    { label: 'p_code', args: { p_code: normalizedCode } },
-  ];
-
-  for (const attempt of attempts) {
-    const res = await supabase.rpc('eg_admin_exchange_passcode', attempt.args);
-    if (res.error) {
-      diagnostics.push(`[RPC] eg_admin_exchange_passcode(${attempt.label}) ${res.error.message || 'request failed'}`);
-      continue;
-    }
-    diagnostics.push(`[RPC] eg_admin_exchange_passcode(${attempt.label}) response received`);
-    const payload = parsePasscodePayload(res.data);
-    if (payload?.ok && text(payload?.token)) {
-      diagnostics.push('[RPC] unlocked');
-      return { response: payload, diagnostics };
-    }
-    diagnostics.push('[RPC] passcode rejected');
-    return { response: payload, diagnostics };
-  }
-
-  const e = new Error('Cannot reach Supabase RPC endpoint for admin passcode.');
-  (e as any).diagnostics = diagnostics;
-  throw e;
-}
 
 const tabs: Array<{ key: AdminTab; label: string; icon: JSX.Element }> = [
   { key: 'overview', label: 'Overview', icon: <Sparkles size={16} /> },
@@ -218,13 +136,6 @@ function fromDatetimeLocal(v: string): string | null {
 
 function seasonLabelForKey(key: CompetitionKey) {
   return competitions.find((c) => c.key === key)?.label || 'Competition';
-}
-
-async function findRegistrationsTable(): Promise<string | null> {
-  const table = REG_TABLE_CANDIDATES[0];
-  const probe = await supabase.from(table).select('user_id', { head: true, count: 'exact' });
-  if (!probe.error) return table;
-  return null;
 }
 
 export default function AdminConsolePage() {
@@ -291,7 +202,7 @@ export default function AdminConsolePage() {
   const validateToken = useCallback(async (candidate: string) => {
     const normalized = String(candidate || '').trim();
     if (!normalized) return false;
-    const ping = await callSessionPing(normalized);
+    const ping = await pingAdminSession(normalized);
     return ping.ok;
   }, []);
 
@@ -329,61 +240,14 @@ export default function AdminConsolePage() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const { data } = await supabase.auth.getUser();
+      const userId = await fetchCurrentAuthUserId();
       if (!active) return;
-      setAuthUserId(text(data?.user?.id));
+      setAuthUserId(text(userId));
     })();
     return () => {
       active = false;
     };
   }, []);
-
-  const loadSeasonMap = useCallback(async () => {
-    const next: SeasonMap = { preseason: null, afl26: null };
-    await Promise.all(
-      competitions.map(async (comp) => {
-        const { data } = await supabase.from('eg_seasons').select('id').eq('slug', comp.slug).maybeSingle();
-        next[comp.key] = text(data?.id) || null;
-      }),
-    );
-    setSeasonMap(next);
-    return next;
-  }, []);
-
-  const loadTeams = useCallback(async () => {
-    const { data, error: teamsError } = await supabase.from('eg_teams').select('id,name,logo_url').order('name', { ascending: true });
-    if (teamsError) throw new Error(teamsError.message || 'Unable to load teams');
-    setTeams((data || []) as TeamRow[]);
-  }, []);
-
-  const loadProfiles = useCallback(async () => {
-    const { data, error: profilesError } = await supabase.from('eg_profiles').select('*').limit(2000);
-    if (profilesError) throw new Error(profilesError.message || 'Unable to load profiles');
-
-    const rows = ((data || []) as any[]).map((row) => ({
-      user_id: text(row.user_id || row.id),
-      display_name: text(row.display_name),
-      psn: text(row.psn),
-      team_id: text(row.team_id) || null,
-      role: text(row.role) || null,
-      is_admin: typeof row.is_admin === 'boolean' ? row.is_admin : null,
-    }));
-
-    setProfiles(rows.filter((r) => r.user_id));
-  }, []);
-
-  const loadRegistrations = useCallback(async () => {
-    const table = regTable || (await findRegistrationsTable());
-    setRegTable(table);
-    if (!table) {
-      setRegistrations([]);
-      return;
-    }
-
-    const { data, error: regError } = await supabase.from(table).select('*').limit(2000);
-    if (regError) throw new Error(regError.message || 'Unable to load registrations');
-    setRegistrations((data || []) as RegistrationRow[]);
-  }, [regTable]);
 
   const loadFixtures = useCallback(
     async (mapValue: SeasonMap) => {
@@ -393,19 +257,8 @@ export default function AdminConsolePage() {
         return;
       }
 
-      const { data, error: fixturesError } = await supabase
-        .from('eg_fixture_cards')
-        .select(
-          'id,season_id,round,week_index,stage_name,status,start_time,venue,home_team_id,away_team_id,home_team_name,away_team_name,home_goals,home_behinds,home_total,away_goals,away_behinds,away_total',
-        )
-        .eq('season_id', seasonId)
-        .order('week_index', { ascending: true, nullsFirst: false })
-        .order('round', { ascending: true, nullsFirst: false })
-        .order('start_time', { ascending: true, nullsFirst: false });
-
-      if (fixturesError) throw new Error(fixturesError.message || 'Unable to load fixtures');
-
-      const mapped = ((data || []) as any[]).map((f) => ({
+      const { fixtures: fixtureRows } = await fetchSeasonFixturesBySeasonId(seasonId, { limit: 3000, offset: 0 });
+      const mapped = fixtureRows.map((f) => ({
         id: text(f.id),
         season_id: text(f.season_id),
         round: numberOrNull(f.round),
@@ -432,91 +285,39 @@ export default function AdminConsolePage() {
     [competitionKey],
   );
 
-  const loadDiagnostics = useCallback(
-    async (mapValue: SeasonMap, rows: RegistrationRow[]) => {
-      const preseasonSeasonId = mapValue.preseason;
-      const seasonTwoSeasonId = mapValue.afl26;
-
-      const [usersRes, preseasonFixturesRes, seasonTwoFixturesRes] = await Promise.all([
-        supabase.from('eg_profiles').select('user_id', { count: 'exact', head: true }),
-        preseasonSeasonId
-          ? supabase.from('eg_fixtures').select('id', { count: 'exact', head: true }).eq('season_id', preseasonSeasonId)
-          : Promise.resolve({ count: 0 } as any),
-        seasonTwoSeasonId
-          ? supabase.from('eg_fixtures').select('id', { count: 'exact', head: true }).eq('season_id', seasonTwoSeasonId)
-          : Promise.resolve({ count: 0 } as any),
-      ]);
-
-      const preseasonRegistrations = rows.filter((r) => {
-        const slug = text(r.season_slug);
-        return !slug || slug === 'preseason';
-      }).length;
-
-      const metricCards: MetricCard[] = [
-        {
-          label: 'Knockout registrations',
-          value: preseasonRegistrations,
-          hint: 'season_slug = preseason',
-        },
-        {
-          label: 'Users',
-          value: usersRes.count || 0,
-          hint: 'Rows in eg_profiles',
-        },
-        {
-          label: 'Preseason fixtures',
-          value: preseasonFixturesRes.count || 0,
-          hint: preseasonSeasonId ? `season_id: ${preseasonSeasonId.slice(0, 8)}…` : 'Preseason slug missing',
-        },
-        {
-          label: 'Season Two fixtures',
-          value: seasonTwoFixturesRes.count || 0,
-          hint: seasonTwoSeasonId ? `season_id: ${seasonTwoSeasonId.slice(0, 8)}…` : 'Season Two slug missing',
-        },
-      ];
-
-      const [missingLogoRes, badJoinRes, profileMissingTeamRes] = await Promise.all([
-        supabase.from('eg_teams').select('id', { count: 'exact', head: true }).or('logo_url.is.null,logo_url.eq.'),
-        supabase.from('eg_fixture_cards').select('id', { count: 'exact', head: true }).or('home_team_name.is.null,away_team_name.is.null'),
-        supabase.from('eg_profiles').select('user_id', { count: 'exact', head: true }).is('team_id', null),
-      ]);
-
-      const healthItems: HealthItem[] = [
-        { label: 'Broken joins', value: badJoinRes.count || 0, hint: 'eg_fixture_cards rows missing team names' },
-        { label: 'Teams missing logos', value: missingLogoRes.count || 0, hint: 'eg_teams.logo_url is empty' },
-        { label: 'Profiles without team_id', value: profileMissingTeamRes.count || 0, hint: 'Optional, but affects “My Team” UX' },
-      ];
-
-      setMetrics(metricCards);
-      setHealth(healthItems);
-    },
-    [],
-  );
-
   const refreshAll = useCallback(async () => {
     if (!hasToken) return;
     await withRpcGuard(async () => {
       setLoading(true);
-      const mapValue = await loadSeasonMap();
-      const registrationsRows = await (async () => {
-        const table = regTable || (await findRegistrationsTable());
-        setRegTable(table);
-        if (!table) {
-          setRegistrations([]);
-          return [] as RegistrationRow[];
-        }
-        const { data, error: regError } = await supabase.from(table).select('*').limit(2000);
-        if (regError) throw new Error(regError.message || 'Unable to load registrations');
-        const rows = (data || []) as RegistrationRow[];
-        setRegistrations(rows);
-        return rows;
-      })();
-      await Promise.all([loadTeams(), loadProfiles(), loadFixtures(mapValue), loadDiagnostics(mapValue, registrationsRows)]);
+      const bootstrap = await fetchAdminConsoleBootstrap({
+        competitionKey,
+        competitions,
+        regTable,
+      });
+      setSeasonMap(bootstrap.seasonMap as SeasonMap);
+      setTeams(bootstrap.teams as TeamRow[]);
+      setProfiles(bootstrap.profiles as ProfileRow[]);
+      setRegistrations(bootstrap.registrations as RegistrationRow[]);
+      setRegTable(bootstrap.regTable);
+      setFixtures(bootstrap.fixtures as FixtureRow[]);
+      setMetrics(bootstrap.metrics as MetricCard[]);
+      setHealth(bootstrap.health as HealthItem[]);
+      setFixtureDrafts({});
       setLoading(false);
       return true;
     });
     setLoading(false);
-  }, [hasToken, loadDiagnostics, loadFixtures, loadProfiles, loadSeasonMap, loadTeams, regTable, withRpcGuard]);
+  }, [competitionKey, hasToken, regTable, withRpcGuard]);
+
+  const loadRegistrations = useCallback(async () => {
+    const bootstrap = await fetchAdminConsoleBootstrap({
+      competitionKey,
+      competitions,
+      regTable,
+    });
+    setRegistrations(bootstrap.registrations as RegistrationRow[]);
+    setRegTable(bootstrap.regTable);
+  }, [competitionKey, regTable]);
 
   useEffect(() => {
     let mounted = true;
@@ -539,7 +340,7 @@ export default function AdminConsolePage() {
         return;
       }
 
-      const ping = await callSessionPing(storedToken);
+      const ping = await pingAdminSession(storedToken);
       const ok = ping.ok;
       if (!mounted) return;
       if (ok) {
@@ -569,7 +370,7 @@ export default function AdminConsolePage() {
   useEffect(() => {
     if (!hasToken) return;
     const id = window.setInterval(async () => {
-      const ping = await callSessionPing(sessionToken);
+      const ping = await pingAdminSession(sessionToken);
       if (!ping.ok) {
         clearSession('Session expired — please unlock again.');
       }
@@ -687,7 +488,7 @@ export default function AdminConsolePage() {
     setUnlocking(true);
 
     try {
-      const { response: data, diagnostics } = await callAdminPasscode(passcode.trim());
+      const { response: data, diagnostics } = await exchangeAdminPasscode(passcode.trim());
       setLastRpcError('');
       setGateDiagnostics(diagnostics);
       if (!data?.ok || !data?.token) {
@@ -696,7 +497,7 @@ export default function AdminConsolePage() {
       }
 
       const fresh = String(data.token || '').trim();
-      const ok = (await callSessionPing(fresh)).ok;
+      const ok = (await pingAdminSession(fresh)).ok;
       if (!ok) {
         clearSession('Session token rejected by server.');
         return;
@@ -817,12 +618,7 @@ export default function AdminConsolePage() {
 
       if (draft.id) payload.id = draft.id;
 
-      const { error: rpcError } = await supabase.rpc('eg_admin_upsert_fixture', {
-        p_token: sessionToken,
-        payload,
-      });
-
-      if (rpcError) throw new Error(rpcError.message || 'Unable to save fixture');
+      await saveAdminFixture(sessionToken, payload);
 
       pushNotice('Fixture saved.');
       await refreshAll();
@@ -844,11 +640,7 @@ export default function AdminConsolePage() {
     if (!window.confirm('Delete this fixture? This cannot be undone.')) return;
     setActioning(`fxd:${id}`);
     await withRpcGuard(async () => {
-      const { error: rpcError } = await supabase.rpc('eg_admin_delete_fixture', {
-        p_token: sessionToken,
-        p_fixture_id: id,
-      });
-      if (rpcError) throw new Error(rpcError.message || 'Unable to delete fixture');
+      await deleteAdminFixture(sessionToken, id);
       pushNotice('Fixture deleted.');
       await refreshAll();
       return true;
@@ -859,11 +651,7 @@ export default function AdminConsolePage() {
   async function regeneratePreseason() {
     setActioning('regen');
     await withRpcGuard(async () => {
-      const { error: rpcError } = await supabase.rpc('eg_admin_regenerate_preseason', {
-        p_token: sessionToken,
-        p_team_count: teamCount,
-      });
-      if (rpcError) throw new Error(rpcError.message || 'Failed to regenerate preseason');
+      await regenerateAdminPreseason(sessionToken, teamCount);
       pushNotice('Preseason regenerated.');
       await refreshAll();
       return true;
@@ -885,14 +673,11 @@ export default function AdminConsolePage() {
 
     setActioning(`p:${userId}`);
     await withRpcGuard(async () => {
-      const { error: rpcError } = await supabase.rpc('eg_admin_update_profile', {
-        p_token: sessionToken,
-        p_user_id: userId,
-        p_display_name: draft.display_name || null,
-        p_psn: draft.psn || null,
-        p_team_id: draft.team_id || null,
+      await saveAdminProfile(sessionToken, userId, {
+        display_name: draft.display_name || null,
+        psn: draft.psn || null,
+        team_id: draft.team_id || null,
       });
-      if (rpcError) throw new Error(rpcError.message || 'Unable to update profile');
       pushNotice('Profile updated.');
       await refreshAll();
       return true;
@@ -903,12 +688,7 @@ export default function AdminConsolePage() {
   async function setProfileAdmin(userId: string, isAdmin: boolean) {
     setActioning(`pa:${userId}`);
     await withRpcGuard(async () => {
-      const { error: rpcError } = await supabase.rpc('eg_admin_set_profile_admin', {
-        p_token: sessionToken,
-        p_user_id: userId,
-        p_is_admin: isAdmin,
-      });
-      if (rpcError) throw new Error(rpcError.message || 'Unable to change admin flag');
+      await setAdminProfileFlag(sessionToken, userId, isAdmin);
       pushNotice(`Admin ${isAdmin ? 'enabled' : 'disabled'} for user.`);
       await refreshAll();
       return true;
@@ -928,13 +708,7 @@ export default function AdminConsolePage() {
 
     setActioning(`r:${userId}:${action}`);
     await withRpcGuard(async () => {
-      const { error: rpcError } = await supabase.rpc('eg_admin_update_registration', {
-        p_token: sessionToken,
-        p_user_id: userId,
-        p_action: action,
-        p_team_id: action === 'approve' ? pickedTeamId : null,
-      });
-      if (rpcError) throw new Error(rpcError.message || 'Unable to update registration');
+      await updateAdminRegistration(sessionToken, userId, action, pickedTeamId);
       pushNotice(`Registration ${action}d.`);
       await loadRegistrations();
       return true;
@@ -946,20 +720,9 @@ export default function AdminConsolePage() {
     if (!window.confirm('Clear all preseason fixtures? This cannot be undone.')) return;
     setActioning('clear-preseason');
     await withRpcGuard(async () => {
-      const mapValue = await loadSeasonMap();
-      const seasonId = mapValue.preseason;
+      const seasonId = seasonMap.preseason;
       if (!seasonId) throw new Error('Preseason season_id not found.');
-
-      const { data, error: listError } = await supabase.from('eg_fixtures').select('id').eq('season_id', seasonId).limit(3000);
-      if (listError) throw new Error(listError.message || 'Unable to load preseason fixtures.');
-
-      for (const row of (data || []) as Array<{ id: string }>) {
-        const { error: deleteError } = await supabase.rpc('eg_admin_delete_fixture', {
-          p_token: sessionToken,
-          p_fixture_id: row.id,
-        });
-        if (deleteError) throw new Error(deleteError.message || 'Failed to clear preseason fixtures.');
-      }
+      await clearAdminPreseasonFixtures(sessionToken, seasonId);
 
       pushNotice('Preseason fixtures cleared.');
       await refreshAll();
@@ -1191,7 +954,7 @@ export default function AdminConsolePage() {
               <article className="egAdminStat wide">
                 <h3>Why fixtures empty?</h3>
                 <strong>{emptyFixtureReason || 'Fixtures loaded.'}</strong>
-                <p>Check competition mapping, selected filters, and eg_fixture_cards joins.</p>
+                <p>Check competition mapping, selected filters, and eg_fixtures team assignments.</p>
               </article>
             </section>
           ) : null}

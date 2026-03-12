@@ -1,0 +1,146 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+      - generic "Elite Gaming" [ref=e14]:
+        - button "Go to home" [ref=e15] [cursor=pointer]
+      - button "Account" [ref=e18] [cursor=pointer]:
+        - img [ref=e19]
+  - main [ref=e22]:
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - generic: 0 0
+        - button "Back" [ref=e26] [cursor=pointer]:
+          - img [ref=e27]
+        - generic [ref=e29]:
+          - generic [ref=e31]: ROUND —
+          - generic [ref=e32]:
+            - generic [ref=e33]:
+              - img "Home" [ref=e35]
+              - generic [ref=e36]: Home Team
+              - generic [ref=e37]: H
+            - generic [ref=e38]:
+              - generic [ref=e41]: Loading
+              - generic [ref=e43]:
+                - generic [ref=e44]: "0"
+                - generic [ref=e45]: "-"
+                - generic [ref=e46]: "0"
+            - generic [ref=e47]:
+              - img "Away" [ref=e49]
+              - generic [ref=e50]: Away Team
+              - generic [ref=e51]: A
+      - tablist "Match centre sections" [ref=e54]:
+        - tab "Summary" [selected] [ref=e55] [cursor=pointer]:
+          - generic [ref=e56]: Summary
+        - tab "Team Stats" [ref=e57] [cursor=pointer]:
+          - generic [ref=e58]: Team Stats
+        - tab "Player Stats" [ref=e59] [cursor=pointer]:
+          - generic [ref=e60]: Player Stats
+      - tabpanel "Summary" [ref=e61]:
+        - generic [ref=e62]:
+          - generic [ref=e63]:
+            - heading "Match Leaders" [level=2] [ref=e64]
+            - paragraph [ref=e65]: Top performers from the published result.
+          - generic [ref=e66]:
+            - article [ref=e67]:
+              - generic [ref=e69]: Stat
+              - generic [ref=e70]:
+                - generic [ref=e71]:
+                  - generic [ref=e72]:
+                    - img "Home"
+                    - generic [ref=e73]: HOME
+                  - generic [ref=e74]: —
+                  - generic [ref=e75]:
+                    - generic [ref=e77]: LO
+                    - generic:
+                      - generic: Loading…
+                      - generic: —
+                - generic [ref=e79]:
+                  - generic [ref=e80]:
+                    - img "Away"
+                    - generic [ref=e81]: AWAY
+                  - generic [ref=e82]: —
+                  - generic [ref=e83]:
+                    - generic [ref=e85]: LO
+                    - generic:
+                      - generic: Loading…
+                      - generic: —
+            - article [ref=e86]:
+              - generic [ref=e88]: Stat
+              - generic [ref=e89]:
+                - generic [ref=e90]:
+                  - generic [ref=e91]:
+                    - img "Home"
+                    - generic [ref=e92]: HOME
+                  - generic [ref=e93]: —
+                  - generic [ref=e94]:
+                    - generic [ref=e96]: LO
+                    - generic:
+                      - generic: Loading…
+                      - generic: —
+                - generic [ref=e98]:
+                  - generic [ref=e99]:
+                    - img "Away"
+                    - generic [ref=e100]: AWAY
+                  - generic [ref=e101]: —
+                  - generic [ref=e102]:
+                    - generic [ref=e104]: LO
+                    - generic:
+                      - generic: Loading…
+                      - generic: —
+            - article [ref=e105]:
+              - generic [ref=e107]: Stat
+              - generic [ref=e108]:
+                - generic [ref=e109]:
+                  - generic [ref=e110]:
+                    - img "Home"
+                    - generic [ref=e111]: HOME
+                  - generic [ref=e112]: —
+                  - generic [ref=e113]:
+                    - generic [ref=e115]: LO
+                    - generic:
+                      - generic: Loading…
+                      - generic: —
+                - generic [ref=e117]:
+                  - generic [ref=e118]:
+                    - img "Away"
+                    - generic [ref=e119]: AWAY
+                  - generic [ref=e120]: —
+                  - generic [ref=e121]:
+                    - generic [ref=e123]: LO
+                    - generic:
+                      - generic: Loading…
+                      - generic: —
+        - generic [ref=e124]:
+          - generic [ref=e125]:
+            - heading "Momentum Worm" [level=2] [ref=e126]
+            - paragraph [ref=e127]: Awaiting the first submitted result
+          - generic [ref=e128]:
+            - generic [ref=e129]:
+              - generic [ref=e131]: Q1
+              - generic [ref=e133]: Q2
+              - generic [ref=e135]: Q3
+              - generic [ref=e137]: Q4
+            - generic [ref=e138]:
+              - img "Home" [ref=e140]
+              - img "Away" [ref=e145]
+            - generic [ref=e146]:
+              - generic [ref=e147]: —
+              - generic [ref=e148]: —
+        - generic [ref=e149]:
+          - generic [ref=e150]:
+            - heading "Key Moments" [level=2] [ref=e151]
+            - paragraph [ref=e152]: What happens next before this match is locked in
+          - generic [ref=e154]: Loading moments…
+        - generic [ref=e155]:
+          - generic [ref=e156]:
+            - heading "Key Match Stats" [level=2] [ref=e157]
+            - paragraph [ref=e158]: Live team comparisons from the submitted result
+          - generic [ref=e159]:
+            - paragraph [ref=e163]: Stat
+            - paragraph [ref=e168]: Stat
+            - paragraph [ref=e173]: Stat
+            - paragraph [ref=e178]: Stat

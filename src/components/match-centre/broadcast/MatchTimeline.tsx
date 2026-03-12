@@ -33,6 +33,13 @@ function slugToTeamKey(slug: string): TeamKey | null {
   return aliases[compact] || null;
 }
 
+function momentToneClass(tone?: 'good' | 'warn' | 'bad' | 'neutral') {
+  if (tone === 'good') return 'success';
+  if (tone === 'warn') return 'warning';
+  if (tone === 'bad') return 'danger';
+  return 'info';
+}
+
 export default function MatchTimeline({ model, loading }: { model: MatchCentreModel | null; loading?: boolean }) {
   const home = model?.home;
   const away = model?.away;
@@ -50,13 +57,23 @@ export default function MatchTimeline({ model, loading }: { model: MatchCentreMo
 
   const progression = model?.quarterProgression || [];
   const moments = model?.moments || [];
+  const isLoadingShell = !!loading && !model;
+  const hasProgression = progression.length > 0;
+  const wormDesc = hasProgression
+    ? 'Score progression through the match'
+    : model?.hasSubmissionData
+      ? 'Quarter breakdown will appear once richer OCR data is available'
+      : 'Awaiting the first submitted result';
+  const momentsDesc = model?.hasSubmissionData
+    ? 'Submission and publish checkpoints for this fixture'
+    : 'What happens next before this match is locked in';
 
   return (
     <>
       <section className="mcMomentum">
         <div className="mcMomentum__header">
           <h2 className="mcMomentum__title">Momentum Worm</h2>
-          <p className="mcMomentum__desc">Score progression through quarters</p>
+          <p className="mcMomentum__desc">{wormDesc}</p>
         </div>
 
         <div className="mcMomentum__card">
@@ -83,14 +100,14 @@ export default function MatchTimeline({ model, loading }: { model: MatchCentreMo
 
             <div className="mcMomentum__worm">
               <div className="mcMomentum__midline" />
-              {loading || !model ? (
+              {isLoadingShell || !model ? (
                 <div className="mcMomentum__placeholder">
                   <div className="mcMomentum__placeholderDot" />
                 </div>
               ) : (
                 <WormGraph
                   progression={progression}
-                  waitingLabel="Awaiting data"
+                  waitingLabel={model.hasSubmissionData ? 'Quarter data pending' : 'Awaiting first result'}
                 />
               )}
             </div>
@@ -122,28 +139,29 @@ export default function MatchTimeline({ model, loading }: { model: MatchCentreMo
       <section className="mcMoments">
         <div className="mcMomentum__header">
           <h2 className="mcMomentum__title">Key Moments</h2>
-          <p className="mcMomentum__desc">Timeline of match submissions and decisions</p>
+          <p className="mcMomentum__desc">{momentsDesc}</p>
         </div>
         <div className="mcMomentum__card mcMoments__card">
-          {loading ? (
+          {isLoadingShell ? (
             <div className="mcMoments__empty">Loading moments…</div>
           ) : moments.length ? (
             <ul className="mcMoments__list">
               {moments.map((moment) => (
                 <li key={moment.id} className="mcMoments__item">
-                  <div className={`mcMoments__dot is-${moment.tone || 'neutral'}`} />
+                  <div className={`mcMoments__dot is-${momentToneClass(moment.tone)}`} />
                   <div className="mcMoments__body">
                     <div className="mcMoments__titleRow">
                       <span className="mcMoments__title">{moment.title}</span>
                       <span className="mcMoments__time">{moment.timeLabel}</span>
                     </div>
+                    {moment.subtitle ? <div className="mcMoments__subtitle">{moment.subtitle}</div> : null}
                     {moment.detail ? <div className="mcMoments__detail">{moment.detail}</div> : null}
                   </div>
                 </li>
               ))}
             </ul>
           ) : (
-            <div className="mcMoments__empty">Moments will appear after submission</div>
+            <div className="mcMoments__empty">{model?.hasSubmissionData ? 'Publish checkpoints pending' : 'Moments will appear after submission'}</div>
           )}
         </div>
       </section>

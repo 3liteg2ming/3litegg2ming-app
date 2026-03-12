@@ -1,0 +1,48 @@
+[     523ms] [ERROR] Warning: React does not recognize the `%s` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `%s` instead. If you accidentally passed it from a parent component, remove it from the DOM element.%s fetchPriority fetchpriority 
+    at img
+    at SmartImg (http://127.0.0.1:4173/src/components/SmartImg.tsx:20:3)
+    at div
+    at div
+    at div
+    at MotionComponent (http://127.0.0.1:4173/node_modules/.vite/deps/framer-motion.js?v=47aa2e9b:946:40)
+    at div
+    at section
+    at HeroHeader (http://127.0.0.1:4173/src/components/match-centre/broadcast/HeroHeader.tsx:71:38)
+    at div
+    at div
+    at MatchCentrePage (http://127.0.0.1:4173/src/pages/MatchCentrePage.tsx:36:20)
+    at RenderedRoute (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4130:5)
+    at Routes (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4600:5)
+    at Suspense
+    at ErrorBoundary (http://127.0.0.1:4173/src/components/ErrorBoundary.tsx:11:5)
+    at main
+    at AppRoutes (http://127.0.0.1:4173/src/App.tsx:146:20)
+    at QueryClientProvider (http://127.0.0.1:4173/node_modules/.vite/deps/@tanstack_react-query.js?v=47aa2e9b:3103:3)
+    at div
+    at div
+    at AppShell (http://127.0.0.1:4173/src/App.tsx:582:20)
+    at App
+    at Router (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4543:15)
+    at BrowserRouter (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:5289:5)
+    at AuthProvider (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx:156:32) @ http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:520
+[     570ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[     570ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[     640ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:4173/favicon.ico:0
+[    1461ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_teams?select=id%2Cteam_key%2Cslug%2Cname%2Cshort_name%2Cabbreviation%2Clogo_url%2Cprimary_color%2Ccolour&id=in.%286d7d39fb-1136-4cc8-a68c-bb6a284f2245%2C7fddbede-9cbf-4436-9845-1db1739b2476%29:0
+[    1462ms] [WARNING] [matchCentreRepo] eg_teams by id failed: column eg_teams.abbreviation does not exist @ http://127.0.0.1:4173/src/lib/matchCentreRepo.ts:398
+[    1621ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_teams?select=id%2Cteam_key%2Cslug%2Cname%2Cshort_name%2Cabbreviation%2Clogo_url%2Cprimary_color%2Ccolour&slug=eq.adelaide-crows:0
+[    1783ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_teams?select=id%2Cteam_key%2Cslug%2Cname%2Cshort_name%2Cabbreviation%2Clogo_url%2Cprimary_color%2Ccolour&slug=eq.west-coast-eagles:0
+[    1925ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/submissions?select=*&fixture_id=eq.071dab8d-8cbe-42e4-b6c2-424ea0991874&order=submitted_at.desc:0
+[    2389ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_players?select=id%2Cteam_id%2Cname%2Cfirst_name%2Clast_name%2Cposition%2Cnumber%2Cheadshot_url%2Cphoto_url&team_id=in.%286d7d39fb-1136-4cc8-a68c-bb6a284f2245%2C7fddbede-9cbf-4436-9845-1db1739b2476%29&limit=600:0
+[    2843ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_players?select=id%2Cteam_id%2Cname%2Cfirst_name%2Clast_name%2Cposition%2Cnumber%2Cheadshot_url%2Cphoto_url&team_id=in.%286d7d39fb-1136-4cc8-a68c-bb6a284f2245%2C7fddbede-9cbf-4436-9845-1db1739b2476%29&limit=600:0
+[    3266ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_players?select=id%2Cteam_id%2Cname%2Cfirst_name%2Clast_name%2Cposition%2Cnumber%2Cheadshot_url%2Cphoto_url&team_id=in.%286d7d39fb-1136-4cc8-a68c-bb6a284f2245%2C7fddbede-9cbf-4436-9845-1db1739b2476%29&limit=600:0
+[    3576ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_players?select=id%2Cteam_id%2Cteam_name%2Cname%2Cfirst_name%2Clast_name%2Cposition%2Cnumber%2Cheadshot_url%2Cphoto_url&team_name=in.%28Adelaide%2CWest+Coast%29&limit=600:0
+[  297620ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_teams?select=id%2Cteam_key%2Cslug%2Cname%2Cshort_name%2Cabbreviation%2Clogo_url%2Cprimary_color%2Ccolour&id=in.%286d7d39fb-1136-4cc8-a68c-bb6a284f2245%2C7fddbede-9cbf-4436-9845-1db1739b2476%29:0
+[  297621ms] [WARNING] [matchCentreRepo] eg_teams by id failed: column eg_teams.abbreviation does not exist @ http://127.0.0.1:4173/src/lib/matchCentreRepo.ts:398
+[  297692ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_teams?select=id%2Cteam_key%2Cslug%2Cname%2Cshort_name%2Cabbreviation%2Clogo_url%2Cprimary_color%2Ccolour&slug=eq.adelaide-crows:0
+[  297760ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_teams?select=id%2Cteam_key%2Cslug%2Cname%2Cshort_name%2Cabbreviation%2Clogo_url%2Cprimary_color%2Ccolour&slug=eq.west-coast-eagles:0
+[  297828ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/submissions?select=*&fixture_id=eq.071dab8d-8cbe-42e4-b6c2-424ea0991874&order=submitted_at.desc:0
+[  298051ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_players?select=id%2Cteam_id%2Cname%2Cfirst_name%2Clast_name%2Cposition%2Cnumber%2Cheadshot_url%2Cphoto_url&team_id=in.%286d7d39fb-1136-4cc8-a68c-bb6a284f2245%2C7fddbede-9cbf-4436-9845-1db1739b2476%29&limit=600:0
+[  298269ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_players?select=id%2Cteam_id%2Cname%2Cfirst_name%2Clast_name%2Cposition%2Cnumber%2Cheadshot_url%2Cphoto_url&team_id=in.%286d7d39fb-1136-4cc8-a68c-bb6a284f2245%2C7fddbede-9cbf-4436-9845-1db1739b2476%29&limit=600:0
+[  298464ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_players?select=id%2Cteam_id%2Cname%2Cfirst_name%2Clast_name%2Cposition%2Cnumber%2Cheadshot_url%2Cphoto_url&team_id=in.%286d7d39fb-1136-4cc8-a68c-bb6a284f2245%2C7fddbede-9cbf-4436-9845-1db1739b2476%29&limit=600:0
+[  298599ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_players?select=id%2Cteam_id%2Cteam_name%2Cname%2Cfirst_name%2Clast_name%2Cposition%2Cnumber%2Cheadshot_url%2Cphoto_url&team_name=in.%28Adelaide%2CWest+Coast%29&limit=600:0

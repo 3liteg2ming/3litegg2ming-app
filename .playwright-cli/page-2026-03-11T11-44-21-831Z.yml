@@ -1,0 +1,139 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - generic [ref=e12]:
+          - generic [ref=e13]: Preseason
+          - generic [ref=e14]: Open now
+        - img [ref=e15]
+      - generic "Elite Gaming" [ref=e17]:
+        - button "Go to home" [ref=e18] [cursor=pointer]:
+          - img [ref=e202]
+      - button "Sign in" [ref=e203] [cursor=pointer]:
+        - img [ref=e204]
+        - generic [ref=e207]: Sign in
+  - main [ref=e22]:
+    - generic [ref=e24]:
+      - generic [ref=e26]:
+        - generic [ref=e27]: Elite Gaming Competition Hub
+        - heading "Home" [level=1] [ref=e28]
+      - region "Homepage hero" [ref=e29]:
+        - generic [ref=e31]:
+          - generic [ref=e32]: Elite Gaming Competition Hub
+          - heading "Preseason registrations are open." [level=2] [ref=e33]
+          - paragraph [ref=e34]: Join the competition, then track fixtures, results, ladder, and stats in one place.
+        - article [ref=e35]:
+          - generic [ref=e36]:
+            - generic [ref=e37]: Knockout Preseason
+            - heading "Register now and get into the Elite Gaming preseason." [level=3] [ref=e38]
+            - paragraph [ref=e39]: Public registrations are open now. Claim your place, browse the fixture feed, and follow the ladder from day one.
+          - generic [ref=e40]:
+            - button "Register for Preseason" [ref=e41] [cursor=pointer]
+            - button "View Fixtures" [ref=e42] [cursor=pointer]
+            - button "View Ladder" [ref=e43] [cursor=pointer]
+        - generic "Competition switcher" [ref=e44]:
+          - button "Knockout Preseason Registrations open" [ref=e45] [cursor=pointer]:
+            - generic [ref=e46]: Knockout Preseason
+            - generic [ref=e47]: Registrations open
+          - button "AFL 26 Season two" [ref=e48] [cursor=pointer]:
+            - generic [ref=e49]: AFL 26
+            - generic [ref=e50]: Season two
+        - generic [ref=e51]:
+          - article [ref=e52]:
+            - generic [ref=e53]: Loading fixtures…
+          - complementary [ref=e54]:
+            - article [ref=e55]:
+              - generic [ref=e56]: Competition access
+              - generic [ref=e57]: Public competition access.
+              - generic [ref=e58]: Registrations are open now for the Knockout Preseason.
+              - generic [ref=e59]:
+                - button "Register for Preseason" [ref=e60] [cursor=pointer]
+                - button "View Ladder" [ref=e61] [cursor=pointer]
+              - generic [ref=e62]:
+                - generic [ref=e64]: Competition Pulse
+                - generic [ref=e65]:
+                  - generic [ref=e66]:
+                    - generic [ref=e67]: Fixtures
+                    - strong [ref=e68]: —
+                  - generic [ref=e69]:
+                    - generic [ref=e70]: Results
+                    - strong [ref=e71]: "0"
+                  - generic [ref=e72]:
+                    - generic [ref=e73]: Leader
+                    - strong [ref=e74]: TBD
+      - region "Quick access" [ref=e75]:
+        - button "Fixtures Now" [ref=e76] [cursor=pointer]:
+          - img [ref=e78]
+          - generic [ref=e80]:
+            - strong [ref=e81]: Fixtures
+            - generic [ref=e82]: Now
+          - img [ref=e83]
+        - button "Ladder Now" [ref=e85] [cursor=pointer]:
+          - img [ref=e87]
+          - generic [ref=e93]:
+            - strong [ref=e94]: Ladder
+            - generic [ref=e95]: Now
+          - img [ref=e96]
+        - button "Stats Now" [ref=e98] [cursor=pointer]:
+          - img [ref=e100]
+          - generic [ref=e102]:
+            - strong [ref=e103]: Stats
+            - generic [ref=e104]: Now
+          - img [ref=e105]
+        - button "Match Centre Now" [ref=e107] [cursor=pointer]:
+          - img [ref=e109]
+          - generic [ref=e115]:
+            - strong [ref=e116]: Match Centre
+            - generic [ref=e117]: Now
+          - img [ref=e118]
+        - button "Coach Sign In Now" [ref=e120] [cursor=pointer]:
+          - img [ref=e122]
+          - generic [ref=e127]:
+            - strong [ref=e128]: Coach Sign In
+            - generic [ref=e129]: Now
+          - img [ref=e130]
+      - generic [ref=e132]:
+        - region "Competition spotlight" [ref=e133]:
+          - generic [ref=e134]:
+            - generic [ref=e135]:
+              - img [ref=e137]
+              - heading "Competition Spotlight" [level=2] [ref=e146]
+            - button "Fixtures" [ref=e147] [cursor=pointer]:
+              - text: Fixtures
+              - img [ref=e148]
+          - generic [ref=e150]: Loading fixture cards…
+        - generic [ref=e151]:
+          - region "Ladder snapshot" [ref=e152]:
+            - generic [ref=e153]:
+              - generic [ref=e154]:
+                - img [ref=e156]
+                - heading "Ladder Snapshot" [level=2] [ref=e162]
+              - button "Full ladder" [ref=e163] [cursor=pointer]:
+                - text: Full ladder
+                - img [ref=e164]
+            - generic [ref=e166]: Loading ladder…
+          - region "League leaders" [ref=e169]:
+            - generic [ref=e170]:
+              - generic [ref=e171]:
+                - img [ref=e173]
+                - heading "League Leaders" [level=2] [ref=e175]
+              - button "Stats" [ref=e176] [cursor=pointer]:
+                - text: Stats
+                - img [ref=e177]
+            - generic [ref=e179]:
+              - article [ref=e180]:
+                - generic [ref=e181]: GOALS
+                - generic [ref=e182]:
+                  - img [ref=e184]
+                  - generic [ref=e188]:
+                    - strong [ref=e189]: Jeremy Cameron
+                    - generic [ref=e190]: AFL26
+              - article [ref=e191]:
+                - generic [ref=e192]: DISPOSALS
+                - generic [ref=e193]:
+                  - img [ref=e195]
+                  - generic [ref=e199]:
+                    - strong [ref=e200]: Nick Daicos
+                    - generic [ref=e201]: AFL26

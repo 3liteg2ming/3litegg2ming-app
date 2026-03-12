@@ -1,0 +1,127 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+      - generic "Elite Gaming" [ref=e14]:
+        - button "Go to home" [ref=e15] [cursor=pointer]
+      - generic [ref=e18] [cursor=pointer]: Account
+  - main [ref=e19]:
+    - generic [ref=e21]:
+      - generic [ref=e23]:
+        - generic [ref=e24]: Elite Gaming Competition Hub
+        - heading "Home" [level=1] [ref=e25]
+      - region "Homepage hero" [ref=e26]:
+        - generic [ref=e27]:
+          - generic [ref=e28]:
+            - generic [ref=e29]: Elite Gaming Competition Hub
+            - heading "Your season hub." [level=2] [ref=e30]
+            - paragraph [ref=e31]: Fixtures, results, ladder, stats, and coach actions in one place.
+          - generic "Competition switcher" [ref=e32]:
+            - button "Knockout Preseason Open" [ref=e33] [cursor=pointer]:
+              - generic [ref=e34]: Knockout Preseason
+              - generic [ref=e35]: Open
+            - button "AFL 26 Season Two" [ref=e36] [cursor=pointer]:
+              - generic [ref=e37]: AFL 26
+              - generic [ref=e38]: Season Two
+        - generic [ref=e39]:
+          - article [ref=e40]:
+            - generic [ref=e41]: Loading fixtures…
+          - complementary [ref=e42]:
+            - article [ref=e43]:
+              - generic [ref=e44]: Member access
+              - generic [ref=e45]: Competition access open.
+              - generic [ref=e46]: Knockout Preseason
+              - generic [ref=e47]:
+                - button "Coach Sign In" [ref=e48] [cursor=pointer]
+                - button "View Ladder" [ref=e49] [cursor=pointer]
+              - generic [ref=e50]:
+                - generic [ref=e52]: Competition Pulse
+                - generic [ref=e53]:
+                  - generic [ref=e54]:
+                    - generic [ref=e55]: Fixtures
+                    - strong [ref=e56]: —
+                  - generic [ref=e57]:
+                    - generic [ref=e58]: Results
+                    - strong [ref=e59]: "0"
+                  - generic [ref=e60]:
+                    - generic [ref=e61]: Leader
+                    - strong [ref=e62]: TBD
+      - region "Quick access" [ref=e63]:
+        - button "Fixtures Now" [ref=e64] [cursor=pointer]:
+          - img [ref=e66]
+          - generic [ref=e68]:
+            - strong [ref=e69]: Fixtures
+            - generic [ref=e70]: Now
+          - img [ref=e71]
+        - button "Ladder Now" [ref=e73] [cursor=pointer]:
+          - img [ref=e75]
+          - generic [ref=e81]:
+            - strong [ref=e82]: Ladder
+            - generic [ref=e83]: Now
+          - img [ref=e84]
+        - button "Stats Now" [ref=e86] [cursor=pointer]:
+          - img [ref=e88]
+          - generic [ref=e90]:
+            - strong [ref=e91]: Stats
+            - generic [ref=e92]: Now
+          - img [ref=e93]
+        - button "Match Centre Now" [ref=e95] [cursor=pointer]:
+          - img [ref=e97]
+          - generic [ref=e103]:
+            - strong [ref=e104]: Match Centre
+            - generic [ref=e105]: Now
+          - img [ref=e106]
+        - button "Coach Sign In Now" [ref=e108] [cursor=pointer]:
+          - img [ref=e110]
+          - generic [ref=e115]:
+            - strong [ref=e116]: Coach Sign In
+            - generic [ref=e117]: Now
+          - img [ref=e118]
+      - generic [ref=e120]:
+        - region "Competition spotlight" [ref=e121]:
+          - generic [ref=e122]:
+            - generic [ref=e123]:
+              - img [ref=e125]
+              - heading "Competition Spotlight" [level=2] [ref=e134]
+            - button "Fixtures" [ref=e135] [cursor=pointer]:
+              - text: Fixtures
+              - img [ref=e136]
+          - generic [ref=e138]: Loading fixture cards…
+        - generic [ref=e139]:
+          - region "Ladder snapshot" [ref=e140]:
+            - generic [ref=e141]:
+              - generic [ref=e142]:
+                - img [ref=e144]
+                - heading "Ladder Snapshot" [level=2] [ref=e150]
+              - button "Full ladder" [ref=e151] [cursor=pointer]:
+                - text: Full ladder
+                - img [ref=e152]
+            - generic [ref=e154]:
+              - strong [ref=e155]: Ladder preview unavailable.
+              - generic [ref=e156]: The full ladder will appear once the season baseline resolves.
+          - region "League leaders" [ref=e157]:
+            - generic [ref=e158]:
+              - generic [ref=e159]:
+                - img [ref=e161]
+                - heading "League Leaders" [level=2] [ref=e163]
+              - button "Stats" [ref=e164] [cursor=pointer]:
+                - text: Stats
+                - img [ref=e165]
+            - generic [ref=e167]:
+              - article [ref=e168]:
+                - generic [ref=e169]: GOALS
+                - generic [ref=e170]:
+                  - img [ref=e172]
+                  - generic [ref=e176]:
+                    - strong [ref=e177]: Jeremy Cameron
+                    - generic [ref=e178]: AFL26
+              - article [ref=e179]:
+                - generic [ref=e180]: DISPOSALS
+                - generic [ref=e181]:
+                  - img [ref=e183]
+                  - generic [ref=e187]:
+                    - strong [ref=e188]: Nick Daicos
+                    - generic [ref=e189]: AFL26

@@ -23,6 +23,13 @@ type PlayerRow = {
   full_name?: string | null;
   display_name?: string | null;
   name?: string | null;
+  goals?: number | null;
+  disposals?: number | null;
+  kicks?: number | null;
+  handballs?: number | null;
+  marks?: number | null;
+  tackles?: number | null;
+  clearances?: number | null;
 };
 
 type TeamRow = {
@@ -33,45 +40,6 @@ type TeamRow = {
   logo_url?: string | null;
   primary_color?: string | null;
   colour?: string | null;
-};
-
-type LatestRow = {
-  player_id: string;
-  fixture_id: string;
-  season_id: string;
-  start_time: string | null;
-  team_id: string | null;
-  disposals: number | null;
-  kicks: number | null;
-  handballs: number | null;
-  marks: number | null;
-  tackles: number | null;
-  clearances: number | null;
-};
-
-type SeasonAvgRow = {
-  player_id: string;
-  season_id: string;
-  team_id: string | null;
-  matches: number;
-  avg_disposals: number | null;
-  avg_kicks: number | null;
-  avg_handballs: number | null;
-  avg_marks: number | null;
-  avg_tackles: number | null;
-  avg_clearances: number | null;
-};
-
-type CareerAvgRow = {
-  player_id: string;
-  team_id: string | null;
-  matches: number;
-  avg_disposals: number | null;
-  avg_kicks: number | null;
-  avg_handballs: number | null;
-  avg_marks: number | null;
-  avg_tackles: number | null;
-  avg_clearances: number | null;
 };
 
 type StatTiles = {
@@ -139,14 +107,7 @@ function teamLogo(team: TeamRow | null): string {
   });
 }
 
-async function resolveCurrentSeasonIdByCompetition(): Promise<string | null> {
-  const seasonSlug = getDataSeasonSlugForCompetition(getStoredCompetitionKey());
-  const { data, error } = await supabase.from('eg_seasons').select('id').eq('slug', seasonSlug).maybeSingle();
-  if (error) return null;
-  return data?.id ? String(data.id) : null;
-}
-
-function latestToTiles(row: LatestRow | null): StatTiles {
+function latestToTiles(row: PlayerRow | null): StatTiles {
   return {
     disposals: row?.disposals ?? null,
     kicks: row?.kicks ?? null,
@@ -157,25 +118,25 @@ function latestToTiles(row: LatestRow | null): StatTiles {
   };
 }
 
-function seasonToTiles(row: SeasonAvgRow | null): StatTiles {
-  return {
-    disposals: row?.avg_disposals ?? null,
-    kicks: row?.avg_kicks ?? null,
-    handballs: row?.avg_handballs ?? null,
-    marks: row?.avg_marks ?? null,
-    tackles: row?.avg_tackles ?? null,
-    clearances: row?.avg_clearances ?? null,
-  };
+function resolveMatchCount(row: PlayerRow | null): number {
+  if (!row) return 0;
+  const values = [row.disposals, row.kicks, row.handballs, row.marks, row.tackles, row.clearances, row.goals]
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value) && value > 0);
+
+  if (!values.length) return 0;
+  return 1;
 }
 
-function careerToTiles(row: CareerAvgRow | null): StatTiles {
+function averageToTiles(row: PlayerRow | null): StatTiles {
+  const matches = Math.max(1, resolveMatchCount(row));
   return {
-    disposals: row?.avg_disposals ?? null,
-    kicks: row?.avg_kicks ?? null,
-    handballs: row?.avg_handballs ?? null,
-    marks: row?.avg_marks ?? null,
-    tackles: row?.avg_tackles ?? null,
-    clearances: row?.avg_clearances ?? null,
+    disposals: row?.disposals != null ? Number(row.disposals) / matches : null,
+    kicks: row?.kicks != null ? Number(row.kicks) / matches : null,
+    handballs: row?.handballs != null ? Number(row.handballs) / matches : null,
+    marks: row?.marks != null ? Number(row.marks) / matches : null,
+    tackles: row?.tackles != null ? Number(row.tackles) / matches : null,
+    clearances: row?.clearances != null ? Number(row.clearances) / matches : null,
   };
 }
 
@@ -189,12 +150,6 @@ export default function PlayerProfilePage() {
 
   const [player, setPlayer] = useState<PlayerRow | null>(null);
   const [team, setTeam] = useState<TeamRow | null>(null);
-  const [latest, setLatest] = useState<LatestRow | null>(null);
-  const [seasonRows, setSeasonRows] = useState<SeasonAvgRow[]>([]);
-  const [career, setCareer] = useState<CareerAvgRow | null>(null);
-
-  const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
-
   useEffect(() => {
     if (!playerId) {
       setError('Player not found.');
@@ -210,9 +165,9 @@ export default function PlayerProfilePage() {
 
       try {
         const playerSelects = [
-          'id,team_id,number,position,headshot_url,photo_url,display_name,full_name,name',
-          'id,team_id,number,position,headshot_url,photo_url,name',
-        ] as const;
+          'id,team_id,number,position,headshot_url,photo_url,display_name,full_name,name,goals,disposals,kicks,handballs,marks,tackles,clearances',
+          'id,team_id,number,position,headshot_url,photo_url,name,goals,disposals,kicks,handballs,marks,tackles,clearances',
+          ] as const;
 
         let playerData: any = null;
         let playerErr: any = null;
@@ -232,32 +187,15 @@ export default function PlayerProfilePage() {
 
         const playerRow = playerData as PlayerRow;
 
-        const [teamRes, latestRes, seasonRes, careerRes, currentSeasonId] = await Promise.all([
+        const teamRes = await (
           playerRow.team_id
             ? supabase
                 .from('eg_teams')
                 .select('id,name,short_name,abbreviation,logo_url,primary_color,colour')
                 .eq('id', playerRow.team_id)
                 .maybeSingle()
-            : Promise.resolve({ data: null, error: null }),
-          supabase
-            .from('eg_player_latest_fixture_statline')
-            .select('player_id,fixture_id,season_id,start_time,team_id,disposals,kicks,handballs,marks,tackles,clearances')
-            .eq('player_id', playerId)
-            .maybeSingle(),
-          supabase
-            .from('eg_player_season_averages')
-            .select(
-              'player_id,season_id,team_id,matches,avg_disposals,avg_kicks,avg_handballs,avg_marks,avg_tackles,avg_clearances',
-            )
-            .eq('player_id', playerId),
-          supabase
-            .from('eg_player_career_averages')
-            .select('player_id,team_id,matches,avg_disposals,avg_kicks,avg_handballs,avg_marks,avg_tackles,avg_clearances')
-            .eq('player_id', playerId)
-            .maybeSingle(),
-          resolveCurrentSeasonIdByCompetition(),
-        ]);
+            : Promise.resolve({ data: null, error: null })
+        );
 
         if (cancelled) return;
 
@@ -266,26 +204,6 @@ export default function PlayerProfilePage() {
         if (!teamRes.error) {
           setTeam((teamRes.data as TeamRow | null) || null);
         }
-
-        if (!latestRes.error) {
-          setLatest((latestRes.data as LatestRow | null) || null);
-        }
-
-        const seasons = (!seasonRes.error ? ((seasonRes.data || []) as SeasonAvgRow[]) : [])
-          .filter((r) => String(r.season_id || '').trim().length > 0)
-          .sort((a, b) => String(b.season_id).localeCompare(String(a.season_id)));
-
-        setSeasonRows(seasons);
-
-        if (!careerRes.error) {
-          setCareer((careerRes.data as CareerAvgRow | null) || null);
-        }
-
-        const fromCurrentContext = currentSeasonId && seasons.some((s) => s.season_id === currentSeasonId) ? currentSeasonId : '';
-        const latestSeasonId = latestRes.data?.season_id ? String(latestRes.data.season_id) : '';
-        const fromLatest = latestSeasonId && seasons.some((s) => s.season_id === latestSeasonId) ? latestSeasonId : '';
-
-        setSelectedSeasonId(fromCurrentContext || fromLatest || seasons[0]?.season_id || '');
       } catch (e: any) {
         if (!cancelled) {
           setError(e?.message || 'Unable to load player profile.');
@@ -304,22 +222,14 @@ export default function PlayerProfilePage() {
   const position = String(player?.position || '').trim() || 'Player';
   const numberText = player?.number ? `#${player.number}` : '#—';
 
-  const selectedSeasonRow = useMemo(
-    () => seasonRows.find((r) => r.season_id === selectedSeasonId) || null,
-    [seasonRows, selectedSeasonId],
-  );
-
   const tabTiles = useMemo<StatTiles>(() => {
-    if (tab === 'latest') return latestToTiles(latest);
-    if (tab === 'season') return seasonToTiles(selectedSeasonRow);
-    return careerToTiles(career);
-  }, [tab, latest, selectedSeasonRow, career]);
+    if (tab === 'latest') return latestToTiles(player);
+    return averageToTiles(player);
+  }, [tab, player]);
 
   const tabMatches = useMemo(() => {
-    if (tab === 'season') return selectedSeasonRow?.matches ?? 0;
-    if (tab === 'career') return career?.matches ?? 0;
-    return latest ? 1 : 0;
-  }, [tab, latest, selectedSeasonRow, career]);
+    return resolveMatchCount(player);
+  }, [player]);
 
   const hasAnyStats = useMemo(() => {
     return TILE_CONFIG.some(({ key }) => tabTiles[key] !== null && tabTiles[key] !== undefined);
@@ -410,26 +320,6 @@ export default function PlayerProfilePage() {
           </button>
         </section>
 
-        {tab === 'season' && seasonRows.length > 0 ? (
-          <section className="ppSeasonSelectWrap">
-            <label className="ppSeasonLabel" htmlFor="pp-season-select">
-              <CalendarDays size={14} /> Season
-            </label>
-            <select
-              id="pp-season-select"
-              className="ppSeasonSelect"
-              value={selectedSeasonId}
-              onChange={(e) => setSelectedSeasonId(e.target.value)}
-            >
-              {seasonRows.map((row) => (
-                <option key={row.season_id} value={row.season_id}>
-                  {row.season_id}
-                </option>
-              ))}
-            </select>
-          </section>
-        ) : null}
-
         <section className="ppSection">
           <header className="ppSection__header">
             <h2>At a Glance</h2>
@@ -453,7 +343,7 @@ export default function PlayerProfilePage() {
         <section className="ppSection ppSection--more">
           <header className="ppSection__header">
             <h2>More Stats</h2>
-            <span>{tab === 'latest' ? formatDateTime(latest?.start_time) : tab === 'season' ? 'Season average' : 'Career average'}</span>
+            <span>{tab === 'latest' ? 'Current totals' : tab === 'season' ? 'Current season average' : 'Current average'}</span>
           </header>
 
           <div className="ppMoreGrid">

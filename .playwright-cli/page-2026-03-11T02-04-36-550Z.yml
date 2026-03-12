@@ -1,0 +1,271 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+      - generic "Elite Gaming" [ref=e14]:
+        - button "Go to home" [ref=e15] [cursor=pointer]:
+          - img [ref=e62]
+      - button "Account" [ref=e18] [cursor=pointer]:
+        - img [ref=e19]
+  - main [ref=e22]:
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e26]:
+          - generic [ref=e27]: Fixtures
+          - generic [ref=e28]: 9 matches
+        - generic [ref=e29]:
+          - button "Change competition" [ref=e30]:
+            - generic [ref=e31]: Competition
+            - generic [ref=e32]: Knockout Preseason
+            - img [ref=e33]
+          - button "Open fixtures filters" [ref=e35]:
+            - img [ref=e36]
+            - text: Filter
+        - generic "Preseason format" [ref=e38]:
+          - generic [ref=e39]: "Format:"
+          - generic [ref=e40]: 2 Rounds guaranteed
+          - generic [ref=e41]: •
+          - generic [ref=e42]: Top 8 seeded finals
+          - generic [ref=e43]: •
+          - generic [ref=e44]: Grand Final
+        - generic "Round selector" [ref=e45]:
+          - button "R1" [ref=e46]
+          - button "R2" [ref=e47]
+        - generic "Status filters" [ref=e48]:
+          - button "All 9" [ref=e63]:
+            - generic [ref=e50]: All
+            - generic [ref=e51]: "9"
+          - button "Scheduled 8" [ref=e64]:
+            - generic [ref=e53]: Scheduled
+            - generic [ref=e54]: "8"
+          - button "Final 1" [ref=e65]:
+            - generic [ref=e56]: Final
+            - generic [ref=e57]: "1"
+        - generic [ref=e58]: Scheduled 8 • Final 1 • 6/9
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - generic "Knockout • Round 1"
+          - generic:
+            - generic:
+              - generic: SCHEDULED
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic [ref=e68]:
+            - generic [ref=e69]:
+              - img "Western Bulldogs" [ref=e71]
+              - generic [ref=e72]: DOGS
+            - generic [ref=e73]:
+              - generic [ref=e74]: MATCHUP
+              - generic [ref=e75]: VS
+            - generic [ref=e76]:
+              - img "Brisbane" [ref=e78]
+              - generic [ref=e79]: LIONS
+          - generic [ref=e80]:
+            - generic [ref=e81]: Time TBA
+            - generic [ref=e82]: TBA
+          - generic [ref=e83]:
+            - generic [ref=e84]:
+              - generic [ref=e85]: TBC
+              - generic [ref=e86]:
+                - img "PlayStation" [ref=e87]
+                - generic [ref=e88]: TBC
+            - generic [ref=e89]:
+              - generic [ref=e90]: TBC
+              - generic [ref=e91]:
+                - img "PlayStation" [ref=e92]
+                - generic [ref=e93]: TBC
+          - button "MATCH CENTRE" [ref=e94] [cursor=pointer]
+        - generic [ref=e95]:
+          - generic "Knockout • Round 1"
+          - generic:
+            - generic:
+              - generic: SCHEDULED
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic [ref=e96]:
+            - generic [ref=e97]:
+              - img "Fremantle" [ref=e99]
+              - generic [ref=e100]: DOCKERS
+            - generic [ref=e101]:
+              - generic [ref=e102]: MATCHUP
+              - generic [ref=e103]: VS
+            - generic [ref=e104]:
+              - img "Sydney" [ref=e106]
+              - generic [ref=e107]: SWANS
+          - generic [ref=e108]:
+            - generic [ref=e109]: Time TBA
+            - generic [ref=e110]: TBA
+          - generic [ref=e111]:
+            - generic [ref=e112]:
+              - generic [ref=e113]: TBC
+              - generic [ref=e114]:
+                - img "PlayStation" [ref=e115]
+                - generic [ref=e116]: TBC
+            - generic [ref=e117]:
+              - generic [ref=e118]: TBC
+              - generic [ref=e119]:
+                - img "PlayStation" [ref=e120]
+                - generic [ref=e121]: TBC
+          - button "MATCH CENTRE" [ref=e122] [cursor=pointer]
+        - generic [ref=e123]:
+          - generic "Knockout • Round 1"
+          - generic:
+            - generic:
+              - generic: FULL TIME
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic [ref=e124]:
+            - generic [ref=e125]:
+              - img "Gold Coast" [ref=e127]
+              - generic [ref=e128]: SUNS
+            - generic [ref=e129]:
+              - generic [ref=e130]: FULL TIME
+              - generic [ref=e131]:
+                - generic [ref=e132]: "34"
+                - generic [ref=e133]: "-"
+                - generic [ref=e134]: "13"
+              - generic [ref=e135]:
+                - generic [ref=e136]: "5.4"
+                - generic [ref=e138]: "2.1"
+            - generic [ref=e139]:
+              - img "GWS" [ref=e141]
+              - generic [ref=e142]: GIANTS
+          - generic [ref=e143]:
+            - generic [ref=e144]: Time TBA
+            - generic [ref=e145]: TBC
+          - generic [ref=e146]:
+            - generic [ref=e147]:
+              - generic [ref=e148]: TBC
+              - generic [ref=e149]:
+                - img "PlayStation" [ref=e150]
+                - generic [ref=e151]: TBC
+            - generic [ref=e152]:
+              - generic [ref=e153]: TBC
+              - generic [ref=e154]:
+                - img "PlayStation" [ref=e155]
+                - generic [ref=e156]: TBC
+          - generic [ref=e157]: Gold Coast by 21
+          - button "MATCH CENTRE" [ref=e158] [cursor=pointer]
+        - generic [ref=e159]:
+          - generic "Knockout • Round 1"
+          - generic:
+            - generic:
+              - generic: SCHEDULED
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic [ref=e160]:
+            - generic [ref=e161]:
+              - img "St Kilda" [ref=e163]
+              - generic [ref=e164]: SAINTS
+            - generic [ref=e165]:
+              - generic [ref=e166]: MATCHUP
+              - generic [ref=e167]: VS
+            - generic [ref=e168]:
+              - img "Collingwood" [ref=e170]
+              - generic [ref=e171]: MAGPIES
+          - generic [ref=e172]:
+            - generic [ref=e173]: Time TBA
+            - generic [ref=e174]: TBA
+          - generic [ref=e175]:
+            - generic [ref=e176]:
+              - generic [ref=e177]: TBC
+              - generic [ref=e178]:
+                - img "PlayStation" [ref=e179]
+                - generic [ref=e180]: TBC
+            - generic [ref=e181]:
+              - generic [ref=e182]: TBC
+              - generic [ref=e183]:
+                - img "PlayStation" [ref=e184]
+                - generic [ref=e185]: TBC
+          - button "MATCH CENTRE" [ref=e186] [cursor=pointer]
+        - generic [ref=e187]:
+          - generic "Knockout • Round 1"
+          - generic:
+            - generic:
+              - generic: SCHEDULED
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic [ref=e188]:
+            - generic [ref=e189]:
+              - img "Adelaide" [ref=e191]
+              - generic [ref=e192]: CROWS
+            - generic [ref=e193]:
+              - generic [ref=e194]: MATCHUP
+              - generic [ref=e195]: VS
+            - generic [ref=e196]:
+              - img "Port Adelaide" [ref=e198]
+              - generic [ref=e199]: POWER
+          - generic [ref=e200]:
+            - generic [ref=e201]: Time TBA
+            - generic [ref=e202]: TBA
+          - generic [ref=e203]:
+            - generic [ref=e204]:
+              - generic [ref=e205]: TBC
+              - generic [ref=e206]:
+                - img "PlayStation" [ref=e207]
+                - generic [ref=e208]: TBC
+            - generic [ref=e209]:
+              - generic [ref=e210]: TBC
+              - generic [ref=e211]:
+                - img "PlayStation" [ref=e212]
+                - generic [ref=e213]: TBC
+          - button "MATCH CENTRE" [ref=e214] [cursor=pointer]
+        - generic [ref=e215]:
+          - generic "Knockout • Round 1"
+          - generic:
+            - generic:
+              - generic: SCHEDULED
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic [ref=e216]:
+            - generic [ref=e217]:
+              - img "North Melbourne" [ref=e219]
+              - generic [ref=e220]: ROOS
+            - generic [ref=e221]:
+              - generic [ref=e222]: MATCHUP
+              - generic [ref=e223]: VS
+            - generic [ref=e224]:
+              - img "Essendon" [ref=e226]
+              - generic [ref=e227]: BOMBERS
+          - generic [ref=e228]:
+            - generic [ref=e229]: Time TBA
+            - generic [ref=e230]: TBA
+          - generic [ref=e231]:
+            - generic [ref=e232]:
+              - generic [ref=e233]: TBC
+              - generic [ref=e234]:
+                - img "PlayStation" [ref=e235]
+                - generic [ref=e236]: TBC
+            - generic [ref=e237]:
+              - generic [ref=e238]: TBC
+              - generic [ref=e239]:
+                - img "PlayStation" [ref=e240]
+                - generic [ref=e241]: TBC
+          - button "MATCH CENTRE" [ref=e242] [cursor=pointer]

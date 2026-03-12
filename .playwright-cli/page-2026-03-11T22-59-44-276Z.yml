@@ -1,0 +1,107 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - generic [ref=e12]:
+          - generic [ref=e13]: Preseason
+          - generic [ref=e14]: Competition
+        - img [ref=e15]
+      - generic "Elite Gaming" [ref=e17]:
+        - button "Go to home" [ref=e18] [cursor=pointer]
+      - generic [ref=e21] [cursor=pointer]: Account
+  - main [ref=e22]:
+    - generic [ref=e24]:
+      - generic [ref=e26]:
+        - generic [ref=e27]: Preseason open
+        - heading "Home" [level=1] [ref=e28]
+      - region "Homepage hero" [ref=e29]:
+        - generic [ref=e31]:
+          - generic [ref=e32]: Preseason registrations open
+          - heading "Join the competition." [level=2] [ref=e33]
+          - paragraph [ref=e34]: Register now and track fixtures, results, ladder, and stats in one place.
+        - article [ref=e35]:
+          - generic [ref=e36]:
+            - generic [ref=e37]: Knockout Preseason
+            - heading "Register for preseason now." [level=3] [ref=e38]
+            - paragraph [ref=e39]: Public registrations are open now. Claim your place, browse the fixture feed, and follow the ladder from day one.
+          - generic [ref=e40]:
+            - button "Register for Preseason" [ref=e41] [cursor=pointer]
+            - button "View Fixtures" [ref=e42] [cursor=pointer]
+            - button "View Ladder" [ref=e43] [cursor=pointer]
+        - generic "Competition switcher" [ref=e44]:
+          - button "Knockout Preseason Registrations open" [ref=e45] [cursor=pointer]:
+            - generic [ref=e46]: Knockout Preseason
+            - generic [ref=e47]: Registrations open
+          - button "AFL 26 Season two" [ref=e48] [cursor=pointer]:
+            - generic [ref=e49]: AFL 26
+            - generic [ref=e50]: Season two
+        - generic [ref=e51]:
+          - article [ref=e52]:
+            - generic [ref=e53]: Loading fixtures…
+          - complementary [ref=e54]:
+            - article [ref=e55]:
+              - generic [ref=e56]: Competition access
+              - generic [ref=e57]: Preseason registration open.
+              - generic [ref=e58]: Registrations are open now for the Knockout Preseason.
+              - generic [ref=e59]:
+                - button "Register for Preseason" [ref=e60] [cursor=pointer]
+                - button "View Ladder" [ref=e61] [cursor=pointer]
+              - generic [ref=e62]:
+                - generic [ref=e64]: Competition Pulse
+                - generic [ref=e65]:
+                  - generic [ref=e66]:
+                    - generic [ref=e67]: Fixtures
+                    - strong [ref=e68]: —
+                  - generic [ref=e69]:
+                    - generic [ref=e70]: Results
+                    - strong [ref=e71]: "0"
+                  - generic [ref=e72]:
+                    - generic [ref=e73]: Leader
+                    - strong [ref=e74]: TBD
+      - generic [ref=e75]:
+        - region "Competition spotlight" [ref=e76]:
+          - generic [ref=e77]:
+            - generic [ref=e78]:
+              - img [ref=e80]
+              - heading "Competition Spotlight" [level=2] [ref=e89]
+            - button "Fixtures" [ref=e90] [cursor=pointer]:
+              - text: Fixtures
+              - img [ref=e91]
+          - generic [ref=e93]: Loading fixture cards…
+        - generic [ref=e94]:
+          - region "Ladder snapshot" [ref=e95]:
+            - generic [ref=e96]:
+              - generic [ref=e97]:
+                - img [ref=e99]
+                - heading "Ladder Snapshot" [level=2] [ref=e105]
+              - button "Full ladder" [ref=e106] [cursor=pointer]:
+                - text: Full ladder
+                - img [ref=e107]
+            - generic [ref=e109]:
+              - strong [ref=e110]: Ladder preview unavailable.
+              - generic [ref=e111]: The full ladder will appear once the season baseline resolves.
+          - region "League leaders" [ref=e112]:
+            - generic [ref=e113]:
+              - generic [ref=e114]:
+                - img [ref=e116]
+                - heading "League Leaders" [level=2] [ref=e118]
+              - button "Stats" [ref=e119] [cursor=pointer]:
+                - text: Stats
+                - img [ref=e120]
+            - generic [ref=e122]:
+              - article [ref=e123]:
+                - generic [ref=e124]: GOALS
+                - generic [ref=e125]:
+                  - img [ref=e127]
+                  - generic [ref=e131]:
+                    - strong [ref=e132]: Jeremy Cameron
+                    - generic [ref=e133]: AFL26
+              - article [ref=e134]:
+                - generic [ref=e135]: DISPOSALS
+                - generic [ref=e136]:
+                  - img [ref=e138]
+                  - generic [ref=e142]:
+                    - strong [ref=e143]: Nick Daicos
+                    - generic [ref=e144]: AFL26

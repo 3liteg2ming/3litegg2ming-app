@@ -1,0 +1,34 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+      - generic "Elite Gaming" [ref=e14]:
+        - button "Go to home" [ref=e15] [cursor=pointer]
+      - button "Account" [ref=e18] [cursor=pointer]:
+        - img [ref=e19]
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - button [ref=e25] [cursor=pointer]:
+          - img [ref=e26]
+        - generic [ref=e28]: Stat Leaders
+      - generic [ref=e29]:
+        - generic [ref=e30]:
+          - combobox [ref=e31] [cursor=pointer]:
+            - option "Goals" [selected]
+            - option "Disposals"
+            - option "Marks"
+            - option "Tackles"
+            - option "Fantasy Points"
+          - button "Filter" [ref=e32] [cursor=pointer]:
+            - img [ref=e33]
+            - text: Filter
+        - generic [ref=e34]:
+          - button "Total" [ref=e35]
+          - button "Average" [ref=e36]
+      - generic [ref=e37]:
+        - generic [ref=e38]: Player
+        - generic [ref=e39]: G

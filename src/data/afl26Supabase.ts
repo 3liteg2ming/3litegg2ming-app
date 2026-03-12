@@ -1,7 +1,5 @@
-import { requireSupabaseClient } from '../lib/supabaseClient';
 import { getDataSeasonSlugForCompetition, getStoredCompetitionKey } from '../lib/competitionRegistry';
-
-const supabase = requireSupabaseClient();
+import { fetchSeasonFixtures, normalizeFixtureStatus } from '../lib/fixturesRepo';
 
 export type ScoreLine = { total: number; goals: number; behinds: number };
 
@@ -28,14 +26,7 @@ export type AflRound = {
   matches: AflMatch[];
 };
 
-const SEASON_SLUG_ALIASES: Record<string, string> = {
-  afl26: 'afl26-season-two',
-  'afl-26': 'afl26-season-two',
-};
-
-// small cache so Home + Fixtures don’t refetch back-to-back
 let cache = new Map<string, { at: number; rounds: AflRound[] }>();
-const seasonIdCache = new Map<string, string>();
 const TTL_MS = 60_000;
 
 function normalizeSlug(value: unknown): string {
@@ -47,52 +38,9 @@ function getActiveSeasonSlug() {
   return getDataSeasonSlugForCompetition(activeCompetition);
 }
 
-async function resolveSeasonIdForSlug(inputSlug?: string): Promise<string> {
-  const requested = normalizeSlug(inputSlug || getActiveSeasonSlug());
-  if (!requested) throw new Error('Missing season slug for active competition');
-
-  const cached = seasonIdCache.get(requested);
-  if (cached) return cached;
-
-  const alias = SEASON_SLUG_ALIASES[requested];
-  const attempts = [requested, alias].filter((v, i, arr): v is string => !!v && arr.indexOf(v) === i);
-
-  for (const attempt of attempts) {
-    const exact = await supabase.from('eg_seasons').select('id, slug').eq('slug', attempt).maybeSingle();
-    if (!exact.error && exact.data?.id) {
-      const id = String(exact.data.id);
-      seasonIdCache.set(requested, id);
-      seasonIdCache.set(normalizeSlug((exact.data as any).slug || attempt), id);
-      return id;
-    }
-  }
-
-  const fuzzy = await supabase
-    .from('eg_seasons')
-    .select('id, slug')
-    .ilike('slug', `%${requested}%`)
-    .limit(1);
-
-  if (!fuzzy.error && Array.isArray(fuzzy.data) && fuzzy.data[0]?.id) {
-    const id = String(fuzzy.data[0].id);
-    seasonIdCache.set(requested, id);
-    seasonIdCache.set(normalizeSlug((fuzzy.data[0] as any).slug || requested), id);
-    return id;
-  }
-
-  throw new Error(`Season not found for slug "${requested}"`);
-}
-
-function toNum(v: any): number | null {
-  const n = typeof v === 'number' ? v : Number(v);
-  return Number.isFinite(n) ? n : null;
-}
-
-function coerceStatus(v: any): 'SCHEDULED' | 'LIVE' | 'FINAL' {
-  const s = String(v || '').toUpperCase();
-  if (s === 'LIVE') return 'LIVE';
-  if (s === 'FINAL' || s === 'FULL_TIME' || s === 'FULLTIME') return 'FINAL';
-  return 'SCHEDULED';
+function toScoreLine(goals: number | null, behinds: number | null, total: number | null): ScoreLine | undefined {
+  if (goals == null || behinds == null || total == null) return undefined;
+  return { goals, behinds, total };
 }
 
 export function invalidateAfl26Cache() {
@@ -114,151 +62,24 @@ export async function getAfl26RoundsFromSupabase(opts?: { force?: boolean; seaso
   const cacheKey = requestedSlug;
   const cached = cache.get(cacheKey);
   if (!opts?.force && cached && now - cached.at < TTL_MS) return cached.rounds;
-  const seasonId = await resolveSeasonIdForSlug(requestedSlug);
 
-  // The eg_fixture_cards view has changed a few times during the build.
-  // Try a few select shapes (and finally fallback to eg_fixtures) so the page never hard-crashes
-  // just because a column or view was renamed.
-  const attempts: Array<{ table: 'eg_fixture_cards' | 'eg_fixtures'; select: string }> = [
-    {
-      table: 'eg_fixture_cards',
-      select: [
-        'id',
-        'season_id',
-        'round',
-        'status',
-        'venue',
-        'home_team_slug',
-        'away_team_slug',
-        'home_goals',
-        'home_behinds',
-        'home_total',
-        'away_goals',
-        'away_behinds',
-        'away_total',
-        'home_coach_name',
-        'away_coach_name',
-        'home_psn',
-        'away_psn',
-      ].join(','),
-    },
-    {
-      table: 'eg_fixture_cards',
-      select: [
-        'id',
-        'season_id',
-        'round',
-        'status',
-        'venue',
-        'home_team_slug',
-        'away_team_slug',
-        'home_goals',
-        'home_behinds',
-        'home_total',
-        'away_goals',
-        'away_behinds',
-        'away_total',
-        'home_coach_name',
-        'away_coach_name',
-      ].join(','),
-    },
-    {
-      table: 'eg_fixture_cards',
-      select: [
-        'id',
-        'season_id',
-        'round',
-        'status',
-        'venue',
-        'home_team_slug',
-        'away_team_slug',
-        'home_goals',
-        'home_behinds',
-        'home_total',
-        'away_goals',
-        'away_behinds',
-        'away_total',
-      ].join(','),
-    },
-    {
-      table: 'eg_fixtures',
-      select: [
-        'id',
-        'season_id',
-        'round',
-        'status',
-        'venue',
-        'home_team_slug',
-        'away_team_slug',
-        'home_goals',
-        'home_behinds',
-        'home_total',
-        'away_goals',
-        'away_behinds',
-        'away_total',
-      ].join(','),
-    },
-  ];
-
-  let data: any[] | null = null;
-  let lastError: any = null;
-
-  for (const a of attempts) {
-    const res = await supabase
-      .from(a.table)
-      .select(a.select)
-      .eq('season_id', seasonId)
-      .order('round', { ascending: true });
-
-    if (!res.error) {
-      data = (res.data as any[]) || [];
-      lastError = null;
-      break;
-    }
-
-    lastError = res.error;
-  }
-
-  if (lastError) throw lastError;
-
-
-  const rows = (data || []) as any[];
+  const { fixtures } = await fetchSeasonFixtures(requestedSlug, { limit: 1000, offset: 0 });
   const byRound = new Map<number, AflRound>();
 
-  for (const r of rows) {
-    const roundNo = Number(r.round);
+  for (const fixture of fixtures) {
+    const roundNo = Number(fixture.round);
     if (!Number.isFinite(roundNo)) continue;
 
     if (!byRound.has(roundNo)) byRound.set(roundNo, { round: roundNo, matches: [] });
 
-    const hg = toNum(r.home_goals);
-    const hb = toNum(r.home_behinds);
-    const ag = toNum(r.away_goals);
-    const ab = toNum(r.away_behinds);
-
-    const ht = toNum(r.home_total) ?? (hg != null && hb != null ? hg * 6 + hb : null);
-    const at = toNum(r.away_total) ?? (ag != null && ab != null ? ag * 6 + ab : null);
-
-    const hasScores = hg != null && hb != null && ag != null && ab != null && ht != null && at != null;
-
     byRound.get(roundNo)!.matches.push({
-      id: String(r.id),
-      venue: r.venue ? String(r.venue) : undefined,
-      status: coerceStatus(r.status),
-
-      home: String(r.home_team_slug),
-      away: String(r.away_team_slug),
-
-      // ✅ coach names from eg_coaches via view
-      homeCoachName: r.home_coach_name ? String(r.home_coach_name) : undefined,
-      awayCoachName: r.away_coach_name ? String(r.away_coach_name) : undefined,
-
-      // ✅ psn from eg_coaches via view
-      homePsn: r.home_psn ? String(r.home_psn) : undefined,
-      awayPsn: r.away_psn ? String(r.away_psn) : undefined,
-
-      homeScore: hasScores ? { goals: hg!, behinds: hb!, total: ht! } : undefined,
-      awayScore: hasScores ? { goals: ag!, behinds: ab!, total: at! } : undefined,
+      id: fixture.id,
+      venue: fixture.venue || undefined,
+      status: normalizeFixtureStatus(fixture.status, fixture),
+      home: fixture.home_team_key || fixture.home_team_slug || 'unknown',
+      away: fixture.away_team_key || fixture.away_team_slug || 'unknown',
+      homeScore: toScoreLine(fixture.home_goals, fixture.home_behinds, fixture.home_total),
+      awayScore: toScoreLine(fixture.away_goals, fixture.away_behinds, fixture.away_total),
     });
   }
 

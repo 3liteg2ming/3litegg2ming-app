@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ArrowRight, Search, User, Users, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import SmartImg from '../components/SmartImg';
 import { assetUrl, TEAM_ASSETS, type TeamKey } from '../lib/teamAssets';
 import type { StatLeaderCategory } from '../lib/stats-leaders-cache';
+import { useStatsCategories } from '../hooks/useStatsCategories';
+import { getStoredCompetitionKey } from '../lib/competitionRegistry';
 
 import '../styles/stats-home.css';
 
@@ -54,31 +56,10 @@ export default function StatsPage() {
   const [mode, setMode] = useState<Mode>('players');
   const [scope, setScope] = useState<Scope>('total');
   const [search, setSearch] = useState('');
-  const [cats, setCats] = useState<StatLeaderCategory[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let alive = true;
-    setCats([]);
-    setLoading(true);
-    import('../lib/stats-leaders-cache')
-      .then((mod) => mod.fetchLeaderCategories(mode))
-      .then((rows) => {
-        if (!alive) return;
-        setCats(Array.isArray(rows) ? rows : []);
-      })
-      .catch(() => {
-        if (!alive) return;
-        setCats([]);
-      })
-      .finally(() => {
-        if (!alive) return;
-        setLoading(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [mode]);
+  const statsCategoriesQuery = useStatsCategories(mode);
+  const cats = statsCategoriesQuery.data ?? [];
+  const loading = statsCategoriesQuery.isLoading;
+  const competitionLabel = getStoredCompetitionKey() === 'preseason' ? 'Knockout Preseason' : 'AFL 26 Season Two';
 
   const filteredCats = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -94,7 +75,7 @@ export default function StatsPage() {
         <div className="egStatsHeader">
           <div className="egStatsTitleWrap">
             <h1 className="egStatsTitle">Stats</h1>
-            <div className="egStatsSubtitlePill">AFL 26 • Season One</div>
+            <div className="egStatsSubtitlePill">{competitionLabel}</div>
           </div>
         </div>
 

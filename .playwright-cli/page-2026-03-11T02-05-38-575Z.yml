@@ -1,0 +1,271 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+      - generic "Elite Gaming" [ref=e14]:
+        - button "Go to home" [ref=e15] [cursor=pointer]:
+          - img [ref=e62]
+      - button "Account" [ref=e18] [cursor=pointer]:
+        - img [ref=e19]
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - generic [ref=e26]:
+            - generic [ref=e27]: Fixtures
+            - generic [ref=e28]: 9 matches
+          - generic [ref=e29]:
+            - button "Change competition" [active] [ref=e30]:
+              - generic [ref=e31]: Competition
+              - generic [ref=e32]: AFL 26 Season Two
+              - img [ref=e33]
+            - button "Open fixtures filters" [ref=e35]:
+              - img [ref=e36]
+              - text: Filter
+          - generic "Round selector" [ref=e45]:
+            - button "R1" [ref=e244]
+            - button "R2" [ref=e245]
+            - button "R3" [ref=e246]
+            - button "R4" [ref=e247]
+            - button "R5" [ref=e248]
+            - button "R6" [ref=e249]
+            - button "R7" [ref=e250]
+            - button "R8" [ref=e251]
+            - button "R9" [ref=e252]
+            - button "R10" [ref=e253]
+            - button "R11" [ref=e254]
+          - generic "Status filters" [ref=e48]:
+            - button "All 9" [ref=e63]:
+              - generic [ref=e50]: All
+              - generic [ref=e51]: "9"
+            - button "Scheduled 9" [ref=e255]:
+              - generic [ref=e53]: Scheduled
+              - generic [ref=e54]: "9"
+            - button "Final 0" [ref=e256]:
+              - generic [ref=e56]: Final
+              - generic [ref=e57]: "0"
+          - generic [ref=e58]: Scheduled 9 • Final 0 • 6/9
+        - generic [ref=e257]:
+          - generic [ref=e258]:
+            - generic:
+              - generic:
+                - generic: SCHEDULED
+            - generic:
+              - img
+            - generic:
+              - img
+            - generic:
+              - img
+            - generic [ref=e259]:
+              - generic [ref=e260]:
+                - img "Fremantle" [ref=e262]
+                - generic [ref=e263]: DOCKERS
+              - generic [ref=e264]:
+                - generic [ref=e265]: MATCHUP
+                - generic [ref=e266]: VS
+              - generic [ref=e267]:
+                - img "Port Adelaide" [ref=e269]
+                - generic [ref=e270]: POWER
+            - generic [ref=e271]:
+              - generic [ref=e272]: Time TBA
+              - generic [ref=e273]: TBC
+            - generic [ref=e274]:
+              - generic [ref=e275]:
+                - generic [ref=e276]: TBC
+                - generic [ref=e277]:
+                  - img "PlayStation" [ref=e278]
+                  - generic [ref=e279]: TBC
+              - generic [ref=e280]:
+                - generic [ref=e281]: TBC
+                - generic [ref=e282]:
+                  - img "PlayStation" [ref=e283]
+                  - generic [ref=e284]: TBC
+            - button "MATCH CENTRE" [ref=e285] [cursor=pointer]
+          - generic [ref=e286]:
+            - generic:
+              - generic:
+                - generic: SCHEDULED
+            - generic:
+              - img
+            - generic:
+              - img
+            - generic:
+              - img
+            - generic [ref=e287]:
+              - generic [ref=e288]:
+                - img "Collingwood" [ref=e290]
+                - generic [ref=e291]: MAGPIES
+              - generic [ref=e292]:
+                - generic [ref=e293]: MATCHUP
+                - generic [ref=e294]: VS
+              - generic [ref=e295]:
+                - img "St Kilda" [ref=e297]
+                - generic [ref=e298]: SAINTS
+            - generic [ref=e299]:
+              - generic [ref=e300]: Time TBA
+              - generic [ref=e301]: TBC
+            - generic [ref=e302]:
+              - generic [ref=e303]:
+                - generic [ref=e304]: TBC
+                - generic [ref=e305]:
+                  - img "PlayStation" [ref=e306]
+                  - generic [ref=e307]: TBC
+              - generic [ref=e308]:
+                - generic [ref=e309]: TBC
+                - generic [ref=e310]:
+                  - img "PlayStation" [ref=e311]
+                  - generic [ref=e312]: TBC
+            - button "MATCH CENTRE" [ref=e313] [cursor=pointer]
+          - generic [ref=e314]:
+            - generic:
+              - generic:
+                - generic: SCHEDULED
+            - generic:
+              - img
+            - generic:
+              - img
+            - generic:
+              - img
+            - generic [ref=e315]:
+              - generic [ref=e316]:
+                - img "Geelong" [ref=e318]
+                - generic [ref=e319]: CATS
+              - generic [ref=e320]:
+                - generic [ref=e321]: MATCHUP
+                - generic [ref=e322]: VS
+              - generic [ref=e323]:
+                - img "North Melbourne" [ref=e325]
+                - generic [ref=e326]: ROOS
+            - generic [ref=e327]:
+              - generic [ref=e328]: Time TBA
+              - generic [ref=e329]: TBC
+            - generic [ref=e330]:
+              - generic [ref=e331]:
+                - generic [ref=e332]: TBC
+                - generic [ref=e333]:
+                  - img "PlayStation" [ref=e334]
+                  - generic [ref=e335]: TBC
+              - generic [ref=e336]:
+                - generic [ref=e337]: TBC
+                - generic [ref=e338]:
+                  - img "PlayStation" [ref=e339]
+                  - generic [ref=e340]: TBC
+            - button "MATCH CENTRE" [ref=e341] [cursor=pointer]
+          - generic [ref=e342]:
+            - generic:
+              - generic:
+                - generic: SCHEDULED
+            - generic:
+              - img
+            - generic:
+              - img
+            - generic:
+              - img
+            - generic [ref=e343]:
+              - generic [ref=e344]:
+                - img "Essendon" [ref=e346]
+                - generic [ref=e347]: BOMBERS
+              - generic [ref=e348]:
+                - generic [ref=e349]: MATCHUP
+                - generic [ref=e350]: VS
+              - generic [ref=e351]:
+                - img "Richmond" [ref=e353]
+                - generic [ref=e354]: TIGERS
+            - generic [ref=e355]:
+              - generic [ref=e356]: Time TBA
+              - generic [ref=e357]: TBC
+            - generic [ref=e358]:
+              - generic [ref=e359]:
+                - generic [ref=e360]: TBC
+                - generic [ref=e361]:
+                  - img "PlayStation" [ref=e362]
+                  - generic [ref=e363]: TBC
+              - generic [ref=e364]:
+                - generic [ref=e365]: TBC
+                - generic [ref=e366]:
+                  - img "PlayStation" [ref=e367]
+                  - generic [ref=e368]: TBC
+            - button "MATCH CENTRE" [ref=e369] [cursor=pointer]
+          - generic [ref=e370]:
+            - generic:
+              - generic:
+                - generic: SCHEDULED
+            - generic:
+              - img
+            - generic:
+              - img
+            - generic:
+              - img
+            - generic [ref=e371]:
+              - generic [ref=e372]:
+                - img "Carlton" [ref=e374]
+                - generic [ref=e375]: BLUES
+              - generic [ref=e376]:
+                - generic [ref=e377]: MATCHUP
+                - generic [ref=e378]: VS
+              - generic [ref=e379]:
+                - img "Sydney" [ref=e381]
+                - generic [ref=e382]: SWANS
+            - generic [ref=e383]:
+              - generic [ref=e384]: Time TBA
+              - generic [ref=e385]: TBC
+            - generic [ref=e386]:
+              - generic [ref=e387]:
+                - generic [ref=e388]: TBC
+                - generic [ref=e389]:
+                  - img "PlayStation" [ref=e390]
+                  - generic [ref=e391]: TBC
+              - generic [ref=e392]:
+                - generic [ref=e393]: TBC
+                - generic [ref=e394]:
+                  - img "PlayStation" [ref=e395]
+                  - generic [ref=e396]: TBC
+            - button "MATCH CENTRE" [ref=e397] [cursor=pointer]
+          - generic [ref=e398]:
+            - generic:
+              - generic:
+                - generic: SCHEDULED
+            - generic:
+              - img
+            - generic:
+              - img
+            - generic:
+              - img
+            - generic [ref=e399]:
+              - generic [ref=e400]:
+                - img "Adelaide" [ref=e402]
+                - generic [ref=e403]: CROWS
+              - generic [ref=e404]:
+                - generic [ref=e405]: MATCHUP
+                - generic [ref=e406]: VS
+              - generic [ref=e407]:
+                - img "Western Bulldogs" [ref=e409]
+                - generic [ref=e410]: DOGS
+            - generic [ref=e411]:
+              - generic [ref=e412]: Time TBA
+              - generic [ref=e413]: TBC
+            - generic [ref=e414]:
+              - generic [ref=e415]:
+                - generic [ref=e416]: TBC
+                - generic [ref=e417]:
+                  - img "PlayStation" [ref=e418]
+                  - generic [ref=e419]: TBC
+              - generic [ref=e420]:
+                - generic [ref=e421]: TBC
+                - generic [ref=e422]:
+                  - img "PlayStation" [ref=e423]
+                  - generic [ref=e424]: TBC
+            - button "MATCH CENTRE" [ref=e425] [cursor=pointer]
+      - dialog "Filter By Season" [ref=e427]:
+        - button [ref=e428]
+        - generic [ref=e429]:
+          - heading "Filter By Season" [level=3] [ref=e431]
+          - generic [ref=e432]:
+            - button "Knockout Preseason" [ref=e433]:
+              - generic [ref=e434]: Knockout Preseason
+            - button "AFL 26 Season Two" [ref=e435]:
+              - generic [ref=e436]: AFL 26 Season Two
+              - img [ref=e437]

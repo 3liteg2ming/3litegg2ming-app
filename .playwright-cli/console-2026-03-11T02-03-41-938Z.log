@@ -1,0 +1,127 @@
+[    1246ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://127.0.0.1:5175/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[    1247ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://127.0.0.1:5175/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[    1330ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:5175/favicon.ico:0
+[    2865ms] [ERROR] Warning: React does not recognize the `%s` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `%s` instead. If you accidentally passed it from a parent component, remove it from the DOM element.%s fetchPriority fetchpriority 
+    at img
+    at div
+    at section
+    at MotionComponent (http://127.0.0.1:5175/node_modules/.vite/deps/framer-motion.js?v=47aa2e9b:946:40)
+    at FixturePosterCardComponent (http://127.0.0.1:5175/src/components/FixturePosterCard.tsx:92:39)
+    at div
+    at div
+    at div
+    at div
+    at AFL26FixturesPage (http://127.0.0.1:5175/src/pages/AFL26FixturesPage.tsx:130:20)
+    at RenderedRoute (http://127.0.0.1:5175/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4130:5)
+    at Routes (http://127.0.0.1:5175/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4600:5)
+    at Suspense
+    at ErrorBoundary (http://127.0.0.1:5175/src/components/ErrorBoundary.tsx:11:5)
+    at main
+    at AppRoutes (http://127.0.0.1:5175/src/App.tsx:146:20)
+    at QueryClientProvider (http://127.0.0.1:5175/node_modules/.vite/deps/@tanstack_react-query.js?v=47aa2e9b:3103:3)
+    at div
+    at div
+    at AppShell (http://127.0.0.1:5175/src/App.tsx:582:20)
+    at App
+    at Router (http://127.0.0.1:5175/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4543:15)
+    at BrowserRouter (http://127.0.0.1:5175/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:5289:5)
+    at AuthProvider (http://127.0.0.1:5175/src/state/auth/AuthProvider.tsx:156:32) @ http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:520
+[ 7823330ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://127.0.0.1:5175/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[ 7823332ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://127.0.0.1:5175/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[15017844ms] [ERROR] [EG CRASH] window.error Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:5175/src/state/auth/AuthProvider.tsx:381:19)
+    at TopHeader (http://127.0.0.1:5175/src/components/TopHeader.tsx:43:20)
+    at renderWithHooks (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20) @ http://127.0.0.1:5175/src/main.tsx:22
+[15017862ms] [ERROR] Warning: Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render%s AppRoutes TopHeader TopHeader 
+    at TopHeader (http://127.0.0.1:5175/src/components/TopHeader.tsx:42:15)
+    at AppRoutes (http://127.0.0.1:5175/src/App.tsx:146:20)
+    at QueryClientProvider (http://127.0.0.1:5175/node_modules/.vite/deps/@tanstack_react-query.js?v=47aa2e9b:3103:3)
+    at div
+    at div
+    at AppShell (http://127.0.0.1:5175/src/App.tsx:582:20)
+    at App
+    at Router (http://127.0.0.1:5175/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4543:15)
+    at BrowserRouter (http://127.0.0.1:5175/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:5289:5)
+    at AuthProvider (http://127.0.0.1:5175/src/state/auth/AuthProvider.tsx?t=1773209639167:175:32) @ http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:520
+[15018178ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:5175/src/state/auth/AuthProvider.tsx:381:19)
+    at TopHeader (http://127.0.0.1:5175/src/components/TopHeader.tsx:43:20)
+    at renderWithHooks (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+[15017987ms] [ERROR] [EG CRASH] window.error Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:5175/src/state/auth/AuthProvider.tsx:381:19)
+    at TopHeader (http://127.0.0.1:5175/src/components/TopHeader.tsx:43:20)
+    at renderWithHooks (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20) @ http://127.0.0.1:5175/src/main.tsx:22
+[15018242ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:5175/src/state/auth/AuthProvider.tsx:381:19)
+    at TopHeader (http://127.0.0.1:5175/src/components/TopHeader.tsx:43:20)
+    at renderWithHooks (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+[15018078ms] [ERROR] The above error occurred in the <TopHeader> component:
+
+    at TopHeader (http://127.0.0.1:5175/src/components/TopHeader.tsx:42:15)
+    at AppRoutes (http://127.0.0.1:5175/src/App.tsx:146:20)
+    at QueryClientProvider (http://127.0.0.1:5175/node_modules/.vite/deps/@tanstack_react-query.js?v=47aa2e9b:3103:3)
+    at div
+    at div
+    at AppShell (http://127.0.0.1:5175/src/App.tsx:582:20)
+    at App
+    at Router (http://127.0.0.1:5175/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4543:15)
+    at BrowserRouter (http://127.0.0.1:5175/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:5289:5)
+    at AuthProvider (http://127.0.0.1:5175/src/state/auth/AuthProvider.tsx?t=1773209639167:175:32)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. @ http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14079
+[15018093ms] [ERROR] [EG CRASH] unhandledrejection Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:5175/src/state/auth/AuthProvider.tsx:381:19)
+    at TopHeader (http://127.0.0.1:5175/src/components/TopHeader.tsx:43:20)
+    at renderWithHooks (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at beginWork$1 (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19806:22)
+    at performUnitOfWork (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+    at workLoopSync (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19190:13)
+    at renderRootSync (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19169:15)
+    at recoverFromConcurrentError (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:18786:28) @ http://127.0.0.1:5175/src/main.tsx:39
+[15018262ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:5175/src/state/auth/AuthProvider.tsx:381:19)
+    at TopHeader (http://127.0.0.1:5175/src/components/TopHeader.tsx:43:20)
+    at renderWithHooks (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at beginWork$1 (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19806:22)
+    at performUnitOfWork (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+    at workLoopSync (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19190:13)
+    at renderRootSync (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19169:15)
+    at recoverFromConcurrentError (http://127.0.0.1:5175/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:18786:28)
+[15019615ms] [WARNING] [useFixtures] slug fixture fetch failed, falling back to season.id path {requestedSeasonSlug: afl26-season-two, canonicalSeasonSlug: afl26-season-two, error: TypeError: Failed to fetch} @ http://127.0.0.1:5175/src/hooks/useFixtures.ts?t=1773206119393:36
+[15021285ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://127.0.0.1:5175/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[15021285ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://127.0.0.1:5175/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[15046835ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://127.0.0.1:5175/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[15046835ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://127.0.0.1:5175/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434

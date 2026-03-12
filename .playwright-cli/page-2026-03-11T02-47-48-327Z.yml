@@ -1,0 +1,37 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+      - generic "Elite Gaming" [ref=e14]:
+        - button "Go to home" [ref=e15] [cursor=pointer]:
+          - img [ref=e17]
+      - button "Account" [ref=e19] [cursor=pointer]:
+        - img [ref=e20]
+  - main [ref=e23]:
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - generic [ref=e28]: Fixtures
+        - generic [ref=e29]: Loading…
+      - generic [ref=e30]:
+        - button "Change competition" [ref=e31]:
+          - generic [ref=e32]: Competition
+          - generic [ref=e33]: AFL 26 Season Two
+          - img [ref=e34]
+        - button "Open fixtures filters" [ref=e36]:
+          - img [ref=e37]
+          - text: Filter
+      - generic "Round selector" [ref=e39]
+      - generic "Status filters" [ref=e40]:
+        - button "All —" [ref=e41]:
+          - generic [ref=e42]: All
+          - generic [ref=e43]: —
+        - button "Scheduled —" [ref=e44]:
+          - generic [ref=e45]: Scheduled
+          - generic [ref=e46]: —
+        - button "Final —" [ref=e47]:
+          - generic [ref=e48]: Final
+          - generic [ref=e49]: —
+      - generic [ref=e50]: Loading fixtures…

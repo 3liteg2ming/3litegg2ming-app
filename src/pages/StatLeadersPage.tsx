@@ -198,8 +198,8 @@ const StatLeadersPage: React.FC = () => {
           <div className="eg-list-row">
             <span className="eg-list-rank">—</span>
             <div className="eg-list-info">
-              <div className="eg-list-name">No live data yet</div>
-              <div className="eg-list-team">Showing Supabase players only</div>
+              <div className="eg-list-name">No live season data yet</div>
+              <div className="eg-list-team">Awaiting submitted match data for this category</div>
             </div>
             <span className="eg-list-value">—</span>
           </div>

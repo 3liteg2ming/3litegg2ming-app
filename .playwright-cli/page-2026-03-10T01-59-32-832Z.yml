@@ -1,0 +1,46 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+      - generic "Elite Gaming" [ref=e14]:
+        - button "Go to home" [ref=e15] [cursor=pointer]
+      - button "Account" [ref=e18] [cursor=pointer]:
+        - img [ref=e19]
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - button "Back to home" [ref=e25] [cursor=pointer]:
+        - img [ref=e26]
+        - generic [ref=e28]: Home
+      - generic [ref=e29]:
+        - generic [ref=e30]: COACH ACCESS
+        - generic [ref=e31]:
+          - generic [ref=e32]: Sign in
+          - generic [ref=e33]: Use your coach account to access the members hub and submissions.
+        - generic [ref=e34]:
+          - generic [ref=e35]:
+            - generic [ref=e36]: Email
+            - generic [ref=e37]:
+              - img [ref=e38]
+              - textbox "Email" [ref=e41]:
+                - /placeholder: Email address
+          - generic [ref=e42]:
+            - generic [ref=e43]: Password
+            - generic [ref=e44]:
+              - img [ref=e45]
+              - textbox "Password Show password" [ref=e48]:
+                - /placeholder: Password
+              - button "Show password" [ref=e49] [cursor=pointer]:
+                - img [ref=e50]
+          - button "Sign in" [disabled] [ref=e53]
+          - generic [ref=e54]:
+            - generic [ref=e55]:
+              - generic [ref=e56]: New coach?
+              - link "Create account" [ref=e57] [cursor=pointer]:
+                - /url: /auth/sign-up
+            - generic [ref=e58]:
+              - generic [ref=e59]: Forgot password?
+              - link "Reset it" [ref=e60] [cursor=pointer]:
+                - /url: /auth/forgot-password

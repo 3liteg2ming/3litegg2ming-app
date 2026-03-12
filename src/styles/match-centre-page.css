@@ -9,7 +9,8 @@
   width: 100%;
   min-height: 100dvh;
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(100,60,200,0.08), transparent 70%),
+    radial-gradient(ellipse at 18% 0%, rgba(245, 196, 0, 0.08), transparent 58%),
+    radial-gradient(ellipse at 82% 0%, rgba(74, 144, 226, 0.08), transparent 60%),
     linear-gradient(180deg, rgba(8,10,16,0.95) 0%, rgba(6,8,14,0.98) 100%);
   color: rgba(255,255,255,0.95);
   overflow-x: hidden;
@@ -30,12 +31,47 @@
 
 .mcPage__content {
   width: 100%;
-  max-width: 760px;
+  max-width: 740px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding-bottom: calc(140px + env(safe-area-inset-bottom));
+  padding-bottom: calc(108px + env(safe-area-inset-bottom));
+}
+
+.mcPage__submeta {
+  width: 100%;
+  max-width: 740px;
+  margin: 2px auto 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 2px;
+}
+
+.mcPage__submeta span {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 5px 9px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: rgba(214, 226, 246, 0.72);
+}
+
+.mcPage__submeta--live span,
+.mcPage__submeta--verified span,
+.mcPage__submeta--submitted span {
+  border-color: rgba(88, 232, 149, 0.18);
+}
+
+.mcPage__submeta--scheduled span {
+  border-color: rgba(245, 196, 0, 0.16);
+}
+
+.mcPage__submeta--disputed span {
+  border-color: rgba(255, 130, 130, 0.18);
 }
 
 .mcPage__footer {
@@ -44,14 +80,15 @@
 
 .mcTrust {
   width: 100%;
-  max-width: 760px;
-  margin: -6px auto 8px;
-  border-radius: 18px;
+  max-width: 740px;
+  margin: -2px auto 6px;
+  border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background:
-    radial-gradient(130% 85% at 50% 0%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03) 58%, rgba(255, 255, 255, 0.01) 100%),
-    rgba(8, 12, 24, 0.8);
-  padding: 12px 14px 13px;
+    radial-gradient(140% 100% at 8% 0%, rgba(245, 196, 0, 0.14), transparent 54%),
+    radial-gradient(120% 100% at 100% 0%, rgba(72, 155, 255, 0.12), transparent 52%),
+    rgba(8, 12, 24, 0.82);
+  padding: 11px 13px 11px;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow:
@@ -61,7 +98,7 @@
 
 .mcTrust__head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
 }
@@ -88,14 +125,14 @@
 }
 
 .mcTrust__summary {
-  margin-top: 6px;
-  font-size: 13px;
-  font-weight: 650;
-  color: rgba(236, 243, 255, 0.9);
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 760;
+  color: rgba(236, 243, 255, 0.92);
 }
 
 .mcTrust__meta {
-  margin-top: 8px;
+  margin-top: 7px;
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
@@ -110,15 +147,15 @@
   padding: 4px 8px;
 }
 
-.mcTrust__links {
-  margin-top: 6px;
-  display: flex;
-  gap: 12px;
-  font-size: 11px;
-  color: rgba(245, 196, 0, 0.9);
+.mcTrust__note {
+  margin-top: 7px;
+  font-size: 10px;
+  line-height: 1.45;
+  color: rgba(214, 226, 246, 0.76);
 }
 
 .mcTrust--scheduled .mcTrust__state { color: rgba(255, 214, 74, 0.95); border-color: rgba(245, 196, 0, 0.34); background: rgba(245, 196, 0, 0.14); }
+.mcTrust--live .mcTrust__state { color: rgba(88, 232, 149, 0.96); border-color: rgba(88, 232, 149, 0.34); background: rgba(88, 232, 149, 0.13); }
 .mcTrust--submitted .mcTrust__state { color: rgba(112, 194, 255, 0.96); border-color: rgba(112, 194, 255, 0.34); background: rgba(112, 194, 255, 0.14); }
 .mcTrust--verified .mcTrust__state { color: rgba(88, 232, 149, 0.96); border-color: rgba(88, 232, 149, 0.34); background: rgba(88, 232, 149, 0.13); }
 .mcTrust--disputed .mcTrust__state { color: rgba(255, 130, 130, 0.96); border-color: rgba(255, 130, 130, 0.34); background: rgba(255, 130, 130, 0.13); }
@@ -135,10 +172,37 @@
   pointer-events: none;
   background:
     radial-gradient(ellipse at 15% 10%, rgba(255,210,24,0.06), transparent 55%),
-    radial-gradient(ellipse at 85% 20%, rgba(82,174,255,0.06), transparent 58%),
+    radial-gradient(ellipse at 85% 20%, rgba(82,174,255,0.07), transparent 58%),
     radial-gradient(ellipse at 50% 65%, rgba(255,255,255,0.03), transparent 65%);
   filter: blur(8px);
   z-index: 0;
+}
+
+@media (max-width: 640px) {
+  .mcPage__content {
+    gap: 4px;
+  }
+
+  .mcPage__submeta {
+    margin: 2px 12px 4px;
+  }
+
+  .mcTrust {
+    margin: -2px 12px 8px;
+  }
+
+  .mcTrust__head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mcTrust__state {
+    align-self: flex-start;
+  }
+
+  .mcTrust__note {
+    font-size: 11px;
+  }
 }
 
 .mcPage__inner > * {

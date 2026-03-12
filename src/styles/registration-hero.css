@@ -85,7 +85,7 @@
 
 .regHeroCard__title {
   margin: 10px 0 0;
-  font-size: clamp(30px, 7.4vw, 56px);
+  font-size: clamp(28px, 6.4vw, 48px);
   line-height: 0.95;
   letter-spacing: -0.045em;
 }
@@ -93,15 +93,17 @@
 .regHeroCard__subtitle {
   margin: 8px 0 0;
   color: rgba(252, 254, 255, 0.9);
-  font-size: clamp(14px, 2.7vw, 18px);
+  font-size: clamp(13px, 2.5vw, 16px);
   font-weight: 800;
+  line-height: 1.35;
 }
 
 .regHeroCard__seed {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   color: rgba(255, 217, 98, 0.95);
   font-size: 12px;
   font-weight: 700;
+  line-height: 1.4;
 }
 
 .regHeroCard__side {
@@ -124,6 +126,7 @@
   color: rgba(218, 226, 244, 0.72);
   font-size: 12px;
   font-weight: 600;
+  line-height: 1.42;
 }
 
 .tlgWrap {
@@ -201,11 +204,11 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.03);
   color: rgba(246, 250, 255, 0.96);
-  min-height: 98px;
+  min-height: 116px;
   padding: 7px;
   display: grid;
   place-items: center;
-  gap: 0;
+  gap: 6px;
   text-align: center;
   cursor: pointer;
   transition: border-color 150ms ease, background-color 150ms ease, box-shadow 170ms ease, transform 150ms ease;
@@ -268,7 +271,15 @@
 }
 
 .tlgCard__name {
-  display: none;
+  display: block;
+  max-width: 100%;
+  font-size: 11px;
+  line-height: 1.15;
+  font-weight: 800;
+  color: rgba(236, 243, 255, 0.86);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tlgCard__check {

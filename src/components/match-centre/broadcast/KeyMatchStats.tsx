@@ -15,23 +15,32 @@ export default function KeyMatchStats({ model, loading }: { model: MatchCentreMo
     .filter(Boolean) as NonNullable<MatchCentreModel>['teamStats'];
   const fallbackStats = source.filter((s) => !stats.includes(s)).slice(0, Math.max(0, 4 - stats.length));
   const cards = [...stats, ...fallbackStats].slice(0, 4);
+  const isLoadingShell = !!loading && !model;
   const isEmpty = !loading && cards.length === 0;
+  const desc = model?.hasSubmissionData
+    ? 'Clean team comparisons from the published result'
+    : 'Team stat cards will appear once a submitted result includes richer match stats';
 
   return (
     <section className="mcKeyStats">
       <div className="mcKeyStats__header">
         <h2 className="mcKeyStats__title">Key Match Stats</h2>
-        <p className="mcKeyStats__desc">Verified team comparisons from submissions</p>
+        <p className="mcKeyStats__desc">{desc}</p>
       </div>
 
-      {isEmpty ? (
+      {isLoadingShell ? (
+        <div className="mcLeaders__empty" style={{ paddingTop: 8 }}>
+          <div className="mcLeaders__emptyText">Loading match stats…</div>
+          <p className="mcLeaders__emptyDesc">This section will settle as soon as the fixture feed resolves.</p>
+        </div>
+      ) : isEmpty ? (
         <div className="mcLeaders__empty" style={{ paddingTop: 8 }}>
           <div className="mcLeaders__emptyText">No key stats yet</div>
-          <p className="mcLeaders__emptyDesc">Team stat cards will appear after verified submissions</p>
+          <p className="mcLeaders__emptyDesc">Team stat cards will appear once the submitted result includes richer match stats</p>
         </div>
       ) : (
         <div className="mcKeyStats__grid">
-          {(loading && !model ? Array.from({ length: 4 }) : cards).map((stat: any, i) => {
+          {cards.map((stat: any, i) => {
             const home = Number(stat?.homeMatch ?? 0);
             const away = Number(stat?.awayMatch ?? 0);
             return (
@@ -40,30 +49,24 @@ export default function KeyMatchStats({ model, loading }: { model: MatchCentreMo
                   <div className="mcKeyStat__head">
                     <p className="mcKeyStat__label">{stat?.label || 'Stat'}</p>
                   </div>
-                  {loading ? (
-                    <div className="mcKeyStat__skeleton" />
-                  ) : (
-                    <>
-                      <div className="mcKeyStat__values">
-                        <span className="mcKeyStat__value mcKeyStat__value--home">{home}</span>
-                        <span className="mcKeyStat__divider">vs</span>
-                        <span className="mcKeyStat__value mcKeyStat__value--away">{away}</span>
-                      </div>
-                      <div className="mcKeyStat__bar">
-                        {(() => {
-                          const max = Math.max(home, away, 1);
-                          const hp = (home / max) * 100;
-                          const ap = (away / max) * 100;
-                          return (
-                            <>
-                              <div className="mcKeyStat__barHome" style={{ width: `${hp}%` }} />
-                              <div className="mcKeyStat__barAway" style={{ width: `${ap}%` }} />
-                            </>
-                          );
-                        })()}
-                      </div>
-                    </>
-                  )}
+                  <div className="mcKeyStat__values">
+                    <span className="mcKeyStat__value mcKeyStat__value--home">{home}</span>
+                    <span className="mcKeyStat__divider">vs</span>
+                    <span className="mcKeyStat__value mcKeyStat__value--away">{away}</span>
+                  </div>
+                  <div className="mcKeyStat__bar">
+                    {(() => {
+                      const max = Math.max(home, away, 1);
+                      const hp = (home / max) * 100;
+                      const ap = (away / max) * 100;
+                      return (
+                        <>
+                          <div className="mcKeyStat__barHome" style={{ width: `${hp}%` }} />
+                          <div className="mcKeyStat__barAway" style={{ width: `${ap}%` }} />
+                        </>
+                      );
+                    })()}
+                  </div>
                 </div>
               </div>
             );

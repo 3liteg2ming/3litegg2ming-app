@@ -1,13 +1,11 @@
-import React from 'react';
-import { BarChart3, LayoutGrid, Users } from 'lucide-react';
 import '@/styles/match-centre-tabs.css';
 
 export type MatchCentreTabKey = 'summary' | 'team' | 'players';
 
-const TABS: { key: MatchCentreTabKey; label: string; icon: React.ReactNode }[] = [
-  { key: 'summary', label: 'Summary', icon: <LayoutGrid className="w-4 h-4" /> },
-  { key: 'team', label: 'Team Stats', icon: <BarChart3 className="w-4 h-4" /> },
-  { key: 'players', label: 'Player Stats', icon: <Users className="w-4 h-4" /> },
+const TABS: { key: MatchCentreTabKey; label: string }[] = [
+  { key: 'summary', label: 'Summary' },
+  { key: 'team', label: 'Team Stats' },
+  { key: 'players', label: 'Player Stats' },
 ];
 
 export default function MatchCentreTabs({
@@ -36,7 +34,6 @@ export default function MatchCentreTabs({
                 title={t.label}
                 className={`mcTabs__button ${isActive ? 'mcTabs__button--active' : ''}`}
               >
-                {t.icon}
                 <span className="mcTabs__label">{t.label}</span>
               </button>
             );

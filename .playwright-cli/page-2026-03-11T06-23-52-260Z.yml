@@ -1,0 +1,152 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+      - generic "Elite Gaming" [ref=e14]:
+        - button "Go to home" [ref=e15] [cursor=pointer]
+      - button "Sign in" [ref=e18] [cursor=pointer]:
+        - img [ref=e19]
+        - generic [ref=e22]: Sign in
+  - main [ref=e23]:
+    - generic [ref=e25]:
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - generic [ref=e28]: Elite Gaming AFL Live
+          - heading "Home" [level=1] [ref=e29]
+        - generic [ref=e30]: Viewing as guest
+      - region "Homepage hero" [ref=e31]:
+        - generic [ref=e32]:
+          - generic [ref=e33]:
+            - generic [ref=e34]: Knockout Preseason
+            - heading "A cleaner live hub for fixtures, results, ladder, stats, and coach actions." [level=2] [ref=e35]
+            - paragraph [ref=e36]: The current competition, next match, standings, and coaches are all surfaced here in one clean landing page.
+          - generic "Competition switcher" [ref=e37]:
+            - button "Knockout Preseason Live" [ref=e38] [cursor=pointer]:
+              - generic [ref=e39]: Knockout Preseason
+              - generic [ref=e40]: Live
+            - button "AFL 26 Season Two" [ref=e41] [cursor=pointer]:
+              - generic [ref=e42]: AFL 26
+              - generic [ref=e43]: Season Two
+        - generic [ref=e44]:
+          - article [ref=e45]:
+            - generic [ref=e46]: Loading live competition feed…
+          - complementary [ref=e47]:
+            - article [ref=e48]:
+              - generic [ref=e49]: Coach access
+              - generic [ref=e50]: Sign in to reach Submit Results, your team context, and live coach actions.
+              - generic [ref=e51]: 08D 06H 36M
+              - generic [ref=e52]:
+                - button "Coach Sign In" [ref=e53] [cursor=pointer]
+                - button "Browse Fixtures" [ref=e54] [cursor=pointer]
+              - generic [ref=e55]:
+                - generic [ref=e56]: REGISTRATIONS OPEN
+                - generic [ref=e57]: 08D 06H 36M
+            - article [ref=e58]:
+              - generic [ref=e60]: Competition Pulse
+              - generic [ref=e61]:
+                - generic [ref=e62]:
+                  - generic [ref=e63]: Clubs
+                  - strong [ref=e64]: —
+                - generic [ref=e65]:
+                  - generic [ref=e66]: Fixtures
+                  - strong [ref=e67]: —
+                - generic [ref=e68]:
+                  - generic [ref=e69]: Results Live
+                  - strong [ref=e70]: "0"
+                - generic [ref=e71]:
+                  - generic [ref=e72]: Table Leader
+                  - strong [ref=e73]: TBD
+      - region "Quick access" [ref=e74]:
+        - button "Fixtures Open" [ref=e75] [cursor=pointer]:
+          - img [ref=e77]
+          - generic [ref=e79]:
+            - strong [ref=e80]: Fixtures
+            - generic [ref=e81]: Open
+          - img [ref=e82]
+        - button "Ladder Open" [ref=e84] [cursor=pointer]:
+          - img [ref=e86]
+          - generic [ref=e92]:
+            - strong [ref=e93]: Ladder
+            - generic [ref=e94]: Open
+          - img [ref=e95]
+        - button "Stats Open" [ref=e97] [cursor=pointer]:
+          - img [ref=e99]
+          - generic [ref=e101]:
+            - strong [ref=e102]: Stats
+            - generic [ref=e103]: Open
+          - img [ref=e104]
+        - button "Match Centre Open" [ref=e106] [cursor=pointer]:
+          - img [ref=e108]
+          - generic [ref=e114]:
+            - strong [ref=e115]: Match Centre
+            - generic [ref=e116]: Open
+          - img [ref=e117]
+        - button "Coach Sign In Open" [ref=e119] [cursor=pointer]:
+          - img [ref=e121]
+          - generic [ref=e126]:
+            - strong [ref=e127]: Coach Sign In
+            - generic [ref=e128]: Open
+          - img [ref=e129]
+      - generic [ref=e131]:
+        - region "Competition spotlight" [ref=e132]:
+          - generic [ref=e133]:
+            - generic [ref=e134]:
+              - img [ref=e136]
+              - heading "Competition Spotlight" [level=2] [ref=e145]
+            - button "Fixtures" [ref=e146] [cursor=pointer]:
+              - text: Fixtures
+              - img [ref=e147]
+          - generic [ref=e149]: Loading fixture cards…
+        - region "Ladder snapshot" [ref=e150]:
+          - generic [ref=e151]:
+            - generic [ref=e152]:
+              - img [ref=e154]
+              - heading "Ladder Snapshot" [level=2] [ref=e160]
+            - button "View ladder" [ref=e161] [cursor=pointer]:
+              - text: View ladder
+              - img [ref=e162]
+          - generic [ref=e164]:
+            - strong [ref=e165]: Ladder is waiting on the current season baseline.
+            - generic [ref=e166]: The full table will appear here as soon as the active competition is resolved.
+        - region "League leaders" [ref=e167]:
+          - generic [ref=e168]:
+            - generic [ref=e169]:
+              - img [ref=e171]
+              - heading "League Leaders" [level=2] [ref=e173]
+            - button "Stats" [ref=e174] [cursor=pointer]:
+              - text: Stats
+              - img [ref=e175]
+          - generic [ref=e177]:
+            - article [ref=e178]:
+              - generic [ref=e179]: GOALS
+              - generic [ref=e180]:
+                - img [ref=e182]
+                - generic [ref=e186]:
+                  - strong [ref=e187]: Jeremy Cameron
+                  - generic [ref=e188]: AFL26
+            - article [ref=e189]:
+              - generic [ref=e190]: DISPOSALS
+              - generic [ref=e191]:
+                - img [ref=e193]
+                - generic [ref=e197]:
+                  - strong [ref=e198]: Nick Daicos
+                  - generic [ref=e199]: AFL26
+        - region "Coaches and community" [ref=e200]:
+          - generic [ref=e201]:
+            - generic [ref=e202]:
+              - img [ref=e204]
+              - heading "Coach Room" [level=2] [ref=e209]
+            - button "All coaches" [ref=e210] [cursor=pointer]:
+              - text: All coaches
+              - img [ref=e211]
+          - generic [ref=e213]: Loading current coaches…
+        - region "League notes" [ref=e214]:
+          - generic [ref=e216]:
+            - img [ref=e218]
+            - heading "League Notes" [level=2] [ref=e221]
+          - generic [ref=e222]:
+            - strong [ref=e223]: No announcements right now.
+            - generic [ref=e224]: Important league notes will appear here when published.

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Search, Edit2, Save, X, Plus, RotateCw, AlertCircle } from 'lucide-react';
+import { fetchAllFixtures } from '../../lib/fixturesRepo';
 import { requireSupabaseClient } from '../../lib/supabaseClient';
 import '../../styles/adminPanel.css';
 
@@ -119,9 +120,21 @@ export default function AdminPanelPage() {
   const loadFixtures = async () => {
     setFixturesLoading(true);
     try {
-      const { data, error: err } = await supabase.from('eg_fixtures').select('*').order('round');
-      if (err) throw err;
-      setFixtures((data || []) as Fixture[]);
+      const rows = await fetchAllFixtures({ limit: 3000, offset: 0 });
+      setFixtures(
+        rows.map((row) => ({
+          id: row.id,
+          round: row.round,
+          status: row.status,
+          venue: row.venue || undefined,
+          home_team_id: row.home_team_id || undefined,
+          away_team_id: row.away_team_id || undefined,
+          home_goals: row.home_goals || undefined,
+          home_behinds: row.home_behinds || undefined,
+          away_goals: row.away_goals || undefined,
+          away_behinds: row.away_behinds || undefined,
+        })),
+      );
     } catch (e: any) {
       setError(e?.message || 'Failed to load fixtures');
     } finally {

@@ -1,0 +1,102 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+      - generic "Elite Gaming" [ref=e14]:
+        - button "Go to home" [ref=e15] [cursor=pointer]:
+          - img [ref=e24]
+      - button "Account" [ref=e18] [cursor=pointer]:
+        - img [ref=e19]
+  - main [ref=e22]:
+    - generic [ref=e25]:
+      - generic [ref=e26]:
+        - heading "Stats" [level=1] [ref=e27]
+        - generic [ref=e28]: Knockout Preseason
+      - generic [ref=e30]:
+        - button "Players" [ref=e31] [cursor=pointer]:
+          - img [ref=e32]
+          - text: Players
+        - button "Teams" [ref=e35] [cursor=pointer]:
+          - img [ref=e36]
+          - text: Teams
+      - generic [ref=e42]:
+        - heading "Season Leaders" [level=2] [ref=e43]
+        - generic [ref=e44]:
+          - button "Total" [ref=e45] [cursor=pointer]
+          - button "Average" [ref=e46] [cursor=pointer]
+      - generic [ref=e49]:
+        - generic [ref=e50]:
+          - generic [ref=e51]:
+            - img "Gold Coast Suns" [ref=e55]
+            - generic [ref=e56]: Goals
+            - generic [ref=e57]: "5"
+            - generic [ref=e58]:
+              - generic [ref=e59]: Mac
+              - button "Andrew" [ref=e60] [cursor=pointer]
+              - generic [ref=e61]: Gold Coast Suns
+            - button "MA" [ref=e62] [cursor=pointer]:
+              - generic [ref=e63]: MA
+          - generic [ref=e65]:
+            - generic [ref=e66]: "2"
+            - generic [ref=e68]: HT
+            - generic [ref=e69]:
+              - generic [ref=e70]: Harvey Thomas
+              - generic [ref=e71]: GWS Giants
+            - generic [ref=e72]: "2"
+          - button "Full Table" [ref=e73] [cursor=pointer]:
+            - text: Full Table
+            - img [ref=e74]
+        - generic "Disposals unavailable" [ref=e76]:
+          - generic [ref=e77]:
+            - generic [ref=e79]: Disposals
+            - generic [ref=e80]: —
+            - generic [ref=e81]:
+              - generic [ref=e82]: No stats
+              - generic [ref=e83]: submitted yet
+              - generic [ref=e84]: Submit Results to populate leaders
+          - button "Full Table" [ref=e86] [cursor=pointer]:
+            - text: Full Table
+            - img [ref=e87]
+        - generic "Marks unavailable" [ref=e89]:
+          - generic [ref=e90]:
+            - generic [ref=e92]: Marks
+            - generic [ref=e93]: —
+            - generic [ref=e94]:
+              - generic [ref=e95]: No stats
+              - generic [ref=e96]: submitted yet
+              - generic [ref=e97]: Submit Results to populate leaders
+          - button "Full Table" [ref=e99] [cursor=pointer]:
+            - text: Full Table
+            - img [ref=e100]
+        - generic "Tackles unavailable" [ref=e102]:
+          - generic [ref=e103]:
+            - generic [ref=e105]: Tackles
+            - generic [ref=e106]: —
+            - generic [ref=e107]:
+              - generic [ref=e108]: No stats
+              - generic [ref=e109]: submitted yet
+              - generic [ref=e110]: Submit Results to populate leaders
+          - button "Full Table" [ref=e112] [cursor=pointer]:
+            - text: Full Table
+            - img [ref=e113]
+        - generic "Fantasy Points unavailable" [ref=e115]:
+          - generic [ref=e116]:
+            - generic [ref=e118]: Fantasy Points
+            - generic [ref=e119]: —
+            - generic [ref=e120]:
+              - generic [ref=e121]: No stats
+              - generic [ref=e122]: submitted yet
+              - generic [ref=e123]: Submit Results to populate leaders
+          - button "Full Table" [ref=e125] [cursor=pointer]:
+            - text: Full Table
+            - img [ref=e126]
+      - generic [ref=e130]:
+        - generic [ref=e131]:
+          - generic [ref=e132]:
+            - heading "All Players" [level=3] [ref=e133]
+            - paragraph [ref=e134]: Baseline competition roster. Match stats overlay as results are submitted.
+          - generic [ref=e135]: 0 players
+        - generic [ref=e137]: No players available for this competition.

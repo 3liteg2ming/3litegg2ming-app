@@ -83,56 +83,57 @@ export default function TeamStats({ model, loading }: { model: MatchCentreModel 
   const homeKey = home ? slugToTeamKey(home.slug) : null;
   const awayKey = away ? slugToTeamKey(away.slug) : null;
 
-  const homeLogo =
-    home?.logoUrl || (homeKey ? assetUrl(TEAM_ASSETS[homeKey].logoFile ?? '') : assetUrl('elite-gaming-logo.png'));
-  const awayLogo =
-    away?.logoUrl || (awayKey ? assetUrl(TEAM_ASSETS[awayKey].logoFile ?? '') : assetUrl('elite-gaming-logo.png'));
+  const homeLogo = home?.logoUrl || (homeKey ? assetUrl(TEAM_ASSETS[homeKey].logoFile ?? '') : assetUrl('elite-gaming-logo.png'));
+  const awayLogo = away?.logoUrl || (awayKey ? assetUrl(TEAM_ASSETS[awayKey].logoFile ?? '') : assetUrl('elite-gaming-logo.png'));
 
   const stats = model?.teamStats || [];
-  const isEmpty = !loading && stats.length === 0;
+  const isLoadingShell = !!loading && !model;
+  const isEmpty = !isLoadingShell && stats.length === 0;
+  const desc = model?.hasSubmissionData
+    ? 'Side-by-side team comparison from the published result'
+    : 'A richer stat pack will turn this into a live team comparison after submission';
 
   return (
     <section className="mcTeamStats">
       <div className="mcTeamStats__header">
         <h2 className="mcTeamStats__title">Team Stats</h2>
-        <p className="mcTeamStats__desc">Side-by-side match comparison</p>
+        <p className="mcTeamStats__desc">{desc}</p>
       </div>
 
-      {isEmpty ? (
+      {isLoadingShell ? (
+        <div className="mcTeamStats__empty">
+          <div className="mcTeamStats__emptyText">Loading team stats…</div>
+          <p className="mcTeamStats__emptyDesc">The baseline fixture is loading now.</p>
+        </div>
+      ) : isEmpty ? (
         <div className="mcTeamStats__empty">
           <div className="mcTeamStats__emptyText">Team stats not available yet</div>
-          <p className="mcTeamStats__emptyDesc">
-            Once coaches submit results and stats are verified, they will appear here
-          </p>
+          <p className="mcTeamStats__emptyDesc">If a richer stat pack is submitted later, it will appear here automatically.</p>
         </div>
       ) : (
-        <>
+        <div className="mcTeamStats__shell">
           <div className="mcTeamStats__teams">
             <div className="mcTeamStats__team">
-              <SmartImg
-                key={`teamstats-home-${homeLogo}`}
-                src={homeLogo}
-                alt={home?.fullName || 'Home'}
-                className="mcTeamStats__logo"
-                fallbackText={home?.abbreviation || 'H'}
-              />
-              <span className="mcTeamStats__teamName">{home?.fullName || '—'}</span>
+              <SmartImg src={homeLogo} alt={home?.fullName || 'Home'} className="mcTeamStats__logo" fallbackText={home?.abbreviation || 'H'} />
+              <div className="mcTeamStats__teamMeta">
+                <span className="mcTeamStats__teamLabel">Home</span>
+                <span className="mcTeamStats__teamName">{home?.fullName || '—'}</span>
+              </div>
             </div>
-            <div className="mcTeamStats__versus">VS</div>
+
+            <div className="mcTeamStats__divider" aria-hidden="true" />
+
             <div className="mcTeamStats__team mcTeamStats__team--away">
-              <span className="mcTeamStats__teamName">{away?.fullName || '—'}</span>
-              <SmartImg
-                key={`teamstats-away-${awayLogo}`}
-                src={awayLogo}
-                alt={away?.fullName || 'Away'}
-                className="mcTeamStats__logo"
-                fallbackText={away?.abbreviation || 'A'}
-              />
+              <div className="mcTeamStats__teamMeta mcTeamStats__teamMeta--away">
+                <span className="mcTeamStats__teamLabel">Away</span>
+                <span className="mcTeamStats__teamName">{away?.fullName || '—'}</span>
+              </div>
+              <SmartImg src={awayLogo} alt={away?.fullName || 'Away'} className="mcTeamStats__logo" fallbackText={away?.abbreviation || 'A'} />
             </div>
           </div>
 
           <div className="mcTeamStats__card">
-            {(loading && !model ? Array.from({ length: 5 }) : stats).map((stat: any, idx: number) => (
+            {stats.map((stat: any, idx: number) => (
               <StatRow
                 key={stat?.label || idx}
                 stat={stat}
@@ -141,12 +142,7 @@ export default function TeamStats({ model, loading }: { model: MatchCentreModel 
               />
             ))}
           </div>
-
-          <div className="mcTeamStats__footer">
-            <div className="mcTeamStats__footerLabel">{home?.abbreviation || home?.name || 'HOME'}</div>
-            <div className="mcTeamStats__footerLabel">{away?.abbreviation || away?.name || 'AWAY'}</div>
-          </div>
-        </>
+        </div>
       )}
     </section>
   );

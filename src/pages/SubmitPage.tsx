@@ -1,29 +1,33 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertTriangle,
-  Calendar,
   Check,
   ChevronRight,
-  Eye,
-  EyeOff,
-  Search,
   Shield,
   Trophy,
   Upload,
   User,
-  Wand2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import { requireSupabaseClient } from '../lib/supabaseClient';
+import { GoalKickerPicker } from '../components/submit/GoalKickerPicker';
 import { fetchCoachProfile } from '../lib/profileRepo';
 import { TEAM_COLORS, TEAM_SHORT_NAMES } from '../data/teamColors';
+import { invalidateAfl26Cache } from '../data/afl26Supabase';
 import { getDataSeasonSlugForCompetition, getStoredCompetitionKey } from '../lib/competitionRegistry';
-import { resolvePlayerDisplayName, resolvePlayerPhotoUrl, resolveTeamLogoUrl, resolveTeamName } from '@/lib/entityResolvers';
+import { fetchSeasonFixturesBySeasonId, invalidateFixturesCache, type FixtureRow } from '../lib/fixturesRepo';
+import { invalidateLadderCache } from '../lib/ladderRepo';
+import { resolveSeasonId as resolveAppSeasonId } from '../lib/seasonResolver';
+import { clearStatsCategoriesCache } from '../lib/statsRepo';
+import { clearStatLeadersCache } from '../lib/stats-leaders-cache';
+import { resolvePlayerDisplayName, resolvePlayerPhotoUrl, resolveTeamLogoUrl } from '@/lib/entityResolvers';
 import '../styles/submitPage.css';
 
 const supabase = requireSupabaseClient();
+const DATA_SYNC_EVENT = 'eg:data-sync';
 
 type NextFixturePayload = {
   fixture: {
@@ -38,12 +42,12 @@ type NextFixturePayload = {
   awayTeam: { id: string; name: string; shortName?: string; logo?: string; teamKey?: string };
 } | null;
 
-type OcrState =
-  | { status: 'idle' }
-  | { status: 'ocr_running'; step: string; progress01: number }
-  | { status: 'done'; rawText: string; teamStats: Record<string, number>; playerLines: string[] }
-  | { status: 'timeout'; error: string }
-  | { status: 'error'; message: string };
+type EligibleFixtureOption = {
+  id: string;
+  label: string;
+  payload: Exclude<NextFixturePayload, null>;
+  sortTime: number;
+};
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
@@ -57,6 +61,23 @@ type PlayerLite = {
   photoUrl?: string;
 };
 
+type UploadedFile = {
+  id: string;
+  file: File;
+  name: string;
+  size: number;
+  previewUrl: string;
+};
+
+type UploadedEvidenceAsset = {
+  bucket: string;
+  path: string;
+  publicUrl: string;
+  name: string;
+  size: number;
+  mimeType: string | null;
+};
+
 type DraftPayload = {
   venue: string;
   homeGoals: string;
@@ -65,11 +86,16 @@ type DraftPayload = {
   awayBehinds: string;
   homeGoalMap: Record<string, number>;
   awayGoalMap: Record<string, number>;
+  manualHomePlayers?: PlayerLite[];
+  manualAwayPlayers?: PlayerLite[];
   notes: string;
   currentStep: Step;
-  ocrConfirm: boolean;
-  uploadedMeta: Array<{ name: string; size: number }>;
   savedAt: number;
+};
+
+type SubmitConflict = {
+  message: string;
+  detail?: string;
 };
 
 const STEP_LABELS: Record<Step, string> = {
@@ -99,126 +125,6 @@ function clamp(n: number, min: number, max: number) {
 
 function bytesToKb(n: number) {
   return Math.max(1, Math.round((n || 0) / 1024));
-}
-
-function parseTeamStatsFromText(raw: string) {
-  const keys = [
-    'DISPOSALS',
-    'KICKS',
-    'HANDBALLS',
-    'MARKS',
-    'TACKLES',
-    'INSIDE 50',
-    'CLEARANCES',
-    'HITOUTS',
-    'CONTESTED POSSESSIONS',
-    'UNCONTESTED POSSESSIONS',
-    'CLANGERS',
-    'TURNOVERS',
-  ];
-
-  const out: Record<string, number> = {};
-  const text = raw.toUpperCase();
-
-  for (const k of keys) {
-    const re = new RegExp(`${k.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\\\$&')}\\s*[:\\-]?\\s*(\\d{1,3})`, 'i');
-    const m = text.match(re);
-    if (m?.[1]) out[k] = safeNum(m[1]);
-  }
-
-  return out;
-}
-
-function parsePlayerLinesFromText(raw: string) {
-  const lines = (raw || '')
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter(Boolean);
-
-  const out: string[] = [];
-  for (const l of lines) {
-    if (/^[A-Z][A-Z '\-.]{2,}\s+\d{1,3}$/i.test(l)) out.push(l);
-    else if (/^[A-Z][A-Z '\-.]{2,}.*\s\d{1,3}$/i.test(l) && /\d{1,3}$/.test(l)) out.push(l);
-  }
-
-  return out.slice(0, 50);
-}
-
-async function runTesseract(files: File[], onProgress: (step: string, progress01: number) => void) {
-  const GLOBAL_TIMEOUT_MS = 20000;
-
-  const withTimeout = async <T,>(p: Promise<T>, ms: number, label: string) => {
-    return await new Promise<T>((resolve, reject) => {
-      const t = window.setTimeout(() => reject(new Error(`${label} timed out`)), ms);
-      p.then(
-        (v) => {
-          window.clearTimeout(t);
-          resolve(v);
-        },
-        (e) => {
-          window.clearTimeout(t);
-          reject(e);
-        },
-      );
-    });
-  };
-
-  return await withTimeout(
-    (async () => {
-      const mod: any = await import('tesseract.js');
-      const createWorker = mod?.createWorker ?? mod?.default?.createWorker;
-      if (!createWorker) throw new Error('tesseract.js not available');
-
-      const workerPath = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js';
-      const corePath = 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core.wasm.js';
-      const langPath = 'https://tessdata.projectnaptha.com/4.0.0';
-
-      const logger = (m: any) => {
-        if (!m?.status) return;
-        const status = String(m.status);
-        const p = typeof m.progress === 'number' ? clamp(m.progress, 0, 1) : 0;
-        if (status.includes('loading')) onProgress('Preparing OCR…', Math.max(0.05, p));
-        else if (status.includes('initializ')) onProgress('Reading screenshot…', Math.max(0.1, p));
-        else if (status.includes('recogniz')) onProgress('Extracting team stats…', Math.max(0.2, p));
-        else onProgress(status, p);
-      };
-
-      onProgress('Preparing OCR…', 0.01);
-
-      let worker: any;
-      try {
-        worker = await createWorker({ logger, workerPath, corePath, langPath });
-      } catch {
-        worker = await createWorker('eng', 1, { logger, workerPath, corePath, langPath });
-      }
-
-      try {
-        if (worker?.loadLanguage) await withTimeout(worker.loadLanguage('eng'), 60000, 'loadLanguage');
-        if (worker?.initialize) await withTimeout(worker.initialize('eng'), 60000, 'initialize');
-
-        let combined = '';
-        for (let i = 0; i < files.length; i += 1) {
-          const f = files[i];
-          const base = i / Math.max(1, files.length);
-          onProgress(`Reading screenshot ${i + 1} of ${files.length}`, clamp(base, 0.15, 0.9));
-          const res = await withTimeout(worker.recognize(f), 120000, `recognize(${f.name})`);
-          const text = (res as any)?.data?.text ?? '';
-          combined += `\n\n--- ${f.name} ---\n${text}`;
-        }
-
-        onProgress('Ready to review', 0.98);
-        return combined.trim();
-      } finally {
-        try {
-          await worker.terminate();
-        } catch {
-          // ignore
-        }
-      }
-    })(),
-    GLOBAL_TIMEOUT_MS,
-    'Overall OCR processing',
-  );
 }
 
 function resolveTeamLogo(teamName: string, logo?: string) {
@@ -261,6 +167,79 @@ function normalizeToken(value: unknown) {
     .replace(/[^a-z0-9]/g, '');
 }
 
+function dedupePlayers(players: PlayerLite[]) {
+  return Array.from(new Map(players.map((player) => [player.id, player])).values());
+}
+
+function normalizeFixtureStatus(value: unknown): string {
+  return String(value || '').trim().toUpperCase();
+}
+
+function isEligibleSubmitFixtureStatus(value: unknown): boolean {
+  const status = normalizeFixtureStatus(value);
+  return status !== 'FINAL' && status !== 'COMPLETED' && status !== 'COMPLETE';
+}
+
+function fixtureSortTime(startTime?: string) {
+  const raw = String(startTime || '').trim();
+  if (!raw) return Number.MAX_SAFE_INTEGER;
+  const time = new Date(raw).getTime();
+  return Number.isFinite(time) ? time : Number.MAX_SAFE_INTEGER;
+}
+
+function buildFixturePickerLabel(payload: Exclude<NextFixturePayload, null>) {
+  const kickoff = formatKickoff(payload.fixture.startTime);
+  return `R${payload.fixture.round} • ${payload.homeTeam.shortName || payload.homeTeam.name} vs ${payload.awayTeam.shortName || payload.awayTeam.name} • ${kickoff}`;
+}
+
+function mapFixtureToSubmitOption(fx: FixtureRow): EligibleFixtureOption {
+  const homeName = String(fx.home_team_name || 'unknown');
+  const awayName = String(fx.away_team_name || 'unknown');
+
+  const payload: Exclude<NextFixturePayload, null> = {
+    fixture: {
+      id: String(fx.id),
+      round: safeNum(fx.round),
+      venue: String(fx.venue || 'TBC'),
+      status: String(fx.status || 'SCHEDULED'),
+      seasonId: fx.season_id ? String(fx.season_id) : undefined,
+      startTime: fx.start_time ? String(fx.start_time) : undefined,
+    },
+    homeTeam: {
+      id: String(fx.home_team_id || ''),
+      name: homeName,
+      shortName: deriveShortName(homeName, fx.home_team_short_name || TEAM_SHORT_NAMES[homeName]),
+      logo: resolveTeamLogo(homeName, fx.home_team_logo_url || undefined),
+      teamKey: fx.home_team_key || undefined,
+    },
+    awayTeam: {
+      id: String(fx.away_team_id || ''),
+      name: awayName,
+      shortName: deriveShortName(awayName, fx.away_team_short_name || TEAM_SHORT_NAMES[awayName]),
+      logo: resolveTeamLogo(awayName, fx.away_team_logo_url || undefined),
+      teamKey: fx.away_team_key || undefined,
+    },
+  };
+
+  return {
+    id: payload.fixture.id,
+    label: buildFixturePickerLabel(payload),
+    payload,
+    sortTime: fixtureSortTime(payload.fixture.startTime),
+  };
+}
+
+function pickDefaultFixtureId(options: EligibleFixtureOption[]): string | null {
+  if (!options.length) return null;
+  const now = Date.now();
+  const upcoming = options.find((option) => option.sortTime >= now);
+  return upcoming?.id || options[0].id;
+}
+
+async function resolveSeasonIdForSlug(seasonSlug: string): Promise<string> {
+  return resolveAppSeasonId(supabase, seasonSlug, { preferFixtureRows: true });
+}
+
 function buildDraftKey(userId?: string | null, fixtureId?: string | null) {
   const comp = getStoredCompetitionKey();
   return `eg_submit_draft:${comp}:${userId || 'guest'}:${fixtureId || 'none'}`;
@@ -278,9 +257,84 @@ function formatSavedAt(ts: number | null) {
   return d.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
 }
 
+function hasMeaningfulMeta(value: unknown) {
+  const raw = String(value || '').trim();
+  if (!raw) return false;
+  const normalized = raw.toLowerCase();
+  return normalized !== 'tbc' && normalized !== 'venue tbc' && normalized !== 'time tba';
+}
+
+function sanitizeFileName(name: string) {
+  const cleaned = String(name || 'screenshot')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9.\-_]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  return cleaned || 'screenshot.jpg';
+}
+
+function formatSubmitError(error: any): SubmitConflict {
+  const message = String(error?.message || 'Submit failed.').trim() || 'Submit failed.';
+  const details = [error?.details, error?.hint, error?.code ? `Code: ${error.code}` : null]
+    .map((part) => String(part || '').trim())
+    .filter(Boolean);
+
+  return details.length ? { message, detail: details.join('\n') } : { message };
+}
+
+function buildEvidencePath(fixtureId: string, sessionUserId: string, fileName: string) {
+  const safeName = sanitizeFileName(fileName);
+  return `submissions/${fixtureId}/${sessionUserId}/${Date.now()}-${uuid()}-${safeName}`;
+}
+
+async function uploadEvidenceFiles(
+  fixtureId: string,
+  sessionUserId: string,
+  uploadedFiles: UploadedFile[],
+): Promise<UploadedEvidenceAsset[]> {
+  const assets: UploadedEvidenceAsset[] = [];
+
+  for (const item of uploadedFiles) {
+    const path = buildEvidencePath(fixtureId, sessionUserId, item.name);
+    const { error } = await supabase.storage.from('Assets').upload(path, item.file, {
+      upsert: false,
+      contentType: item.file.type || undefined,
+    });
+
+    if (error) {
+      throw new Error(error.message || `Failed to upload screenshot ${item.name}`);
+    }
+
+    const publicUrl = supabase.storage.from('Assets').getPublicUrl(path).data.publicUrl;
+    assets.push({
+      bucket: 'Assets',
+      path,
+      publicUrl,
+      name: item.name,
+      size: item.size,
+      mimeType: item.file.type || null,
+    });
+  }
+
+  return assets;
+}
+
+async function cleanupEvidenceFiles(assets: UploadedEvidenceAsset[]): Promise<void> {
+  if (!assets.length) return;
+  try {
+    await supabase.storage.from('Assets').remove(assets.map((asset) => asset.path));
+  } catch {
+    // Best effort cleanup only.
+  }
+}
+
 export default function SubmitPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const activeCompetitionKey = getStoredCompetitionKey();
+  const requestedSeasonSlug = getDataSeasonSlugForCompetition(activeCompetitionKey);
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -290,6 +344,8 @@ export default function SubmitPage() {
   const [myTeamId, setMyTeamId] = useState<string | null>(null);
   const [myCoachName, setMyCoachName] = useState<string | null>(null);
 
+  const [eligibleFixtures, setEligibleFixtures] = useState<EligibleFixtureOption[]>([]);
+  const [selectedFixtureId, setSelectedFixtureId] = useState<string>('');
   const [payload, setPayload] = useState<NextFixturePayload>(null);
 
   const [currentStep, setCurrentStep] = useState<Step>(1);
@@ -302,22 +358,19 @@ export default function SubmitPage() {
 
   const [homeGoalMap, setHomeGoalMap] = useState<Record<string, number>>({});
   const [awayGoalMap, setAwayGoalMap] = useState<Record<string, number>>({});
-  const [searchSide, setSearchSide] = useState<'home' | 'away' | 'both'>('both');
-  const [playerSearch, setPlayerSearch] = useState('');
+  const [manualHomePlayers, setManualHomePlayers] = useState<PlayerLite[]>([]);
+  const [manualAwayPlayers, setManualAwayPlayers] = useState<PlayerLite[]>([]);
 
   const [notes, setNotes] = useState('');
 
   const [allPlayers, setAllPlayers] = useState<PlayerLite[]>([]);
   const [playerLoadErr, setPlayerLoadErr] = useState<string | null>(null);
 
-  const [uploaded, setUploaded] = useState<Array<{ id: string; file: File; name: string; size: number; previewUrl: string }>>([]);
-  const [ocr, setOcr] = useState<OcrState>({ status: 'idle' });
-  const [ocrConfirm, setOcrConfirm] = useState(false);
-  const [showOcrText, setShowOcrText] = useState(false);
+  const [uploaded, setUploaded] = useState<UploadedFile[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [conflict, setConflict] = useState<null | { message: string }>(null);
+  const [conflict, setConflict] = useState<SubmitConflict | null>(null);
 
   const [draftSavedAt, setDraftSavedAt] = useState<number | null>(null);
 
@@ -340,8 +393,15 @@ export default function SubmitPage() {
 
   const homeScore = useMemo(() => homeGoalsN * 6 + homeBehindsN, [homeGoalsN, homeBehindsN]);
   const awayScore = useMemo(() => awayGoalsN * 6 + awayBehindsN, [awayGoalsN, awayBehindsN]);
+  const homeTaggedGoals = useMemo(() => Object.values(homeGoalMap).reduce((sum, value) => sum + safeNum(value), 0), [homeGoalMap]);
+  const awayTaggedGoals = useMemo(() => Object.values(awayGoalMap).reduce((sum, value) => sum + safeNum(value), 0), [awayGoalMap]);
+  const totalTaggedGoals = useMemo(() => homeTaggedGoals + awayTaggedGoals, [awayTaggedGoals, homeTaggedGoals]);
 
   const kickoffLabel = useMemo(() => formatKickoff(fixture?.startTime), [fixture?.startTime]);
+  const isMyFixtureSideHome = useMemo(
+    () => Boolean(myTeamId && homeTeam?.id && String(myTeamId) === String(homeTeam.id)),
+    [homeTeam?.id, myTeamId],
+  );
 
   const homeTeamColors = useMemo(() => {
     if (!homeTeam?.name) return { r: '0', g: '0', b: '0' };
@@ -370,99 +430,63 @@ export default function SubmitPage() {
         if (authErr) throw authErr;
         const uid = authData.session?.user?.id || null;
         const email = authData.session?.user?.email || null;
-        if (!uid) throw new Error('Not signed in.');
+        if (!uid) throw new Error('You must sign in to submit results.');
         if (!alive) return;
 
         setSessionUserId(uid);
         setSessionEmail(email);
 
         const profile = await fetchCoachProfile(uid);
-        if (!profile?.team_id) throw new Error('This account is not linked to a team yet.');
+        if (!profile?.team_id) {
+          throw new Error('No team is linked to this account.');
+        }
         if (!alive) return;
 
         setMyTeamId(profile.team_id);
         setMyCoachName(profile.display_name || profile.psn || 'Coach');
+        if (!alive) return;
 
-        const activeComp = getStoredCompetitionKey();
-        const seasonSlug = getDataSeasonSlugForCompetition(activeComp);
-        const { data: seasonRow, error: seasonErr } = await supabase
-          .from('eg_seasons')
-          .select('id')
-          .eq('slug', seasonSlug)
-          .maybeSingle();
-        if (seasonErr || !seasonRow?.id) {
-          throw new Error(`Active season not found for slug "${seasonSlug}"`);
-        }
-        const activeSeasonId = String(seasonRow.id);
+        const activeSeasonId = await resolveSeasonIdForSlug(requestedSeasonSlug);
+        if (!alive) return;
 
-        const { data: fixtures, error: fxErr } = await supabase
-          .from('eg_fixtures')
-          .select('id, round, status, venue, season_id, start_time, home_team_id, away_team_id, home_goals, home_behinds, away_goals, away_behinds')
-          .eq('season_id', activeSeasonId)
-          .or(`home_team_id.eq.${profile.team_id},away_team_id.eq.${profile.team_id}`)
-          .neq('status', 'FINAL')
-          .order('round', { ascending: true })
-          .limit(1);
-        if (fxErr) throw fxErr;
+        const { fixtures } = await fetchSeasonFixturesBySeasonId(activeSeasonId, { limit: 1000, offset: 0 });
+        const teamId = String(profile.team_id || '');
+        const teamFixtures = fixtures
+          .filter((row) => String(row.home_team_id || '') === teamId || String(row.away_team_id || '') === teamId)
+          .sort((a, b) => {
+            const diff = fixtureSortTime(a.start_time || undefined) - fixtureSortTime(b.start_time || undefined);
+            if (diff !== 0) return diff;
+            return String(a.id).localeCompare(String(b.id));
+          });
+        if (!alive) return;
 
-        if (!fixtures || fixtures.length === 0) {
+        const eligible = teamFixtures
+          .filter((row) => isEligibleSubmitFixtureStatus(row?.status))
+          .map(mapFixtureToSubmitOption);
+
+        if (eligible.length === 0) {
           if (alive) {
+            const nextMessage =
+              teamFixtures.length === 0
+                ? `No fixtures found for your team in ${requestedSeasonSlug}.`
+                : `All fixtures for your team in ${requestedSeasonSlug} are already FINAL.`;
+            setEligibleFixtures([]);
+            setSelectedFixtureId('');
             setPayload(null);
             setVenue('');
+            setLoadError(nextMessage);
           }
           return;
         }
 
-        const fx = fixtures[0] as any;
+        const defaultFixtureId = pickDefaultFixtureId(eligible);
+        const defaultFixture = eligible.find((item) => item.id === defaultFixtureId) || eligible[0];
 
-        const [{ data: homeTeamData, error: homeErr }, { data: awayTeamData, error: awayErr }] = await Promise.all([
-          supabase.from('eg_teams').select('*').eq('id', fx.home_team_id).maybeSingle(),
-          supabase.from('eg_teams').select('*').eq('id', fx.away_team_id).maybeSingle(),
-        ]);
-
-        if (homeErr || awayErr) throw new Error('Failed to load team info');
         if (!alive) return;
-
-        const homeName = resolveTeamName({
-          name: homeTeamData?.name,
-          shortName: homeTeamData?.short_name,
-          slug: homeTeamData?.slug,
-          teamKey: homeTeamData?.team_key,
-        });
-        const awayName = resolveTeamName({
-          name: awayTeamData?.name,
-          shortName: awayTeamData?.short_name,
-          slug: awayTeamData?.slug,
-          teamKey: awayTeamData?.team_key,
-        });
-
-        const nextPayload: NextFixturePayload = {
-          fixture: {
-            id: String(fx.id),
-            round: safeNum(fx.round),
-            venue: String(fx.venue || 'TBC'),
-            status: String(fx.status || 'SCHEDULED'),
-            seasonId: fx.season_id ? String(fx.season_id) : undefined,
-            startTime: fx.start_time ? String(fx.start_time) : undefined,
-          },
-          homeTeam: {
-            id: String(homeTeamData?.id || fx.home_team_id),
-            name: homeName,
-            shortName: deriveShortName(homeName, homeTeamData?.short_name || TEAM_SHORT_NAMES[homeName]),
-            logo: resolveTeamLogo(homeName, homeTeamData?.logo_url || undefined),
-            teamKey: homeTeamData?.team_key || undefined,
-          },
-          awayTeam: {
-            id: String(awayTeamData?.id || fx.away_team_id),
-            name: awayName,
-            shortName: deriveShortName(awayName, awayTeamData?.short_name || TEAM_SHORT_NAMES[awayName]),
-            logo: resolveTeamLogo(awayName, awayTeamData?.logo_url || undefined),
-            teamKey: awayTeamData?.team_key || undefined,
-          },
-        };
-
-        setPayload(nextPayload);
-        setVenue(nextPayload.fixture.venue || '');
+        setEligibleFixtures(eligible);
+        setSelectedFixtureId(defaultFixture.id);
+        setPayload(defaultFixture.payload);
+        setVenue(defaultFixture.payload.fixture.venue || '');
       } catch (e: any) {
         console.error('[Submit] load failed:', e);
         if (!alive) return;
@@ -474,7 +498,15 @@ export default function SubmitPage() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [requestedSeasonSlug]);
+
+  useEffect(() => {
+    if (!eligibleFixtures.length) return;
+    const selected = eligibleFixtures.find((item) => item.id === selectedFixtureId) || eligibleFixtures[0];
+    if (!selected) return;
+    setPayload(selected.payload);
+    setVenue((current) => current || selected.payload.fixture.venue || '');
+  }, [eligibleFixtures, selectedFixtureId]);
 
   useEffect(() => {
     let alive = true;
@@ -562,6 +594,34 @@ export default function SubmitPage() {
   }, [homeTeam?.id, homeTeam?.name, awayTeam?.id, awayTeam?.name]);
 
   useEffect(() => {
+    if (!fixture?.id) return;
+
+    uploaded.forEach((file) => {
+      try {
+        URL.revokeObjectURL(file.previewUrl);
+      } catch {
+        // ignore
+      }
+    });
+
+    setCurrentStep(1);
+    setVenue(fixture.venue || '');
+    setHomeGoals('');
+    setHomeBehinds('');
+    setAwayGoals('');
+    setAwayBehinds('');
+    setHomeGoalMap({});
+    setAwayGoalMap({});
+    setManualHomePlayers([]);
+    setManualAwayPlayers([]);
+    setNotes('');
+    setUploaded([]);
+    setSubmitSuccess(false);
+    setConflict(null);
+    setDraftSavedAt(null);
+  }, [fixture?.id]);
+
+  useEffect(() => {
     const draftKey = buildDraftKey(sessionUserId, fixture?.id);
     if (!sessionUserId || !fixture?.id) return;
 
@@ -578,9 +638,10 @@ export default function SubmitPage() {
       setAwayBehinds(String(draft.awayBehinds || ''));
       setHomeGoalMap(draft.homeGoalMap || {});
       setAwayGoalMap(draft.awayGoalMap || {});
+      setManualHomePlayers(Array.isArray(draft.manualHomePlayers) ? draft.manualHomePlayers : []);
+      setManualAwayPlayers(Array.isArray(draft.manualAwayPlayers) ? draft.manualAwayPlayers : []);
       setNotes(String(draft.notes || ''));
       setCurrentStep((draft.currentStep as Step) || 1);
-      setOcrConfirm(!!draft.ocrConfirm);
       setDraftSavedAt(Number(draft.savedAt) || null);
     } catch {
       // ignore malformed draft
@@ -599,10 +660,10 @@ export default function SubmitPage() {
       awayBehinds,
       homeGoalMap,
       awayGoalMap,
+      manualHomePlayers,
+      manualAwayPlayers,
       notes,
       currentStep,
-      ocrConfirm,
-      uploadedMeta: uploaded.map((u) => ({ name: u.name, size: u.size })),
       savedAt: Date.now(),
     };
 
@@ -622,9 +683,10 @@ export default function SubmitPage() {
     awayBehinds,
     homeGoalMap,
     awayGoalMap,
+    manualHomePlayers,
+    manualAwayPlayers,
     notes,
     currentStep,
-    ocrConfirm,
     uploaded,
   ]);
 
@@ -655,63 +717,65 @@ export default function SubmitPage() {
     [allPlayers, awayTeam?.name],
   );
 
-  const unlinkedPlayers = useMemo(
+  const goalKickerGuidance = useMemo(() => {
+    const messages: string[] = [];
+    const homeLabel = homeTeam?.shortName || homeTeam?.name || 'Home team';
+    const awayLabel = awayTeam?.shortName || awayTeam?.name || 'Away team';
+
+    if (homePlayers.length === 0) {
+      messages.push(`No linked players found for ${homeLabel}. Manual names can still be added.`);
+    }
+    if (awayPlayers.length === 0) {
+      messages.push(`No linked players found for ${awayLabel}. Manual names can still be added.`);
+    }
+
+    return messages;
+  }, [awayPlayers.length, awayTeam?.name, awayTeam?.shortName, homePlayers.length, homeTeam?.name, homeTeam?.shortName]);
+
+  const homeKickerPool = useMemo(
     () =>
-      allPlayers
-        .filter((p) => p.teamName === 'All players (team not linked)')
-        .sort((a, b) => (a.number || 999) - (b.number || 999) || a.name.localeCompare(b.name)),
-    [allPlayers],
+      dedupePlayers([...homePlayers, ...manualHomePlayers]).sort(
+        (a, b) => (a.number || 999) - (b.number || 999) || a.name.localeCompare(b.name),
+      ),
+    [homePlayers, manualHomePlayers],
   );
 
-  const mergedPlayerList = useMemo(() => {
-    const source = [
-      ...(searchSide === 'home' || searchSide === 'both' ? homePlayers : []),
-      ...(searchSide === 'away' || searchSide === 'both' ? awayPlayers : []),
-      ...(searchSide === 'both' ? unlinkedPlayers : []),
-    ];
-    const q = playerSearch.trim().toLowerCase();
-    const filtered = q
-      ? source.filter((p) => p.name.toLowerCase().includes(q) || String(p.number || '').includes(q))
-      : source;
-    return filtered.sort((a, b) => {
-      const aSide = a.teamName === homeTeam?.name ? 'home' : 'away';
-      const bSide = b.teamName === homeTeam?.name ? 'home' : 'away';
-      const aGoals = aSide === 'home' ? safeNum(homeGoalMap[a.id]) : safeNum(awayGoalMap[a.id]);
-      const bGoals = bSide === 'home' ? safeNum(homeGoalMap[b.id]) : safeNum(awayGoalMap[b.id]);
-      return bGoals - aGoals || (a.number || 999) - (b.number || 999) || a.name.localeCompare(b.name);
-    });
-  }, [searchSide, homePlayers, awayPlayers, unlinkedPlayers, playerSearch, homeTeam?.name, homeGoalMap, awayGoalMap]);
+  const awayKickerPool = useMemo(
+    () =>
+      dedupePlayers([...awayPlayers, ...manualAwayPlayers]).sort(
+        (a, b) => (a.number || 999) - (b.number || 999) || a.name.localeCompare(b.name),
+      ),
+    [awayPlayers, manualAwayPlayers],
+  );
 
   const topScorers = useMemo(() => {
     const out: Array<{ id: string; name: string; goals: number; team: 'home' | 'away'; photoUrl?: string }> = [];
-    for (const p of homePlayers) {
+    for (const p of homeKickerPool) {
       const g = safeNum(homeGoalMap[p.id]);
       if (g > 0) out.push({ id: p.id, name: p.name, goals: g, team: 'home', photoUrl: p.photoUrl });
     }
-    for (const p of awayPlayers) {
+    for (const p of awayKickerPool) {
       const g = safeNum(awayGoalMap[p.id]);
       if (g > 0) out.push({ id: p.id, name: p.name, goals: g, team: 'away', photoUrl: p.photoUrl });
     }
     return out.sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name)).slice(0, 3);
-  }, [homePlayers, awayPlayers, homeGoalMap, awayGoalMap]);
+  }, [homeKickerPool, awayKickerPool, homeGoalMap, awayGoalMap]);
 
   const homeGoalKickers = useMemo(
-    () => homePlayers
+    () => homeKickerPool
       .map((p) => ({ id: p.id, name: p.name, photoUrl: p.photoUrl, goals: safeNum(homeGoalMap[p.id]) }))
       .filter((p) => p.goals > 0)
       .sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name)),
-    [homePlayers, homeGoalMap],
+    [homeKickerPool, homeGoalMap],
   );
 
   const awayGoalKickers = useMemo(
-    () => awayPlayers
+    () => awayKickerPool
       .map((p) => ({ id: p.id, name: p.name, photoUrl: p.photoUrl, goals: safeNum(awayGoalMap[p.id]) }))
       .filter((p) => p.goals > 0)
       .sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name)),
-    [awayPlayers, awayGoalMap],
+    [awayKickerPool, awayGoalMap],
   );
-
-  const canRunOcr = useMemo(() => uploaded.length > 0 && ocr.status !== 'ocr_running', [uploaded.length, ocr.status]);
 
   const isStep2Valid = useMemo(() => homeGoals !== '' && homeBehinds !== '' && awayGoals !== '' && awayBehinds !== '', [homeGoals, homeBehinds, awayGoals, awayBehinds]);
   const isStep3Valid = useMemo(() => isStep2Valid, [isStep2Valid]);
@@ -720,10 +784,8 @@ export default function SubmitPage() {
   const canSubmit = useMemo(() => {
     if (!fixture || !myTeamId || isSubmitting) return false;
     if (!isStep2Valid || !uploaded.length) return false;
-    if (ocr.status !== 'done' && ocr.status !== 'idle') return false;
-    if (ocr.status === 'done' && !ocrConfirm) return false;
     return true;
-  }, [fixture, myTeamId, isSubmitting, isStep2Valid, uploaded.length, ocr.status, ocrConfirm]);
+  }, [fixture, myTeamId, isSubmitting, isStep2Valid, uploaded.length]);
 
   const getStatusChip = () => {
     if (submitSuccess) return { label: 'Submitted', tone: 'success' as const };
@@ -734,6 +796,27 @@ export default function SubmitPage() {
   const statusChip = getStatusChip();
   const competitionLabel = getCompetitionLabel();
   const draftSavedLabel = formatSavedAt(draftSavedAt);
+  const fixtureAvailabilityLabel = eligibleFixtures.length > 1 ? `${eligibleFixtures.length} eligible fixtures` : 'Fixture locked in';
+  const heroMetaItems = useMemo(() => {
+    const items = [
+      fixture ? `Round ${fixture.round}` : null,
+      competitionLabel,
+    ].filter(Boolean) as string[];
+    if (hasMeaningfulMeta(kickoffLabel)) items.push(kickoffLabel);
+    if (hasMeaningfulMeta(venue)) items.push(venue);
+    return items;
+  }, [competitionLabel, fixture, kickoffLabel, venue]);
+  const heroCoachLabel = useMemo(() => {
+    const identity = String(sessionEmail || myCoachName || 'coach').trim();
+    return identity || 'coach';
+  }, [myCoachName, sessionEmail]);
+  const heroFooterLabel = useMemo(() => {
+    const parts = [fixtureAvailabilityLabel];
+    if (draftSavedLabel && statusChip.tone !== 'muted') {
+      parts.push(`Draft ${draftSavedLabel}`);
+    }
+    return parts.join(' • ');
+  }, [draftSavedLabel, fixtureAvailabilityLabel, statusChip.tone]);
 
   const canGoToStep = (step: Step) => {
     if (step <= 2) return true;
@@ -766,6 +849,50 @@ export default function SubmitPage() {
     }
   };
 
+  const addGoalKicker = (
+    side: 'home' | 'away',
+    player: {
+      id?: string;
+      name: string;
+      photoUrl?: string;
+    },
+  ) => {
+    const name = String(player.name || '').trim();
+    if (!name) return;
+
+    const linkedPool = side === 'home' ? homePlayers : awayPlayers;
+    const manualPool = side === 'home' ? manualHomePlayers : manualAwayPlayers;
+    const explicitId = String(player.id || '').trim();
+    const normalizedName = normalizeToken(name);
+
+    const existing =
+      (explicitId ? [...linkedPool, ...manualPool].find((entry) => entry.id === explicitId) : null) ||
+      [...linkedPool, ...manualPool].find((entry) => normalizeToken(entry.name) === normalizedName);
+
+    if (existing) {
+      const currentGoals = safeNum((side === 'home' ? homeGoalMap : awayGoalMap)[existing.id]);
+      setPlayerGoals(side, existing.id, currentGoals + 1);
+      return;
+    }
+
+    const manualId = explicitId || `manual:${side}:${normalizedName || uuid()}`;
+    const manualPlayer: PlayerLite = {
+      id: manualId,
+      name,
+      teamId: side === 'home' ? homeTeam?.id || 'manual-home' : awayTeam?.id || 'manual-away',
+      teamName: side === 'home' ? homeTeam?.name || homeDisplayName : awayTeam?.name || awayDisplayName,
+      photoUrl: player.photoUrl,
+    };
+
+    if (side === 'home') {
+      setManualHomePlayers((prev) => dedupePlayers([...prev, manualPlayer]));
+    } else {
+      setManualAwayPlayers((prev) => dedupePlayers([...prev, manualPlayer]));
+    }
+
+    setPlayerGoals(side, manualId, safeNum((side === 'home' ? homeGoalMap : awayGoalMap)[manualId]) + 1);
+  };
+
   const onPickFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
@@ -779,8 +906,6 @@ export default function SubmitPage() {
     }));
 
     setUploaded((prev) => [...prev, ...next]);
-    setOcr({ status: 'idle' });
-    setOcrConfirm(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -790,69 +915,79 @@ export default function SubmitPage() {
       if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
       return prev.filter((p) => p.id !== id);
     });
-    setOcr({ status: 'idle' });
-    setOcrConfirm(false);
-  };
-
-  const runOcr = async () => {
-    if (!canRunOcr) return;
-    setOcr({ status: 'ocr_running', step: 'Preparing OCR…', progress01: 0.02 });
-    setConflict(null);
-
-    try {
-      const rawText = await runTesseract(uploaded.map((u) => u.file), (step, p) => {
-        setOcr({ status: 'ocr_running', step, progress01: p });
-      });
-
-      const teamStats = parseTeamStatsFromText(rawText);
-      const playerLines = parsePlayerLinesFromText(rawText);
-      setOcr({ status: 'done', rawText, teamStats, playerLines });
-      setOcrConfirm(false);
-    } catch (e: any) {
-      const msg = e?.message || 'OCR failed';
-      if (msg.includes('timed out')) {
-        setOcr({ status: 'timeout', error: 'OCR took too long (20 seconds). Retry or continue with manual verification.' });
-      } else {
-        setOcr({ status: 'error', message: msg });
-      }
-    }
   };
 
   const submit = async () => {
     if (!fixture || !myTeamId || !canSubmit) return;
+    if (!sessionUserId) {
+      setConflict({ message: 'You must sign in to submit results.' });
+      return;
+    }
+    if (!uploaded.length) {
+      setConflict({ message: 'At least one screenshot is required before submit.' });
+      return;
+    }
+
     setIsSubmitting(true);
     setConflict(null);
+    let uploadedAssets: UploadedEvidenceAsset[] = [];
 
     try {
-      const ocrPayload = ocr.status === 'done' ? {
-        rawText: ocr.rawText,
-        teamStats: ocr.teamStats,
-        playerLines: ocr.playerLines,
-      } : null;
+      uploadedAssets = await uploadEvidenceFiles(fixture.id, sessionUserId, uploaded);
 
-      const { error: rpcErr } = await supabase.rpc('eg_submit_result_home_only', {
+      const { data: rpcData, error: rpcErr } = await supabase.rpc('eg_submit_result_v2', {
         p_fixture_id: fixture.id,
         p_home_goals: homeGoalsN,
         p_home_behinds: homeBehindsN,
         p_away_goals: awayGoalsN,
         p_away_behinds: awayBehindsN,
         p_venue: venue || null,
-        p_goal_kickers_home: homeGoalKickers.length ? JSON.stringify(homeGoalKickers) : null,
-        p_goal_kickers_away: awayGoalKickers.length ? JSON.stringify(awayGoalKickers) : null,
-        p_ocr: ocrPayload ? JSON.stringify(ocrPayload) : null,
+        p_goal_kickers_home: homeGoalKickers.length ? homeGoalKickers : null,
+        p_goal_kickers_away: awayGoalKickers.length ? awayGoalKickers : null,
+        p_ocr: { screenshots: uploadedAssets },
         p_notes: notes || null,
       });
 
       if (rpcErr) {
-        setConflict({ message: rpcErr.message || 'Submit failed.' });
+        console.error('[Submit] eg_submit_result_v2 failed:', rpcErr);
+        await cleanupEvidenceFiles(uploadedAssets);
+        setConflict(formatSubmitError(rpcErr));
         return;
       }
 
       const draftKey = buildDraftKey(sessionUserId, fixture.id);
       window.localStorage.removeItem(draftKey);
+      const activeCompetitionKey = getStoredCompetitionKey();
+      const activeSeasonSlug = getDataSeasonSlugForCompetition(activeCompetitionKey);
+      invalidateAfl26Cache();
+      invalidateFixturesCache({ fixtureId: fixture.id, seasonId: fixture.seasonId || null });
+      invalidateLadderCache({ seasonSlug: activeSeasonSlug, seasonId: fixture.seasonId || null });
+      clearStatsCategoriesCache();
+      clearStatLeadersCache();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['fixtures'] }),
+        queryClient.invalidateQueries({ queryKey: ['fixtures', 'season', activeSeasonSlug] }),
+        queryClient.invalidateQueries({ queryKey: ['fixture', fixture.id] }),
+        queryClient.invalidateQueries({ queryKey: ['submissions', fixture.id] }),
+        queryClient.invalidateQueries({ queryKey: ['match-centre'] }),
+        queryClient.invalidateQueries({ queryKey: ['match-centre', fixture.id] }),
+        queryClient.invalidateQueries({ queryKey: ['eg_ladder'] }),
+        queryClient.invalidateQueries({ queryKey: ['eg_ladder', activeSeasonSlug] }),
+        queryClient.invalidateQueries({ queryKey: ['stats'] }),
+      ]);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent(DATA_SYNC_EVENT, {
+            detail: { fixtureId: fixture.id, seasonId: fixture.seasonId || null, submission: rpcData || null },
+          }),
+        );
+      }
       setSubmitSuccess(true);
     } catch (e: any) {
-      setConflict({ message: e?.message || 'Submit failed.' });
+      if (uploadedAssets.length) {
+        await cleanupEvidenceFiles(uploadedAssets);
+      }
+      setConflict(formatSubmitError(e));
     } finally {
       setIsSubmitting(false);
     }
@@ -880,7 +1015,7 @@ export default function SubmitPage() {
           <div className="egSubmitPage__wrap">
             <div className="mdcLoading">
               <div className="mdcLoading__title">Nothing to submit right now</div>
-              <div className="mdcLoading__sub">{loadError || 'No upcoming home fixture was found for your team.'}</div>
+              <div className="mdcLoading__sub">{loadError || 'No eligible non-final fixture was found for your assigned team.'}</div>
             </div>
           </div>
         </main>
@@ -904,17 +1039,25 @@ export default function SubmitPage() {
             } as React.CSSProperties}
           >
             <div className="mdcHero__top">
-              <div className="mdcHero__chips">
-                <span className="mdcChip">Round {fixture.round}</span>
-                <span className="mdcChip">{competitionLabel}</span>
-                <span className={`mdcChip mdcChip--${statusChip.tone}`}>{statusChip.label}</span>
+              <div className="mdcHero__titleWrap">
+                <div className="mdcHero__eyebrow">Submit Results</div>
+                <div className="mdcHero__titleRow">
+                  <div className="mdcHero__title">Coach Submission</div>
+                  <span className={`mdcChip mdcChip--${statusChip.tone}`}>{statusChip.label}</span>
+                </div>
+                {heroMetaItems.length ? (
+                  <div className="mdcHero__metaRow" aria-label="Fixture metadata">
+                    {heroMetaItems.map((item) => (
+                      <span key={item} className="mdcHero__metaItem">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
               <div className="mdcCoachPill">
                 <Shield size={13} />
-                <span>
-                  Signed in as: {sessionEmail || myCoachName || 'coach'}
-                  {draftSavedLabel ? ` • Draft ${draftSavedLabel}` : ''}
-                </span>
+                <span>{heroCoachLabel}</span>
               </div>
             </div>
 
@@ -927,8 +1070,7 @@ export default function SubmitPage() {
               </div>
 
               <div className="mdcHero__center">
-                <div className="mdcHero__vs">VS</div>
-                <div className="mdcHero__meta">{venue || 'TBC'} • {kickoffLabel}</div>
+                <div className="mdcHero__divider" aria-hidden="true" />
               </div>
 
               <div className="mdcTeamBlock">
@@ -940,7 +1082,10 @@ export default function SubmitPage() {
             </div>
 
             <div className="mdcHero__bottom">
-              <div className="mdcProgressMeta">Step {currentStep} of 5</div>
+              <div className="mdcHero__bottomMeta">
+                <div className="mdcProgressMeta">Step {currentStep} of 5</div>
+                <div className="mdcHero__bottomSub">{heroFooterLabel}</div>
+              </div>
               <button type="button" className="mdcHeroCta" onClick={() => navigate(`/match-centre/${fixture.id}`)}>
                 Match Centre <ChevronRight size={14} />
               </button>
@@ -949,7 +1094,23 @@ export default function SubmitPage() {
 
           {conflict?.message ? (
             <div className="mdcStatus mdcStatus--danger">
-              <AlertTriangle size={14} /> {conflict.message}
+              <AlertTriangle size={14} />
+              <div style={{ minWidth: 0 }}>
+                <div>{conflict.message}</div>
+                {conflict.detail ? (
+                  <pre
+                    style={{
+                      margin: '6px 0 0',
+                      whiteSpace: 'pre-wrap',
+                      fontSize: 11,
+                      lineHeight: 1.45,
+                      color: 'rgba(255, 220, 220, 0.9)',
+                    }}
+                  >
+                    {conflict.detail}
+                  </pre>
+                ) : null}
+              </div>
             </div>
           ) : null}
           {playerLoadErr ? <div className="mdcStatus mdcStatus--muted">{playerLoadErr}</div> : null}
@@ -981,6 +1142,18 @@ export default function SubmitPage() {
                 <div className="mdcCard__head">Confirm Match</div>
                 <div className="mdcCard__body">
                   <div className="mdcConfirmMatch">
+                    {eligibleFixtures.length > 1 ? (
+                      <label className="mdcFixtureSelect">
+                        <span className="mdcFixtureSelect__label">Fixture</span>
+                        <select value={selectedFixtureId} onChange={(e) => setSelectedFixtureId(e.target.value)}>
+                          {eligibleFixtures.map((option) => (
+                            <option key={option.id} value={option.id}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : null}
                     <div className="mdcConfirmMatch__teams">
                       <span>{homeDisplayName}</span>
                       <strong>vs</strong>
@@ -993,7 +1166,11 @@ export default function SubmitPage() {
                     <Trophy size={16} />
                     <div>
                       <div className="mdcRuleCard__title">Submission Rules</div>
-                      <div className="mdcRuleCard__text">This is your next scheduled fixture. Home coach submits final score, kickers and evidence for verification.</div>
+                      <div className="mdcRuleCard__text">
+                        {isMyFixtureSideHome
+                          ? 'You are submitting as the home coach. Final score, goal kickers and evidence will update the live result pipeline.'
+                          : 'You are submitting as the away coach. Final score, goal kickers and evidence will update the live result pipeline.'}
+                      </div>
                     </div>
                   </div>
 
@@ -1065,30 +1242,14 @@ export default function SubmitPage() {
               <motion.section key="s3" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="mdcCard">
                 <div className="mdcCard__head">Goal Kickers</div>
                 <div className="mdcCard__body">
-                  <div className="mdcFilterRow">
-                    <div className="mdcSeg">
-                      {(['both', 'home', 'away'] as const).map((side) => (
-                        <button
-                          key={side}
-                          type="button"
-                          className={`mdcSeg__btn ${searchSide === side ? 'is-active' : ''}`}
-                          onClick={() => setSearchSide(side)}
-                        >
-                          {side === 'both' ? 'Both' : side === 'home' ? homeTeam.shortName || 'Home' : awayTeam.shortName || 'Away'}
-                        </button>
-                      ))}
-                    </div>
-                    <label className="mdcSearch">
-                      <Search size={14} />
-                      <input value={playerSearch} onChange={(e) => setPlayerSearch(e.target.value)} placeholder="Search players" />
-                    </label>
-                  </div>
-
                   <div className="mdcTopScorers">
-                    <div className="mdcTopScorers__label">Top Scorers</div>
-                  <div className="mdcTopScorers__chips">
+                    <div className="mdcTopScorers__head">
+                      <div className="mdcTopScorers__label">Tagged Total</div>
+                      <div className="mdcTopScorers__meta">{totalTaggedGoals} tagged across both teams</div>
+                    </div>
+                    <div className="mdcTopScorers__chips">
                       {(topScorers.length ? topScorers : [
-                        { id: 'ph1', name: 'Awaiting entries', goals: 0, team: 'home' as const, photoUrl: homePlayers[0]?.photoUrl },
+                        { id: 'ph1', name: 'Awaiting entries', goals: 0, team: 'home' as const, photoUrl: homeKickerPool[0]?.photoUrl },
                       ]).map((k) => (
                         <div key={k.id} className="mdcTopChip">
                           <div className="mdcTopChip__photo">
@@ -1101,64 +1262,40 @@ export default function SubmitPage() {
                     </div>
                   </div>
 
-                  {unlinkedPlayers.length ? (
-                    <div className="mdcStatus mdcStatus--muted" style={{ marginTop: 10 }}>
-                      Team links missing for some players. Showing “All players (team not linked)” in combined search.
+                  {goalKickerGuidance.length ? (
+                    <div className="mdcCompactEmptyStack">
+                      {goalKickerGuidance.map((message) => (
+                        <div key={message} className="mdcCompactEmptyCard">
+                          <div className="mdcCompactEmptyCard__title">{message}</div>
+                          <div className="mdcCompactEmptyCard__text">The compact picker supports manual names, so you can still finish the submission cleanly.</div>
+                        </div>
+                      ))}
                     </div>
                   ) : null}
 
-                  <div className="mdcPickerGrid" role="list">
-                    {mergedPlayerList.map((p) => {
-                      const side: 'home' | 'away' =
-                        p.teamName === homeTeam.name
-                          ? 'home'
-                          : p.teamName === awayTeam.name
-                            ? 'away'
-                            : searchSide === 'home'
-                              ? 'home'
-                              : 'away';
-                      const goals = side === 'home' ? safeNum(homeGoalMap[p.id]) : safeNum(awayGoalMap[p.id]);
-                      return (
-                        <button
-                          key={`${side}-${p.id}`}
-                          type="button"
-                          className={`mdcPickerHeadshot ${goals > 0 ? 'is-active' : ''}`}
-                          onClick={() => setPlayerGoals(side, p.id, goals + 1)}
-                          aria-label={`${p.name} (${side === 'home' ? homeDisplayName : awayDisplayName})`}
-                          title={`${p.name}${goals > 0 ? ` • ${goals} goal${goals === 1 ? '' : 's'}` : ''}`}
-                        >
-                          {p.photoUrl ? <img src={p.photoUrl} alt="" loading="lazy" /> : <span>{p.name.slice(0, 1).toUpperCase()}</span>}
-                          {goals > 0 ? <strong>{goals}</strong> : null}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {!mergedPlayerList.length ? <div className="mdcEmptyInline">No players found for this filter.</div> : null}
+                  <GoalKickerPicker
+                    homeTeamId={homeTeam.id}
+                    homeTeamName={homeDisplayName}
+                    awayTeamId={awayTeam.id}
+                    awayTeamName={awayDisplayName}
+                    allPlayers={[...homeKickerPool, ...awayKickerPool]}
+                    homeKickers={homeGoalKickers}
+                    awayKickers={awayGoalKickers}
+                    homeTaggedGoals={homeTaggedGoals}
+                    awayTaggedGoals={awayTaggedGoals}
+                    homeScoredGoals={homeGoalsN}
+                    awayScoredGoals={awayGoalsN}
+                    onAddKicker={addGoalKicker}
+                    onIncGoal={(side, kickerId) =>
+                      setPlayerGoals(side, kickerId, safeNum((side === 'home' ? homeGoalMap : awayGoalMap)[kickerId]) + 1)
+                    }
+                    onDecGoal={(side, kickerId) =>
+                      setPlayerGoals(side, kickerId, safeNum((side === 'home' ? homeGoalMap : awayGoalMap)[kickerId]) - 1)
+                    }
+                    onRemoveKicker={(side, kickerId) => setPlayerGoals(side, kickerId, 0)}
+                  />
 
-                  <div className="mdcSelectedKickers">
-                    {[...homeGoalKickers, ...awayGoalKickers].map((k) => {
-                      const side = homeGoalMap[k.id] ? 'home' : 'away';
-                      return (
-                        <button
-                          key={k.id}
-                          type="button"
-                          className="mdcSelectedKicker"
-                          onClick={() => setPlayerGoals(side, k.id, safeNum((side === 'home' ? homeGoalMap : awayGoalMap)[k.id]) - 1)}
-                          aria-label={`Reduce ${k.name} goal count`}
-                        >
-                          <div className="mdcSelectedKicker__photo">
-                            {k.photoUrl ? <img src={k.photoUrl} alt={k.name} loading="lazy" /> : <span>{k.name.slice(0, 1).toUpperCase()}</span>}
-                          </div>
-                          <span>{k.goals}</span>
-                        </button>
-                      );
-                    })}
-                    {!homeGoalKickers.length && !awayGoalKickers.length ? (
-                      <div className="mdcEmptyInline">Tap player photos to add goal kickers.</div>
-                    ) : null}
-                  </div>
-
-                  <div className="mdcActions">
+                  <div className="mdcActions mdcActions--sticky">
                     <button type="button" className="mdcBtn" onClick={() => setCurrentStep(2)}>Back</button>
                     <button type="button" className="mdcBtn mdcBtn--primary" onClick={() => setCurrentStep(4)}>Continue</button>
                   </div>
@@ -1170,11 +1307,18 @@ export default function SubmitPage() {
           <AnimatePresence mode="wait">
             {currentStep === 4 && (
               <motion.section key="s4" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="mdcCard">
-                <div className="mdcCard__head">Evidence Upload + OCR</div>
+                <div className="mdcCard__head">Evidence Upload</div>
                 <div className="mdcCard__body">
+                  <div className="mdcRequirementCard">
+                    <div className="mdcRequirementCard__title">Screenshots required</div>
+                    <div className="mdcRequirementCard__text">
+                      Upload at least one scoreboard or match-summary screenshot. OCR is not used in the launch submit flow.
+                    </div>
+                  </div>
+
                   <div className="mdcUploadDrop">
                     <div className="mdcUploadDrop__title">Upload screenshots</div>
-                    <div className="mdcUploadDrop__sub">Screenshots are used as verification evidence.</div>
+                    <div className="mdcUploadDrop__sub">These screenshots are stored as live evidence for this fixture submission.</div>
                     <label className="mdcBtn mdcBtn--primary mdcUploadDrop__btn">
                       <Upload size={14} /> Choose Images
                       <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={onPickFiles} hidden />
@@ -1196,46 +1340,13 @@ export default function SubmitPage() {
                     </div>
                   )}
 
-                  <div className="mdcOcrBar">
-                    <button type="button" className="mdcBtn mdcBtn--primary" disabled={!canRunOcr} onClick={runOcr}>
-                      <Wand2 size={14} /> {ocr.status === 'ocr_running' ? 'Running OCR…' : 'Run OCR'}
-                    </button>
-                    <div className="mdcOcrState">
-                      {ocr.status === 'ocr_running' ? (
-                        <>
-                          <span>{ocr.step}</span>
-                          <div className="mdcProgress"><div style={{ width: `${Math.round(ocr.progress01 * 100)}%` }} /></div>
-                        </>
-                      ) : ocr.status === 'done' ? (
-                        <span className="is-done"><Check size={13} /> Ready to review</span>
-                      ) : ocr.status === 'timeout' ? (
-                        <span className="is-error"><AlertTriangle size={13} /> {ocr.error}</span>
-                      ) : ocr.status === 'error' ? (
-                        <span className="is-error"><AlertTriangle size={13} /> {ocr.message}</span>
-                      ) : (
-                        <span>Waiting for OCR run</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {ocr.status === 'done' ? (
-                    <div className="mdcOcrPreview">
-                      <div className="mdcOcrPreview__head">
-                        <span>OCR Summary</span>
-                        <button type="button" onClick={() => setShowOcrText((v) => !v)}>
-                          {showOcrText ? <><EyeOff size={13} /> Hide text</> : <><Eye size={13} /> View text</>}
-                        </button>
-                      </div>
-                      <div className="mdcOcrPreview__stats">Detected stats: {Object.keys(ocr.teamStats || {}).length} • Player lines: {(ocr.playerLines || []).length}</div>
-                      {showOcrText ? <pre className="mdcOcrPreview__text">{ocr.rawText}</pre> : null}
-                      <label className="mdcConfirm">
-                        <input type="checkbox" checked={ocrConfirm} onChange={(e) => setOcrConfirm(e.target.checked)} />
-                        <span>Confirm OCR looks correct</span>
-                      </label>
+                  {!uploaded.length ? (
+                    <div className="mdcStatus mdcStatus--danger mdcStatus--inline">
+                      <AlertTriangle size={14} /> At least one screenshot is required before you can continue to review.
                     </div>
                   ) : null}
 
-                  <div className="mdcActions">
+                  <div className="mdcActions mdcActions--sticky">
                     <button type="button" className="mdcBtn" onClick={() => setCurrentStep(3)}>Back</button>
                     <button type="button" className="mdcBtn mdcBtn--primary" onClick={() => setCurrentStep(5)} disabled={!uploaded.length}>Continue</button>
                   </div>
@@ -1261,7 +1372,7 @@ export default function SubmitPage() {
                     <div className={`mdcChecklist__row ${fixture ? 'is-ok' : ''}`}><Check size={13} /> Fixture confirmed</div>
                     <div className={`mdcChecklist__row ${isStep2Valid ? 'is-ok' : ''}`}><Check size={13} /> Score entered</div>
                     <div className={`mdcChecklist__row ${(homeGoalKickers.length + awayGoalKickers.length) > 0 ? 'is-ok' : ''}`}><Check size={13} /> Goal kickers added</div>
-                    <div className={`mdcChecklist__row ${uploaded.length > 0 ? 'is-ok' : ''}`}><Check size={13} /> Evidence uploaded ({uploaded.length})</div>
+                    <div className={`mdcChecklist__row ${uploaded.length > 0 ? 'is-ok' : ''}`}><Check size={13} /> Screenshots uploaded ({uploaded.length})</div>
                   </div>
 
                   <div className="mdcReviewBlock">
@@ -1284,6 +1395,23 @@ export default function SubmitPage() {
                     <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Any details for admins?" />
                   </div>
 
+                  <div className="mdcReviewBlock">
+                    <div className="mdcReviewBlock__title">Evidence Screenshots</div>
+                    <div className="mdcReviewAssetList">
+                      {uploaded.map((file) => (
+                        <div key={file.id} className="mdcReviewAsset">
+                          <div className="mdcReviewAsset__thumb">
+                            {file.previewUrl ? <img src={file.previewUrl} alt={file.name} /> : <Upload size={14} />}
+                          </div>
+                          <div className="mdcReviewAsset__meta">
+                            <div className="mdcReviewAsset__name">{file.name}</div>
+                            <div className="mdcReviewAsset__sub">{bytesToKb(file.size)} KB</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="mdcActions mdcActions--sticky">
                     <button type="button" className="mdcBtn" onClick={() => setCurrentStep(4)}>Back</button>
                     <button type="button" className="mdcBtn mdcBtn--primary" disabled={!canSubmit || isSubmitting} onClick={submit}>
@@ -1303,7 +1431,7 @@ export default function SubmitPage() {
             <motion.div className="mdcSuccessCard" initial={{ y: 10, scale: 0.97 }} animate={{ y: 0, scale: 1 }}>
               <div className="mdcSuccessCard__icon"><Check size={24} /></div>
               <div className="mdcSuccessCard__title">Submitted</div>
-              <div className="mdcSuccessCard__sub">Your result has been captured and is now pending verification.</div>
+              <div className="mdcSuccessCard__sub">Your result is now live across Fixtures, Match Centre, Ladder, and Stats.</div>
               <div className="mdcSuccessCard__score">{homeScore} — {awayScore}</div>
               <div className="mdcSuccessCard__actions">
                 <button type="button" className="mdcBtn mdcBtn--primary" onClick={() => navigate(`/match-centre/${fixture.id}`)}>

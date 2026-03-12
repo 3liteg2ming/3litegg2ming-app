@@ -16,6 +16,7 @@ const TEAMS_CACHE_TTL_MS = 10 * 60 * 1000;
 
 const REG_UNLOCK_AT =
   import.meta.env.VITE_REG_UNLOCK_AT?.trim() || '2026-03-05T17:30:00+11:00'; // 5:30pm Melbourne (AEDT)
+const PRESEASON_FORMAT_NOTE = 'Format: 2 home-and-away matches, followed by knockout finals.';
 
 type TeamRow = {
   id: string;
@@ -727,7 +728,7 @@ export default function PreseasonRegistrationPage() {
 
     const resolvedPsn = text(resolvedTag.value);
     if (!resolvedPsn) {
-      setInlineError('Add PSN or Xbox gamertag in Profile to register.');
+      setInlineError('Add your PSN or Xbox gamertag to your account before registering.');
       return;
     }
 
@@ -794,100 +795,140 @@ export default function PreseasonRegistrationPage() {
     <div className="prPage">
       <div className={`prLockable ${lockActive ? 'is-locked' : ''}`}>
         <div className="prShell">
-          <RegistrationHeroCard
-            title="Registration"
-            subtitle="2 rounds → Top 8 finals → Grand Final"
-            kicker="KNOCKOUT PRESEASON"
-            leftLogoUrl={heroLogos.left}
-            rightLogoUrl={heroLogos.right}
-            fallbackMark="EG"
-            cta={
-              !submitted ? (
-                <button
-                  type="button"
-                  className="prBtn prBtn--primary"
-                  disabled={lockActive}
-                  onClick={() => document.getElementById('pr-form')?.scrollIntoView({ behavior: 'smooth' })}
-                >
-                  Register Now
-                </button>
-              ) : null
-            }
-            helper={<span>Signed in as {signedInName}</span>}
-          />
-
           {submitted ? (
-            <section className="prConfirmCard">
+            <section className="prConfirmCard prConfirmCard--standalone">
               <div className="prConfirmCard__icon">
                 <CheckCircle2 size={22} />
               </div>
-              <h2>You’re registered</h2>
-              <div className="prConfirmCard__prefs">
-                <div className="prPrefPill">Coach name: {submittedSummary?.coachDisplayName || signedInName}</div>
-                <div className="prPrefPill">PSN or Xbox gamertag: {submittedSummary?.coachPsn || profilePsn}</div>
-                <div className="prPrefPill">Teams: {submittedSummary?.prefTeamNames || selectedNames.join(', ') || 'TBC'}</div>
+              <div className="prConfirmCard__eyebrow">AFL 26 preseason</div>
+              <h2>Registration confirmed</h2>
+              <p className="prConfirmCard__sub">Your preseason entry is locked in.</p>
+              <div className="prConfirmCard__summary">
+                <div className="prConfirmCard__row">
+                  <span>Coach</span>
+                  <strong>{submittedSummary?.coachDisplayName || signedInName}</strong>
+                </div>
+                <div className="prConfirmCard__row">
+                  <span>Gamertag</span>
+                  <strong>{submittedSummary?.coachPsn || profilePsn || 'TBC'}</strong>
+                </div>
+                <div className="prConfirmCard__row">
+                  <span>Preferences</span>
+                  <strong>{submittedSummary?.prefTeamNames || selectedNames.join(', ') || 'TBC'}</strong>
+                </div>
               </div>
-              <button type="button" className="prBtn prBtn--primary" onClick={() => navigate('/')}>
-                Done
+              <p className="prConfirmCard__note">{PRESEASON_FORMAT_NOTE}</p>
+              <button type="button" className="prBtn prBtn--primary" onClick={() => navigate('/preseason-registration')}>
+                Back to registration
               </button>
             </section>
           ) : (
-            <section className="prFormCard" id="pr-form">
-              <form onSubmit={submitRegistration} className="prForm" noValidate>
-                {!lockActive ? <div className="prPrefPill">Registration is live.</div> : null}
-                <p className="prProgress">Signed in as {signedInName}</p>
-                <p className="prProgress">Your preseason team becomes your club for AFL26 Season Two.</p>
-                <p className="prGridHeading">Select up to 4 teams</p>
+            <>
+              <RegistrationHeroCard
+                className="prHeroCard"
+                title="AFL 26 preseason"
+                subtitle="Choose up to four preferred clubs and confirm your entry."
+                seedNote="One confirmed entry locks your preference order."
+                kicker="AFL 26 PRESEASON"
+                leftLogoUrl={heroLogos.left}
+                rightLogoUrl={heroLogos.right}
+                fallbackMark="EG"
+                cta={
+                  <div className="prHeroActions">
+                    {!isLoggedIn ? (
+                      <>
+                        <button type="button" className="prBtn prBtn--primary" onClick={() => navigate('/auth/sign-up')}>
+                          Create account
+                        </button>
+                        <button type="button" className="prBtn prBtn--ghost" onClick={() => navigate('/auth/sign-in')}>
+                          Sign in
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        className="prBtn prBtn--primary"
+                        disabled={lockActive}
+                        onClick={() => document.getElementById('pr-form')?.scrollIntoView({ behavior: 'smooth' })}
+                      >
+                        Choose clubs
+                      </button>
+                    )}
+                  </div>
+                }
+                helper={
+                  <div className="prHeroHelper">
+                    <span>{lockActive ? `Unlocks in ${countdown}.` : 'Registrations are live now.'}</span>
+                  </div>
+                }
+              />
 
-                <TeamLogoGrid
-                  teams={teams}
-                  selectedTeamIds={selectedTeamIds}
-                  onToggle={toggleTeam}
-                  maxSelections={4}
-                  disabled={submitting}
-                  loading={teamsLoading}
-                  emptyMessage="Team logos are syncing. Try again shortly."
-                />
+              <section className="prFormatNote" aria-label="Competition format">
+                <span className="prFormatNote__label">Competition format</span>
+                <span className="prFormatNote__text">{PRESEASON_FORMAT_NOTE}</span>
+              </section>
 
-                {inlineError ? <div className="prInlineError">{inlineError}</div> : null}
-                {profileLoadError ? (
+              {isLoggedIn ? (
+                <section className="prAccountLine" aria-label="Account status">
+                  <span className="prAccountLine__eyebrow">Signed in</span>
+                  <strong>{signedInName}</strong>
+                  <span>{profilePsn ? `Gamertag: ${profilePsn}` : 'Add your PSN or Xbox gamertag before you confirm.'}</span>
+                </section>
+              ) : null}
+
+              <section className="prFormCard" id="pr-form">
+                <form onSubmit={submitRegistration} className="prForm" noValidate>
+                  <div className="prFormIntro">
+                    <div className="prFormIntro__copy">
+                      <p className="prGridHeading">Team preferences</p>
+                      <p className="prFormIntro__sub">Choose up to four clubs in order. Your saved list becomes your preseason entry.</p>
+                    </div>
+                  </div>
+
+                  <TeamLogoGrid
+                    teams={teams}
+                    selectedTeamIds={selectedTeamIds}
+                    onToggle={toggleTeam}
+                    maxSelections={4}
+                    disabled={submitting}
+                    loading={teamsLoading}
+                    emptyMessage="Team logos are syncing. Try again shortly."
+                  />
+
+                  {inlineError ? <div className="prInlineError">{inlineError}</div> : null}
+                  {profileLoadError ? (
+                    <button
+                      type="button"
+                      className="prBtn prBtn--ghost prBtn--support"
+                      onClick={async () => {
+                        if (!user?.id) return;
+                        setProfileLoading(true);
+                        const freshProfile = await loadProfile(user.id).catch(() => null);
+                        const authUserRes = await supabase.auth.getUser();
+                        setProfile(freshProfile);
+                        setAuthMetaUser((authUserRes.data?.user as unknown as AuthMetaUser) || null);
+                        if (!freshProfile) {
+                          console.warn('[PreseasonRegistration] retry profile load failed, metadata fallback still active for user', user.id);
+                          setProfileLoadError('Profile sync pending. Using account metadata for now.');
+                        } else {
+                          setProfileLoadError(null);
+                        }
+                        setProfileLoading(false);
+                      }}
+                    >
+                      Retry profile sync
+                    </button>
+                  ) : null}
                   <button
-                    type="button"
-                    className="prBtn prBtn--ghost"
-                    onClick={async () => {
-                      if (!user?.id) return;
-                      setProfileLoading(true);
-                      const freshProfile = await loadProfile(user.id).catch(() => null);
-                      const authUserRes = await supabase.auth.getUser();
-                      setProfile(freshProfile);
-                      setAuthMetaUser((authUserRes.data?.user as unknown as AuthMetaUser) || null);
-                      if (!freshProfile) {
-                        console.warn('[PreseasonRegistration] retry profile load failed, metadata fallback still active for user', user.id);
-                        setProfileLoadError('Profile sync pending. Using account metadata for now.');
-                      } else {
-                        setProfileLoadError(null);
-                      }
-                      setProfileLoading(false);
-                    }}
+                    type="submit"
+                    className="prBtn prBtn--primary prBtn--confirm"
+                    disabled={lockActive || profileLoading || teamsLoading || submitting || !selectedTeamIds.length || submitted}
                   >
-                    Retry profile sync
+                    {submitting ? 'Submitting…' : isLoggedIn ? 'Confirm preseason entry' : 'Sign in to confirm'}
                   </button>
-                ) : null}
-                {inlineError && inlineError.toLowerCase().includes('add psn or xbox gamertag in profile') ? (
-                  <button type="button" className="prBtn prBtn--profile" onClick={() => navigate('/profile')}>
-                    Go to Profile
-                  </button>
-                ) : null}
-
-                <button
-                  type="submit"
-                  className="prBtn prBtn--primary prBtn--confirm"
-                  disabled={lockActive || profileLoading || teamsLoading || submitting || !selectedTeamIds.length || submitted}
-                >
-                  {submitting ? 'Submitting…' : 'Confirm Registration'}
-                </button>
-              </form>
-            </section>
+                </form>
+              </section>
+            </>
           )}
         </div>
       </div>
@@ -895,14 +936,14 @@ export default function PreseasonRegistrationPage() {
       {lockActive ? (
         <div className="prLockOverlay" role="dialog" aria-modal="true" aria-label="Registration locked">
           <div className="prLockModal">
-            <div className="prLockKicker">Preseason Knockout</div>
-            <h2 className="prLockTitle">Registrations open at half-time</h2>
-            <p className="prLockSub">Swans vs Carlton — unlocks at 5:30pm</p>
+            <div className="prLockKicker">AFL 26 preseason</div>
+            <h2 className="prLockTitle">Registrations open at 5:30pm AEDT</h2>
+            <p className="prLockSub">Swans vs Carlton halftime unlock</p>
             <div className="prLockCountdown">{countdown}</div>
-            <p className="prLockHint">Check back at 5:30pm AEDT.</p>
+            <p className="prLockHint">Check back when the timer hits zero.</p>
             {!isLoggedIn ? (
               <>
-                <p className="prLockHint">Create your account now and come back when the timer hits zero.</p>
+                <p className="prLockHint">Create your account now so you are ready to confirm as soon as registrations unlock.</p>
                 <button type="button" className="prBtn prBtn--primary" onClick={() => navigate('/auth/sign-up')}>
                   Create account
                 </button>

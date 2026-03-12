@@ -1,49 +1,32 @@
 .mcHero {
-  --mcPadX: clamp(12px, 3.4vw, 20px);
-  --mcLogoSize: clamp(70px, 15vw, 112px);
-  --mcScore: clamp(38px, 10vw, 88px);
+  --mcPadX: clamp(14px, 3.2vw, 22px);
+  --mcLogoSize: clamp(50px, 8vw, 66px);
+  --mcScore: clamp(32px, 6vw, 52px);
 
   position: relative;
   width: 100%;
-  min-height: 340px;
-  padding: 12px 0 18px;
+  min-height: 188px;
+  padding: 10px 0 10px;
   overflow: hidden;
-
   color: rgba(244, 248, 255, 0.96);
-
   background:
-    radial-gradient(90% 100% at 15% 42%, rgba(var(--mcHomeR), var(--mcHomeG), var(--mcHomeB), 0.24), transparent 70%),
-    radial-gradient(90% 100% at 85% 42%, rgba(var(--mcAwayR), var(--mcAwayG), var(--mcAwayB), 0.24), transparent 70%),
-    linear-gradient(165deg, rgba(16, 20, 31, 0.92) 0%, rgba(10, 12, 20, 0.95) 52%, rgba(6, 9, 16, 0.98) 100%);
-
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    radial-gradient(95% 90% at 18% 38%, rgba(var(--mcHomeR), var(--mcHomeG), var(--mcHomeB), 0.22), transparent 72%),
+    radial-gradient(95% 90% at 82% 38%, rgba(var(--mcAwayR), var(--mcAwayG), var(--mcAwayB), 0.22), transparent 72%),
+    linear-gradient(162deg, rgba(15, 19, 30, 0.96) 0%, rgba(9, 12, 22, 0.97) 58%, rgba(7, 10, 17, 0.99) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
-    0 24px 54px -20px rgba(0, 0, 0, 0.72),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+    0 22px 46px -22px rgba(0, 0, 0, 0.72),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-.mcHero::before,
-.mcHero::after {
+.mcHero::before {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-}
-
-.mcHero::before {
   background:
-    radial-gradient(120% 70% at 50% 0%, rgba(255, 255, 255, 0.08), transparent 58%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0));
-}
-
-.mcHero::after {
-  opacity: 0.12;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 100% 3px, 3px 100%;
-  mask-image: radial-gradient(circle at 50% 42%, rgba(0, 0, 0, 0.95), transparent 82%);
+    radial-gradient(110% 70% at 50% 0%, rgba(255, 255, 255, 0.08), transparent 56%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.18), transparent 28%);
 }
 
 .mcHero__atmo {
@@ -54,13 +37,13 @@
   background: linear-gradient(
     110deg,
     transparent 24%,
-    rgba(255, 255, 255, 0.045) 43%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(255, 255, 255, 0.045) 57%,
+    rgba(255, 255, 255, 0.03) 44%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.03) 56%,
     transparent 76%
   );
   background-size: 190% 100%;
-  animation: mcHeroSweep 5.8s ease-in-out infinite;
+  animation: mcHeroSweep 6s ease-in-out infinite;
 }
 
 @keyframes mcHeroSweep {
@@ -75,29 +58,27 @@
 .mcHero__ghostScore {
   position: absolute;
   left: 50%;
-  top: 52%;
+  top: 55%;
   transform: translate(-50%, -50%);
   z-index: 1;
   pointer-events: none;
-
-  font-size: clamp(88px, 26vw, 220px);
+  font-size: clamp(54px, 15vw, 96px);
   line-height: 0.86;
   letter-spacing: -0.08em;
   font-weight: 950;
   font-variant-numeric: tabular-nums;
-
-  color: rgba(232, 240, 255, 0.045);
-  text-shadow: 0 22px 40px rgba(0, 0, 0, 0.5);
+  color: rgba(232, 240, 255, 0.025);
+  text-shadow: 0 16px 30px rgba(0, 0, 0, 0.44);
   white-space: nowrap;
 }
 
 .mcHero__back {
   position: absolute;
-  top: 12px;
+  top: 18px;
   left: 12px;
   z-index: 30;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(6, 10, 18, 0.54);
@@ -110,12 +91,12 @@
   transition: transform 0.12s ease, border-color 0.12s ease;
 }
 
-.mcHero__back:active {
-  transform: scale(0.95);
-}
-
 .mcHero__back:hover {
   border-color: rgba(255, 255, 255, 0.24);
+}
+
+.mcHero__back:active {
+  transform: scale(0.95);
 }
 
 .mcHero__inner {
@@ -124,116 +105,111 @@
   width: 100%;
   padding: 0 var(--mcPadX);
   display: grid;
-  gap: 14px;
+  gap: 10px;
 }
 
 .mcHero__metaTop {
   margin: 0 auto;
   max-width: min(96%, 980px);
-  padding: 8px 12px;
+  padding: 5px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.045);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 7px;
+  gap: 5px;
   text-align: center;
 }
 
 .mcHero__round {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 900;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(226, 234, 248, 0.84);
+  color: rgba(230, 237, 249, 0.84);
 }
 
 .mcHero__metaDot {
-  color: rgba(197, 210, 234, 0.46);
+  color: rgba(197, 210, 234, 0.42);
   font-weight: 800;
 }
 
 .mcHero__date,
 .mcHero__venue {
-  font-size: 12px;
-  font-weight: 650;
-  color: rgba(214, 224, 244, 0.74);
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(214, 224, 244, 0.7);
 }
 
 .mcHero__main {
   width: 100%;
-  max-width: 980px;
+  max-width: 760px;
   margin: 0 auto;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  column-gap: clamp(10px, 2.6vw, 24px);
+  column-gap: clamp(8px, 1.5vw, 16px);
 }
 
 .mcHero__team {
   display: grid;
   justify-items: center;
-  gap: 8px;
+  gap: 5px;
   min-width: 0;
+}
+
+.mcHero__team--home {
+  justify-self: end;
+}
+
+.mcHero__team--away {
+  justify-self: start;
 }
 
 .mcHero__logoFrame {
   width: var(--mcLogoSize);
   height: var(--mcLogoSize);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.03)),
-    rgba(9, 13, 22, 0.72);
+  border-radius: 14px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015));
+  border: 1px solid rgba(255, 255, 255, 0.08);
   display: grid;
   place-items: center;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    inset 0 -14px 28px rgba(0, 0, 0, 0.2),
-    0 14px 24px rgba(0, 0, 0, 0.28);
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 8px 14px rgba(0, 0, 0, 0.16);
 }
 
 .mcHero__logo {
-  width: 72%;
-  height: 72%;
-  filter: drop-shadow(0 9px 16px rgba(0, 0, 0, 0.45));
+  width: 70%;
+  height: 70%;
+  filter: drop-shadow(0 7px 14px rgba(0, 0, 0, 0.42));
 }
 
 .mcHero__teamName {
-  max-width: 100%;
-  font-size: 12px;
-  font-weight: 800;
-  color: rgba(235, 242, 255, 0.9);
+  max-width: 104px;
+  font-size: 11px;
+  font-weight: 850;
+  color: rgba(239, 244, 255, 0.92);
   text-align: center;
-  line-height: 1.15;
+  line-height: 1.12;
   text-wrap: balance;
 }
 
 .mcHero__teamAbbr {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 900;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(202, 214, 238, 0.58);
+  color: rgba(202, 214, 238, 0.56);
 }
 
-.mcHero__scoreWrap {
-  min-width: clamp(168px, 38vw, 280px);
+.mcHero__centre {
+  min-width: clamp(156px, 26vw, 212px);
   display: grid;
   justify-items: center;
-  gap: 7px;
-  padding: 10px 12px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background:
-    radial-gradient(120% 95% at 50% 0%, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.02) 62%, rgba(255, 255, 255, 0.01) 100%),
-    rgba(8, 11, 19, 0.56);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 -12px 24px rgba(0, 0, 0, 0.24),
-    0 12px 30px rgba(0, 0, 0, 0.24);
+  gap: 6px;
 }
 
 .mcHero__statusPill {
@@ -241,9 +217,9 @@
   align-items: center;
   gap: 7px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 5px 10px;
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 4px 9px;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .mcHero__statusDot {
@@ -267,14 +243,6 @@
   background: rgba(213, 224, 246, 0.98);
 }
 
-.mcHero__statusDot--submitted {
-  background: rgba(129, 190, 255, 0.98);
-}
-
-.mcHero__statusDot--verified {
-  background: rgba(66, 222, 146, 0.98);
-}
-
 .mcHero__statusDot--disputed {
   background: rgba(255, 106, 106, 0.98);
 }
@@ -289,7 +257,6 @@
     transform: scale(1);
     opacity: 0.85;
   }
-
   50% {
     transform: scale(1.22);
     opacity: 1;
@@ -297,11 +264,27 @@
 }
 
 .mcHero__statusLabel {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 900;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(240, 247, 255, 0.86);
+}
+
+.mcHero__scoreWrap {
+  min-width: clamp(150px, 24vw, 196px);
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  padding: 7px 9px 6px;
+  border-radius: 14px;
+  background:
+    radial-gradient(120% 95% at 50% 0%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02) 62%, rgba(255, 255, 255, 0.01) 100%),
+    rgba(8, 11, 19, 0.46);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 6px 14px rgba(0, 0, 0, 0.16);
 }
 
 .mcHero__scoreLine {
@@ -323,8 +306,8 @@
 }
 
 .mcHero__scoreDash {
-  font-size: clamp(18px, 4vw, 30px);
-  color: rgba(219, 229, 246, 0.4);
+  font-size: clamp(14px, 2.4vw, 20px);
+  color: rgba(219, 229, 246, 0.34);
   transform: translateY(-2px);
 }
 
@@ -337,108 +320,138 @@
 }
 
 .mcHero__minorVal {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 760;
   font-variant-numeric: tabular-nums;
-  color: rgba(208, 219, 241, 0.72);
+  color: rgba(208, 219, 241, 0.7);
 }
 
 .mcHero__minorSep {
-  color: rgba(185, 198, 224, 0.4);
+  color: rgba(185, 198, 224, 0.36);
   font-weight: 700;
 }
 
 .mcHero__scoreWrap.is-compact .mcHero__score {
-  font-size: clamp(30px, 8vw, 66px);
+  font-size: clamp(28px, 7vw, 52px);
 }
 
-.mcHero--verified .mcHero__statusPill {
-  border-color: rgba(66, 222, 146, 0.35);
-  background: rgba(66, 222, 146, 0.14);
+.mcHero__statusDeck {
+  min-height: 58px;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  text-align: center;
 }
 
-.mcHero--submitted .mcHero__statusPill {
-  border-color: rgba(129, 190, 255, 0.34);
-  background: rgba(129, 190, 255, 0.13);
+.mcHero__statusHeadline {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: rgba(245, 249, 255, 0.94);
+}
+
+.mcHero__statusHint {
+  max-width: 190px;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.35;
+  color: rgba(203, 215, 239, 0.72);
+}
+
+.mcHero--final .mcHero__statusPill {
+  border-color: rgba(213, 224, 246, 0.22);
+  background: rgba(213, 224, 246, 0.08);
+}
+
+.mcHero--live .mcHero__statusPill {
+  border-color: rgba(245, 158, 11, 0.26);
+  background: rgba(245, 158, 11, 0.11);
 }
 
 .mcHero--disputed .mcHero__statusPill {
-  border-color: rgba(255, 106, 106, 0.36);
-  background: rgba(255, 106, 106, 0.15);
+  border-color: rgba(255, 106, 106, 0.34);
+  background: rgba(255, 106, 106, 0.13);
 }
 
 .mcHero--corrected .mcHero__statusPill {
-  border-color: rgba(232, 189, 108, 0.34);
-  background: rgba(232, 189, 108, 0.13);
+  border-color: rgba(232, 189, 108, 0.3);
+  background: rgba(232, 189, 108, 0.11);
 }
 
 @media (max-width: 900px) {
-  .mcHero {
-    min-height: 330px;
-  }
-
   .mcHero__metaTop {
     max-width: 100%;
-  }
-
-  .mcHero__main {
-    column-gap: 10px;
-  }
-
-  .mcHero__teamName {
-    font-size: 11px;
   }
 }
 
 @media (max-width: 640px) {
   .mcHero {
-    --mcLogoSize: clamp(62px, 17vw, 84px);
-    --mcScore: clamp(34px, 12vw, 58px);
-    min-height: 308px;
+    --mcLogoSize: clamp(44px, 14vw, 58px);
+    --mcScore: clamp(28px, 9vw, 42px);
+    min-height: 174px;
     padding-top: 10px;
   }
 
   .mcHero__ghostScore {
-    font-size: clamp(74px, 30vw, 140px);
-    opacity: 0.95;
+    font-size: clamp(60px, 26vw, 108px);
   }
 
   .mcHero__inner {
-    gap: 10px;
+    gap: 8px;
   }
 
   .mcHero__metaTop {
     gap: 5px;
-    padding: 7px 10px;
+    padding: 6px 10px;
   }
 
-  .mcHero__date,
-  .mcHero__venue {
-    font-size: 11px;
-  }
-
-  .mcHero__scoreWrap {
-    min-width: clamp(130px, 36vw, 190px);
-    padding: 9px 8px;
-    border-radius: 16px;
-    gap: 6px;
-  }
-
-  .mcHero__scoreLine {
-    gap: 5px;
-  }
-
-  .mcHero__minorVal {
-    font-size: 12px;
+  .mcHero__main {
+    column-gap: 8px;
+    grid-template-columns: minmax(0, 1fr) minmax(116px, 138px) minmax(0, 1fr);
   }
 
   .mcHero__teamName {
-    font-size: 10px;
-    max-width: 96px;
+    max-width: 76px;
+    font-size: 9px;
   }
 
   .mcHero__teamAbbr {
     font-size: 9px;
     letter-spacing: 0.11em;
   }
+
+  .mcHero__statusDeck {
+    min-height: 52px;
+    padding: 2px 4px;
+  }
+
+  .mcHero__statusHeadline {
+    font-size: 13px;
+  }
+
+  .mcHero__statusHint {
+    max-width: 132px;
+    font-size: 10px;
+  }
+
+  .mcHero__scoreWrap {
+    min-width: 0;
+    width: 100%;
+    padding: 7px 7px 6px;
+    gap: 4px;
+  }
+
+  .mcHero__minorVal {
+    font-size: 10px;
+  }
+}
+
+.mcHero__scoreMeta {
+  font-size: 10px;
+  font-weight: 650;
+  color: rgba(203, 216, 240, 0.64);
+  text-align: center;
+  line-height: 1.25;
 }

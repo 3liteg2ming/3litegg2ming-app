@@ -1,5 +1,5 @@
 import { ChevronLeft, Eye, EyeOff, Gamepad2, Lock, Mail, UserRound } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { requireSupabaseClient } from '../../lib/supabaseClient';
 import { useAuth } from '../../state/auth/AuthProvider';
@@ -24,7 +24,7 @@ function toFriendlyCreateMessage(message: string): { title: string; detail: stri
   if (lower.includes('already registered') || lower.includes('already been registered')) {
     return {
       title: 'That email is already in use.',
-      detail: raw,
+      detail: 'Try signing in instead, or reset your password if you already have an account.',
     };
   }
 
@@ -38,7 +38,7 @@ function toFriendlyCreateMessage(message: string): { title: string; detail: stri
   if (lower.includes('database error saving new user')) {
     return {
       title: 'Account creation is partially complete.',
-      detail: 'Account created in Auth may have failed to create profile. Try signing in. If it persists, contact support.',
+      detail: 'Your Auth account may exist already. Try signing in and contact support if the issue continues.',
     };
   }
 
@@ -63,6 +63,8 @@ async function upsertProfileForUser(args: {
   lastName: string;
   displayName: string;
   psn: string;
+  facebookName: string;
+  birthYear: number;
 }): Promise<string[]> {
   const { supabase } = args;
   const userId = String(args.userId || '').trim();
@@ -75,6 +77,8 @@ async function upsertProfileForUser(args: {
     last_name: args.lastName,
     display_name: args.displayName,
     psn: args.psn,
+    facebook_name: args.facebookName,
+    birth_year: args.birthYear,
   };
 
   const { error: profilesError } = await supabase.from('profiles').upsert(payload, { onConflict: 'user_id' });
@@ -120,6 +124,8 @@ export default function SignUpPage() {
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [facebookName, setFacebookName] = useState('');
+  const [birthYear, setBirthYear] = useState('');
   const [psn, setPsn] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -134,16 +140,21 @@ export default function SignUpPage() {
   const trimmedEmail = email.trim();
   const cleanFirst = firstName.trim();
   const cleanLast = lastName.trim();
+  const cleanFacebookName = facebookName.trim();
+  const cleanBirthYear = birthYear.trim();
   const cleanPsn = psn.trim();
 
   const emailValid = EMAIL_RE.test(trimmedEmail);
   const passwordMinValid = password.length >= 8;
   const passwordHasNumber = /\d/.test(password);
   const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
+  const birthYearValid = /^\d{4}$/.test(cleanBirthYear) && Number(cleanBirthYear) > 1920 && Number(cleanBirthYear) < new Date().getFullYear() - 10;
 
   const isFormValid =
     cleanFirst.length > 0 &&
     cleanLast.length > 0 &&
+    cleanFacebookName.length > 0 &&
+    birthYearValid &&
     cleanPsn.length > 0 &&
     emailValid &&
     passwordMinValid &&
@@ -159,7 +170,7 @@ export default function SignUpPage() {
     if (!cleanPsn) {
       setError({
         title: 'PSN or Xbox gamertag is required.',
-        detail: 'Enter your PSN ID or gamertag to create your account.',
+        detail: 'Add the name players can use to find you in-game.',
       });
       return;
     }
@@ -167,7 +178,7 @@ export default function SignUpPage() {
     if (!isFormValid) {
       setError({
         title: 'Check your details before continuing.',
-        detail: 'First name, last name, PSN or Xbox gamertag, valid email, and matching password are required.',
+        detail: 'First name, last name, Facebook name, valid birth year, PSN or Xbox gamertag, valid email, and matching password are required.',
       });
       return;
     }
@@ -184,6 +195,8 @@ export default function SignUpPage() {
         lastName: cleanLast,
         displayName,
         psn: cleanPsn,
+        facebookName: cleanFacebookName,
+        birthYear: Number(cleanBirthYear),
       });
 
       const profileFailures: string[] = [];
@@ -195,6 +208,8 @@ export default function SignUpPage() {
         lastName: cleanLast,
         displayName,
         psn: cleanPsn,
+        facebookName: cleanFacebookName,
+        birthYear: Number(cleanBirthYear),
       }).then((failures) => profileFailures.push(...failures));
 
       if (createdUser?.id) {
@@ -210,6 +225,8 @@ export default function SignUpPage() {
             lastName: cleanLast,
             displayName,
             psn: cleanPsn,
+            facebookName: cleanFacebookName,
+            birthYear: Number(cleanBirthYear),
           });
           profileFailures.push(...retryFailures);
         }
@@ -234,7 +251,7 @@ export default function SignUpPage() {
         if (isSupabase) {
           nav('/auth/sign-in', {
             replace: true,
-            state: { message: 'Account created. Sign in to complete Knockout Preseason registration.' },
+            state: { message: 'Account created. Sign in to continue your preseason registration.' },
           });
         } else {
           nav('/preseason-registration', { replace: true });
@@ -255,6 +272,8 @@ export default function SignUpPage() {
               lastName: cleanLast,
               displayName,
               psn: cleanPsn,
+              facebookName: cleanFacebookName,
+              birthYear: Number(cleanBirthYear),
             });
             if (profileFailures.length) {
               console.error('[SignUp] recovery profile upsert failures', profileFailures);
@@ -297,196 +316,239 @@ export default function SignUpPage() {
 
   return (
     <div className="auth-screen auth-screen--premium">
-      <div className="auth-top">
-        <button type="button" className="auth-back" onClick={() => nav('/auth/sign-in')} aria-label="Back to sign in">
+      <div className="auth-top auth-top--premium">
+        <button type="button" className="auth-back" onClick={() => nav('/preseason-registration')} aria-label="Back to preseason registration">
           <ChevronLeft size={18} />
-          <span>Sign in</span>
+          <span>Preseason</span>
         </button>
       </div>
 
-      <div className="auth-card auth-card--wide auth-card--premium">
+      <div className="auth-card auth-card--premium auth-card--wide auth-card--signup">
         {success ? (
-          <div className="auth-success-card">
+          <div className="auth-success-card auth-success-card--premium">
             <div className="auth-success-title">Account created</div>
             <div className="auth-success-text">Taking you to sign in…</div>
           </div>
         ) : (
           <>
-            <div className="auth-badge">KNOCKOUT PRESEASON</div>
-
-            <div className="auth-head">
-              <div className="auth-title">Create account</div>
-              <div className="auth-step">Step 1 of 2</div>
-              <div className="auth-sub">Account setup first. Team preferences are selected after sign in.</div>
+            <div className="auth-kicker">Coach registration</div>
+            <div className="auth-head auth-head--premium">
+              <div className="auth-title">Create your account</div>
+              <div className="auth-sub">Set up your coach profile now, then sign in to confirm your preseason entry.</div>
             </div>
 
-            <form onSubmit={onSubmit} className="auth-form auth-form--compact" noValidate>
-              <label className="auth-field">
-                <span className="auth-label">First Name</span>
-                <div className="auth-inputWrap">
-                  <UserRound size={16} className="auth-icon" />
-                  <input
-                    className="auth-input"
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="First name"
-                    autoComplete="given-name"
-                    required
-                    disabled={submitting || loading}
-                  />
-                </div>
-              </label>
-
-              <label className="auth-field">
-                <span className="auth-label">Last Name</span>
-                <div className="auth-inputWrap">
-                  <UserRound size={16} className="auth-icon" />
-                  <input
-                    className="auth-input"
-                    type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Last name"
-                    autoComplete="family-name"
-                    required
-                    disabled={submitting || loading}
-                  />
-                </div>
-              </label>
-
-              <label className="auth-field">
-                <span className="auth-label">PSN / Xbox gamertag</span>
-                <div className="auth-inputWrap">
-                  <Gamepad2 size={16} className="auth-icon" />
-                  <input
-                    className="auth-input"
-                    type="text"
-                    value={psn}
-                    onChange={(e) => setPsn(e.target.value)}
-                    placeholder="PSN ID or Gamertag"
-                    autoCapitalize="none"
-                    required
-                    disabled={submitting || loading}
-                  />
-                </div>
-                <span className="auth-inlineHint">Add at least one so people can find you.</span>
-              </label>
-
-              <div className="auth-divider" />
-
-              <label className="auth-field">
-                <span className="auth-label">Email</span>
-                <div className="auth-inputWrap">
-                  <Mail size={16} className="auth-icon" />
-                  <input
-                    className="auth-input"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Email address"
-                    autoComplete="email"
-                    required
-                    disabled={submitting || loading}
-                  />
-                </div>
-                {email.length > 0 && !emailValid ? (
-                  <span className="auth-inlineHint auth-inlineHint--error">Enter a valid email format.</span>
-                ) : null}
-              </label>
-
-              <label className="auth-field">
-                <span className="auth-label">Password</span>
-                <div className="auth-inputWrap">
-                  <Lock size={16} className="auth-icon" />
-                  <input
-                    className="auth-input"
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Password"
-                    autoComplete="new-password"
-                    required
-                    disabled={submitting || loading}
-                  />
-                  <button
-                    type="button"
-                    className="auth-eye"
-                    onClick={() => setShowPassword((s) => !s)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    disabled={submitting || loading}
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-                <div className="auth-inlineStack">
-                  {!passwordMinValid && password.length > 0 ? (
-                    <span className="auth-inlineHint auth-inlineHint--error">Minimum 8 characters.</span>
-                  ) : null}
-                  {password.length > 0 && !passwordHasNumber ? (
-                    <span className="auth-inlineHint auth-inlineHint--error">Include at least 1 number.</span>
-                  ) : null}
-                  {password.length > 0 && passwordStrength ? (
-                    <span className={`auth-inlineHint auth-inlineHint--${passwordStrength}`}>
-                      Strength: {passwordStrength}
-                    </span>
-                  ) : null}
-                </div>
-              </label>
-
-              <label className="auth-field">
-                <span className="auth-label">Confirm password</span>
-                <div className="auth-inputWrap">
-                  <Lock size={16} className="auth-icon" />
-                  <input
-                    className="auth-input"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm password"
-                    autoComplete="new-password"
-                    required
-                    disabled={submitting || loading}
-                  />
-                  <button
-                    type="button"
-                    className="auth-eye"
-                    onClick={() => setShowConfirmPassword((s) => !s)}
-                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                    disabled={submitting || loading}
-                  >
-                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-                {confirmPassword.length > 0 && !passwordsMatch ? (
-                  <span className="auth-inlineHint auth-inlineHint--error">Passwords must match.</span>
-                ) : null}
-              </label>
-
-          {error ? (
-            <div className="auth-message auth-message--error" role="alert" aria-live="assertive">
-              <div className="auth-message__title">{error.title}</div>
-              <details className="auth-message__details">
-                <summary>Details</summary>
-                <div className="auth-message__body">{error.detail}</div>
-              </details>
-              <button type="button" className="auth-message__retry" onClick={() => setError(null)} disabled={submitting || loading}>
-                Try again
-              </button>
+            <div className="auth-subtleRow auth-subtleRow--start">
+              <Link className="auth-subtleLink" to="/preseason-registration">
+                Back to preseason registration
+              </Link>
             </div>
-          ) : null}
+
+            <form onSubmit={onSubmit} className="auth-form auth-form--premium auth-form--signup" noValidate>
+              <div className="form-row">
+                <label className="auth-field">
+                  <span className="auth-label">First name</span>
+                  <div className="auth-inputWrap">
+                    <UserRound size={16} className="auth-icon" />
+                    <input
+                      className="auth-input"
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="First name"
+                      autoComplete="given-name"
+                      required
+                      disabled={submitting || loading}
+                    />
+                  </div>
+                </label>
+
+                <label className="auth-field">
+                  <span className="auth-label">Last name</span>
+                  <div className="auth-inputWrap">
+                    <UserRound size={16} className="auth-icon" />
+                    <input
+                      className="auth-input"
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Last name"
+                      autoComplete="family-name"
+                      required
+                      disabled={submitting || loading}
+                    />
+                  </div>
+                </label>
+              </div>
+
+              <div className="form-row">
+                <label className="auth-field">
+                  <span className="auth-label">Facebook name</span>
+                  <div className="auth-inputWrap">
+                    <UserRound size={16} className="auth-icon" />
+                    <input
+                      className="auth-input"
+                      type="text"
+                      value={facebookName}
+                      onChange={(e) => setFacebookName(e.target.value)}
+                      placeholder="Facebook name"
+                      autoComplete="name"
+                      required
+                      disabled={submitting || loading}
+                    />
+                  </div>
+                  <span className="auth-inlineHint">Use the name admins will recognise.</span>
+                </label>
+
+                <label className="auth-field">
+                  <span className="auth-label">Birth year</span>
+                  <div className="auth-inputWrap">
+                    <UserRound size={16} className="auth-icon" />
+                    <input
+                      className="auth-input"
+                      type="number"
+                      value={birthYear}
+                      onChange={(e) => setBirthYear(e.target.value)}
+                      placeholder="YYYY"
+                      inputMode="numeric"
+                      required
+                      disabled={submitting || loading}
+                    />
+                  </div>
+                  {birthYear.length > 0 && !birthYearValid ? (
+                    <span className="auth-inlineHint auth-inlineHint--error">Enter a valid 4-digit birth year.</span>
+                  ) : (
+                    <span className="auth-inlineHint">Required for coach eligibility.</span>
+                  )}
+                </label>
+              </div>
+
+              <div className="form-row">
+                <label className="auth-field">
+                  <span className="auth-label">PSN / Xbox gamertag</span>
+                  <div className="auth-inputWrap">
+                    <Gamepad2 size={16} className="auth-icon" />
+                    <input
+                      className="auth-input"
+                      type="text"
+                      value={psn}
+                      onChange={(e) => setPsn(e.target.value)}
+                      placeholder="PSN ID or gamertag"
+                      autoCapitalize="none"
+                      required
+                      disabled={submitting || loading}
+                    />
+                  </div>
+                  <span className="auth-inlineHint">This is the name coaches will use to find you in-game.</span>
+                </label>
+
+                <label className="auth-field">
+                  <span className="auth-label">Email</span>
+                  <div className="auth-inputWrap">
+                    <Mail size={16} className="auth-icon" />
+                    <input
+                      className="auth-input"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="coach@email.com"
+                      autoComplete="email"
+                      required
+                      disabled={submitting || loading}
+                    />
+                  </div>
+                  {email.length > 0 && !emailValid ? (
+                    <span className="auth-inlineHint auth-inlineHint--error">Enter a valid email format.</span>
+                  ) : null}
+                </label>
+              </div>
+
+              <div className="form-row">
+                <label className="auth-field">
+                  <span className="auth-label">Password</span>
+                  <div className="auth-inputWrap">
+                    <Lock size={16} className="auth-icon" />
+                    <input
+                      className="auth-input"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Create a password"
+                      autoComplete="new-password"
+                      required
+                      disabled={submitting || loading}
+                    />
+                    <button
+                      type="button"
+                      className="auth-eye"
+                      onClick={() => setShowPassword((current) => !current)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      disabled={submitting || loading}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  <div className="auth-inlineStack">
+                    {!passwordMinValid && password.length > 0 ? (
+                      <span className="auth-inlineHint auth-inlineHint--error">Minimum 8 characters.</span>
+                    ) : null}
+                    {password.length > 0 && !passwordHasNumber ? (
+                      <span className="auth-inlineHint auth-inlineHint--error">Include at least 1 number.</span>
+                    ) : null}
+                    {password.length > 0 && passwordStrength ? (
+                      <span className={`auth-inlineHint auth-inlineHint--${passwordStrength}`}>
+                        Strength: {passwordStrength}
+                      </span>
+                    ) : null}
+                  </div>
+                </label>
+
+                <label className="auth-field">
+                  <span className="auth-label">Confirm password</span>
+                  <div className="auth-inputWrap">
+                    <Lock size={16} className="auth-icon" />
+                    <input
+                      className="auth-input"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm password"
+                      autoComplete="new-password"
+                      required
+                      disabled={submitting || loading}
+                    />
+                    <button
+                      type="button"
+                      className="auth-eye"
+                      onClick={() => setShowConfirmPassword((current) => !current)}
+                      aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                      disabled={submitting || loading}
+                    >
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  {confirmPassword.length > 0 && !passwordsMatch ? (
+                    <span className="auth-inlineHint auth-inlineHint--error">Passwords must match.</span>
+                  ) : null}
+                </label>
+              </div>
+
+              {error ? (
+                <div className="auth-message auth-message--error" role="alert" aria-live="assertive">
+                  <div className="auth-message__title">{error.title}</div>
+                  <div className="auth-message__body">{error.detail}</div>
+                </div>
+              ) : null}
 
               <button type="submit" className="auth-primary" disabled={!canSubmit}>
                 {submitting || loading ? 'Creating account…' : 'Create account'}
               </button>
-
-              <div className="auth-footer">
-                <span>Already have an account?</span>
-                <Link className="auth-link" to="/auth/sign-in">
-                  Sign in
-                </Link>
-              </div>
             </form>
+
+            <div className="auth-footerLinks auth-footerLinks--single">
+              <Link className="auth-footerLink" to="/auth/sign-in">
+                Already have an account? Sign in
+              </Link>
+            </div>
           </>
         )}
       </div>

@@ -1,9 +1,45 @@
 import { getHeadshot } from './statsData';
 import { getTeamAssets } from '@/lib/teamAssets';
-import type { Player, Team } from '@/types/stats2';
+import type { Player, PlayerStatKey, Team, TeamStatKey } from '@/types/stats2';
 
 function hs(name: string) {
   return getHeadshot(name) || '';
+}
+
+function playerStats(overrides: Partial<Record<PlayerStatKey, number>>): Record<PlayerStatKey, number> {
+  return {
+    goals: 0,
+    disposals: 0,
+    marks: 0,
+    tackles: 0,
+    clearances: 0,
+    fantasyPoints: 0,
+    ...overrides,
+  };
+}
+
+function teamStats(overrides: Partial<Record<TeamStatKey, number>>): Record<TeamStatKey, number> {
+  return {
+    goals: 0,
+    disposals: 0,
+    kicks: 0,
+    handballs: 0,
+    inside50s: 0,
+    rebound50s: 0,
+    freesFor: 0,
+    fiftyMetrePenalties: 0,
+    hitOuts: 0,
+    clearances: 0,
+    contestedPossessions: 0,
+    uncontestedPossessions: 0,
+    marks: 0,
+    contestedMarks: 0,
+    interceptMarks: 0,
+    tackles: 0,
+    spoils: 0,
+    goalEfficiency: 0,
+    ...overrides,
+  };
 }
 
 // NOTE: These are demo values to power the Lovable UI pixel-for-pixel.
@@ -16,13 +52,14 @@ export const mockPlayers: Player[] = [
     teamName: 'Geelong Cats',
     headshotUrl: hs('Jeremy Cameron'),
     gamesPlayed: 24,
-    stats: {
+    stats: playerStats({
       goals: 88,
       disposals: 310,
       marks: 120,
       tackles: 48,
+      clearances: 12,
       fantasyPoints: 2150,
-    },
+    }),
   },
   {
     id: 'p2',
@@ -30,13 +67,14 @@ export const mockPlayers: Player[] = [
     teamName: 'Hawthorn Hawks',
     headshotUrl: hs('Jack Gunston'),
     gamesPlayed: 24,
-    stats: {
+    stats: playerStats({
       goals: 73,
       disposals: 205,
       marks: 92,
       tackles: 34,
+      clearances: 8,
       fantasyPoints: 1680,
-    },
+    }),
   },
   {
     id: 'p3',
@@ -44,13 +82,14 @@ export const mockPlayers: Player[] = [
     teamName: 'Gold Coast Suns',
     headshotUrl: hs('Ben King'),
     gamesPlayed: 24,
-    stats: {
+    stats: playerStats({
       goals: 71,
       disposals: 190,
       marks: 88,
       tackles: 22,
+      clearances: 5,
       fantasyPoints: 1550,
-    },
+    }),
   },
   {
     id: 'p4',
@@ -58,13 +97,14 @@ export const mockPlayers: Player[] = [
     teamName: 'Western Bulldogs',
     headshotUrl: hs('Aaron Naughton'),
     gamesPlayed: 24,
-    stats: {
+    stats: playerStats({
       goals: 60,
       disposals: 245,
       marks: 96,
       tackles: 41,
+      clearances: 10,
       fantasyPoints: 1760,
-    },
+    }),
   },
   {
     id: 'p5',
@@ -72,13 +112,14 @@ export const mockPlayers: Player[] = [
     teamName: 'Adelaide Crows',
     headshotUrl: hs('Riley Thilthorpe'),
     gamesPlayed: 24,
-    stats: {
+    stats: playerStats({
       goals: 60,
       disposals: 178,
       marks: 75,
       tackles: 36,
+      clearances: 7,
       fantasyPoints: 1490,
-    },
+    }),
   },
   {
     id: 'p6',
@@ -86,13 +127,14 @@ export const mockPlayers: Player[] = [
     teamName: 'Collingwood Magpies',
     headshotUrl: hs('Nick Daicos'),
     gamesPlayed: 24,
-    stats: {
+    stats: playerStats({
       goals: 18,
       disposals: 650,
       marks: 128,
       tackles: 74,
+      clearances: 132,
       fantasyPoints: 2620,
-    },
+    }),
   },
   {
     id: 'p7',
@@ -100,13 +142,14 @@ export const mockPlayers: Player[] = [
     teamName: 'Brisbane Lions',
     headshotUrl: hs('Lachie Neale'),
     gamesPlayed: 24,
-    stats: {
+    stats: playerStats({
       goals: 22,
       disposals: 620,
       marks: 104,
       tackles: 92,
+      clearances: 146,
       fantasyPoints: 2550,
-    },
+    }),
   },
   {
     id: 'p8',
@@ -114,13 +157,14 @@ export const mockPlayers: Player[] = [
     teamName: 'GWS Giants',
     headshotUrl: hs('Tom Green'),
     gamesPlayed: 24,
-    stats: {
+    stats: playerStats({
       goals: 12,
       disposals: 590,
       marks: 88,
       tackles: 86,
+      clearances: 154,
       fantasyPoints: 2410,
-    },
+    }),
   },
   {
     id: 'p9',
@@ -128,13 +172,14 @@ export const mockPlayers: Player[] = [
     teamName: 'Western Bulldogs',
     headshotUrl: hs('Marcus Bontempelli'),
     gamesPlayed: 24,
-    stats: {
+    stats: playerStats({
       goals: 26,
       disposals: 580,
       marks: 110,
       tackles: 96,
+      clearances: 141,
       fantasyPoints: 2500,
-    },
+    }),
   },
   {
     id: 'p10',
@@ -142,13 +187,14 @@ export const mockPlayers: Player[] = [
     teamName: 'Gold Coast Suns',
     headshotUrl: hs('Noah Anderson'),
     gamesPlayed: 24,
-    stats: {
+    stats: playerStats({
       goals: 14,
       disposals: 540,
       marks: 102,
       tackles: 80,
+      clearances: 120,
       fantasyPoints: 2300,
-    },
+    }),
   },
 ];
 
@@ -158,77 +204,155 @@ export const mockTeams: Team[] = [
     name: 'Brisbane Lions',
     logoUrl: getTeamAssets('Brisbane Lions').logo,
     gamesPlayed: 24,
-    stats: {
+    stats: teamStats({
       disposals: 10033,
+      kicks: 5861,
+      handballs: 4172,
+      inside50s: 1324,
+      rebound50s: 978,
+      freesFor: 471,
+      fiftyMetrePenalties: 16,
+      hitOuts: 712,
+      clearances: 903,
+      contestedPossessions: 2891,
+      uncontestedPossessions: 5208,
       goals: 310,
       marks: 2900,
+      contestedMarks: 192,
+      interceptMarks: 226,
       tackles: 1850,
+      spoils: 612,
       goalEfficiency: 53.1,
-    },
+    }),
   },
   {
     id: 't2',
     name: 'Hawthorn Hawks',
     logoUrl: getTeamAssets('Hawthorn Hawks').logo,
     gamesPlayed: 24,
-    stats: {
+    stats: teamStats({
       disposals: 9537,
+      kicks: 5510,
+      handballs: 4027,
+      inside50s: 1266,
+      rebound50s: 951,
+      freesFor: 458,
+      fiftyMetrePenalties: 14,
+      hitOuts: 665,
+      clearances: 861,
+      contestedPossessions: 2742,
+      uncontestedPossessions: 4955,
       goals: 295,
       marks: 2700,
+      contestedMarks: 178,
+      interceptMarks: 214,
       tackles: 1720,
+      spoils: 584,
       goalEfficiency: 50.4,
-    },
+    }),
   },
   {
     id: 't3',
     name: 'Geelong Cats',
     logoUrl: getTeamAssets('Geelong Cats').logo,
     gamesPlayed: 24,
-    stats: {
+    stats: teamStats({
       disposals: 9145,
+      kicks: 5352,
+      handballs: 3793,
+      inside50s: 1292,
+      rebound50s: 934,
+      freesFor: 446,
+      fiftyMetrePenalties: 12,
+      hitOuts: 648,
+      clearances: 842,
+      contestedPossessions: 2628,
+      uncontestedPossessions: 4764,
       goals: 305,
       marks: 2820,
+      contestedMarks: 181,
+      interceptMarks: 220,
       tackles: 1650,
+      spoils: 571,
       goalEfficiency: 52.6,
-    },
+    }),
   },
   {
     id: 't4',
     name: 'Gold Coast Suns',
     logoUrl: getTeamAssets('Gold Coast Suns').logo,
     gamesPlayed: 24,
-    stats: {
+    stats: teamStats({
       disposals: 8800,
+      kicks: 5121,
+      handballs: 3679,
+      inside50s: 1208,
+      rebound50s: 886,
+      freesFor: 432,
+      fiftyMetrePenalties: 11,
+      hitOuts: 621,
+      clearances: 823,
+      contestedPossessions: 2550,
+      uncontestedPossessions: 4510,
       goals: 280,
       marks: 2600,
+      contestedMarks: 168,
+      interceptMarks: 209,
       tackles: 1600,
+      spoils: 548,
       goalEfficiency: 49.8,
-    },
+    }),
   },
   {
     id: 't5',
     name: 'Collingwood Magpies',
     logoUrl: getTeamAssets('Collingwood Magpies').logo,
     gamesPlayed: 24,
-    stats: {
+    stats: teamStats({
       disposals: 8752,
+      kicks: 5076,
+      handballs: 3676,
+      inside50s: 1189,
+      rebound50s: 902,
+      freesFor: 425,
+      fiftyMetrePenalties: 10,
+      hitOuts: 598,
+      clearances: 801,
+      contestedPossessions: 2498,
+      uncontestedPossessions: 4491,
       goals: 290,
       marks: 2750,
+      contestedMarks: 173,
+      interceptMarks: 212,
       tackles: 1700,
+      spoils: 555,
       goalEfficiency: 51.3,
-    },
+    }),
   },
   {
     id: 't6',
     name: 'Adelaide Crows',
     logoUrl: getTeamAssets('Adelaide Crows').logo,
     gamesPlayed: 24,
-    stats: {
+    stats: teamStats({
       disposals: 8737,
+      kicks: 5034,
+      handballs: 3703,
+      inside50s: 1174,
+      rebound50s: 894,
+      freesFor: 438,
+      fiftyMetrePenalties: 9,
+      hitOuts: 612,
+      clearances: 814,
+      contestedPossessions: 2510,
+      uncontestedPossessions: 4468,
       goals: 285,
       marks: 2550,
+      contestedMarks: 162,
+      interceptMarks: 207,
       tackles: 1680,
+      spoils: 542,
       goalEfficiency: 48.9,
-    },
+    }),
   },
 ];

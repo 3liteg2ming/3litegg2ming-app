@@ -1,9 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { NavLink } from 'react-router-dom';
 import { BarChart3, CalendarDays, Home, Trophy, Upload } from 'lucide-react';
-import type { Session } from '@supabase/supabase-js';
-
-import { hasSupabaseEnv, requireSupabaseClient } from '../lib/supabaseClient';
+import { useAuth } from '../state/auth/AuthProvider';
 import '../styles/bottomNav.css';
 
 type NavItem = {
@@ -62,37 +60,8 @@ async function prefetchRouteAndData(href: string) {
 }
 
 export default function BottomNav({ hidden = false }: { hidden?: boolean }) {
-  const [session, setSession] = useState<Session | null>(null);
-
-  useEffect(() => {
-    if (!hasSupabaseEnv) {
-      setSession(null);
-      return;
-    }
-
-    let unsub: (() => void) | null = null;
-    let alive = true;
-
-    (async () => {
-      const supabase = requireSupabaseClient();
-      const { data } = await supabase.auth.getSession();
-      if (!alive) return;
-      setSession(data.session ?? null);
-
-      const { data: sub } = supabase.auth.onAuthStateChange((_event: string, newSession: Session | null) => {
-        setSession(newSession ?? null);
-      });
-
-      unsub = () => sub.subscription.unsubscribe();
-    })();
-
-    return () => {
-      alive = false;
-      if (unsub) unsub();
-    };
-  }, []);
-
-  const isAuthed = !!session;
+  const { user } = useAuth();
+  const isAuthed = !!user;
 
   const NAV: NavItem[] = useMemo(() => {
     return isAuthed ? [...NAV_BASE, NAV_SUBMIT] : NAV_BASE;

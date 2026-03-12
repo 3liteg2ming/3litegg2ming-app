@@ -1,0 +1,39 @@
+- application "Elite Gaming App" [ref=e4]:
+  - banner [ref=e5]:
+    - status [ref=e6]:
+      - generic [ref=e7]: Elite Gaming AFL 26 preseason registrations are live.
+    - generic [ref=e8]:
+      - button "Open preseason registration" [ref=e10] [cursor=pointer]:
+        - generic [ref=e11]: "26"
+        - generic [ref=e12]: Preseason
+      - button "Go to preseason registration" [ref=e14] [cursor=pointer]
+      - button "Sign in" [ref=e17] [cursor=pointer]
+  - main [ref=e18]:
+    - generic [ref=e21]:
+      - generic [ref=e22]:
+        - generic:
+          - generic: EG
+        - generic:
+          - generic: EG
+        - generic [ref=e23]:
+          - generic [ref=e25]:
+            - generic [ref=e26]:
+              - img [ref=e27]
+              - text: AFL 26 PRESEASON
+            - heading "AFL 26 preseason" [level=1] [ref=e30]
+            - paragraph [ref=e31]: Choose up to four preferred clubs and confirm your entry.
+            - paragraph [ref=e32]: One confirmed entry locks your preference order.
+          - generic [ref=e33]:
+            - generic [ref=e35]:
+              - button "Create account" [ref=e36] [cursor=pointer]
+              - button "Sign in" [ref=e37] [cursor=pointer]
+            - generic [ref=e40]: Registrations are live now.
+      - region "Competition format" [ref=e41]:
+        - generic [ref=e42]: Competition format
+        - generic [ref=e43]: "Format: 2 home-and-away matches, followed by knockout finals."
+      - generic [ref=e45]:
+        - generic [ref=e47]:
+          - paragraph [ref=e48]: Team preferences
+          - paragraph [ref=e49]: Choose up to four clubs in order. Your saved list becomes your preseason entry.
+        - generic "Loading teams" [ref=e50]
+        - button "Sign in to confirm" [disabled] [ref=e59]

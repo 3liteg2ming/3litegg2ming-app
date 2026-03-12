@@ -1,0 +1,238 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - generic [ref=e12]:
+          - generic [ref=e13]: Preseason
+          - generic [ref=e14]: Competition
+        - img [ref=e15]
+      - generic "Elite Gaming" [ref=e17]:
+        - button "Go to home" [ref=e18] [cursor=pointer]:
+          - img [ref=e145]
+      - button "Sign in" [ref=e146] [cursor=pointer]:
+        - img [ref=e147]
+        - generic [ref=e150]: Sign in
+  - main [ref=e22]:
+    - generic [ref=e24]:
+      - generic [ref=e26]:
+        - generic [ref=e27]: Preseason open
+        - heading "Home" [level=1] [ref=e28]
+      - region "Homepage hero" [ref=e29]:
+        - generic [ref=e31]:
+          - generic [ref=e32]: Preseason registrations open
+          - heading "Join the competition." [level=2] [ref=e33]
+          - paragraph [ref=e34]: Register now and track fixtures, results, ladder, and stats in one place.
+        - article [ref=e35]:
+          - generic [ref=e36]:
+            - generic [ref=e37]: Knockout Preseason
+            - heading "Register for preseason now." [level=3] [ref=e38]
+            - paragraph [ref=e39]: Public registrations are open now. Claim your place, browse the fixture feed, and follow the ladder from day one.
+          - generic [ref=e40]:
+            - button "Register for Preseason" [ref=e41] [cursor=pointer]
+            - button "View Fixtures" [ref=e42] [cursor=pointer]
+            - button "View Ladder" [ref=e43] [cursor=pointer]
+        - generic "Competition switcher" [ref=e44]:
+          - button "Knockout Preseason Registrations open" [ref=e45] [cursor=pointer]:
+            - generic [ref=e46]: Knockout Preseason
+            - generic [ref=e47]: Registrations open
+          - button "AFL 26 Season two" [ref=e48] [cursor=pointer]:
+            - generic [ref=e49]: AFL 26
+            - generic [ref=e50]: Season two
+        - generic [ref=e51]:
+          - article [ref=e52]:
+            - generic [ref=e53]:
+              - generic [ref=e151]: Latest Result
+              - generic [ref=e153]: Round 1
+            - generic [ref=e154]:
+              - generic [ref=e155]:
+                - img "Gold Coast Suns" [ref=e157]
+                - strong [ref=e158]: Gold Coast Suns
+              - generic [ref=e159]:
+                - generic [ref=e160]: Gold Coast Suns by 21
+                - generic [ref=e161]: Gold Coast Suns vs GWS Giants
+                - generic [ref=e162]:
+                  - generic [ref=e163]: "34"
+                  - generic [ref=e164]: Full Time
+                  - generic [ref=e165]: "13"
+                - generic [ref=e166]: 5.4 • 2.1
+              - generic [ref=e167]:
+                - img "GWS Giants" [ref=e169]
+                - strong [ref=e170]: GWS Giants
+            - generic [ref=e171]:
+              - button "Open Match Centre" [ref=e172] [cursor=pointer]
+              - button "View Fixtures" [ref=e173] [cursor=pointer]
+          - complementary [ref=e54]:
+            - article [ref=e55]:
+              - generic [ref=e56]: Competition access
+              - generic [ref=e57]: Preseason registration open.
+              - generic [ref=e58]: Registrations are open now for the Knockout Preseason.
+              - generic [ref=e59]:
+                - button "Register for Preseason" [ref=e60] [cursor=pointer]
+                - button "View Ladder" [ref=e61] [cursor=pointer]
+              - generic [ref=e62]:
+                - generic [ref=e64]: Competition Pulse
+                - generic [ref=e65]:
+                  - generic [ref=e66]:
+                    - generic [ref=e67]: Fixtures
+                    - strong [ref=e68]: "18"
+                  - generic [ref=e69]:
+                    - generic [ref=e70]: Results
+                    - strong [ref=e71]: "1"
+                  - generic [ref=e72]:
+                    - generic [ref=e73]: Leader
+                    - strong [ref=e74]: Gold Coast Suns
+      - generic [ref=e75]:
+        - region "Competition spotlight" [ref=e76]:
+          - generic [ref=e77]:
+            - generic [ref=e78]:
+              - img [ref=e80]
+              - heading "Competition Spotlight" [level=2] [ref=e89]
+            - button "Fixtures" [ref=e90] [cursor=pointer]:
+              - text: Fixtures
+              - img [ref=e91]
+          - generic [ref=e93]:
+            - generic [ref=e175]:
+              - generic [ref=e176]:
+                - generic [ref=e177]: Round 1
+                - generic [ref=e180]: SCHEDULED
+              - generic:
+                - img
+              - generic:
+                - img
+              - generic [ref=e181]:
+                - generic [ref=e182]:
+                  - img "Western Bulldogs" [ref=e184]
+                  - generic [ref=e185]: DOGS
+                  - generic [ref=e186]: Western Bulldogs
+                - generic [ref=e188]: Match Day
+                - generic [ref=e189]:
+                  - img "Brisbane" [ref=e191]
+                  - generic [ref=e192]: LIONS
+                  - generic [ref=e193]: Brisbane
+              - generic [ref=e194]:
+                - generic [ref=e195]:
+                  - generic [ref=e196]: Coach
+                  - generic [ref=e197]: Jacob Merrett
+                  - generic [ref=e198]: PSN
+                  - generic [ref=e199]: Jmerrett04
+                - generic [ref=e200]:
+                  - generic [ref=e201]: Coach
+                  - generic [ref=e202]: Coach TBC
+                  - generic [ref=e203]: PSN
+                  - generic [ref=e204]: PSN TBC
+              - button "MATCH CENTRE" [ref=e205] [cursor=pointer]
+            - generic [ref=e207]:
+              - generic [ref=e208]:
+                - generic [ref=e209]: Round 1
+                - generic [ref=e212]: SCHEDULED
+              - generic:
+                - img
+              - generic:
+                - img
+              - generic [ref=e213]:
+                - generic [ref=e214]:
+                  - img "Fremantle" [ref=e216]
+                  - generic [ref=e217]: DOCKERS
+                  - generic [ref=e218]: Fremantle
+                - generic [ref=e220]: Match Day
+                - generic [ref=e221]:
+                  - img "Sydney" [ref=e223]
+                  - generic [ref=e224]: SWANS
+                  - generic [ref=e225]: Sydney
+              - generic [ref=e226]:
+                - generic [ref=e227]:
+                  - generic [ref=e228]: Coach
+                  - generic [ref=e229]: Coach TBC
+                  - generic [ref=e230]: PSN
+                  - generic [ref=e231]: PSN TBC
+                - generic [ref=e232]:
+                  - generic [ref=e233]: Coach
+                  - generic [ref=e234]: Dale Finch
+                  - generic [ref=e235]: PSN
+                  - generic [ref=e236]: inchfinch
+              - button "MATCH CENTRE" [ref=e237] [cursor=pointer]
+            - generic [ref=e239]:
+              - generic [ref=e240]:
+                - generic [ref=e241]: Round 1
+                - generic [ref=e244]: SCHEDULED
+              - generic:
+                - img
+              - generic:
+                - img
+              - generic [ref=e245]:
+                - generic [ref=e246]:
+                  - img "St Kilda" [ref=e248]
+                  - generic [ref=e249]: SAINTS
+                  - generic [ref=e250]: St Kilda
+                - generic [ref=e252]: Match Day
+                - generic [ref=e253]:
+                  - img "Collingwood" [ref=e255]
+                  - generic [ref=e256]: MAGPIES
+                  - generic [ref=e257]: Collingwood
+              - generic [ref=e258]:
+                - generic [ref=e259]:
+                  - generic [ref=e260]: Coach
+                  - generic [ref=e261]: Motchell Palma
+                  - generic [ref=e262]: PSN
+                  - generic [ref=e263]: IloveuaddirE69
+                - generic [ref=e264]:
+                  - generic [ref=e265]: Coach
+                  - generic [ref=e266]: Coach TBC
+                  - generic [ref=e267]: PSN
+                  - generic [ref=e268]: PSN TBC
+              - button "MATCH CENTRE" [ref=e269] [cursor=pointer]
+        - generic [ref=e94]:
+          - region "Ladder snapshot" [ref=e95]:
+            - generic [ref=e96]:
+              - generic [ref=e97]:
+                - img [ref=e99]
+                - heading "Ladder Snapshot" [level=2] [ref=e105]
+              - button "Full ladder" [ref=e106] [cursor=pointer]:
+                - text: Full ladder
+                - img [ref=e107]
+            - generic [ref=e109]:
+              - generic [ref=e270]:
+                - generic [ref=e271]: "#1"
+                - generic [ref=e272]: Gold Coast Suns
+                - generic [ref=e273]: Pts 4
+              - generic [ref=e274]:
+                - generic [ref=e275]: "#2"
+                - generic [ref=e276]: GWS Giants
+                - generic [ref=e277]: Pts 0
+              - generic [ref=e278]:
+                - generic [ref=e279]: "#3"
+                - generic [ref=e280]: Adelaide Crows
+                - generic [ref=e281]: Pts 0
+              - generic [ref=e282]:
+                - generic [ref=e283]: "#4"
+                - generic [ref=e284]: Brisbane Lions
+                - generic [ref=e285]: Pts 0
+              - generic [ref=e286]:
+                - generic [ref=e287]: "#5"
+                - generic [ref=e288]: Carlton Blues
+                - generic [ref=e289]: Pts 0
+          - region "League leaders" [ref=e112]:
+            - generic [ref=e113]:
+              - generic [ref=e114]:
+                - img [ref=e116]
+                - heading "League Leaders" [level=2] [ref=e118]
+              - button "Stats" [ref=e119] [cursor=pointer]:
+                - text: Stats
+                - img [ref=e120]
+            - generic [ref=e122]:
+              - article [ref=e123]:
+                - generic [ref=e124]: GOALS
+                - generic [ref=e125]:
+                  - img [ref=e127]
+                  - generic [ref=e131]:
+                    - strong [ref=e132]: Jeremy Cameron
+                    - generic [ref=e133]: AFL26
+              - article [ref=e134]:
+                - generic [ref=e135]: DISPOSALS
+                - generic [ref=e136]:
+                  - img [ref=e138]
+                  - generic [ref=e142]:
+                    - strong [ref=e143]: Nick Daicos
+                    - generic [ref=e144]: AFL26

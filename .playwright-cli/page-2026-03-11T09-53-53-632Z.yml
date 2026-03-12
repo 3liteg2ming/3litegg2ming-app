@@ -1,0 +1,41 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+      - generic "Elite Gaming" [ref=e14]:
+        - button "Go to home" [ref=e15] [cursor=pointer]:
+          - img [ref=e77]
+      - button "Sign in" [ref=e18] [cursor=pointer]:
+        - img [ref=e19]
+        - generic [ref=e22]: Sign in
+  - main [ref=e23]:
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - heading "Stats" [level=1] [ref=e26]
+        - generic [ref=e27]: Knockout Preseason
+      - generic [ref=e29]:
+        - button "Players" [ref=e30] [cursor=pointer]:
+          - img [ref=e31]
+          - text: Players
+        - button "Teams" [ref=e34] [cursor=pointer]:
+          - img [ref=e35]
+          - text: Teams
+      - generic [ref=e41]:
+        - heading "Season Leaders" [level=2] [ref=e42]
+        - generic [ref=e43]:
+          - button "Total" [ref=e44] [cursor=pointer]
+          - button "Average" [ref=e45] [cursor=pointer]
+      - generic [ref=e48]:
+        - generic [ref=e54] [cursor=pointer]: Loading…
+        - generic [ref=e60] [cursor=pointer]: Loading…
+        - generic [ref=e66] [cursor=pointer]: Loading…
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - generic [ref=e71]:
+            - heading "All Players" [level=3] [ref=e72]
+            - paragraph [ref=e73]: Baseline competition roster. Match stats overlay as results are submitted.
+          - generic [ref=e74]: Loading…
+        - generic [ref=e76]: Loading players…

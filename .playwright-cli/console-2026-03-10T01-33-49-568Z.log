@@ -1,0 +1,28 @@
+[     509ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[     509ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[     603ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:4173/favicon.ico:0
+[    2191ms] [ERROR] Warning: React does not recognize the `%s` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `%s` instead. If you accidentally passed it from a parent component, remove it from the DOM element.%s fetchPriority fetchpriority 
+    at img
+    at div
+    at section
+    at MotionComponent (http://127.0.0.1:4173/node_modules/.vite/deps/framer-motion.js?v=47aa2e9b:946:40)
+    at FixturePosterCardComponent (http://127.0.0.1:4173/src/components/FixturePosterCard.tsx:92:39)
+    at div
+    at div
+    at div
+    at div
+    at AFL26FixturesPage (http://127.0.0.1:4173/src/pages/AFL26FixturesPage.tsx:135:20)
+    at RenderedRoute (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4130:5)
+    at Routes (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4600:5)
+    at Suspense
+    at ErrorBoundary (http://127.0.0.1:4173/src/components/ErrorBoundary.tsx:11:5)
+    at main
+    at AppRoutes (http://127.0.0.1:4173/src/App.tsx:146:20)
+    at QueryClientProvider (http://127.0.0.1:4173/node_modules/.vite/deps/@tanstack_react-query.js?v=47aa2e9b:3103:3)
+    at div
+    at div
+    at AppShell (http://127.0.0.1:4173/src/App.tsx:582:20)
+    at App
+    at Router (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4543:15)
+    at BrowserRouter (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:5289:5)
+    at AuthProvider (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx:156:32) @ http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:520

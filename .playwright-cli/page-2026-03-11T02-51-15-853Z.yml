@@ -1,0 +1,164 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+      - generic "Elite Gaming" [ref=e14]:
+        - button "Go to home" [ref=e15] [cursor=pointer]:
+          - img [ref=e17]
+      - button "Account" [ref=e19] [cursor=pointer]:
+        - img [ref=e20]
+  - main [ref=e23]:
+    - generic [ref=e25]:
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - generic [ref=e28]: Fixtures
+          - generic [ref=e29]: 9 matches
+        - generic [ref=e30]:
+          - button "Change competition" [ref=e31]:
+            - generic [ref=e32]: Competition
+            - generic [ref=e33]: AFL 26 Season Two
+            - img [ref=e34]
+          - button "Open fixtures filters" [ref=e36]:
+            - img [ref=e37]
+            - text: Filter
+        - generic "Round selector" [ref=e39]:
+          - button "R1" [ref=e54]
+          - button "R2" [ref=e55]
+          - button "R3" [ref=e56]
+          - button "R4" [ref=e57]
+          - button "R5" [ref=e58]
+          - button "R6" [ref=e59]
+          - button "R7" [ref=e60]
+          - button "R8" [ref=e61]
+          - button "R9" [ref=e62]
+          - button "R10" [ref=e63]
+          - button "R11" [ref=e64]
+        - generic "Status filters" [ref=e40]:
+          - button "All 9" [ref=e65]:
+            - generic [ref=e42]: All
+            - generic [ref=e43]: "9"
+          - button "Scheduled 9" [ref=e66]:
+            - generic [ref=e45]: Scheduled
+            - generic [ref=e46]: "9"
+          - button "Final 0" [ref=e67]:
+            - generic [ref=e48]: Final
+            - generic [ref=e49]: "0"
+        - generic [ref=e50]: Scheduled 9 • Final 0 • 6/9
+      - generic [ref=e68]:
+        - generic [ref=e69]:
+          - generic:
+            - generic:
+              - generic: SCHEDULED
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic [ref=e70]:
+            - generic [ref=e71]:
+              - img "Fremantle" [ref=e73]
+              - generic [ref=e74]: DOCKERS
+            - generic [ref=e75]:
+              - generic [ref=e76]: Scheduled Match
+              - generic [ref=e77]: vs
+            - generic [ref=e78]:
+              - img "Port Adelaide" [ref=e80]
+              - generic [ref=e81]: POWER
+          - button "MATCH CENTRE" [ref=e82] [cursor=pointer]
+        - generic [ref=e83]:
+          - generic:
+            - generic:
+              - generic: SCHEDULED
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic [ref=e84]:
+            - generic [ref=e85]:
+              - img "Collingwood" [ref=e87]
+              - generic [ref=e88]: MAGPIES
+            - generic [ref=e89]:
+              - generic [ref=e90]: Scheduled Match
+              - generic [ref=e91]: vs
+            - generic [ref=e92]:
+              - img "St Kilda" [ref=e94]
+              - generic [ref=e95]: SAINTS
+          - button "MATCH CENTRE" [ref=e96] [cursor=pointer]
+        - generic [ref=e97]:
+          - generic:
+            - generic:
+              - generic: SCHEDULED
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic [ref=e98]:
+            - generic [ref=e99]:
+              - img "Geelong" [ref=e101]
+              - generic [ref=e102]: CATS
+            - generic [ref=e103]:
+              - generic [ref=e104]: Scheduled Match
+              - generic [ref=e105]: vs
+            - generic [ref=e106]:
+              - img "North Melbourne" [ref=e108]
+              - generic [ref=e109]: ROOS
+          - button "MATCH CENTRE" [ref=e110] [cursor=pointer]
+        - generic [ref=e111]:
+          - generic:
+            - generic:
+              - generic: SCHEDULED
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic [ref=e112]:
+            - generic [ref=e113]:
+              - img "Essendon" [ref=e115]
+              - generic [ref=e116]: BOMBERS
+            - generic [ref=e117]:
+              - generic [ref=e118]: Scheduled Match
+              - generic [ref=e119]: vs
+            - generic [ref=e120]:
+              - img "Richmond" [ref=e122]
+              - generic [ref=e123]: TIGERS
+          - button "MATCH CENTRE" [ref=e124] [cursor=pointer]
+        - generic [ref=e125]:
+          - generic:
+            - generic:
+              - generic: SCHEDULED
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic [ref=e126]:
+            - generic [ref=e127]:
+              - img "Carlton" [ref=e129]
+              - generic [ref=e130]: BLUES
+            - generic [ref=e131]:
+              - generic [ref=e132]: Scheduled Match
+              - generic [ref=e133]: vs
+            - generic [ref=e134]:
+              - img "Sydney" [ref=e136]
+              - generic [ref=e137]: SWANS
+          - button "MATCH CENTRE" [ref=e138] [cursor=pointer]
+        - generic [ref=e139]:
+          - generic:
+            - generic:
+              - generic: SCHEDULED
+          - generic:
+            - img
+          - generic:
+            - img
+          - generic [ref=e140]:
+            - generic [ref=e141]:
+              - img "Adelaide" [ref=e143]
+              - generic [ref=e144]: CROWS
+            - generic [ref=e145]:
+              - generic [ref=e146]: Scheduled Match
+              - generic [ref=e147]: vs
+            - generic [ref=e148]:
+              - img "Western Bulldogs" [ref=e150]
+              - generic [ref=e151]: DOGS
+          - button "MATCH CENTRE" [ref=e152] [cursor=pointer]

@@ -10,14 +10,16 @@ export type CompetitionConfig = {
 };
 
 export const ACTIVE_COMPETITION_STORAGE_KEY = 'eg_active_competition';
+export const PRESEASON_PRIMARY_SEASON_SLUG = 'preseason-2026';
+export const PRESEASON_FALLBACK_SEASON_SLUG = 'preseason';
 
 export const COMPETITIONS: CompetitionConfig[] = [
   {
     key: 'preseason',
     label: 'Knockout Preseason',
     status: 'OPEN',
-    seasonSlug: 'preseason',
-    dataFallbackSeasonSlug: 'preseason',
+    seasonSlug: PRESEASON_PRIMARY_SEASON_SLUG,
+    dataFallbackSeasonSlug: PRESEASON_FALLBACK_SEASON_SLUG,
   },
   {
     key: 'afl26',
@@ -72,7 +74,5 @@ export function setStoredCompetitionKey(key: CompetitionKey): CompetitionKey {
 
 export function getDataSeasonSlugForCompetition(key: CompetitionKey): string {
   const comp = getCompetitionByKey(key);
-  // Preseason is now primary data source.
-  if (comp.key === 'preseason') return comp.seasonSlug;
   return comp.seasonSlug;
 }

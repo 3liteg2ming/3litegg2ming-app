@@ -72,55 +72,6 @@ function normalizeForm(input: unknown): Array<'W' | 'L' | 'D'> {
   return out;
 }
 
-function makeRows(): LadderEntry[] {
-  const mk = (
-    id: string,
-    pos: number,
-    teamKey: TeamKey,
-    teamName: string,
-    played: number,
-    wins: number,
-    losses: number,
-    draws: number,
-    pf: number,
-    pa: number,
-    form: Array<'W' | 'L' | 'D'>
-  ): LadderEntry => {
-    const points = wins * 4 + draws * 2;
-    const percentage = pa > 0 ? (pf / pa) * 100 : 0;
-    return {
-      id,
-      pos,
-      teamKey,
-      teamName,
-      played,
-      wins,
-      losses,
-      draws,
-      pf,
-      pa,
-      points,
-      percentage,
-      form,
-      winChance: 50,
-    };
-  };
-
-      // TEMP demo rows (swap to Supabase later)
-  return [
-    mk('adelaide', 1, 'adelaide', 'Crows', 0, 0, 0, 0, 0, 0, []),
-    mk('brisbane', 2, 'brisbane', 'Lions', 0, 0, 0, 0, 0, 0, []),
-    mk('carlton', 3, 'carlton', 'Blues', 0, 0, 0, 0, 0, 0, []),
-    mk('collingwood', 4, 'collingwood', 'Magpies', 0, 0, 0, 0, 0, 0, []),
-    mk('essendon', 5, 'essendon', 'Bombers', 0, 0, 0, 0, 0, 0, []),
-    mk('fremantle', 6, 'fremantle', 'Dockers', 0, 0, 0, 0, 0, 0, []),
-    mk('geelong', 7, 'geelong', 'Cats', 0, 0, 0, 0, 0, 0, []),
-    mk('goldcoast', 8, 'goldcoast', 'Suns', 0, 0, 0, 0, 0, 0, []),
-    mk('gws', 9, 'gws', 'Giants', 0, 0, 0, 0, 0, 0, []),
-    mk('hawthorn', 10, 'hawthorn', 'Hawks', 0, 0, 0, 0, 0, 0, []),
-  ];
-}
-
 function toTeamKeyFromSlug(slug: string, name: string): TeamKey {
   const key = resolveTeamKey({ slug, name });
   return (key in TEAM_ASSETS ? (key as TeamKey) : 'adelaide') as TeamKey;
@@ -240,11 +191,12 @@ export default function LadderPage() {
 
   const competitionKey = getStoredCompetitionKey();
   const seasonSlug = getDataSeasonSlugForCompetition(competitionKey);
-  const { data: ladderRows, isLoading, isError } = useLadder(seasonSlug);
+  const { data: ladderRows, isLoading, isFetching, isError, isSuccess } = useLadder(seasonSlug);
+  const hasRows = Array.isArray(ladderRows) && ladderRows.length > 0;
+  const showLoading = !isSuccess && !isError && !hasRows && (isLoading || isFetching);
 
   const rows = useMemo(() => {
-    // Fallback to a nice “demo ladder” if the DB isn't ready yet.
-    if (!ladderRows || ladderRows.length === 0) return enrichWinChance(makeRows());
+    if (!Array.isArray(ladderRows) || ladderRows.length === 0) return [] as LadderEntry[];
 
     const mapped: LadderEntry[] = ladderRows
       .map((r, idx) => {
@@ -275,6 +227,7 @@ export default function LadderPage() {
     if (mode === 'EXTENDED') return ['W', 'L', 'D', 'PA', 'PF'];
     return ['Last 5', 'Odds'];
   }, [mode]);
+  const tableMinWidth = mode === 'EXTENDED' ? 688 : mode === 'FORM' ? 640 : 540;
 
   return (
     <div className="ladderPage aflLayout">
@@ -286,7 +239,7 @@ export default function LadderPage() {
               <div className="title">Ladder</div>
               <div className="rule" />
               <div className="hint">
-                {isLoading ? 'Loading ladder…' : isError ? 'Ladder error — showing fallback' : 'Ranked by points, then percentage'}
+                {showLoading ? 'Loading ladder…' : isError ? 'Ladder unavailable right now' : rows.length === 0 ? 'No teams available for this competition' : 'Ranked by points, then percentage'}
               </div>
             </div>
             <div className="seasonPill">{seasonSlug.replace(/-/g, ' ')}</div>
@@ -308,20 +261,41 @@ export default function LadderPage() {
         </div>
 
         <div className="aflTable" data-mode={mode}>
-          <div className="aflHead">
-            <div className="hPos">Pos</div>
-            <div className="hClub">Club</div>
-            <div className="hCols" data-mode={mode}>
-              {headerCols.map((c) => (
-                <div key={c} className="h">
-                  {c}
+          <div className="aflScroll">
+            <div
+              className="aflInner"
+              style={
+                {
+                  ['--ladder-min-width' as any]: `${tableMinWidth}px`,
+                } as React.CSSProperties
+              }
+            >
+              <div className="aflHead">
+                <div className="hPos">Pos</div>
+                <div className="hClub">Club</div>
+                <div className="hCols" data-mode={mode}>
+                  {headerCols.map((c) => (
+                    <div key={c} className="h">
+                      {c}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
 
-          <div className="aflList">
-            {rows.map((r) => <LadderRow key={r.id} entry={r} mode={mode} />)}
+              <div className="aflList">
+                {rows.length > 0 ? rows.map((r) => <LadderRow key={r.id} entry={r} mode={mode} />) : (
+                  <div className="egAflRow">
+                    <div className="cPos">—</div>
+                    <div className="cClub cClub--empty">
+                      <div className="clubName clubName--inline">
+                        {showLoading ? 'Loading live ladder…' : isError ? 'Unable to load ladder right now' : 'No teams available for this competition'}
+                      </div>
+                    </div>
+                    <div className="cCols" data-mode={mode} />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 

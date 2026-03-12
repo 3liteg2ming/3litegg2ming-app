@@ -1,0 +1,75 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+      - generic "Elite Gaming" [ref=e14]:
+        - button "Go to home" [ref=e15] [cursor=pointer]
+      - button "Account" [ref=e18] [cursor=pointer]:
+        - img [ref=e19]
+  - main [ref=e22]:
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - button "Back" [ref=e26] [cursor=pointer]:
+          - img [ref=e27]
+        - generic [ref=e29]:
+          - generic [ref=e31]: ROUND —
+          - generic [ref=e32]:
+            - generic [ref=e33]:
+              - img "Home" [ref=e35]
+              - generic [ref=e36]: Home Team
+              - generic [ref=e37]: H
+            - generic [ref=e38]:
+              - generic [ref=e41]: Loading
+              - generic [ref=e42]:
+                - generic [ref=e43]: Loading Match Centre
+                - generic [ref=e44]: Fetching fixture details
+            - generic [ref=e45]:
+              - img "Away" [ref=e47]
+              - generic [ref=e48]: Away Team
+              - generic [ref=e49]: A
+      - tablist "Match centre sections" [ref=e52]:
+        - tab "Summary" [selected] [ref=e53] [cursor=pointer]:
+          - generic [ref=e54]: Summary
+        - tab "Team Stats" [ref=e55] [cursor=pointer]:
+          - generic [ref=e56]: Team Stats
+        - tab "Player Stats" [ref=e57] [cursor=pointer]:
+          - generic [ref=e58]: Player Stats
+      - tabpanel "Summary" [ref=e59]:
+        - generic [ref=e60]:
+          - generic [ref=e61]:
+            - heading "Match Leaders" [level=2] [ref=e62]
+            - paragraph [ref=e63]: Top performers from the published result.
+          - generic [ref=e64]:
+            - generic [ref=e65]: Loading match leaders…
+            - paragraph [ref=e66]: Player leaders will appear as soon as the fixture feed resolves.
+        - generic [ref=e67]:
+          - generic [ref=e68]:
+            - heading "Momentum Worm" [level=2] [ref=e69]
+            - paragraph [ref=e70]: Awaiting the first submitted result
+          - generic [ref=e71]:
+            - generic [ref=e72]:
+              - generic [ref=e74]: Q1
+              - generic [ref=e76]: Q2
+              - generic [ref=e78]: Q3
+              - generic [ref=e80]: Q4
+            - generic [ref=e81]:
+              - img "Home" [ref=e83]
+              - img "Away" [ref=e88]
+            - generic [ref=e89]:
+              - generic [ref=e90]: —
+              - generic [ref=e91]: —
+        - generic [ref=e92]:
+          - generic [ref=e93]:
+            - heading "Key Moments" [level=2] [ref=e94]
+            - paragraph [ref=e95]: What happens next before this match is locked in
+          - generic [ref=e97]: Loading moments…
+        - generic [ref=e98]:
+          - generic [ref=e99]:
+            - heading "Key Match Stats" [level=2] [ref=e100]
+            - paragraph [ref=e101]: Live team comparisons from the submitted result
+          - generic [ref=e102]:
+            - generic [ref=e103]: Loading match stats…
+            - paragraph [ref=e104]: This section will settle as soon as the fixture feed resolves.

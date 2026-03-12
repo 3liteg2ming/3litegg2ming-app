@@ -1,0 +1,145 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+      - generic "Elite Gaming" [ref=e14]:
+        - button "Go to home" [ref=e15] [cursor=pointer]:
+          - img [ref=e17]
+      - button "Account" [ref=e19] [cursor=pointer]:
+        - img [ref=e20]
+  - main [ref=e23]:
+    - generic [ref=e25]:
+      - generic [ref=e26]:
+        - generic: 0 0
+        - button "Back" [ref=e27] [cursor=pointer]:
+          - img [ref=e28]
+        - generic [ref=e30]:
+          - generic [ref=e31]:
+            - generic [ref=e32]: ROUND —
+            - generic [ref=e33]: •
+            - generic [ref=e34]: Time TBA
+            - generic [ref=e35]: •
+            - generic [ref=e36]: Venue TBA
+          - generic [ref=e37]:
+            - generic [ref=e38]:
+              - img "Home" [ref=e40]
+              - generic [ref=e41]: Home Team
+              - generic [ref=e42]: H
+            - generic [ref=e43]:
+              - generic [ref=e46]: LOADING
+              - generic [ref=e47]:
+                - generic [ref=e48]: "0"
+                - generic [ref=e49]: "-"
+                - generic [ref=e50]: "0"
+              - generic [ref=e51]:
+                - generic [ref=e52]: —.—
+                - generic [ref=e53]: "|"
+                - generic [ref=e54]: —.—
+            - generic [ref=e55]:
+              - img "Away" [ref=e57]
+              - generic [ref=e58]: Away Team
+              - generic [ref=e59]: A
+      - tablist "Match centre sections" [ref=e62]:
+        - tab "Summary" [selected] [ref=e63] [cursor=pointer]:
+          - img [ref=e64]
+          - generic [ref=e69]: Summary
+        - tab "Team Stats" [ref=e70] [cursor=pointer]:
+          - img [ref=e71]
+          - generic [ref=e73]: Team Stats
+        - tab "Player Stats" [ref=e74] [cursor=pointer]:
+          - img [ref=e75]
+          - generic [ref=e80]: Player Stats
+      - tabpanel "Summary" [ref=e81]:
+        - generic [ref=e82]:
+          - generic [ref=e83]:
+            - heading "Match Leaders" [level=2] [ref=e84]
+            - paragraph [ref=e85]: Top performers this match
+          - generic [ref=e86]:
+            - generic [ref=e87]:
+              - generic [ref=e89]: STAT
+              - generic [ref=e91]:
+                - generic [ref=e92]:
+                  - generic [ref=e93]:
+                    - generic [ref=e94]: Home
+                    - generic [ref=e95]: —
+                  - generic [ref=e97]:
+                    - paragraph [ref=e98]: Loading…
+                    - paragraph [ref=e99]: —
+                - generic [ref=e100]:
+                  - generic [ref=e101]:
+                    - generic [ref=e102]: Away
+                    - generic [ref=e103]: —
+                  - generic [ref=e105]:
+                    - paragraph [ref=e106]: Loading…
+                    - paragraph [ref=e107]: —
+            - generic [ref=e108]:
+              - generic [ref=e110]: STAT
+              - generic [ref=e112]:
+                - generic [ref=e113]:
+                  - generic [ref=e114]:
+                    - generic [ref=e115]: Home
+                    - generic [ref=e116]: —
+                  - generic [ref=e118]:
+                    - paragraph [ref=e119]: Loading…
+                    - paragraph [ref=e120]: —
+                - generic [ref=e121]:
+                  - generic [ref=e122]:
+                    - generic [ref=e123]: Away
+                    - generic [ref=e124]: —
+                  - generic [ref=e126]:
+                    - paragraph [ref=e127]: Loading…
+                    - paragraph [ref=e128]: —
+            - generic [ref=e129]:
+              - generic [ref=e131]: STAT
+              - generic [ref=e133]:
+                - generic [ref=e134]:
+                  - generic [ref=e135]:
+                    - generic [ref=e136]: Home
+                    - generic [ref=e137]: —
+                  - generic [ref=e139]:
+                    - paragraph [ref=e140]: Loading…
+                    - paragraph [ref=e141]: —
+                - generic [ref=e142]:
+                  - generic [ref=e143]:
+                    - generic [ref=e144]: Away
+                    - generic [ref=e145]: —
+                  - generic [ref=e147]:
+                    - paragraph [ref=e148]: Loading…
+                    - paragraph [ref=e149]: —
+          - generic [ref=e150]:
+            - button [ref=e151] [cursor=pointer]
+            - button [ref=e152] [cursor=pointer]
+            - button [ref=e153] [cursor=pointer]
+        - generic [ref=e154]:
+          - generic [ref=e155]:
+            - heading "Momentum Worm" [level=2] [ref=e156]
+            - paragraph [ref=e157]: Score progression through quarters
+          - generic [ref=e158]:
+            - generic [ref=e159]:
+              - generic [ref=e161]: Q1
+              - generic [ref=e163]: Q2
+              - generic [ref=e165]: Q3
+              - generic [ref=e167]: Q4
+            - generic [ref=e168]:
+              - img "Home" [ref=e170]
+              - img "Away" [ref=e175]
+            - generic [ref=e176]:
+              - generic [ref=e177]: —
+              - generic [ref=e178]: —
+        - generic [ref=e179]:
+          - generic [ref=e180]:
+            - heading "Key Moments" [level=2] [ref=e181]
+            - paragraph [ref=e182]: Timeline of match submissions and decisions
+          - generic [ref=e184]: Loading moments…
+        - generic [ref=e185]:
+          - generic [ref=e186]:
+            - heading "Key Match Stats" [level=2] [ref=e187]
+            - paragraph [ref=e188]: Verified team comparisons from submissions
+          - generic [ref=e189]:
+            - paragraph [ref=e193]: Stat
+            - paragraph [ref=e198]: Stat
+            - paragraph [ref=e203]: Stat
+            - paragraph [ref=e208]: Stat

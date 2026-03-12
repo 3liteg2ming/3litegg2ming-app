@@ -1,0 +1,160 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+      - generic "Elite Gaming" [ref=e14]:
+        - button "Go to home" [ref=e15] [cursor=pointer]:
+          - img [ref=e105]
+      - button "Account" [ref=e18] [cursor=pointer]:
+        - img [ref=e19]
+  - main [ref=e22]:
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - button "Back" [ref=e26] [cursor=pointer]:
+          - img [ref=e27]
+        - generic [ref=e29]:
+          - generic [ref=e106]: Round 1
+          - generic [ref=e32]:
+            - generic [ref=e33]:
+              - img "Western Bulldogs" [ref=e107]
+              - generic [ref=e36]: Western Bulldogs
+              - generic [ref=e37]: BUL
+            - generic [ref=e38]:
+              - generic [ref=e41]: Scheduled
+              - generic [ref=e42]:
+                - generic [ref=e43]: Match Scheduled
+                - generic [ref=e44]: Line-ups and the live result publish here on match day
+            - generic [ref=e45]:
+              - img "Brisbane Lions" [ref=e108]
+              - generic [ref=e48]: Brisbane Lions
+              - generic [ref=e49]: BRI
+      - generic [ref=e109]:
+        - generic [ref=e110]:
+          - generic [ref=e111]:
+            - generic [ref=e112]: Data Status
+            - generic [ref=e113]: Awaiting coach submission
+          - generic [ref=e114]: Scheduled
+        - generic [ref=e115]:
+          - generic [ref=e116]: Awaiting coach submission
+          - generic [ref=e117]: Updated 10 Mar 2026, 1:55 pm
+        - generic [ref=e118]: Squads are live now. The score, leaders, and match stats will publish as soon as the home coach submits the result.
+      - tablist "Match centre sections" [ref=e52]:
+        - tab "Summary" [selected] [ref=e53] [cursor=pointer]:
+          - generic [ref=e54]: Summary
+        - tab "Team Stats" [ref=e55] [cursor=pointer]:
+          - generic [ref=e56]: Team Stats
+        - tab "Player Stats" [ref=e57] [cursor=pointer]:
+          - generic [ref=e58]: Player Stats
+      - tabpanel "Summary" [ref=e59]:
+        - generic [ref=e60]:
+          - generic [ref=e61]:
+            - heading "Match Leaders" [level=2] [ref=e62]
+            - paragraph [ref=e63]: Squads are live. Match leaders will publish after a result is submitted.
+          - generic [ref=e64]:
+            - article [ref=e119]:
+              - generic [ref=e121]: GOALS
+              - generic [ref=e122]:
+                - generic [ref=e123]:
+                  - generic [ref=e124]:
+                    - img "Western Bulldogs" [ref=e125]
+                    - generic [ref=e126]: BUL
+                  - generic [ref=e127]: —
+                  - generic [ref=e128]:
+                    - generic [ref=e130]: RS
+                    - generic:
+                      - generic: Ryley Sanders
+                      - generic: Western Bulldogs
+                - generic [ref=e132]:
+                  - generic [ref=e133]:
+                    - img "Brisbane Lions" [ref=e134]
+                    - generic [ref=e135]: BRI
+                  - generic [ref=e136]: —
+                  - generic [ref=e137]:
+                    - generic [ref=e139]: TH
+                    - generic:
+                      - generic: Tai Hayes
+                      - generic: Brisbane Lions
+            - article [ref=e140]:
+              - generic [ref=e142]: DISPOSALS
+              - generic [ref=e143]:
+                - generic [ref=e144]:
+                  - generic [ref=e145]:
+                    - img "Western Bulldogs" [ref=e146]
+                    - generic [ref=e147]: BUL
+                  - generic [ref=e148]: —
+                  - generic [ref=e149]:
+                    - generic [ref=e151]: LM
+                    - generic:
+                      - generic: Lachlan McNeil
+                      - generic: Western Bulldogs
+                - generic [ref=e153]:
+                  - generic [ref=e154]:
+                    - img "Brisbane Lions" [ref=e155]
+                    - generic [ref=e156]: BRI
+                  - generic [ref=e157]: —
+                  - generic [ref=e158]:
+                    - img "Eric Hipwood" [ref=e160]
+                    - generic:
+                      - generic: Eric Hipwood
+                      - generic: Brisbane Lions
+            - article [ref=e161]:
+              - generic [ref=e163]: TACKLES
+              - generic [ref=e164]:
+                - generic [ref=e165]:
+                  - generic [ref=e166]:
+                    - img "Western Bulldogs" [ref=e167]
+                    - generic [ref=e168]: BUL
+                  - generic [ref=e169]: —
+                  - generic [ref=e170]:
+                    - generic [ref=e172]: HG
+                    - generic:
+                      - generic: Harvey Gallagher
+                      - generic: Western Bulldogs
+                - generic [ref=e174]:
+                  - generic [ref=e175]:
+                    - img "Brisbane Lions" [ref=e176]
+                    - generic [ref=e177]: BRI
+                  - generic [ref=e178]: —
+                  - generic [ref=e179]:
+                    - generic [ref=e181]: CC
+                    - generic:
+                      - generic: Cody Curtin
+                      - generic: Brisbane Lions
+        - generic [ref=e67]:
+          - generic [ref=e68]:
+            - heading "Momentum Worm" [level=2] [ref=e69]
+            - paragraph [ref=e70]: Awaiting the first submitted result
+          - generic [ref=e71]:
+            - generic [ref=e72]:
+              - generic [ref=e74]: Q1
+              - generic [ref=e76]: Q2
+              - generic [ref=e78]: Q3
+              - generic [ref=e80]: Q4
+            - generic [ref=e81]:
+              - img "Western Bulldogs" [ref=e182]
+              - paragraph [ref=e184]: Awaiting first result
+              - img "Brisbane Lions" [ref=e185]
+            - generic [ref=e89]:
+              - generic [ref=e90]: Western Bulldogs
+              - generic [ref=e91]: Brisbane Lions
+        - generic [ref=e92]:
+          - generic [ref=e93]:
+            - heading "Key Moments" [level=2] [ref=e94]
+            - paragraph [ref=e95]: What happens next before this match is locked in
+          - list [ref=e186]:
+            - listitem [ref=e187]:
+              - generic [ref=e189]:
+                - generic [ref=e190]:
+                  - generic [ref=e191]: Fixture scheduled
+                  - generic [ref=e192]: Awaiting first bounce
+                - generic [ref=e193]: Kick-off time has not been locked yet.
+        - generic [ref=e98]:
+          - generic [ref=e99]:
+            - heading "Key Match Stats" [level=2] [ref=e100]
+            - paragraph [ref=e101]: Team stat cards will appear once a submitted result includes richer match stats
+          - generic [ref=e102]:
+            - generic [ref=e103]: No key stats yet
+            - paragraph [ref=e104]: Team stat cards will appear once the submitted result includes richer match stats

@@ -1,18 +1,21 @@
-import { ChevronLeft, Mail, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, Mail } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { getSupabaseClient } from '../../lib/supabaseClient';
+import { Link, useNavigate } from 'react-router-dom';
 import { buildAuthRedirect } from '../../lib/authRedirect';
+import { getSupabaseClient } from '../../lib/supabaseClient';
+import '../../styles/auth-premium.css';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ForgotPasswordPage() {
   const nav = useNavigate();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [successEmail, setSuccessEmail] = useState<string | null>(null);
 
-  const isFormValid = email;
+  const trimmedEmail = email.trim();
+  const isFormValid = EMAIL_RE.test(trimmedEmail);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -22,10 +25,10 @@ export default function ForgotPasswordPage() {
     try {
       const supabase = getSupabaseClient();
       if (!supabase) {
-        throw new Error('Supabase not configured. Using local mode — password reset not available.');
+        throw new Error('Supabase not configured. Password reset is not available right now.');
       }
 
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
         redirectTo: buildAuthRedirect('/auth/callback'),
       });
 
@@ -33,122 +36,46 @@ export default function ForgotPasswordPage() {
         throw resetError;
       }
 
-      setSuccess(true);
+      setSuccessEmail(trimmedEmail);
       setEmail('');
     } catch (err: any) {
-      const errMsg = err?.message || 'Could not send reset email. Check your connection.';
-      setError(errMsg);
+      setError(String(err?.message || 'Could not send reset email. Check your connection and try again.'));
     } finally {
       setLoading(false);
     }
   }
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
-  };
-
   return (
-    <div className="auth-screen">
-      <motion.div 
-        className="auth-top"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <motion.button 
-          type="button" 
-          className="auth-back" 
-          onClick={() => nav('/auth/sign-in')}
-          aria-label="Back to sign in"
-          whileHover={{ scale: 1.05, x: -4 }}
-          whileTap={{ scale: 0.95 }}
-        >
+    <div className="auth-screen auth-screen--premium">
+      <div className="auth-top auth-top--premium">
+        <button type="button" className="auth-back" onClick={() => nav('/auth/sign-in')} aria-label="Back to sign in">
           <ChevronLeft size={18} />
           <span>Sign in</span>
-        </motion.button>
-      </motion.div>
+        </button>
+      </div>
 
-      <motion.div 
-        className="auth-card"
-        initial={{ opacity: 0, y: 20, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
-        variants={containerVariants}
-      >
-        {success ? (
-          <>
-            <motion.div 
-              className="auth-badge"
-              variants={itemVariants}
-            >
-              CHECK EMAIL
-            </motion.div>
-            
-            <motion.div variants={itemVariants}>
-              <div className="auth-title">Email sent!</div>
-              <div className="auth-sub">
-                We've sent a password reset link to <strong>{email}</strong>. Check your inbox and follow the link to reset your password.
-              </div>
-            </motion.div>
-
-            <motion.div 
-              className="auth-success-card"
-              variants={itemVariants}
-            >
-              <CheckCircle2 size={40} className="auth-success-icon" />
-              <div className="auth-success-text">Reset link sent to your email</div>
-            </motion.div>
-
-            <motion.button 
-              type="button" 
-              className="auth-primary" 
-              onClick={() => nav('/auth/sign-in')}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              variants={itemVariants}
-            >
-              Back to Sign In
-            </motion.button>
-          </>
+      <div className="auth-card auth-card--premium auth-card--forgot">
+        {successEmail ? (
+          <div className="auth-success-card auth-success-card--premium">
+            <CheckCircle2 size={22} className="auth-success-icon" />
+            <div className="auth-success-title">Check your inbox</div>
+            <div className="auth-success-text">We sent a reset link to {successEmail}.</div>
+            <button type="button" className="auth-primary" onClick={() => nav('/auth/sign-in')}>
+              Back to sign in
+            </button>
+          </div>
         ) : (
           <>
-            <motion.div 
-              className="auth-badge"
-              variants={itemVariants}
-            >
-              PASSWORD RESET
-            </motion.div>
-            
-            <motion.div variants={itemVariants}>
-              <div className="auth-title">Forgot password?</div>
-              <div className="auth-sub">
-                Enter your email address and we'll send you a link to reset your password.
-              </div>
-            </motion.div>
+            <div className="auth-kicker">Password reset</div>
+            <div className="auth-head auth-head--premium">
+              <div className="auth-title">Reset your password</div>
+              <div className="auth-sub">Enter your email and we’ll send a secure reset link.</div>
+            </div>
 
-            <motion.form 
-              onSubmit={onSubmit} 
-              className="auth-form"
-              variants={itemVariants}
-            >
-              <motion.label 
-                className="auth-field"
-                whileHover={{ scale: 1.01 }}
-              >
-                <span className="auth-label">Email address</span>
-                <motion.div className="auth-inputWrap">
+            <form onSubmit={onSubmit} className="auth-form auth-form--premium" noValidate>
+              <label className="auth-field">
+                <span className="auth-label">Email</span>
+                <div className="auth-inputWrap">
                   <Mail size={16} className="auth-icon" />
                   <input
                     className="auth-input"
@@ -160,51 +87,33 @@ export default function ForgotPasswordPage() {
                     required
                     disabled={loading}
                   />
-                </motion.div>
-              </motion.label>
+                </div>
+                {email.length > 0 && !isFormValid ? <span className="auth-inlineHint auth-inlineHint--error">Enter a valid email format.</span> : null}
+              </label>
 
               {error ? (
-                <motion.div 
-                  className="auth-error"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {error}
-                </motion.div>
+                <div className="auth-message auth-message--error" role="alert" aria-live="assertive">
+                  <div className="auth-message__title">Could not send reset email.</div>
+                  <div className="auth-message__body">{error}</div>
+                </div>
               ) : null}
 
-              <motion.button 
-                type="submit" 
-                className="auth-primary" 
-                disabled={loading || !isFormValid}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-              >
-                {loading ? (
-                  <>
-                    <span className="auth-button-spinner" />
-                    <span style={{ marginLeft: 8 }}>Sending…</span>
-                  </>
-                ) : (
-                  'Send Reset Link'
-                )}
-              </motion.button>
+              <button type="submit" className="auth-primary" disabled={loading || !isFormValid}>
+                {loading ? 'Sending reset link…' : 'Send reset link'}
+              </button>
+            </form>
 
-              <motion.div 
-                className="auth-footer"
-                variants={itemVariants}
-              >
-                <span>Remember your password?</span>
-                <a href="/auth/sign-in" className="auth-link">
-                  Sign in
-                </a>
-              </motion.div>
-            </motion.form>
+            <div className="auth-footerLinks">
+              <Link className="auth-footerLink" to="/auth/sign-in">
+                Back to sign in
+              </Link>
+              <Link className="auth-footerLink" to="/auth/sign-up">
+                Create account
+              </Link>
+            </div>
           </>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 }

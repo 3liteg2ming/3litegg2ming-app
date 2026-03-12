@@ -1,144 +1,35 @@
 import { useQuery } from '@tanstack/react-query';
+import { fetchFixtureById, fetchSeasonFixtures, fetchSeasonFixturesBySeasonId, type FixtureRow } from '../lib/fixturesRepo';
+import { getCanonicalSeasonSlug, resolveSeasonRecord } from '../lib/seasonResolver';
 import { getSupabaseClient } from '../lib/supabaseClient';
 
-interface FixturesParams {
-  seasonSlug: string;
-  limit?: number;
-  offset?: number;
-  roundNumber?: number;
-}
-
-const SEASON_SLUG_ALIASES: Record<string, string> = {
-  afl26: 'afl26-season-two',
-  'afl-26': 'afl26-season-two',
-  'preseason-2026': 'preseason',
-  'knockout-preseason': 'preseason',
+export type SeasonFixturesResult = {
+  requestedSeasonSlug: string;
+  canonicalSeasonSlug: string;
+  resolvedSeasonId: string;
+  resolvedSeasonSlug: string;
+  fixtures: FixtureRow[];
 };
 
-const seasonIdCache = new Map<string, string>();
-const seasonIdInFlight = new Map<string, Promise<string>>();
-
-function normSlug(input: string) {
-  return String(input || '').trim().toLowerCase();
+function asError(error: unknown, fallbackMessage: string): Error {
+  if (error instanceof Error) return error;
+  return new Error(String(error || fallbackMessage));
 }
 
-function cacheSeasonResolution(requestedSlug: string, resolvedId: string, resolvedSlug?: string) {
-  const requested = normSlug(requestedSlug);
-  if (requested) seasonIdCache.set(requested, resolvedId);
-
-  const alias = SEASON_SLUG_ALIASES[requested];
-  if (alias) seasonIdCache.set(normSlug(alias), resolvedId);
-
-  if (resolvedSlug) seasonIdCache.set(normSlug(resolvedSlug), resolvedId);
-}
-
-async function getSeasonId(seasonSlug: string): Promise<string> {
-  const supabase = getSupabaseClient();
-  if (!supabase) {
-    const err = new Error('Supabase client is not configured (missing env vars).');
-    console.error('Error resolving season id:', err);
-    throw err;
-  }
-
-  const requested = normSlug(seasonSlug);
-  if (!requested) {
-    const err = new Error('seasonSlug is required');
-    console.error('Error resolving season id:', err);
-    throw err;
-  }
-
-  const cached = seasonIdCache.get(requested);
-  if (cached) return cached;
-
-  const inflight = seasonIdInFlight.get(requested);
-  if (inflight) return inflight;
-
-  const request = (async () => {
-    let exactAttemptError: any = null;
-    let aliasAttemptError: any = null;
-    let fuzzyAttemptError: any = null;
-
-    // 1) Exact match
-    const exact = await supabase
-      .from('eg_seasons')
-      .select('id, slug')
-      .eq('slug', requested)
-      .maybeSingle();
-
-    if (exact.data?.id) {
-      const id = String(exact.data.id);
-      cacheSeasonResolution(requested, id, (exact.data as any).slug);
-      return id;
-    }
-    exactAttemptError = exact.error;
-
-    // 2) Alias match
-    const aliasCandidates = [
-      SEASON_SLUG_ALIASES[requested],
-      Object.entries(SEASON_SLUG_ALIASES).find(([, value]) => value === requested)?.[0] || null,
-    ].filter((v, i, arr): v is string => !!v && arr.indexOf(v) === i && v !== requested);
-
-    for (const alias of aliasCandidates) {
-      const aliasRes = await supabase
-        .from('eg_seasons')
-        .select('id, slug')
-        .eq('slug', alias)
-        .maybeSingle();
-
-      if (aliasRes.data?.id) {
-        const id = String(aliasRes.data.id);
-        cacheSeasonResolution(requested, id, (aliasRes.data as any).slug);
-        return id;
-      }
-      aliasAttemptError = aliasRes.error;
-    }
-
-    // 3) Fuzzy fallback
-    const fuzzy = await supabase
-      .from('eg_seasons')
-      .select('id, slug')
-      .ilike('slug', `%${requested}%`)
-      .limit(1);
-
-    if (!fuzzy.error && Array.isArray(fuzzy.data) && fuzzy.data.length > 0 && fuzzy.data[0]?.id) {
-      const row = fuzzy.data[0] as any;
-      const id = String(row.id);
-      cacheSeasonResolution(requested, id, row.slug);
-      return id;
-    }
-    fuzzyAttemptError = fuzzy.error;
-
-    const err = new Error(
-      `Season not found for slug "${requested}". Attempts: exact="${requested}", aliases="${aliasCandidates.join(',') || 'n/a'}", fuzzy="%${requested}%".`
-    );
-    console.error('Error resolving season id:', {
-      message: err.message,
-      requestedSlug: requested,
-      aliasAttempt: aliasCandidates,
-      exactAttemptError,
-      aliasAttemptError,
-      fuzzyAttemptError,
-    });
-    throw err;
-  })();
-
-  seasonIdInFlight.set(requested, request);
-  try {
-    return await request;
-  } finally {
-    seasonIdInFlight.delete(requested);
-  }
-}
-
-/**
- * Fetch all fixtures for a season with team info in one query
- * Uses eg_fixtures table + team joins.
- */
-async function fetchFixturesWithTeams(
+async function fetchFixturesForSeason(
   seasonSlug: string,
   limit = 100,
-  offset = 0
-): Promise<any[]> {
+  offset = 0,
+): Promise<FixtureRow[]> {
+  const result = await fetchResolvedSeasonFixtures(seasonSlug, limit, offset);
+  return result.fixtures;
+}
+
+async function fetchResolvedSeasonFixtures(
+  seasonSlug: string,
+  limit = 1000,
+  offset = 0,
+): Promise<SeasonFixturesResult> {
   const supabase = getSupabaseClient();
   if (!supabase) {
     const err = new Error('Supabase client is not configured (missing env vars).');
@@ -146,272 +37,109 @@ async function fetchFixturesWithTeams(
     throw err;
   }
 
-  const seasonId = await getSeasonId(seasonSlug);
+  const requestedSeasonSlug = String(seasonSlug || '').trim().toLowerCase();
+  const canonicalSeasonSlug = getCanonicalSeasonSlug(requestedSeasonSlug);
 
-  const from = Math.max(0, Number(offset) || 0);
-  const to = from + Math.max(1, Number(limit) || 100) - 1;
+  let slugResult:
+    | {
+        season: { id: string; slug: string };
+        fixtures: FixtureRow[];
+      }
+    | null = null;
+  let slugError: Error | null = null;
 
-  // We intentionally avoid PostgREST relationship embeds here because they are fragile
-  // across Supabase schema tweaks. Instead we prefer stable views.
-  const selectAttempts: Array<{ table: string; select: string; orderStartTime: boolean }> = [
-    {
-      table: 'eg_fixtures_with_teams',
-      select: [
-        'id',
-        'season_id',
-        'round',
-        'stage_name',
-        'stage_index',
-        'bracket_slot',
-        'week_index',
-        'is_preseason',
-        'next_fixture_id',
-        'status',
-        'start_time',
-        'venue',
-        'home_team_id',
-        'away_team_id',
-        'home_goals',
-        'home_behinds',
-        'home_total',
-        'away_goals',
-        'away_behinds',
-        'away_total',
-        'home_team_slug',
-        'away_team_slug',
-        'home_team_name',
-        'away_team_name',
-        'home_team_logo_url',
-        'away_team_logo_url',
-        'home_team_colour',
-        'away_team_colour',
-      ].join(','),
-      orderStartTime: true,
-    },
-    {
-      table: 'eg_fixtures_with_teams',
-      select: [
-        'id',
-        'season_id',
-        'round',
-        'status',
-        'start_time',
-        'venue',
-        'home_team_id',
-        'away_team_id',
-        'home_goals',
-        'home_behinds',
-        'home_total',
-        'away_goals',
-        'away_behinds',
-        'away_total',
-        'home_team_slug',
-        'away_team_slug',
-        'home_team_name',
-        'away_team_name',
-        'home_team_logo_url',
-        'away_team_logo_url',
-        'home_team_colour',
-        'away_team_colour',
-      ].join(','),
-      orderStartTime: true,
-    },
-    {
-      table: 'eg_fixtures_by_stage',
-      select: [
-        'fixture_id',
-        'season_id',
-        'stage_name',
-        'stage_index',
-        'start_time',
-        'home_team_id',
-        'away_team_id',
-        'home_team_slug',
-        'away_team_slug',
-        'status',
-        'home_goals',
-        'home_behinds',
-        'home_total',
-        'away_goals',
-        'away_behinds',
-        'away_total',
-        'bracket_slot',
-        'next_fixture_id',
-      ].join(','),
-      orderStartTime: true,
-    },
-    {
-      table: 'eg_fixtures',
-      select: [
-        'id',
-        'season_id',
-        'round',
-        'stage_name',
-        'stage_index',
-        'bracket_slot',
-        'week_index',
-        'is_preseason',
-        'next_fixture_id',
-        'status',
-        'start_time',
-        'venue',
-        'home_team_id',
-        'away_team_id',
-        'home_team_slug',
-        'away_team_slug',
-        'home_goals',
-        'home_behinds',
-        'home_total',
-        'away_goals',
-        'away_behinds',
-        'away_total',
-      ].join(','),
-      orderStartTime: true,
-    },
-    {
-      table: 'eg_fixtures',
-      select: [
-        'id',
-        'season_id',
-        'round',
-        'status',
-        'start_time',
-        'venue',
-        'home_team_id',
-        'away_team_id',
-        'home_goals',
-        'home_behinds',
-        'home_total',
-        'away_goals',
-        'away_behinds',
-        'away_total',
-      ].join(','),
-      orderStartTime: true,
-    },
-    { table: 'eg_fixtures', select: '*', orderStartTime: false },
-  ];
-
-  let fixtures: any[] | null = null;
-  let lastError: any = null;
-
-  for (const attempt of selectAttempts) {
-    const table = attempt.table;
-    let query = supabase
-      .from(table)
-      .select(attempt.select)
-      .eq('season_id', seasonId)
-      .order('round', { ascending: false })
-      .range(from, to);
-
-    // eg_fixtures_by_stage doesn't expose round; stage_index can be used instead.
-    if (table === 'eg_fixtures_by_stage') {
-      query = supabase
-        .from(table)
-        .select(attempt.select)
-        .eq('season_id', seasonId)
-        .order('stage_index', { ascending: true })
-        .range(from, to);
+  try {
+    slugResult = await fetchSeasonFixtures(canonicalSeasonSlug, { limit, offset });
+    if (slugResult.fixtures.length > 0) {
+      return {
+        requestedSeasonSlug,
+        canonicalSeasonSlug,
+        resolvedSeasonId: slugResult.season.id,
+        resolvedSeasonSlug: slugResult.season.slug,
+        fixtures: slugResult.fixtures,
+      };
     }
-
-    if (attempt.orderStartTime) {
-      query = query.order('start_time', { ascending: true });
-    }
-
-    const res = await query;
-
-    if (!res.error) {
-      fixtures = (res.data || []) as any[];
-      lastError = null;
-      break;
-    }
-    lastError = res.error;
-  }
-
-  if (lastError) {
-    console.error('Error fetching fixtures:', {
-      seasonSlug,
-      seasonId,
-      from,
-      to,
-      error: lastError,
+  } catch (error) {
+    slugError = asError(error, 'Slug fixtures fetch failed');
+    console.warn('[useFixtures] slug fixture fetch failed, falling back to season.id path', {
+      requestedSeasonSlug,
+      canonicalSeasonSlug,
+      error: slugError.message,
     });
-    throw lastError;
   }
 
-  return (fixtures || []).map((raw: any) => {
-    const f: any = raw?.fixture_id ? { ...raw, id: raw.fixture_id } : raw;
-    const homeGoals = Number(f?.home_goals);
-    const homeBehinds = Number(f?.home_behinds);
-    const awayGoals = Number(f?.away_goals);
-    const awayBehinds = Number(f?.away_behinds);
-
-    const homeTotal =
-      Number.isFinite(Number(f?.home_total))
-        ? Number(f.home_total)
-        : Number.isFinite(homeGoals) && Number.isFinite(homeBehinds)
-          ? homeGoals * 6 + homeBehinds
-          : null;
-
-    const awayTotal =
-      Number.isFinite(Number(f?.away_total))
-        ? Number(f.away_total)
-        : Number.isFinite(awayGoals) && Number.isFinite(awayBehinds)
-          ? awayGoals * 6 + awayBehinds
-          : null;
+  try {
+    const season = await resolveSeasonRecord(supabase, canonicalSeasonSlug, { preferFixtureRows: true });
+    const bySeasonId = await fetchSeasonFixturesBySeasonId(season.id, { limit, offset });
 
     return {
-      ...f,
-      round: Number.isFinite(Number(f?.round)) ? Number(f.round) : 1,
-      stage_name: f?.stage_name || null,
-      stage_index: Number.isFinite(Number(f?.stage_index)) ? Number(f.stage_index) : null,
-      bracket_slot: f?.bracket_slot || null,
-      week_index: Number.isFinite(Number(f?.week_index)) ? Number(f.week_index) : null,
-      is_preseason: Boolean(f?.is_preseason),
-      next_fixture_id: f?.next_fixture_id || null,
-      status: String(f?.status || 'SCHEDULED').toUpperCase(),
-      home_total: homeTotal,
-      away_total: awayTotal,
-      home_team_slug: f?.home_team_slug || '',
-      away_team_slug: f?.away_team_slug || '',
+      requestedSeasonSlug,
+      canonicalSeasonSlug,
+      resolvedSeasonId: season.id,
+      resolvedSeasonSlug: season.slug,
+      fixtures: bySeasonId.fixtures,
     };
-  });
+  } catch (error) {
+    if (slugResult) {
+      return {
+        requestedSeasonSlug,
+        canonicalSeasonSlug,
+        resolvedSeasonId: slugResult.season.id,
+        resolvedSeasonSlug: slugResult.season.slug,
+        fixtures: slugResult.fixtures,
+      };
+    }
+
+    throw asError(error, slugError?.message || `Unable to load fixtures for season "${canonicalSeasonSlug}"`);
+  }
 }
 
-/**
- * Fetch next N rounds of fixtures (for initial fast load)
- */
 export function useNextFixtures(
   seasonSlug: string,
-  roundLimit = 3
+  roundLimit = 3,
 ): ReturnType<typeof useQuery> {
-  return useQuery({
+  return useQuery<FixtureRow[]>({
     queryKey: ['fixtures', 'next', seasonSlug, roundLimit],
-    queryFn: () => fetchFixturesWithTeams(seasonSlug, roundLimit * 10, 0),
+    queryFn: () => fetchFixturesForSeason(seasonSlug, roundLimit * 10, 0),
     staleTime: 45_000,
     gcTime: 1_200_000,
   });
 }
 
-/**
- * Fetch all fixtures for a season (background load after next fixtures)
- */
 export function useAllFixtures(
   seasonSlug: string,
-  enabled = false
+  enabled = false,
 ): ReturnType<typeof useQuery> {
-  return useQuery({
+  return useQuery<FixtureRow[]>({
     queryKey: ['fixtures', 'all', seasonSlug],
-    queryFn: () => fetchFixturesWithTeams(seasonSlug, 1000, 0),
+    queryFn: () => fetchFixturesForSeason(seasonSlug, 1000, 0),
     staleTime: 45_000,
     gcTime: 1_200_000,
     enabled,
   });
 }
 
-/**
- * Fetch a specific fixture by ID with team and submission data
- */
-async function fetchFixtureById(fixtureId: string): Promise<any> {
+export function useSeasonFixtures(
+  seasonSlug: string,
+  options?: {
+    limit?: number;
+    offset?: number;
+    enabled?: boolean;
+  },
+) {
+  const limit = Math.max(1, Number(options?.limit) || 1000);
+  const offset = Math.max(0, Number(options?.offset) || 0);
+
+  return useQuery<SeasonFixturesResult>({
+    queryKey: ['fixtures', 'season', seasonSlug, limit, offset],
+    queryFn: () => fetchResolvedSeasonFixtures(seasonSlug, limit, offset),
+    staleTime: 45_000,
+    gcTime: 1_200_000,
+    enabled: options?.enabled ?? true,
+  });
+}
+
+async function fetchFixture(fixtureId: string): Promise<FixtureRow | null> {
   const supabase = getSupabaseClient();
   if (!supabase) {
     const err = new Error('Supabase client is not configured (missing env vars).');
@@ -419,49 +147,19 @@ async function fetchFixtureById(fixtureId: string): Promise<any> {
     throw err;
   }
 
-  // Prefer the view that already includes team metadata.
-  const attempts: Array<{ table: string; select: string; idCol: string }> = [
-    {
-      table: 'eg_fixtures_with_teams',
-      select: '*',
-      idCol: 'id',
-    },
-    {
-      table: 'eg_fixtures',
-      select: '*',
-      idCol: 'id',
-    },
-  ];
-
-  let fixture: any = null;
-  let error: any = null;
-  for (const attempt of attempts) {
-    const res = await supabase.from(attempt.table).select(attempt.select).eq(attempt.idCol, fixtureId).maybeSingle();
-    if (!res.error) {
-      fixture = res.data;
-      error = null;
-      break;
-    }
-    error = res.error;
-  }
-
-  if (error) throw error;
-  return fixture;
+  return fetchFixtureById(fixtureId);
 }
 
 export function useFixture(fixtureId: string | undefined) {
   return useQuery({
     queryKey: ['fixture', fixtureId],
-    queryFn: () => fetchFixtureById(fixtureId!),
+    queryFn: () => fetchFixture(fixtureId!),
     enabled: !!fixtureId,
     staleTime: 45_000,
     gcTime: 1_200_000,
   });
 }
 
-/**
- * Fetch submissions for a fixture (for match centre stats)
- */
 async function fetchFixtureSubmissions(fixtureId: string): Promise<any[]> {
   const supabase = getSupabaseClient();
   if (!supabase) {
@@ -473,7 +171,8 @@ async function fetchFixtureSubmissions(fixtureId: string): Promise<any[]> {
   const { data: submissions, error } = await supabase
     .from('submissions')
     .select('*')
-    .eq('fixture_id', fixtureId);
+    .eq('fixture_id', fixtureId)
+    .order('submitted_at', { ascending: false });
 
   if (error) throw error;
   return submissions || [];

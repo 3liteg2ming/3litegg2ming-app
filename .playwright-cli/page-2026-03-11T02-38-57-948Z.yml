@@ -1,0 +1,186 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+      - generic "Elite Gaming" [ref=e14]:
+        - button "Go to home" [ref=e15] [cursor=pointer]:
+          - img [ref=e62]
+      - button "Account" [ref=e18] [cursor=pointer]:
+        - img [ref=e19]
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - generic [ref=e26]:
+            - generic [ref=e27]: Fixtures
+            - generic [ref=e28]: 9 matches
+          - generic [ref=e29]:
+            - button "Change competition" [active] [ref=e30]:
+              - generic [ref=e31]: Competition
+              - generic [ref=e32]: Knockout Preseason
+              - img [ref=e33]
+            - button "Open fixtures filters" [ref=e35]:
+              - img [ref=e36]
+              - text: Filter
+          - generic "Preseason format" [ref=e38]:
+            - generic [ref=e39]: "Format:"
+            - generic [ref=e40]: 2 Rounds guaranteed
+            - generic [ref=e41]: •
+            - generic [ref=e42]: Top 8 seeded finals
+            - generic [ref=e43]: •
+            - generic [ref=e44]: Grand Final
+          - generic "Round selector" [ref=e45]:
+            - button "R1" [ref=e46]
+            - button "R2" [ref=e47]
+          - generic "Status filters" [ref=e48]:
+            - button "All 9" [ref=e63]:
+              - generic [ref=e50]: All
+              - generic [ref=e51]: "9"
+            - button "Scheduled 8" [ref=e64]:
+              - generic [ref=e53]: Scheduled
+              - generic [ref=e54]: "8"
+            - button "Final 1" [ref=e65]:
+              - generic [ref=e56]: Final
+              - generic [ref=e57]: "1"
+          - generic [ref=e58]: Scheduled 8 • Final 1 • 6/9
+        - generic [ref=e66]:
+          - generic [ref=e67]:
+            - generic "Knockout • Round 1"
+            - generic:
+              - generic:
+                - generic: SCHEDULED
+            - generic:
+              - img
+            - generic:
+              - img
+            - generic [ref=e68]:
+              - generic [ref=e69]:
+                - img "Western Bulldogs" [ref=e71]
+                - generic [ref=e72]: DOGS
+              - generic [ref=e73]:
+                - generic [ref=e74]: Scheduled Match
+                - generic [ref=e75]: vs
+              - generic [ref=e76]:
+                - img "Brisbane" [ref=e78]
+                - generic [ref=e79]: LIONS
+            - button "MATCH CENTRE" [ref=e80] [cursor=pointer]
+          - generic [ref=e81]:
+            - generic "Knockout • Round 1"
+            - generic:
+              - generic:
+                - generic: SCHEDULED
+            - generic:
+              - img
+            - generic:
+              - img
+            - generic [ref=e82]:
+              - generic [ref=e83]:
+                - img "Fremantle" [ref=e85]
+                - generic [ref=e86]: DOCKERS
+              - generic [ref=e87]:
+                - generic [ref=e88]: Scheduled Match
+                - generic [ref=e89]: vs
+              - generic [ref=e90]:
+                - img "Sydney" [ref=e92]
+                - generic [ref=e93]: SWANS
+            - button "MATCH CENTRE" [ref=e94] [cursor=pointer]
+          - generic [ref=e95]:
+            - generic "Knockout • Round 1"
+            - generic:
+              - generic:
+                - generic: FULL TIME
+            - generic:
+              - img
+            - generic:
+              - img
+            - generic [ref=e96]:
+              - generic [ref=e97]:
+                - img "Gold Coast" [ref=e99]
+                - generic [ref=e100]: SUNS
+              - generic [ref=e101]:
+                - generic [ref=e102]: FULL TIME
+                - generic [ref=e103]:
+                  - generic [ref=e104]: "34"
+                  - generic [ref=e105]: "-"
+                  - generic [ref=e106]: "13"
+                - generic [ref=e107]:
+                  - generic [ref=e108]: "5.4"
+                  - generic [ref=e110]: "2.1"
+              - generic [ref=e111]:
+                - img "GWS" [ref=e113]
+                - generic [ref=e114]: GIANTS
+            - generic [ref=e115]: Gold Coast by 21
+            - button "MATCH CENTRE" [ref=e116] [cursor=pointer]
+          - generic [ref=e117]:
+            - generic "Knockout • Round 1"
+            - generic:
+              - generic:
+                - generic: SCHEDULED
+            - generic:
+              - img
+            - generic:
+              - img
+            - generic [ref=e118]:
+              - generic [ref=e119]:
+                - img "St Kilda" [ref=e121]
+                - generic [ref=e122]: SAINTS
+              - generic [ref=e123]:
+                - generic [ref=e124]: Scheduled Match
+                - generic [ref=e125]: vs
+              - generic [ref=e126]:
+                - img "Collingwood" [ref=e128]
+                - generic [ref=e129]: MAGPIES
+            - button "MATCH CENTRE" [ref=e130] [cursor=pointer]
+          - generic [ref=e131]:
+            - generic "Knockout • Round 1"
+            - generic:
+              - generic:
+                - generic: SCHEDULED
+            - generic:
+              - img
+            - generic:
+              - img
+            - generic [ref=e132]:
+              - generic [ref=e133]:
+                - img "Adelaide" [ref=e135]
+                - generic [ref=e136]: CROWS
+              - generic [ref=e137]:
+                - generic [ref=e138]: Scheduled Match
+                - generic [ref=e139]: vs
+              - generic [ref=e140]:
+                - img "Port Adelaide" [ref=e142]
+                - generic [ref=e143]: POWER
+            - button "MATCH CENTRE" [ref=e144] [cursor=pointer]
+          - generic [ref=e145]:
+            - generic "Knockout • Round 1"
+            - generic:
+              - generic:
+                - generic: SCHEDULED
+            - generic:
+              - img
+            - generic:
+              - img
+            - generic [ref=e146]:
+              - generic [ref=e147]:
+                - img "North Melbourne" [ref=e149]
+                - generic [ref=e150]: ROOS
+              - generic [ref=e151]:
+                - generic [ref=e152]: Scheduled Match
+                - generic [ref=e153]: vs
+              - generic [ref=e154]:
+                - img "Essendon" [ref=e156]
+                - generic [ref=e157]: BOMBERS
+            - button "MATCH CENTRE" [ref=e158] [cursor=pointer]
+      - dialog "Filter By Season" [ref=e160]:
+        - button [ref=e161]
+        - generic [ref=e162]:
+          - heading "Filter By Season" [level=3] [ref=e164]
+          - generic [ref=e165]:
+            - button "Knockout Preseason" [ref=e166]:
+              - generic [ref=e167]: Knockout Preseason
+              - img [ref=e168]
+            - button "AFL 26 Season Two" [ref=e170]:
+              - generic [ref=e171]: AFL 26 Season Two

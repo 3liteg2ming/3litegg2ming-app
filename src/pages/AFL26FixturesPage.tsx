@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Filter } from 'lucide-react';
-
-const supabase = requireSupabaseClient();
 
 import FixturePosterCard, { type FixturePosterMatch } from '../components/FixturePosterCard';
 import { FixtureSkeletons } from '../components/FixtureSkeleton';
 import FixturesCompetitionSheet from '../components/fixtures/FixturesCompetitionSheet';
 import FixturesFilterSheet from '../components/fixtures/FixturesFilterSheet';
-import { useAllFixtures, useNextFixtures } from '../hooks/useFixtures';
+import { useSeasonFixtures } from '../hooks/useFixtures';
+import { useTeamOptions } from '../hooks/useTeams';
 import {
   getDataSeasonSlugForCompetition,
   getStoredCompetitionKey,
@@ -17,41 +17,11 @@ import {
   type CompetitionKey,
 } from '../lib/competitionRegistry';
 import { resolveTeamKey } from '../lib/entityResolvers';
-import { requireSupabaseClient } from '../lib/supabaseClient';
-
+import { deriveFixtureRound, normalizeFixtureStatus, type FixtureRow } from '../lib/fixturesRepo';
+import { fetchCurrentCoaches, type HomeCoach } from '../lib/homeRepo';
 import '../styles/Fixtures.css';
 
 type StatusFilter = 'ALL' | 'SCHEDULED' | 'FINAL';
-
-type FixtureRow = {
-  id: string;
-  round?: number;
-  stage_name?: string | null;
-  stage_index?: number | null;
-  bracket_slot?: string | null;
-  week_index?: number | null;
-  is_preseason?: boolean;
-  next_fixture_id?: string | null;
-  status?: string;
-  start_time?: string | null;
-  venue?: string | null;
-  home_team_id?: string | null;
-  away_team_id?: string | null;
-  home_team_slug?: string | null;
-  away_team_slug?: string | null;
-  home_goals?: number | null;
-  home_behinds?: number | null;
-  home_total?: number | null;
-  away_goals?: number | null;
-  away_behinds?: number | null;
-  away_total?: number | null;
-  home_team_name?: string | null;
-  away_team_name?: string | null;
-  home_team_logo_url?: string | null;
-  away_team_logo_url?: string | null;
-  eg_teams?: { slug?: string; name?: string; logo_url?: string } | null;
-  away_team?: { slug?: string; name?: string; logo_url?: string } | null;
-};
 
 type StageGroup = {
   id: string;
@@ -73,26 +43,6 @@ function toPositiveInt(value: unknown): number | null {
   if (!Number.isFinite(n)) return null;
   const rounded = Math.trunc(n);
   return rounded > 0 ? rounded : null;
-}
-
-function normalizeStatus(status: string | undefined | null) {
-  return String(status || 'SCHEDULED').toUpperCase();
-}
-
-function deriveFixtureRound(fixture: FixtureRow): number {
-  const explicitWeek = toPositiveInt(fixture.week_index);
-  if (explicitWeek) return explicitWeek;
-
-  const round = toPositiveInt(fixture.round);
-  if (round) return round;
-
-  const stageIndex = toPositiveInt(fixture.stage_index);
-  if (stageIndex) return stageIndex;
-
-  const stageName = String(fixture.stage_name || '').toLowerCase();
-  if (stageName.includes('grand')) return 4;
-  if (stageName.includes('semi')) return 3;
-  return 1;
 }
 
 function buildRegularStageGroups(fixtures: FixtureRow[]): StageGroup[] {
@@ -122,8 +72,7 @@ function buildRegularStageGroups(fixtures: FixtureRow[]): StageGroup[] {
 function stageHasIdentity(fixture: FixtureRow, side: 'home' | 'away') {
   const byId = side === 'home' ? fixture.home_team_id : fixture.away_team_id;
   const bySlug = side === 'home' ? fixture.home_team_slug : fixture.away_team_slug;
-  const byJoinName =
-    side === 'home' ? fixture.home_team_name || fixture.eg_teams?.name : fixture.away_team_name || fixture.away_team?.name;
+  const byJoinName = side === 'home' ? fixture.home_team_name : fixture.away_team_name;
   return Boolean(String(byId || bySlug || byJoinName || '').trim());
 }
 
@@ -145,15 +94,18 @@ function mapToPosterMatch(
   fixture: FixtureRow,
   navigate: ReturnType<typeof useNavigate>,
   isPreseasonMode: boolean,
+  coachesByTeamId: Map<string, HomeCoach>,
 ): FixturePosterMatch {
   const roundNumber = deriveFixtureRound(fixture);
   const home = resolveTeamKey({
     slug: fixture.home_team_slug,
-    name: fixture.home_team_name || fixture.eg_teams?.name,
+    teamKey: fixture.home_team_key,
+    name: fixture.home_team_name || fixture.home_team_short_name,
   });
   const away = resolveTeamKey({
     slug: fixture.away_team_slug,
-    name: fixture.away_team_name || fixture.away_team?.name,
+    teamKey: fixture.away_team_key,
+    name: fixture.away_team_name || fixture.away_team_short_name,
   });
 
   const homeGoals = Number(fixture.home_goals ?? 0);
@@ -179,14 +131,27 @@ function mapToPosterMatch(
         }
       : undefined;
 
+  const homeCoach = String(fixture.home_team_id || '').trim()
+    ? coachesByTeamId.get(String(fixture.home_team_id || '').trim()) || null
+    : null;
+  const awayCoach = String(fixture.away_team_id || '').trim()
+    ? coachesByTeamId.get(String(fixture.away_team_id || '').trim()) || null
+    : null;
+
   return {
     id: fixture.id,
     round: roundNumber,
     dateText: formatDateText(fixture.start_time),
     venue: fixture.venue || 'TBA',
-    status: normalizeStatus(fixture.status) as FixturePosterMatch['status'],
+    status: normalizeFixtureStatus(fixture.status, fixture) as FixturePosterMatch['status'],
     home: stageHasIdentity(fixture, 'home') ? home : 'unknown',
     away: stageHasIdentity(fixture, 'away') ? away : 'unknown',
+    homeCoachName: homeCoach?.display_name || undefined,
+    awayCoachName: awayCoach?.display_name || undefined,
+    homePsn: homeCoach?.psn || undefined,
+    awayPsn: awayCoach?.psn || undefined,
+    homeCoachPsn: homeCoach?.psn || undefined,
+    awayCoachPsn: awayCoach?.psn || undefined,
     homeScore,
     awayScore,
     headerTag: isPreseasonMode ? `Knockout • Round ${roundNumber}` : undefined,
@@ -216,18 +181,32 @@ export default function AFL26FixturesPage() {
   const [isDockCompact, setIsDockCompact] = useState(false);
   const [competitionSheetOpen, setCompetitionSheetOpen] = useState(false);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
-  const [teamOptions, setTeamOptions] = useState<TeamOption[]>([]);
   const [selectedTeamId, setSelectedTeamId] = useState<string>('ALL');
   const [selectedVenue, setSelectedVenue] = useState<string>('ALL');
 
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  const nextFixturesQuery = useNextFixtures(seasonSlug, 3);
-  const allFixturesQuery = useAllFixtures(seasonSlug, nextFixturesQuery.isSuccess);
-
+  const seasonFixturesQuery = useSeasonFixtures(seasonSlug, { limit: 1000 });
+  const coachesQuery = useQuery({
+    queryKey: ['home', 'current-coaches'],
+    queryFn: fetchCurrentCoaches,
+    staleTime: 60_000,
+    gcTime: 1_200_000,
+  });
+  const teamOptionsQuery = useTeamOptions();
+  const teamOptions = (teamOptionsQuery.data || []) as TeamOption[];
+  const coachesByTeamId = useMemo(() => {
+    const map = new Map<string, HomeCoach>();
+    for (const coach of coachesQuery.data || []) {
+      const teamId = String(coach.team_id || '').trim();
+      if (!teamId) continue;
+      if (!map.has(teamId)) map.set(teamId, coach);
+    }
+    return map;
+  }, [coachesQuery.data]);
   const allFixtures = useMemo<FixtureRow[]>(
-    () => ((allFixturesQuery.data ?? nextFixturesQuery.data ?? []) as FixtureRow[]),
-    [allFixturesQuery.data, nextFixturesQuery.data],
+    () => (Array.isArray(seasonFixturesQuery.data?.fixtures) ? seasonFixturesQuery.data?.fixtures || [] : []),
+    [seasonFixturesQuery.data?.fixtures],
   );
 
   useEffect(() => {
@@ -249,28 +228,6 @@ export default function AFL26FixturesPage() {
     setSelectedVenue('ALL');
     setVisibleCount(INITIAL_RENDER_COUNT);
   }, [competitionKey]);
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      const { data, error } = await supabase.from('eg_teams').select('id,name').order('name', { ascending: true });
-
-      if (!alive || error) return;
-
-      const options = ((data || []) as Array<{ id?: string | null; name?: string | null }>)
-        .map((row) => ({
-          id: String(row.id || '').trim(),
-          name: String(row.name || '').trim(),
-        }))
-        .filter((row) => row.id && row.name);
-
-      setTeamOptions(options);
-    })();
-
-    return () => {
-      alive = false;
-    };
-  }, []);
 
   const regularStageGroups = useMemo(() => buildRegularStageGroups(allFixtures), [allFixtures]);
 
@@ -312,12 +269,20 @@ export default function AFL26FixturesPage() {
   }, [activeWeek, isPreseasonMode, preseasonRounds]);
 
   const scopeMatches = useMemo(() => {
+    if (!allFixtures.length) return [];
+
     if (isPreseasonMode) {
-      return allFixtures.filter((fixture) => deriveFixtureRound(fixture) === activeWeek);
+      const roundMatches = allFixtures.filter((fixture) => deriveFixtureRound(fixture) === activeWeek);
+      if (roundMatches.length) return roundMatches;
+
+      return allFixtures;
     }
 
     const stage = regularStageGroups.find((entry) => entry.id === activeStageId) || regularStageGroups[0];
-    return stage?.matches || [];
+    const stageMatches = stage?.matches || [];
+    if (stageMatches.length) return stageMatches;
+
+    return allFixtures;
   }, [activeStageId, activeWeek, allFixtures, isPreseasonMode, regularStageGroups]);
 
   const venueOptions = useMemo(() => {
@@ -342,22 +307,22 @@ export default function AFL26FixturesPage() {
 
   const counts = useMemo(() => {
     const all = matchesAfterFilterSheet.length;
-    const scheduled = matchesAfterFilterSheet.filter((fixture) => normalizeStatus(fixture.status) === 'SCHEDULED').length;
-    const final = matchesAfterFilterSheet.filter((fixture) => normalizeStatus(fixture.status) === 'FINAL').length;
+    const scheduled = matchesAfterFilterSheet.filter((fixture) => normalizeFixtureStatus(fixture.status, fixture) === 'SCHEDULED').length;
+    const final = matchesAfterFilterSheet.filter((fixture) => normalizeFixtureStatus(fixture.status, fixture) === 'FINAL').length;
     return { all, scheduled, final };
   }, [matchesAfterFilterSheet]);
 
   const filteredMatches = useMemo(() => {
     if (activeStatus === 'ALL') return matchesAfterFilterSheet;
     return matchesAfterFilterSheet.filter((fixture) => {
-      const status = normalizeStatus(fixture.status);
+      const status = normalizeFixtureStatus(fixture.status, fixture);
       return activeStatus === 'SCHEDULED' ? status === 'SCHEDULED' : status === 'FINAL';
     });
   }, [activeStatus, matchesAfterFilterSheet]);
 
   const uiMatches = useMemo(
-    () => filteredMatches.map((fixture) => mapToPosterMatch(fixture, navigate, isPreseasonMode)),
-    [filteredMatches, isPreseasonMode, navigate],
+    () => filteredMatches.map((fixture) => mapToPosterMatch(fixture, navigate, isPreseasonMode, coachesByTeamId)),
+    [coachesByTeamId, filteredMatches, isPreseasonMode, navigate],
   );
 
   useEffect(() => {
@@ -382,14 +347,16 @@ export default function AFL26FixturesPage() {
   }, [uiMatches.length]);
 
   const displayedMatches = useMemo(() => uiMatches.slice(0, visibleCount), [uiMatches, visibleCount]);
+  const activeMatchCount = filteredMatches.length;
 
-  const isLoading = nextFixturesQuery.isLoading;
-  const isError = nextFixturesQuery.isError;
+  const hasSettled = seasonFixturesQuery.isSuccess || seasonFixturesQuery.isError;
+  const isLoading = !hasSettled && allFixtures.length === 0;
+  const isError = seasonFixturesQuery.isError;
 
-  const statusPills: Array<{ key: StatusFilter; label: string; count: number }> = [
-    { key: 'ALL', label: 'All', count: counts.all },
-    { key: 'SCHEDULED', label: 'Scheduled', count: counts.scheduled },
-    { key: 'FINAL', label: 'Final', count: counts.final },
+  const statusPills: Array<{ key: StatusFilter; label: string; count: number | string }> = [
+    { key: 'ALL', label: 'All', count: isLoading ? '—' : counts.all },
+    { key: 'SCHEDULED', label: 'Scheduled', count: isLoading ? '—' : counts.scheduled },
+    { key: 'FINAL', label: 'Final', count: isLoading ? '—' : counts.final },
   ];
 
   const competitionOptions = getCompetitionOptions();
@@ -400,7 +367,7 @@ export default function AFL26FixturesPage() {
         <div className={`fxAflStickyNav ${isDockCompact ? 'is-compact' : ''}`}>
           <div className="fxAflTopHead">
             <div className="fxAflHeaderTitle">Fixtures</div>
-            <div className="fxAflCountPill">{counts.all} matches</div>
+            <div className="fxAflCountPill">{isLoading ? 'Loading…' : `${activeMatchCount} matches`}</div>
           </div>
 
           <div className="fxAflControlRow">
@@ -480,7 +447,7 @@ export default function AFL26FixturesPage() {
           </div>
 
           <div className="fxAflMetaLine">
-            Scheduled {counts.scheduled} • Final {counts.final} • {displayedMatches.length}/{uiMatches.length}
+            {isLoading ? 'Loading fixtures…' : `Scheduled ${counts.scheduled} • Final ${counts.final} • ${displayedMatches.length}/${activeMatchCount}`}
           </div>
         </div>
 

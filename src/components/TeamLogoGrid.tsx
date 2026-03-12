@@ -104,6 +104,7 @@ export default function TeamLogoGrid({
                   <Check size={12} />
                 </span>
               ) : null}
+              <span className="tlgCard__name">{team.name}</span>
             </button>
           );
         })}

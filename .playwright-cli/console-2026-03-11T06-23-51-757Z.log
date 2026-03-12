@@ -1,0 +1,3 @@
+[     406ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:4173/favicon.ico:0
+[     763ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_announcements?select=id%2Ctitle%2Cbody&is_active=eq.true&or=%28season_slug.is.null%2Cseason_slug.eq.preseason-2026%29&order=created_at.desc&limit=3:0
+[     952ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_announcements?select=id%2Ctitle%2Cbody&is_active=eq.true&order=created_at.desc&limit=3:0

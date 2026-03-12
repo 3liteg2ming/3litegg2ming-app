@@ -1,0 +1,139 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+      - generic "Elite Gaming" [ref=e14]:
+        - button "Go to home" [ref=e15] [cursor=pointer]
+      - button "Account" [ref=e18] [cursor=pointer]:
+        - img [ref=e19]
+  - main [ref=e22]:
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - generic: 0 0
+        - button "Back" [ref=e26] [cursor=pointer]:
+          - img [ref=e27]
+        - generic [ref=e29]:
+          - generic [ref=e31]: ROUND —
+          - generic [ref=e32]:
+            - generic [ref=e33]:
+              - img "Home" [ref=e35]
+              - generic [ref=e36]: Home Team
+              - generic [ref=e37]: H
+            - generic [ref=e38]:
+              - generic [ref=e41]: LOADING
+              - generic [ref=e42]:
+                - generic [ref=e43]: "0"
+                - generic [ref=e44]: "-"
+                - generic [ref=e45]: "0"
+              - generic [ref=e46]:
+                - generic [ref=e47]: —.—
+                - generic [ref=e48]: "|"
+                - generic [ref=e49]: —.—
+            - generic [ref=e50]:
+              - img "Away" [ref=e52]
+              - generic [ref=e53]: Away Team
+              - generic [ref=e54]: A
+      - tablist "Match centre sections" [ref=e57]:
+        - tab "Summary" [selected] [ref=e58] [cursor=pointer]:
+          - img [ref=e59]
+          - generic [ref=e64]: Summary
+        - tab "Team Stats" [ref=e65] [cursor=pointer]:
+          - img [ref=e66]
+          - generic [ref=e68]: Team Stats
+        - tab "Player Stats" [ref=e69] [cursor=pointer]:
+          - img [ref=e70]
+          - generic [ref=e75]: Player Stats
+      - tabpanel "Summary" [ref=e76]:
+        - generic [ref=e77]:
+          - generic [ref=e78]:
+            - heading "Match Leaders" [level=2] [ref=e79]
+            - paragraph [ref=e80]: Top performers this match
+          - generic [ref=e81]:
+            - generic [ref=e82]:
+              - generic [ref=e84]: STAT
+              - generic [ref=e86]:
+                - generic [ref=e87]:
+                  - generic [ref=e88]:
+                    - generic [ref=e89]: Home
+                    - generic [ref=e90]: —
+                  - generic [ref=e92]:
+                    - paragraph [ref=e93]: Loading…
+                    - paragraph [ref=e94]: —
+                - generic [ref=e95]:
+                  - generic [ref=e96]:
+                    - generic [ref=e97]: Away
+                    - generic [ref=e98]: —
+                  - generic [ref=e100]:
+                    - paragraph [ref=e101]: Loading…
+                    - paragraph [ref=e102]: —
+            - generic [ref=e103]:
+              - generic [ref=e105]: STAT
+              - generic [ref=e107]:
+                - generic [ref=e108]:
+                  - generic [ref=e109]:
+                    - generic [ref=e110]: Home
+                    - generic [ref=e111]: —
+                  - generic [ref=e113]:
+                    - paragraph [ref=e114]: Loading…
+                    - paragraph [ref=e115]: —
+                - generic [ref=e116]:
+                  - generic [ref=e117]:
+                    - generic [ref=e118]: Away
+                    - generic [ref=e119]: —
+                  - generic [ref=e121]:
+                    - paragraph [ref=e122]: Loading…
+                    - paragraph [ref=e123]: —
+            - generic [ref=e124]:
+              - generic [ref=e126]: STAT
+              - generic [ref=e128]:
+                - generic [ref=e129]:
+                  - generic [ref=e130]:
+                    - generic [ref=e131]: Home
+                    - generic [ref=e132]: —
+                  - generic [ref=e134]:
+                    - paragraph [ref=e135]: Loading…
+                    - paragraph [ref=e136]: —
+                - generic [ref=e137]:
+                  - generic [ref=e138]:
+                    - generic [ref=e139]: Away
+                    - generic [ref=e140]: —
+                  - generic [ref=e142]:
+                    - paragraph [ref=e143]: Loading…
+                    - paragraph [ref=e144]: —
+          - generic [ref=e145]:
+            - button [ref=e146] [cursor=pointer]
+            - button [ref=e147] [cursor=pointer]
+            - button [ref=e148] [cursor=pointer]
+        - generic [ref=e149]:
+          - generic [ref=e150]:
+            - heading "Momentum Worm" [level=2] [ref=e151]
+            - paragraph [ref=e152]: Awaiting the first submitted result
+          - generic [ref=e153]:
+            - generic [ref=e154]:
+              - generic [ref=e156]: Q1
+              - generic [ref=e158]: Q2
+              - generic [ref=e160]: Q3
+              - generic [ref=e162]: Q4
+            - generic [ref=e163]:
+              - img "Home" [ref=e165]
+              - img "Away" [ref=e170]
+            - generic [ref=e171]:
+              - generic [ref=e172]: —
+              - generic [ref=e173]: —
+        - generic [ref=e174]:
+          - generic [ref=e175]:
+            - heading "Key Moments" [level=2] [ref=e176]
+            - paragraph [ref=e177]: What happens next before this match is locked in
+          - generic [ref=e179]: Loading moments…
+        - generic [ref=e180]:
+          - generic [ref=e181]:
+            - heading "Key Match Stats" [level=2] [ref=e182]
+            - paragraph [ref=e183]: Live team comparisons from the submitted result
+          - generic [ref=e184]:
+            - paragraph [ref=e188]: Stat
+            - paragraph [ref=e193]: Stat
+            - paragraph [ref=e198]: Stat
+            - paragraph [ref=e203]: Stat

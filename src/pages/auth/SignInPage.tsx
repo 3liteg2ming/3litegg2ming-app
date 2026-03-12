@@ -1,5 +1,5 @@
 import { ChevronLeft, Eye, EyeOff, Lock, Mail } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../state/auth/AuthProvider';
 import '../../styles/auth-premium.css';
@@ -7,6 +7,13 @@ import '../../styles/auth-premium.css';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SESSION_PERSIST_BLOCKED_MESSAGE =
   'Signed in, but your browser blocked saving the session. If you’re using Brave or an ad blocker, disable Shields for this site, or clear site data and reload.';
+const PUBLIC_AUTH_REDIRECTS = new Set([
+  '/preseason-registration',
+  '/auth/sign-in',
+  '/auth/sign-up',
+  '/auth/forgot-password',
+  '/auth/callback',
+]);
 
 function isNetworkErrorMessage(raw: string): boolean {
   const lower = String(raw || '').toLowerCase();
@@ -27,14 +34,14 @@ function toFriendlyAuthMessage(message: string): { title: string; detail: string
   if (lower.includes('invalid login credentials')) {
     return {
       title: 'Email or password is incorrect.',
-      detail: raw,
+      detail: 'Check your details and try again.',
     };
   }
 
   if (lower.includes('email not confirmed')) {
     return {
-      title: 'Your email isn’t confirmed yet. Check your inbox for the verification link.',
-      detail: raw || 'Complete email verification, then sign in again.',
+      title: 'Your email is not confirmed yet.',
+      detail: 'Open the verification email, then come back and sign in again.',
     };
   }
 
@@ -67,65 +74,38 @@ function toFriendlyAuthMessage(message: string): { title: string; detail: string
 
 function sanitizeRedirectPath(input: unknown): string {
   const raw = String(input || '').trim();
-  if (!raw) return '/members';
-  if (/^https?:\/\//i.test(raw)) return '/members';
-  if (raw.includes('localhost') || raw.includes('127.0.0.1')) return '/members';
-  if (!raw.startsWith('/')) return '/members';
-  return raw;
+  if (!raw) return '/preseason-registration';
+  if (/^https?:\/\//i.test(raw)) return '/preseason-registration';
+  if (raw.includes('localhost') || raw.includes('127.0.0.1')) return '/preseason-registration';
+  if (!raw.startsWith('/')) return '/preseason-registration';
+
+  const cleanPath = raw.replace(/\/+$/, '') || '/';
+  return PUBLIC_AUTH_REDIRECTS.has(cleanPath) ? cleanPath : '/preseason-registration';
 }
 
 export default function SignInPage() {
   const nav = useNavigate();
-  const location = useLocation() as any;
-  const { signIn, user, loading, booting, actionLoading } = useAuth();
-  const passwordRef = useRef<HTMLInputElement | null>(null);
-  const emailAutoFocusTimerRef = useRef<number | null>(null);
+  const location = useLocation() as {
+    state?: {
+      from?: string;
+      message?: string;
+    };
+  };
+  const { signIn, user, booting, actionLoading } = useAuth();
 
   const redirectTo = useMemo(() => sanitizeRedirectPath(location?.state?.from), [location]);
+  const successMessage = location?.state?.message || null;
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<{ title: string; detail: string } | null>(null);
-  const [successMessage] = useState<string | null>(location?.state?.message || null);
 
   const trimmedEmail = email.trim();
   const emailValid = EMAIL_RE.test(trimmedEmail);
   const passwordValid = password.length >= 8;
   const canSubmit = emailValid && passwordValid && !submitting && !actionLoading;
-
-  useEffect(() => {
-    return () => {
-      if (emailAutoFocusTimerRef.current !== null) {
-        window.clearTimeout(emailAutoFocusTimerRef.current);
-        emailAutoFocusTimerRef.current = null;
-      }
-    };
-  }, []);
-
-  function schedulePasswordAutoFocus(nextEmailValue: string) {
-    if (emailAutoFocusTimerRef.current !== null) {
-      window.clearTimeout(emailAutoFocusTimerRef.current);
-      emailAutoFocusTimerRef.current = null;
-    }
-
-    const candidate = String(nextEmailValue || '').trim();
-    const lower = candidate.toLowerCase();
-    const atIndex = candidate.indexOf('@');
-    const hasAt = atIndex > 0;
-    const hasDotAfterAt = hasAt && candidate.slice(atIndex + 1).includes('.');
-    const looksCompleteCom = lower.endsWith('.com');
-
-    if (!hasAt || !hasDotAfterAt || !looksCompleteCom) return;
-
-    emailAutoFocusTimerRef.current = window.setTimeout(() => {
-      const active = document.activeElement as HTMLElement | null;
-      if (active && active instanceof HTMLInputElement && active.type === 'email') {
-        passwordRef.current?.focus();
-      }
-      emailAutoFocusTimerRef.current = null;
-    }, 1000);
-  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -134,7 +114,7 @@ export default function SignInPage() {
     if (!emailValid) {
       setError({
         title: 'Enter a valid email address.',
-        detail: 'Email format is invalid.',
+        detail: 'Use the email linked to your Elite Gaming account.',
       });
       return;
     }
@@ -142,7 +122,7 @@ export default function SignInPage() {
     if (!passwordValid) {
       setError({
         title: 'Password is too short.',
-        detail: 'Password must be at least 8 characters.',
+        detail: 'Passwords must be at least 8 characters.',
       });
       return;
     }
@@ -158,25 +138,24 @@ export default function SignInPage() {
     }
   }
 
-  if (user && !loading) {
-    return <Navigate to="/members" replace />;
+  if (user && !booting) {
+    return <Navigate to={redirectTo} replace />;
   }
 
   return (
     <div className="auth-screen auth-screen--premium">
-      <div className="auth-top">
-        <button type="button" className="auth-back" onClick={() => nav('/')} aria-label="Back to home">
+      <div className="auth-top auth-top--premium">
+        <button type="button" className="auth-back" onClick={() => nav('/preseason-registration')} aria-label="Back to preseason registration">
           <ChevronLeft size={18} />
-          <span>Home</span>
+          <span>Preseason</span>
         </button>
       </div>
 
-      <div className="auth-card auth-card--premium">
-        <div className="auth-badge">COACH ACCESS</div>
-
-        <div className="auth-head">
+      <div className="auth-card auth-card--premium auth-card--signin">
+        <div className="auth-kicker">Coach access</div>
+        <div className="auth-head auth-head--premium">
           <div className="auth-title">Sign in</div>
-          <div className="auth-sub">Use your coach account to access the members hub and submissions.</div>
+          <div className="auth-sub">Continue your preseason registration.</div>
         </div>
 
         {successMessage ? (
@@ -186,7 +165,7 @@ export default function SignInPage() {
           </div>
         ) : null}
 
-        <form onSubmit={onSubmit} className="auth-form auth-form--compact" noValidate>
+        <form onSubmit={onSubmit} className="auth-form auth-form--premium" noValidate>
           <label className="auth-field">
             <span className="auth-label">Email</span>
             <div className="auth-inputWrap">
@@ -195,22 +174,15 @@ export default function SignInPage() {
                 className="auth-input"
                 type="email"
                 value={email}
-                onChange={(e) => {
-                  const next = e.target.value;
-                  setEmail(next);
-                  schedulePasswordAutoFocus(next);
-                }}
-                placeholder="Email address"
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="coach@email.com"
                 autoComplete="email"
                 inputMode="email"
-                enterKeyHint="next"
                 required
                 disabled={submitting || actionLoading}
               />
             </div>
-            {email.length > 0 && !emailValid ? (
-              <span className="auth-inlineHint auth-inlineHint--error">Enter a valid email format.</span>
-            ) : null}
+            {email.length > 0 && !emailValid ? <span className="auth-inlineHint auth-inlineHint--error">Enter a valid email format.</span> : null}
           </label>
 
           <label className="auth-field">
@@ -218,63 +190,50 @@ export default function SignInPage() {
             <div className="auth-inputWrap">
               <Lock size={16} className="auth-icon" />
               <input
-                ref={passwordRef}
                 className="auth-input"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
                 autoComplete="current-password"
-                enterKeyHint="done"
                 required
                 disabled={submitting || actionLoading}
               />
               <button
                 type="button"
                 className="auth-eye"
-                onClick={() => setShowPassword((s) => !s)}
+                onClick={() => setShowPassword((current) => !current)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
                 disabled={submitting || actionLoading}
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
-            {password.length > 0 && !passwordValid ? (
-              <span className="auth-inlineHint auth-inlineHint--error">Minimum 8 characters.</span>
-            ) : null}
+            {password.length > 0 && !passwordValid ? <span className="auth-inlineHint auth-inlineHint--error">Minimum 8 characters.</span> : null}
           </label>
 
           {error ? (
             <div className="auth-message auth-message--error" role="alert" aria-live="assertive">
               <div className="auth-message__title">{error.title}</div>
-              <details className="auth-message__details">
-                <summary>Details</summary>
-                <div className="auth-message__body">{error.detail}</div>
-              </details>
+              <div className="auth-message__body">{error.detail}</div>
             </div>
           ) : null}
 
-          {booting ? <div className="auth-inlineHint">Checking your coach session…</div> : null}
+          {booting ? <div className="auth-statusNote">Checking your coach session…</div> : null}
 
           <button type="submit" className="auth-primary" disabled={!canSubmit}>
             {submitting || actionLoading ? 'Signing in…' : 'Sign in'}
           </button>
-
-          <div className="auth-footerRow">
-            <div className="auth-footer">
-              <span>New coach?</span>
-              <Link className="auth-link" to="/auth/sign-up">
-                Create account
-              </Link>
-            </div>
-            <div className="auth-footer">
-              <span>Forgot password?</span>
-              <Link className="auth-link" to="/auth/forgot-password">
-                Reset it
-              </Link>
-            </div>
-          </div>
         </form>
+
+        <div className="auth-footerLinks">
+          <Link className="auth-footerLink" to="/auth/sign-up">
+            Create account
+          </Link>
+          <Link className="auth-footerLink" to="/auth/forgot-password">
+            Forgot password
+          </Link>
+        </div>
       </div>
     </div>
   );

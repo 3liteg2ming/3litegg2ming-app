@@ -55,10 +55,10 @@ export default function SmartImg({
       style={style}
       loading={resolvedLoading}
       decoding={resolvedDecoding}
-      fetchPriority={resolvedPriority}
       sizes={sizes}
       width={width}
       height={height}
+      {...({ fetchpriority: resolvedPriority } as any)}
       draggable={false}
       onError={() => setOk(false)}
     />

@@ -1,0 +1,35 @@
+- application "Elite Gaming App" [ref=e4]:
+  - status [ref=e5]:
+    - generic [ref=e6]: App is in beta mode. Please contact us for any issues.
+  - banner [ref=e7]:
+    - generic [ref=e8]:
+      - button "Switch competition" [ref=e10] [cursor=pointer]:
+        - img [ref=e12]
+      - generic "Elite Gaming" [ref=e14]:
+        - button "Go to home" [ref=e15] [cursor=pointer]
+      - button "Sign in" [ref=e18] [cursor=pointer]:
+        - img [ref=e19]
+        - generic [ref=e22]: Sign in
+  - main [ref=e23]:
+    - generic [ref=e25]:
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - generic [ref=e29]: PRESEASON • Elite Gaming
+          - generic [ref=e30]: Ladder
+          - generic [ref=e32]: Loading ladder…
+        - generic [ref=e33]: preseason 2026
+      - tablist "Ladder tabs" [ref=e35]:
+        - button "Summary" [ref=e36]
+        - button "Extended" [ref=e37]
+        - button "Form" [ref=e38]
+      - generic [ref=e41]:
+        - generic [ref=e42]:
+          - generic [ref=e43]: Pos
+          - generic [ref=e44]: Club
+          - generic [ref=e45]:
+            - generic [ref=e46]: P
+            - generic [ref=e47]: Pts
+            - generic [ref=e48]: "%"
+        - generic [ref=e50]:
+          - generic [ref=e51]: —
+          - generic [ref=e53]: Loading live ladder…

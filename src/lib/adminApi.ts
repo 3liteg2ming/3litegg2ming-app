@@ -1,4 +1,5 @@
 import { requireSupabaseClient } from './supabaseClient';
+import { fetchAllFixtures, fetchSeasonFixturesBySeasonId, normalizeFixtureStatus } from './fixturesRepo';
 import type {
   AdminAuditLog,
   AdminCompetition,
@@ -204,54 +205,54 @@ export async function listFixtures(
   },
 ): Promise<AdminPagedResult<AdminFixture>> {
   const [from, to] = rangeFromPage(params);
+  const fixtures =
+    params.seasonId && params.seasonId !== 'all'
+      ? (await fetchSeasonFixturesBySeasonId(params.seasonId, { limit: 3000, offset: 0 })).fixtures
+      : await fetchAllFixtures({ limit: 3000, offset: 0 });
 
-  let query = supabase
-    .from('eg_fixtures')
-    .select(
-      [
-        'id',
-        'season_id',
-        'round',
-        'status',
-        'venue',
-        'start_time',
-        'home_team_id',
-        'away_team_id',
-        'home_total',
-        'away_total',
-        'home_goals',
-        'home_behinds',
-        'away_goals',
-        'away_behinds',
-        'submitted_at',
-        'verified_at',
-        'disputed_at',
-        'corrected_at',
-      ].join(','),
-      { count: 'exact' },
-    );
-
-  if (params.seasonId && params.seasonId !== 'all') query = query.eq('season_id', params.seasonId);
-  if (params.round != null) query = query.eq('round', params.round);
-  if (params.status && params.status !== 'all') query = query.eq('status', params.status);
-  if (params.teamId && params.teamId !== 'all') {
-    query = query.or(`home_team_id.eq.${params.teamId},away_team_id.eq.${params.teamId}`);
-  }
-  if (params.search?.trim()) {
-    const q = params.search.trim();
-    query = query.ilike('venue', `%${q}%`);
-  }
-
-  const { data, error, count } = await query
-    .order('round', { ascending: false })
-    .order('start_time', { ascending: false })
-    .range(from, to);
-
-  if (error) throw new Error(error.message);
+  const rows = fixtures
+    .filter((fixture) => (params.round != null ? fixture.round === params.round : true))
+    .filter((fixture) => (params.status && params.status !== 'all' ? normalizeFixtureStatus(fixture.status, fixture) === params.status : true))
+    .filter((fixture) =>
+      params.teamId && params.teamId !== 'all'
+        ? fixture.home_team_id === params.teamId || fixture.away_team_id === params.teamId
+        : true,
+    )
+    .filter((fixture) => {
+      if (!params.search?.trim()) return true;
+      const q = params.search.trim().toLowerCase();
+      return String(fixture.venue || '').toLowerCase().includes(q);
+    })
+    .sort((a, b) => {
+      const roundDiff = (b.round || 0) - (a.round || 0);
+      if (roundDiff !== 0) return roundDiff;
+      const aTime = a.start_time ? new Date(a.start_time).getTime() : -1;
+      const bTime = b.start_time ? new Date(b.start_time).getTime() : -1;
+      return bTime - aTime;
+    });
 
   return {
-    rows: ((data || []) as unknown[]) as AdminFixture[],
-    total: count ?? 0,
+    rows: rows.slice(from, to + 1).map((fixture) => ({
+      id: fixture.id,
+      season_id: fixture.season_id,
+      round: fixture.round,
+      status: fixture.status,
+      venue: fixture.venue,
+      start_time: fixture.start_time,
+      home_team_id: fixture.home_team_id,
+      away_team_id: fixture.away_team_id,
+      home_total: fixture.home_total,
+      away_total: fixture.away_total,
+      home_goals: fixture.home_goals,
+      home_behinds: fixture.home_behinds,
+      away_goals: fixture.away_goals,
+      away_behinds: fixture.away_behinds,
+      submitted_at: fixture.submitted_at,
+      verified_at: fixture.verified_at,
+      disputed_at: fixture.disputed_at,
+      corrected_at: fixture.corrected_at,
+    })),
+    total: rows.length,
   };
 }
 
@@ -360,12 +361,14 @@ export async function listFixtureSubmissions(
 ): Promise<AdminPagedResult<AdminFixtureSubmission>> {
   const [from, to] = rangeFromPage(params);
   let query = supabase
-    .from('eg_fixture_submissions')
-    .select('id,fixture_id,submitted_by_user_id,submitted_team_id,status,source,notes,created_at,updated_at', {
+    .from('submissions')
+    .select('id,fixture_id,submitted_by,team_id,notes,submitted_at', {
       count: 'exact',
     });
 
-  if (params.status && params.status !== 'all') query = query.eq('status', params.status);
+  if (params.status && params.status !== 'all' && params.status !== 'submitted') {
+    return { rows: [], total: 0 };
+  }
   if (params.search?.trim()) {
     const q = params.search.trim();
     if (isLikelyUuid(q)) {
@@ -376,7 +379,7 @@ export async function listFixtureSubmissions(
   }
 
   const { data, error, count } = await query
-    .order('created_at', { ascending: false })
+    .order('submitted_at', { ascending: false })
     .range(from, to);
 
   if (error) {
@@ -387,7 +390,17 @@ export async function listFixtureSubmissions(
   }
 
   return {
-    rows: (data || []) as AdminFixtureSubmission[],
+    rows: ((data || []) as Array<Record<string, unknown>>).map((row) => ({
+      id: String(row.id || ''),
+      fixture_id: String(row.fixture_id || ''),
+      submitted_by_user_id: row.submitted_by ? String(row.submitted_by) : null,
+      submitted_team_id: row.team_id ? String(row.team_id) : null,
+      status: 'submitted',
+      source: 'submissions',
+      notes: row.notes ? String(row.notes) : null,
+      created_at: String(row.submitted_at || ''),
+      updated_at: String(row.submitted_at || ''),
+    })),
     total: count ?? 0,
   };
 }

@@ -1,8 +1,21 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import type { AuthState, CoachUser } from './types';
 import type { TeamKey } from '../../lib/teamAssets';
 import { buildAuthRedirect } from '../../lib/authRedirect';
+import { fetchCoachProfile } from '../../lib/profileRepo';
 import { getSupabaseClient, hasSupabaseEnv, requireSupabaseClient } from '../../lib/supabaseClient';
+import { fetchTeamsByIds } from '../../lib/teamsRepo';
+
+const PUBLIC_REGISTRATION_ONLY_MODE = true;
+const PUBLIC_LAUNCH_FALLBACK_PATH = '/preseason-registration';
+const PUBLIC_LAUNCH_ALLOWED_PATHS = new Set([
+  '/preseason-registration',
+  '/auth/sign-in',
+  '/auth/sign-up',
+  '/auth/forgot-password',
+  '/auth/callback',
+]);
 
 type AuthContextValue = AuthState & {
   signIn: (args: { email: string; password: string }) => Promise<void>;
@@ -13,6 +26,8 @@ type AuthContextValue = AuthState & {
     psn?: string;
     firstName?: string;
     lastName?: string;
+    facebookName?: string;
+    birthYear?: number;
     teamKey?: TeamKey;
   }) => Promise<CoachUser | null>;
   signOut: () => Promise<void>;
@@ -46,23 +61,19 @@ function debugLog(event: string, payload?: Record<string, unknown>) {
   }
 }
 
-function toCoachUserFromSupabase(raw: any): CoachUser | null {
-  if (!raw) return null;
-  const meta = raw.user_metadata || {};
-  const resolvedPsn = meta.psn || meta.gamer_tag || meta.gamertag || meta.psn_name || undefined;
-  return {
-    id: raw.id,
-    email: raw.email || '',
-    displayName: meta.display_name || meta.displayName || undefined,
-    psn: resolvedPsn,
-    firstName: meta.first_name || meta.firstName || undefined,
-    lastName: meta.last_name || meta.lastName || undefined,
-    teamKey: meta.team_key || meta.teamKey || undefined,
-  };
-}
-
 function cleanText(value: unknown): string {
   return String(value ?? '').trim();
+}
+
+function normalizePublicPath(pathname: string): string {
+  const raw = String(pathname || '/').trim();
+  if (!raw || raw === '/') return '/';
+  const withLeadingSlash = raw.startsWith('/') ? raw : `/${raw}`;
+  return withLeadingSlash.replace(/\/+$/, '') || '/';
+}
+
+function isPublicLaunchAllowedPath(pathname: string): boolean {
+  return PUBLIC_LAUNCH_ALLOWED_PATHS.has(normalizePublicPath(pathname));
 }
 
 function toLoggableError(error: unknown) {
@@ -135,7 +146,56 @@ function logBootstrapError(error: unknown) {
   debugLog('boot.failed', payload);
 }
 
-async function ensureProfileFromAuthUser(supabase: ReturnType<typeof getSupabaseClient>, authUser: any | null) {
+function toCoachUserFromSupabase(raw: SupabaseUser | null): CoachUser | null {
+  if (!raw) return null;
+  const meta = raw.user_metadata || {};
+  const firstName = cleanText(meta.first_name || meta.firstName);
+  const lastName = cleanText(meta.last_name || meta.lastName);
+  const displayName =
+    cleanText(meta.display_name || meta.displayName) ||
+    cleanText(`${firstName} ${lastName}`) ||
+    cleanText(raw.email).split('@')[0] ||
+    'Coach';
+  const resolvedPsn = cleanText(meta.psn || meta.gamer_tag || meta.gamertag || meta.psn_name) || undefined;
+
+  return {
+    id: raw.id,
+    email: raw.email || '',
+    displayName,
+    psn: resolvedPsn,
+    firstName: firstName || undefined,
+    lastName: lastName || undefined,
+    facebookName: cleanText(meta.facebook_name) || undefined,
+    birthYear: Number(meta.birth_year) || undefined,
+  };
+}
+
+function mergeCoachUser(
+  authUser: SupabaseUser | null,
+  profile?: Awaited<ReturnType<typeof fetchCoachProfile>> | null,
+  team?: { id: string; name: string; shortName: string; teamKey: string | null; logoUrl: string | null } | null,
+): CoachUser | null {
+  const base = toCoachUserFromSupabase(authUser);
+  if (!base) return null;
+
+  const displayName =
+    cleanText(profile?.display_name) ||
+    base.displayName ||
+    cleanText(base.email).split('@')[0] ||
+    'Coach';
+
+  return {
+    ...base,
+    displayName,
+    psn: cleanText(profile?.psn) || base.psn,
+    teamKey: ((cleanText(team?.teamKey) || base.teamKey) as TeamKey | undefined) || undefined,
+    teamId: cleanText(profile?.team_id) || undefined,
+    teamName: cleanText(team?.shortName || team?.name) || undefined,
+    teamLogoUrl: cleanText(team?.logoUrl) || undefined,
+  };
+}
+
+async function ensureProfileFromAuthUser(supabase: ReturnType<typeof getSupabaseClient>, authUser: SupabaseUser | null) {
   if (!supabase || !authUser?.id) return;
 
   const meta = authUser.user_metadata || {};
@@ -144,15 +204,26 @@ async function ensureProfileFromAuthUser(supabase: ReturnType<typeof getSupabase
   const displayName =
     cleanText(meta.display_name || meta.displayName) || cleanText(`${firstName} ${lastName}`) || cleanText(authUser.email).split('@')[0];
   const gamerTag = cleanText(meta.psn || meta.gamer_tag || meta.gamertag || meta.psn_name);
+  const facebookName = cleanText(meta.facebook_name);
+  const birthYear = Number(meta.birth_year) || null;
 
   try {
-    const { data, error } = await supabase.from('profiles').select('user_id,psn').eq('user_id', authUser.id).maybeSingle();
-    if (error) {
-      console.error('[AuthBootstrap] profiles select failed', toLoggableError(error));
+    const primary = await supabase.from('eg_profiles').select('user_id,psn,facebook_name,birth_year').eq('user_id', authUser.id).maybeSingle();
+    if (primary.error) {
+      console.error('[AuthBootstrap] eg_profiles select failed', toLoggableError(primary.error));
     }
 
+    const fallback = !primary.data?.user_id
+      ? await supabase.from('profiles').select('user_id,psn,facebook_name,birth_year').eq('user_id', authUser.id).maybeSingle()
+      : { data: null, error: null };
+
+    if (fallback.error) {
+      console.error('[AuthBootstrap] profiles fallback select failed', toLoggableError(fallback.error));
+    }
+
+    const data = primary.data?.user_id ? primary.data : fallback.data;
     const existingPsn = cleanText(data?.psn);
-    const needsUpsert = !data?.user_id || !existingPsn;
+    const needsUpsert = !data?.user_id || !existingPsn || !data.facebook_name || !data.birth_year;
     if (!needsUpsert) return;
 
     const payload = {
@@ -162,6 +233,8 @@ async function ensureProfileFromAuthUser(supabase: ReturnType<typeof getSupabase
       last_name: lastName || null,
       display_name: displayName || null,
       psn: gamerTag || null,
+      facebook_name: facebookName || null,
+      birth_year: birthYear || null,
       updated_at: new Date().toISOString(),
     };
 
@@ -181,92 +254,164 @@ async function ensureProfileFromAuthUser(supabase: ReturnType<typeof getSupabase
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = useMemo(() => (hasSupabaseEnv ? requireSupabaseClient() : null), []);
+  const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<CoachUser | null>(null);
   const [booting, setBooting] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const hydrateRequestRef = useRef(0);
 
   const isSupabase = Boolean(supabase && hasSupabaseEnv);
-  const loading = booting || actionLoading;
+  const loading = booting;
 
-  async function refresh() {
+  const hydrateIdentity = useCallback(
+    async (authUser: SupabaseUser | null) => {
+      const requestId = ++hydrateRequestRef.current;
+      if (!authUser?.id) return;
+
+      try {
+        await ensureProfileFromAuthUser(supabase, authUser);
+        const profile = await fetchCoachProfile(authUser.id);
+        let team: { id: string; name: string; shortName: string; teamKey: string | null; logoUrl: string | null } | null = null;
+
+        if (profile?.team_id) {
+          try {
+            const teamMap = await fetchTeamsByIds([profile.team_id]);
+            team = teamMap.get(profile.team_id) || null;
+          } catch (teamError) {
+            debugLog('profile.team_lookup.failed', toLoggableError(teamError));
+          }
+        }
+
+        if (requestId !== hydrateRequestRef.current) return;
+        setUser(mergeCoachUser(authUser, profile, team));
+      } catch (error) {
+        if (requestId !== hydrateRequestRef.current) return;
+        debugLog('profile.hydrate.failed', toLoggableError(error));
+        setUser((current) => current || toCoachUserFromSupabase(authUser));
+      }
+    },
+    [supabase],
+  );
+
+  const applySession = useCallback(
+    (nextSession: Session | null, options?: { hydratedUser?: SupabaseUser | null }) => {
+      setSession(nextSession);
+      if (!nextSession?.user) {
+        hydrateRequestRef.current += 1;
+        setUser(null);
+        return;
+      }
+
+      const authUser = options?.hydratedUser || nextSession.user;
+      setUser((current) => mergeCoachUser(authUser) || current);
+      void hydrateIdentity(authUser);
+    },
+    [hydrateIdentity],
+  );
+
+  const refresh = useCallback(async () => {
     debugLog('boot.start', {
       hasSupabaseEnv,
       isSupabase,
       supabaseUrl: SUPABASE_URL,
       hasAnonKey: SUPABASE_ANON_PRESENT,
     });
+
     setBooting(true);
     try {
-      if (isSupabase) {
-        const {
-          data: { session },
-          error: sessionError,
-        } = await withTimeout(
-          supabase!.auth.getSession(),
-          AUTH_TIMEOUT_MS,
-          'Could not reach server. Please try again.',
-        );
-        if (sessionError) {
-          debugLog('boot.session.error', toLoggableError(sessionError));
-          throw sessionError;
-        }
-        if (!session) {
-          debugLog('boot.session.none');
-          setUser(null);
-        } else {
-          debugLog('boot.session.found');
-          const { data, error } = await withTimeout(
-            supabase!.auth.getUser(),
-            AUTH_TIMEOUT_MS,
-            'Could not reach server. Please try again.',
-          );
-          if (error) {
-            debugLog('boot.user.error', toLoggableError(error));
-            setUser(null);
-          } else {
-            await ensureProfileFromAuthUser(supabase, data.user);
-            setUser(toCoachUserFromSupabase(data.user));
-          }
-        }
-      } else {
-        debugLog('boot.env.missing');
+      if (!isSupabase) {
+        setSession(null);
         setUser(null);
+        return;
       }
+
+      const {
+        data: { session: restoredSession },
+        error: sessionError,
+      } = await withTimeout(supabase!.auth.getSession(), AUTH_TIMEOUT_MS, 'Could not reach server. Please try again.');
+
+      if (sessionError) {
+        debugLog('boot.session.error', toLoggableError(sessionError));
+        throw sessionError;
+      }
+
+      if (!restoredSession?.user) {
+        debugLog('boot.session.none');
+        setSession(null);
+        setUser(null);
+        return;
+      }
+
+      debugLog('boot.session.found', { userId: restoredSession.user.id });
+      applySession(restoredSession);
     } catch (error) {
       logBootstrapError(error);
+      setSession(null);
       setUser(null);
     } finally {
       setBooting(false);
       debugLog('boot.end');
     }
-  }
+  }, [applySession, isSupabase, supabase]);
 
   useEffect(() => {
     debugLog('provider.init', { hasSupabaseEnv, isSupabase });
-    refresh();
+    void refresh();
 
     if (!isSupabase) return;
 
-    const { data: sub } = supabase!.auth.onAuthStateChange(async (_event, session) => {
-      debugLog('auth.state.change', { event: _event, hasSession: Boolean(session) });
-      await ensureProfileFromAuthUser(supabase, session?.user || null);
-      setUser(toCoachUserFromSupabase(session?.user));
+    const { data: sub } = supabase!.auth.onAuthStateChange((_event, nextSession) => {
+      debugLog('auth.state.change', { event: _event, hasSession: Boolean(nextSession) });
+      applySession(nextSession);
       setBooting(false);
     });
 
     return () => {
       sub.subscription?.unsubscribe();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [applySession, isSupabase, refresh, supabase]);
+
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined' || !PUBLIC_REGISTRATION_ONLY_MODE) return;
+
+    const originalPushState = window.history.pushState.bind(window.history);
+    const originalReplaceState = window.history.replaceState.bind(window.history);
+
+    const enforcePublicLaunchRoute = () => {
+      const currentPath = normalizePublicPath(window.location.pathname);
+      if (isPublicLaunchAllowedPath(currentPath)) return;
+      if (currentPath === PUBLIC_LAUNCH_FALLBACK_PATH) return;
+
+      originalReplaceState(window.history.state, '', PUBLIC_LAUNCH_FALLBACK_PATH);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    };
+
+    window.history.pushState = function (...args) {
+      originalPushState(...args);
+      enforcePublicLaunchRoute();
+    };
+
+    window.history.replaceState = function (...args) {
+      originalReplaceState(...args);
+      enforcePublicLaunchRoute();
+    };
+
+    window.addEventListener('popstate', enforcePublicLaunchRoute);
+    enforcePublicLaunchRoute();
+
+    return () => {
+      window.history.pushState = originalPushState;
+      window.history.replaceState = originalReplaceState;
+      window.removeEventListener('popstate', enforcePublicLaunchRoute);
+    };
   }, []);
 
   async function signIn(args: { email: string; password: string }) {
     debugLog('signin.start');
     setActionLoading(true);
     try {
-      if (!isSupabase) {
-        throw new Error(SUPABASE_ENV_ERROR);
-      }
+      if (!isSupabase) throw new Error(SUPABASE_ENV_ERROR);
+
       let data: any = null;
       let error: any = null;
       try {
@@ -281,9 +426,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         data = response.data;
         error = response.error;
       } catch (firstErr) {
-        if (!isReachabilityError(firstErr)) {
-          throw firstErr;
-        }
+        if (!isReachabilityError(firstErr)) throw firstErr;
         debugLog('signin.retry', { reason: String((firstErr as any)?.message || 'network timeout') });
         const response = await withTimeout(
           supabase!.auth.signInWithPassword({
@@ -298,40 +441,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (error) throw error;
-      if (!data?.session?.access_token) {
-        debugLog('signin.no_access_token', { hasSession: Boolean(data?.session), hasUser: Boolean(data?.user) });
-      }
 
-      let verifiedSessionUser: any = null;
-      try {
-        const sessionCheck = await withTimeout(
-          supabase!.auth.getSession(),
-          AUTH_TIMEOUT_MS,
-          'Could not reach server. Please try again.',
-        );
-        if (sessionCheck.error) {
-          throw sessionCheck.error;
-        }
-        verifiedSessionUser = sessionCheck.data.session?.user || null;
-        debugLog('signin.session_check', {
-          hasSession: Boolean(sessionCheck.data.session),
-          hasUser: Boolean(verifiedSessionUser),
-        });
-      } catch (sessionErr) {
-        debugLog('signin.session_check_failed', toLoggableError(sessionErr));
-        throw sessionErr;
-      }
-
-      if (!verifiedSessionUser?.id) {
-        debugLog('signin.session_persist_blocked');
+      const signedSession = data?.session || null;
+      const signedUser = signedSession?.user || data?.user || null;
+      if (!signedUser?.id) {
         const persistError = new Error(SESSION_PERSIST_BLOCKED_ERROR);
         (persistError as any).code = 'EG_SESSION_PERSIST_BLOCKED';
         throw persistError;
       }
 
-      await ensureProfileFromAuthUser(supabase, data.user);
-      setUser(toCoachUserFromSupabase(verifiedSessionUser || data.user));
-      debugLog('signin.success', { hasUser: Boolean(verifiedSessionUser || data.user) });
+      applySession(signedSession, { hydratedUser: signedUser });
+      debugLog('signin.success', { userId: signedUser.id });
     } catch (error) {
       debugLog('signin.failed', toLoggableError(error));
       throw error;
@@ -348,14 +468,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     psn?: string;
     firstName?: string;
     lastName?: string;
+    facebookName?: string;
+    birthYear?: number;
     teamKey?: TeamKey;
   }): Promise<CoachUser | null> {
     debugLog('signup.start');
     setActionLoading(true);
     try {
-      if (!isSupabase) {
-        throw new Error(SUPABASE_ENV_ERROR);
-      }
+      if (!isSupabase) throw new Error(SUPABASE_ENV_ERROR);
+
       const { data, error } = await supabase!.auth.signUp({
         email: args.email,
         password: args.password,
@@ -366,10 +487,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             last_name: args.lastName,
             display_name: args.displayName,
             psn: args.psn,
+            facebook_name: args.facebookName,
+            birth_year: args.birthYear,
             team_key: args.teamKey,
           },
         },
       });
+
       if (error) {
         console.error('[Auth.signUp] Supabase error', {
           code: (error as any)?.code,
@@ -379,9 +503,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         throw error;
       }
+
       await ensureProfileFromAuthUser(supabase, data.user);
       const next = toCoachUserFromSupabase(data.user);
-      setUser(next);
+      if (data.session) applySession(data.session, { hydratedUser: data.user || null });
+      else setUser(next);
+
       debugLog('signup.success', { hasUser: Boolean(next) });
       return next;
     } catch (error) {
@@ -398,6 +525,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       if (!isSupabase) throw new Error(SUPABASE_ENV_ERROR);
       await supabase!.auth.signOut();
+      hydrateRequestRef.current += 1;
+      setSession(null);
       setUser(null);
     } finally {
       setActionLoading(false);
@@ -406,6 +535,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const value: AuthContextValue = {
     user,
+    session,
     booting,
     actionLoading,
     loading,

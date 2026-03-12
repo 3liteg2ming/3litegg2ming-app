@@ -1,4 +1,5 @@
 import { requireSupabaseClient } from './supabaseClient';
+import { lookupPlayerHeadshotByName, resolveKnownPlayerHeadshot } from './playerHeadshots';
 
 const supabase = requireSupabaseClient();
 
@@ -39,7 +40,13 @@ function buildNameCandidates(name?: string): string[] {
 }
 
 function pickPhoto(row: EGPlayer): string | null {
-  return String(row?.headshot_url || row?.photo_url || '').trim() || null;
+  return (
+    resolveKnownPlayerHeadshot({
+      name: String(row?.name || row?.full_name || row?.display_name || `${row?.first_name || ''} ${row?.last_name || ''}` || '').trim(),
+      photoUrl: row?.photo_url,
+      headshotUrl: row?.headshot_url,
+    }) || null
+  );
 }
 
 function rowNames(row: EGPlayer): string[] {
@@ -58,29 +65,24 @@ async function fetchPlayersForNames(playerNames: string[]): Promise<EGPlayer[]> 
   if (!unique.length) return [];
 
   const selectAttempts = [
-    'id,name,full_name,display_name,first_name,last_name,headshot_url,photo_url',
-    'id,name,full_name,display_name,headshot_url,photo_url',
     'id,name,headshot_url,photo_url',
     'id,name,headshot_url',
+    'id,first_name,last_name,headshot_url,photo_url',
+    'id,first_name,last_name,headshot_url',
   ] as const;
 
   for (const select of selectAttempts) {
     const { data, error } = await supabase
       .from('eg_players')
       .select(select)
-      .in('name', unique)
       .limit(5000);
 
-    if (!error) return (data || []) as EGPlayer[];
-  }
-
-  for (const select of selectAttempts) {
-    const { data, error } = await supabase
-      .from('eg_players')
-      .select(select)
-      .limit(5000);
-
-    if (!error) return (data || []) as EGPlayer[];
+    if (!error) {
+      return ((data || []) as EGPlayer[]).filter((row) => {
+        const names = rowNames(row);
+        return names.some((name) => unique.includes(name));
+      });
+    }
   }
 
   return [];
@@ -89,6 +91,11 @@ async function fetchPlayersForNames(playerNames: string[]): Promise<EGPlayer[]> 
 export async function getPlayerPhotoFromSupabase(playerName?: string): Promise<string | null> {
   if (!playerName) return null;
   const normalizedName = normalizeName(playerName);
+  const mapped = lookupPlayerHeadshotByName(playerName);
+  if (mapped) {
+    playerPhotosCache.set(normalizedName, mapped);
+    return mapped;
+  }
 
   if (playerPhotosCache.has(normalizedName)) {
     return playerPhotosCache.get(normalizedName) ?? null;
@@ -106,6 +113,13 @@ export async function preloadPlayerPhotos(playerNames: string[]): Promise<Map<st
     const normalized = normalizeName(name);
     if (!normalized) {
       results.set(name, null);
+      continue;
+    }
+
+    const mapped = lookupPlayerHeadshotByName(name);
+    if (mapped) {
+      playerPhotosCache.set(normalized, mapped);
+      results.set(name, mapped);
       continue;
     }
 

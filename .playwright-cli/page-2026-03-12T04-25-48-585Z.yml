@@ -1,0 +1,71 @@
+- application "Elite Gaming App" [ref=e4]:
+  - banner [ref=e5]:
+    - status [ref=e6]:
+      - generic [ref=e7]: Elite Gaming AFL 26 preseason registrations are live.
+    - generic [ref=e8]:
+      - button "Open preseason registration" [ref=e10] [cursor=pointer]:
+        - generic [ref=e11]: "26"
+        - generic [ref=e12]: Preseason
+      - button "Go to home" [ref=e14] [cursor=pointer]:
+        - img [ref=e97]
+      - button "Sign in" [ref=e98] [cursor=pointer]
+  - main [ref=e20]:
+    - generic [ref=e22]:
+      - region "Launch intro" [ref=e23]:
+        - generic [ref=e24]:
+          - generic [ref=e25]: Elite Gaming
+          - heading "AFL 26 Preseason Knockout" [level=1] [ref=e26]
+          - paragraph [ref=e27]: The public microsite for coach registration, club preferences, and preseason launch updates.
+      - region "AFL 26 preseason registration" [ref=e28]:
+        - generic [ref=e29]:
+          - generic [ref=e31]:
+            - img [ref=e32]
+            - text: Coach registration
+          - generic [ref=e34]:
+            - heading "Lock in your club order for AFL 26." [level=2] [ref=e35]
+            - paragraph [ref=e36]: Choose up to four preferred clubs, confirm your preseason entry, and keep everything in one clean public flow.
+          - generic [ref=e37]:
+            - button "Register for preseason" [ref=e38] [cursor=pointer]
+            - button "Sign in" [ref=e39] [cursor=pointer]
+          - paragraph [ref=e40]: Create your account, set your club order, and lock in your entry today.
+          - generic "Launch info" [ref=e41]:
+            - generic [ref=e42]:
+              - generic [ref=e43]:
+                - img [ref=e44]
+                - text: Status
+              - strong [ref=e47]: Registrations live now
+            - generic [ref=e48]:
+              - generic [ref=e49]:
+                - img [ref=e50]
+                - text: Entry window
+              - strong [ref=e54]: Confirm your clubs today
+      - region "Current coaches" [ref=e55]:
+        - generic [ref=e56]:
+          - generic [ref=e57]:
+            - img [ref=e59]
+            - heading "Current Coaches" [level=2] [ref=e62]
+          - generic [ref=e63]: Registration board
+        - paragraph [ref=e64]: Confirmed coaches and team allocations will appear here as registrations are processed.
+        - button "View registration" [ref=e65] [cursor=pointer]
+      - region "Competition notes" [ref=e66]:
+        - generic [ref=e67]:
+          - generic [ref=e68]:
+            - img [ref=e70]
+            - heading "Competition Notes" [level=2] [ref=e73]
+          - generic [ref=e74]: Launch notes
+        - generic [ref=e75]:
+          - article [ref=e76]:
+            - heading "Competition format" [level=3] [ref=e77]
+            - paragraph [ref=e78]: "Format: 2 home-and-away matches, followed by knockout finals."
+          - article [ref=e79]:
+            - heading "Registration flow" [level=3] [ref=e80]
+            - paragraph [ref=e81]: Create your account, sign in, choose up to four clubs, and confirm one final preseason entry.
+      - region "League leaders" [ref=e82]:
+        - generic [ref=e83]:
+          - generic [ref=e84]:
+            - img [ref=e86]
+            - heading "League Leaders" [level=2] [ref=e92]
+          - generic [ref=e93]: Opens after round one
+        - generic [ref=e94]:
+          - paragraph [ref=e95]: Leaders will appear once preseason begins.
+          - paragraph [ref=e96]: Goals, disposals, and headline performers will populate here after the opening matches.

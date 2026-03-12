@@ -1,162 +1,609 @@
 .prPage {
   position: relative;
   width: 100%;
+  min-height: 100%;
   color: rgba(246, 249, 255, 0.95);
   background:
-    linear-gradient(138deg, rgba(7, 7, 12, 0.94), rgba(10, 10, 20, 0.95)),
-    radial-gradient(88% 120% at 4% 10%, rgba(124, 92, 255, 0.12), transparent 72%),
+    linear-gradient(180deg, rgba(5, 9, 15, 0.96), rgba(7, 11, 18, 0.94)),
+    radial-gradient(80% 110% at 12% 6%, rgba(245, 196, 0, 0.12), transparent 66%),
+    radial-gradient(82% 120% at 88% 12%, rgba(73, 147, 255, 0.16), transparent 68%),
     url('https://zohtixrgskbzosgfluni.supabase.co/storage/v1/object/public/Assets/mcg-stadium.jpg');
-  background-size: cover, 150% 150%, cover;
-  background-position: center, left top, center;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
+  background-size: cover, 140% 140%, 135% 135%, cover;
+  background-position: center, left top, right top, center;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
+}
+
+.prPage::before,
+.prPage::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.prPage::before {
+  top: 0;
+  height: min(30vh, 260px);
+  background: linear-gradient(180deg, rgba(4, 6, 10, 0.62), rgba(4, 6, 10, 0));
+}
+
+.prPage::after {
+  bottom: 0;
+  height: min(26vh, 220px);
+  background: linear-gradient(0deg, rgba(4, 7, 11, 0.74), rgba(4, 7, 11, 0));
+}
+
+.prLockable {
+  position: relative;
+  z-index: 1;
+}
+
+.prLockable.is-locked {
+  filter: blur(10px) saturate(0.92);
+  transform: scale(0.995);
+  pointer-events: none;
+  user-select: none;
 }
 
 .prShell {
-  width: min(900px, 100%);
+  position: relative;
+  z-index: 1;
+  width: min(760px, 100%);
   margin: 0 auto;
-  padding: 12px 10px 0;
+  padding: 14px 14px 0;
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .prFormCard,
 .prErrorCard,
 .prConfirmCard {
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
-  padding: 12px;
+  position: relative;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  box-shadow: 0 26px 56px rgba(2, 6, 14, 0.42);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  overflow: hidden;
 }
 
-.prLoading {
+.prFormCard::before,
+.prErrorCard::before,
+.prConfirmCard::before,
+.prPage .regHeroCard::before,
+.prSelectionSummary__pill::before,
+.prPage .tlgCard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+}
+
+.prErrorCard,
+.prConfirmCard {
+  padding: 22px;
+}
+
+.prConfirmCard {
   display: grid;
-  gap: 8px;
+  gap: 14px;
 }
 
-.prSkeleton {
-  height: 58px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
-  background-size: 200% 100%;
-  animation: prShimmer 1.2s linear infinite;
+.prErrorCard h1,
+.prConfirmCard h2 {
+  margin: 12px 0 0;
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 0.96;
+  letter-spacing: -0.04em;
 }
 
-.prIdentityRow {
-  display: grid;
-  gap: 8px;
+.prErrorCard p,
+.prConfirmCard__sub {
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(214, 224, 242, 0.76);
 }
 
-.prIdentityRow--triple {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.prPage .regHeroCard {
+  border-radius: 28px;
+  border-color: rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(135deg, rgba(4, 9, 16, 0.94), rgba(6, 11, 18, 0.82)),
+    radial-gradient(80% 110% at 15% 15%, rgba(245, 196, 0, 0.16), transparent 64%),
+    radial-gradient(84% 114% at 88% 16%, rgba(73, 147, 255, 0.18), transparent 70%);
+  box-shadow:
+    0 0 0 1px rgba(245, 196, 0, 0.06),
+    0 30px 70px rgba(1, 5, 14, 0.48);
 }
 
-.prIdentityRow label {
-  display: grid;
-  gap: 6px;
+.prPage .regHeroCard::after {
+  opacity: 0.1;
 }
 
-.prIdentityRow span {
-  font-size: 10px;
-  font-weight: 800;
-  color: rgba(218, 225, 239, 0.68);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+.prPage .regHeroCard__watermark {
+  opacity: 0.08;
+  filter: grayscale(1) brightness(0.38);
 }
 
-.prIdentityRow input {
-  width: 100%;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(245, 249, 255, 0.93);
-  padding: 10px 11px;
-  font-size: 13px;
-  font-weight: 800;
+.prPage .regHeroCard__content {
+  padding: 15px;
 }
 
-.prForm {
+.prPage .regHeroCard__top {
+  display: block;
+}
+
+.prPage .regHeroCard__kicker {
+  border-color: rgba(245, 196, 0, 0.32);
+  background: rgba(245, 196, 0, 0.12);
+  color: rgba(255, 236, 177, 0.97);
+}
+
+.prPage .regHeroCard__title {
+  font-size: clamp(1.7rem, 4vw, 2.8rem);
+  line-height: 0.96;
+  letter-spacing: -0.06em;
+}
+
+.prPage .regHeroCard__subtitle {
+  max-width: 40ch;
+  font-size: clamp(14px, 1.8vw, 15px);
+  line-height: 1.55;
+  color: rgba(233, 239, 250, 0.85);
+}
+
+.prPage .regHeroCard__seed {
+  max-width: 40ch;
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(255, 229, 157, 0.7);
+}
+
+.prPage .regHeroCard__ctaArea {
   margin-top: 10px;
-  display: grid;
   gap: 10px;
 }
 
-.prProgress {
-  margin: 0;
-  color: rgba(212, 233, 220, 0.76);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
+.prPage .regHeroCard__helper {
+  color: rgba(211, 221, 240, 0.72);
+  font-size: 12px;
+}
+
+.prFormatNote {
+  display: grid;
+  gap: 4px;
+  padding: 13px 15px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.prFormatNote__label {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
+  color: rgba(229, 216, 163, 0.74);
+}
+
+.prFormatNote__text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(230, 237, 248, 0.82);
+}
+
+.prHeroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: min(100%, 320px);
+}
+
+.prHeroHelper {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  color: rgba(211, 221, 240, 0.74);
+}
+
+.prFormCard {
+  padding: 15px;
+}
+
+.prForm {
+  display: grid;
+  gap: 15px;
+}
+
+.prFormIntro {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.prFormIntro__copy {
+  display: grid;
+  gap: 8px;
+  max-width: 44ch;
+}
+
+.prAccountLine {
+  display: grid;
+  gap: 3px;
+  padding: 13px 15px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(233, 240, 252, 0.9);
+}
+
+.prAccountLine__eyebrow {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(229, 216, 163, 0.74);
+}
+
+.prAccountLine strong {
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.prAccountLine span {
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(208, 219, 239, 0.74);
 }
 
 .prGridHeading {
-  margin: -2px 0 2px;
-  color: rgba(232, 245, 238, 0.94);
-  font-size: 13px;
+  margin: 0;
+  font-size: clamp(22px, 3vw, 28px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: rgba(247, 250, 255, 0.97);
+}
+
+.prFormIntro__sub {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(209, 220, 239, 0.72);
+}
+
+.prPrefPill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: 12px;
   font-weight: 800;
+  color: rgba(241, 246, 255, 0.94);
+  max-width: 100%;
+  line-height: 1.35;
+  white-space: normal;
 }
 
 .prInlineError {
-  border-radius: 10px;
-  border: 1px solid rgba(255, 106, 117, 0.4);
-  background: rgba(255, 106, 117, 0.11);
-  color: rgba(255, 213, 218, 0.96);
-  font-size: 12px;
-  padding: 8px 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 106, 117, 0.32);
+  background: rgba(255, 106, 117, 0.1);
+  color: rgba(255, 221, 226, 0.96);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 12px 14px;
 }
 
 .prBtn {
   border: 1px solid transparent;
-  border-radius: 14px;
-  min-height: 44px;
-  padding: 0 14px;
+  border-radius: 18px;
+  min-height: 46px;
+  padding: 0 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 900;
-  cursor: pointer;
   letter-spacing: 0.01em;
-  transition: transform 0.14s ease, box-shadow 0.16s ease;
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+
+.prBtn:hover {
+  transform: translateY(-1px);
 }
 
 .prBtn:active {
-  transform: scale(0.985);
+  transform: translateY(0);
+}
+
+.prBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .prBtn--primary {
-  background: linear-gradient(180deg, #ffdd72, #f5c400);
+  background: linear-gradient(180deg, #ffe28a, #f5c400);
   color: rgba(10, 12, 18, 0.96);
-  box-shadow: 0 10px 24px rgba(245, 196, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.42), inset 0 -1px 0 rgba(90, 56, 0, 0.18);
+  box-shadow:
+    0 14px 28px rgba(245, 196, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.44),
+    inset 0 -1px 0 rgba(101, 63, 0, 0.2);
 }
 
-.prBtn--confirm {
-  min-height: 46px;
-  font-size: 14px;
-  width: 100%;
-  max-width: 420px;
-  justify-self: center;
-  box-shadow: 0 12px 28px rgba(245, 196, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.44), inset 0 -1px 0 rgba(90, 56, 0, 0.2);
+.prBtn--ghost,
+.prBtn--profile,
+.prBtn--support {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(241, 246, 255, 0.94);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .prBtn--profile {
   width: 100%;
   max-width: 420px;
   justify-self: center;
-  min-height: 42px;
-  border-color: rgba(124, 92, 255, 0.36);
-  background: rgba(124, 92, 255, 0.12);
-  color: rgba(232, 223, 255, 0.96);
 }
 
-.prLockable.is-locked {
-  filter: blur(10px) saturate(0.9);
-  transform: scale(0.995);
-  pointer-events: none;
-  user-select: none;
+.prBtn--confirm {
+  width: 100%;
+  max-width: none;
+  justify-self: stretch;
+  min-height: 49px;
+}
+
+.prConfirmCard {
+  border-color: rgba(245, 196, 0, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+    radial-gradient(120% 120% at 0% 0%, rgba(245, 196, 0, 0.1), transparent 66%);
+  gap: 12px;
+}
+
+.prConfirmCard--standalone {
+  margin-top: 2px;
+}
+
+.prConfirmCard__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(245, 196, 0, 0.28);
+  background: rgba(245, 196, 0, 0.12);
+  color: rgba(255, 236, 177, 0.98);
+}
+
+.prConfirmCard__eyebrow {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(229, 216, 163, 0.76);
+}
+
+.prConfirmCard__summary {
+  display: grid;
+  gap: 8px;
+}
+
+.prConfirmCard__row {
+  display: grid;
+  grid-template-columns: minmax(0, 92px) minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.prConfirmCard__row span {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(206, 218, 239, 0.68);
+  padding-top: 3px;
+}
+
+.prConfirmCard__row strong {
+  font-size: 14px;
+  line-height: 1.45;
+  color: rgba(245, 248, 255, 0.96);
+}
+
+.prConfirmCard__note {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: rgba(220, 229, 244, 0.68);
+}
+
+.prPage .tlgWrap {
+  display: grid;
+  gap: 10px;
+}
+
+.prPage .tlgCount {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(232, 240, 255, 0.82);
+}
+
+.prPage .tlgSlots {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.prPage .tlgSlot {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: rgba(255, 255, 255, 0.05);
+  min-height: 54px;
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.prPage .tlgSlot.is-filled {
+  border-color: rgba(245, 196, 0, 0.26);
+  background: linear-gradient(180deg, rgba(245, 196, 0, 0.14), rgba(255, 255, 255, 0.04));
+}
+
+.prPage .tlgSlot__index {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(236, 243, 255, 0.92);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.prPage .tlgSlot__logo {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+
+.prPage .tlgSlot__empty {
+  color: rgba(204, 216, 239, 0.46);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.prPage .tlgGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.prPage .tlgCard {
+  position: relative;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  min-height: 128px;
+  padding: 12px 10px;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  text-align: center;
+  color: rgba(245, 249, 255, 0.95);
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+  overflow: hidden;
+}
+
+.prPage .tlgCard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.prPage .tlgCard.is-active {
+  border-color: rgba(245, 196, 0, 0.34);
+  background: linear-gradient(180deg, rgba(245, 196, 0, 0.14), rgba(255, 255, 255, 0.05));
+  box-shadow:
+    0 18px 30px rgba(245, 196, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.prPage .tlgCard__logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+    rgba(7, 11, 18, 0.9);
+  box-shadow: 0 16px 24px rgba(0, 0, 0, 0.26);
+}
+
+.prPage .tlgCard__logoImg,
+.prPage .tlgCard__logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.prPage .tlgCard__name {
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 800;
+  color: rgba(239, 245, 255, 0.9);
+}
+
+.prPage .tlgCard__check {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 196, 0, 0.34);
+  background: rgba(245, 196, 0, 0.16);
+  color: rgba(255, 237, 181, 0.98);
+}
+
+.prPage .tlgCard__order {
+  top: 10px;
+  right: 10px;
+}
+
+.prPage .tlgCard__orderBadge {
+  min-width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(245, 196, 0, 0.5);
+  background: linear-gradient(180deg, rgba(245, 196, 0, 0.26), rgba(245, 196, 0, 0.18));
+  color: rgba(255, 243, 202, 0.98);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.prPage .tlgEmpty,
+.prPage .tlgGrid--loading {
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 18px;
+}
+
+.prPage .tlgGrid--loading {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.prPage .tlgSkeleton {
+  height: 120px;
+  border-radius: 20px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04));
+  background-size: 200% 100%;
+  animation: prShimmer 1.2s linear infinite;
 }
 
 .prLockOverlay {
@@ -166,150 +613,71 @@
   display: grid;
   place-items: center;
   padding: 18px;
-  background: radial-gradient(70% 80% at 50% 30%, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.72));
+  background: radial-gradient(72% 84% at 50% 26%, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.8));
 }
 
 .prLockModal {
-  width: min(520px, 100%);
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
-  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.55);
-  padding: 16px;
+  width: min(540px, 100%);
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(180deg, rgba(9, 13, 20, 0.94), rgba(7, 10, 16, 0.98)),
+    radial-gradient(120% 120% at 0% 0%, rgba(245, 196, 0, 0.12), transparent 66%);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.58);
+  padding: 24px;
   text-align: center;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
 .prLockKicker {
   display: inline-flex;
-  padding: 6px 10px;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 12px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
-  font-size: 11px;
+  border: 1px solid rgba(245, 196, 0, 0.28);
+  background: rgba(245, 196, 0, 0.12);
+  color: rgba(255, 237, 183, 0.98);
+  font-size: 10px;
   font-weight: 900;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(246, 249, 255, 0.9);
 }
 
 .prLockTitle {
-  margin: 12px 0 0;
-  font-size: 26px;
-  line-height: 1.08;
-  letter-spacing: -0.02em;
-  color: rgba(246, 249, 255, 0.95);
+  margin: 14px 0 0;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 0.94;
+  letter-spacing: -0.05em;
+  color: rgba(246, 249, 255, 0.97);
 }
 
-.prLockSub {
-  margin: 8px 0 0;
-  color: rgba(210, 220, 245, 0.72);
-  font-size: 13px;
-  font-weight: 700;
+.prLockSub,
+.prLockHint {
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(211, 221, 240, 0.74);
 }
 
 .prLockCountdown {
-  margin: 12px auto 0;
+  margin: 18px auto 0;
   width: fit-content;
-  padding: 10px 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(0, 0, 0, 0.22);
-  font-size: 18px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.92);
-}
-
-.prLockHint {
-  margin: 12px 0 12px;
-  color: rgba(210, 220, 245, 0.7);
-  font-size: 13px;
-}
-
-.prBtn--ghost {
-  background: rgba(255, 255, 255, 0.06);
+  min-width: 190px;
+  padding: 14px 18px;
+  border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  color: rgba(246, 249, 255, 0.92);
-  box-shadow: none;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: rgba(246, 249, 255, 0.97);
 }
 
 .prLockModal .prBtn {
   width: 100%;
-  max-width: 360px;
-  margin: 8px auto 0;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .prBtn--confirm:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 14px 30px rgba(245, 196, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.46), inset 0 -1px 0 rgba(90, 56, 0, 0.22);
-  }
-}
-
-.prBtn:disabled {
-  opacity: 0.62;
-  cursor: not-allowed;
-}
-
-.prConfirmCard {
-  border-color: rgba(124, 92, 255, 0.36);
-  background: linear-gradient(180deg, rgba(124, 92, 255, 0.14), rgba(12, 14, 24, 0.62));
-}
-
-.prConfirmCard__icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(124, 92, 255, 0.42);
-  color: rgba(234, 224, 255, 0.98);
-  background: rgba(124, 92, 255, 0.14);
-}
-
-.prConfirmCard h2,
-.prErrorCard h1 {
-  margin: 10px 0 0;
-  font-size: clamp(24px, 5vw, 30px);
-  line-height: 1.03;
-  letter-spacing: -0.02em;
-}
-
-.prErrorCard p {
-  margin: 8px 0 0;
-  color: rgba(223, 231, 246, 0.72);
-  font-size: 13px;
-}
-
-.prConfirmCard__prefs {
-  margin: 12px 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.prPrefPill {
-  border-radius: 999px;
-  border: 1px solid rgba(124, 92, 255, 0.4);
-  background: rgba(124, 92, 255, 0.15);
-  color: rgba(234, 224, 255, 0.98);
-  padding: 7px 10px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.teamLogoGrid__name {
-  display: block;
-  margin-top: 10px;
-  max-width: 100%;
-  color: rgba(236, 243, 255, 0.85);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.15;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin-top: 12px;
 }
 
 @keyframes prShimmer {
@@ -320,18 +688,73 @@
 
 @media (max-width: 760px) {
   .prShell {
-    padding: 10px 8px 0;
+    padding: 14px 10px 0;
+    gap: 12px;
+  }
+
+  .prPage .regHeroCard,
+  .prFormCard,
+  .prErrorCard,
+  .prConfirmCard,
+  .prLockModal {
+    border-radius: 24px;
+  }
+
+  .prPage .regHeroCard__content,
+  .prFormCard,
+  .prErrorCard,
+  .prConfirmCard,
+  .prLockModal {
+    padding: 18px;
+  }
+
+  .prConfirmCard__row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .prHeroActions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .prPage .tlgSlots,
+  .prPage .tlgGrid,
+  .prPage .tlgGrid--loading {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .prShell {
+    padding-inline: 8px;
+  }
+
+  .prFormIntro {
+    flex-direction: column;
+  }
+
+  .prPrefPill {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .prPage .tlgSlots,
+  .prPage .tlgGrid,
+  .prPage .tlgGrid--loading {
+    grid-template-columns: 1fr 1fr;
     gap: 10px;
   }
 
-  .prFormCard,
-  .prErrorCard,
-  .prConfirmCard {
-    border-radius: 16px;
-    padding: 11px;
+  .prPage .tlgCard {
+    min-height: 118px;
   }
 
-  .prIdentityRow--triple {
-    grid-template-columns: 1fr;
+  .prLockCountdown {
+    min-width: 0;
+    width: 100%;
+    font-size: 24px;
   }
 }

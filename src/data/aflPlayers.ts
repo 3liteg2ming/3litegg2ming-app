@@ -1,4 +1,6 @@
 import { requireSupabaseClient } from '../lib/supabaseClient';
+import { fetchActiveCompetitionBaseline } from '../lib/seasonParticipantsRepo';
+import { resolveKnownPlayerHeadshot } from '../lib/playerHeadshots';
 
 const supabase = requireSupabaseClient();
 
@@ -21,14 +23,24 @@ export type AflPlayer = {
   handballs?: number;
   marks?: number;
   tackles?: number;
+  clearances?: number;
   hitOuts?: number;
   fantasyPoints?: number;
 };
 
 type TeamLookup = { id?: string; name?: string; teamKey?: string };
 type RawPlayerRow = Record<string, any>;
+type CsvPlayerRow = {
+  id: string;
+  name: string;
+  headshotUrl?: string;
+  teamName?: string;
+  position?: string;
+  number?: number;
+};
 
 let cache: { at: number; players: AflPlayer[] } | null = null;
+let bundledCsvCache: CsvPlayerRow[] | null = null;
 const TTL_MS = 5 * 60_000;
 
 function numOrUndef(v: unknown) {
@@ -43,34 +55,51 @@ function strOrUndef(v: unknown) {
 }
 
 function pickHeadshot(p: any) {
-  return strOrUndef(p?.headshot_url) || strOrUndef(p?.photo_url) || strOrUndef(p?.headshot);
+  return (
+    strOrUndef(
+      resolveKnownPlayerHeadshot({
+        name:
+          strOrUndef(p?.name) ||
+          `${strOrUndef(p?.first_name) || ''} ${strOrUndef(p?.last_name) || ''}`.trim(),
+        photoUrl: strOrUndef(p?.photo_url),
+        headshotUrl: strOrUndef(p?.headshot_url) || strOrUndef(p?.headshot),
+      }),
+    )
+  );
 }
 
 function normalizeTeamKey(raw?: string) {
   return raw ? raw.trim().toLowerCase() || undefined : undefined;
 }
 
+function normalizeTeamToken(value: unknown) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '')
+    .trim();
+}
+
 async function fetchPlayersRaw() {
   const selectAttempts = [
-    // Optional nested join by team_id (works when FK relationship metadata exists)
-    `id,name,team_id,team_key,team_name,team,position,number,headshot_url,photo_url,headshot,
-     games_played,goals,disposals,kicks,handballs,marks,tackles,hit_outs,fantasy_points,
-     eg_teams(id,name,team_key)`,
-    // Flat row with stats
-    'id,name,team_id,team_key,team_name,team,position,number,headshot_url,photo_url,headshot,games_played,goals,disposals,kicks,handballs,marks,tackles,hit_outs,fantasy_points',
-    // Flat row minimal stats-less
-    'id,name,team_id,team_key,team_name,team,position,number,headshot_url,photo_url,headshot',
-    // Minimal schema requested by user
+    // Keep live roster fetches on the stable core schema only.
+    'id,name,team_id,position,number,headshot_url,photo_url',
     'id,name,team_id,position,number,headshot_url',
-    // First/last name schema fallback
-    'id,first_name,last_name,team_id,position,number,headshot_url,photo_url',
+    'id,name,team_id,headshot_url,photo_url',
+    'id,name,team_id,headshot_url',
+    'id,name,position,number,headshot_url,photo_url',
+    'id,name,headshot_url,photo_url',
+    'id,display_name,team_id,position,number,headshot_url,photo_url',
+    'id,full_name,team_id,position,number,headshot_url,photo_url',
+    'id,display_name,headshot_url,photo_url',
+    'id,full_name,headshot_url,photo_url',
   ] as const;
 
   let data: any[] = [];
   let lastErr: any = null;
 
   for (const sel of selectAttempts) {
-    const res = await supabase.from('eg_players').select(sel).order('name', { ascending: true }).limit(5000);
+    const res = await supabase.from('eg_players').select(sel).limit(5000);
     if (!res.error) {
       data = (res.data as any[]) || [];
       lastErr = null;
@@ -81,6 +110,86 @@ async function fetchPlayersRaw() {
 
   if (lastErr) throw lastErr;
   return data;
+}
+
+function parseCsvLine(line: string): string[] {
+  const out: string[] = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i];
+    const next = line[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && next === '"') {
+        current += '"';
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === ',' && !inQuotes) {
+      out.push(current);
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  out.push(current);
+  return out.map((value) => value.trim());
+}
+
+async function fetchBundledPlayersCsv(): Promise<CsvPlayerRow[]> {
+  if (bundledCsvCache) return bundledCsvCache;
+
+  const response = await fetch('/data/afl-players-2026.csv', { cache: 'force-cache' });
+  if (!response.ok) {
+    throw new Error(`Failed to load bundled players CSV: ${response.status}`);
+  }
+
+  const textBlob = (await response.text()).replace(/^\uFEFF/, '');
+  const lines = textBlob
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (lines.length <= 1) {
+    bundledCsvCache = [];
+    return bundledCsvCache;
+  }
+
+  const headers = parseCsvLine(lines[0]);
+  const column = (name: string) => headers.indexOf(name);
+  const players: CsvPlayerRow[] = [];
+
+  for (const line of lines.slice(1)) {
+    const cells = parseCsvLine(line);
+    const read = (name: string) => {
+      const index = column(name);
+      return index >= 0 ? String(cells[index] || '').trim() : '';
+    };
+
+    const id = read('ID');
+    const name = read('Player Name');
+    if (!id || !name) continue;
+
+    players.push({
+      id,
+      name,
+      headshotUrl: strOrUndef(read('Headshot URL')) || undefined,
+      teamName: strOrUndef(read('Team')) || undefined,
+      position: strOrUndef(read('Position')) || undefined,
+      number: numOrUndef(read('Jumper Number')),
+    });
+  }
+
+  bundledCsvCache = players;
+  return bundledCsvCache;
 }
 
 async function fetchTeamsById(): Promise<Map<string, TeamLookup>> {
@@ -206,6 +315,7 @@ export async function fetchAflPlayers(): Promise<AflPlayer[]> {
   if (cache && now - cache.at < TTL_MS) return cache.players;
 
   let rawPlayers: RawPlayerRow[] = [];
+  const baseline = await fetchActiveCompetitionBaseline().catch(() => null);
   try {
     rawPlayers = await fetchPlayersRaw();
   } catch {
@@ -221,7 +331,79 @@ export async function fetchAflPlayers(): Promise<AflPlayer[]> {
     byId.set(mapped.id, prev ? mergePreferBetter(prev, mapped) : mapped);
   }
 
-  const players = Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name));
+  if (byId.size === 0) {
+    const bundledPlayers = await fetchBundledPlayersCsv().catch(() => [] as CsvPlayerRow[]);
+    for (const player of bundledPlayers) {
+      const normalizedTeamName = strOrUndef(player.teamName) || '';
+      const matchedTeam = Array.from(teamById.values()).find((team) => {
+        const nameToken = normalizeTeamToken(team.name);
+        const keyToken = normalizeTeamToken(team.teamKey);
+        const playerToken = normalizeTeamToken(normalizedTeamName);
+        return playerToken && (playerToken === nameToken || playerToken === keyToken);
+      });
+
+      const mapped: AflPlayer = {
+        id: player.id,
+        name: player.name,
+        headshotUrl: pickHeadshot({
+          name: player.name,
+          headshot_url: player.headshotUrl,
+          photo_url: player.headshotUrl,
+        }) || undefined,
+        teamId: matchedTeam?.id,
+        teamName: matchedTeam?.name || normalizedTeamName || undefined,
+        teamKey: matchedTeam?.teamKey || normalizeTeamKey(normalizedTeamName)?.replace(/_/g, '') || undefined,
+        position: player.position,
+        number: player.number,
+        gamesPlayed: 0,
+        goals: 0,
+        disposals: 0,
+        kicks: 0,
+        handballs: 0,
+        marks: 0,
+        tackles: 0,
+        hitOuts: 0,
+        fantasyPoints: 0,
+      };
+
+      byId.set(mapped.id, mapped);
+    }
+  }
+
+  const allPlayers = Array.from(byId.values());
+  const baselineTeams = baseline?.teams || [];
+  let players = allPlayers;
+
+  if (baselineTeams.length > 0) {
+    const teamIds = new Set(baselineTeams.map((team) => strOrUndef(team.id)).filter(Boolean));
+    const teamNames = new Set(
+      baselineTeams
+        .flatMap((team) => [normalizeTeamToken(team.name), normalizeTeamToken(team.shortName)])
+        .filter(Boolean),
+    );
+    const teamKeys = new Set(
+      baselineTeams
+        .flatMap((team) => [normalizeTeamToken(team.teamKey), normalizeTeamToken(team.slug)])
+        .filter(Boolean),
+    );
+
+    const filtered = allPlayers.filter((player) => {
+      const playerTeamId = strOrUndef(player.teamId);
+      const playerTeamName = normalizeTeamToken(player.teamName);
+      const playerTeamKey = normalizeTeamToken(player.teamKey);
+      return (
+        (playerTeamId && teamIds.has(playerTeamId)) ||
+        (playerTeamName && teamNames.has(playerTeamName)) ||
+        (playerTeamKey && teamKeys.has(playerTeamKey))
+      );
+    });
+
+    if (filtered.length > 0) {
+      players = filtered;
+    }
+  }
+
+  players.sort((a, b) => a.name.localeCompare(b.name));
   cache = { at: now, players };
   return players;
 }
