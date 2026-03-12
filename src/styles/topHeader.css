@@ -298,7 +298,9 @@
 
   .egTopHeader__compPill {
     min-height: 30px;
-    padding: 0 10px 0 8px;
+    min-width: 122px;
+    gap: 6px;
+    padding: 0 12px 0 8px;
   }
 
   .egTopHeader__compPillMark {
@@ -308,20 +310,20 @@
   }
 
   .egTopHeader__compPillLabel {
-    font-size: 9.2px;
-    letter-spacing: 0.06em;
+    font-size: 9.1px;
+    letter-spacing: 0.05em;
   }
 
   .egTopHeader__brandLockup {
-    width: 208px;
-    height: 46px;
+    width: 220px;
+    height: 48px;
   }
 
   .egTopHeader__brandLogo {
     width: 100%;
-    max-width: 208px;
+    max-width: 220px;
     height: auto;
-    max-height: 46px;
+    max-height: 48px;
     object-fit: contain;
     object-position: center;
   }
@@ -345,20 +347,20 @@
 
 @media (max-width: 430px) {
   .egTopHeader__inner {
-    gap: 5px;
-    grid-template-columns: minmax(104px, 112px) minmax(0, 1fr) minmax(88px, 96px);
+    gap: 4px;
+    grid-template-columns: minmax(118px, 126px) minmax(0, 1fr) minmax(84px, 92px);
   }
 
   .egTopHeader__brandLockup {
-    width: clamp(180px, 48vw, 194px);
-    height: 42px;
+    width: clamp(196px, 52vw, 212px);
+    height: 44px;
   }
 
   .egTopHeader__brandLogo {
     width: 100%;
-    max-width: clamp(180px, 48vw, 194px);
+    max-width: clamp(196px, 52vw, 212px);
     height: auto;
-    max-height: 42px;
+    max-height: 44px;
     object-fit: contain;
     object-position: center;
   }
@@ -381,10 +383,13 @@
 
   .egTopHeader__compPill {
     min-height: 29px;
-    padding: 0 10px 0 7px;
+    min-width: 118px;
+    gap: 6px;
+    padding: 0 12px 0 8px;
   }
 
   .egTopHeader__compPillLabel {
-    font-size: 9.05px;
+    font-size: 8.9px;
+    letter-spacing: 0.04em;
   }
 }
