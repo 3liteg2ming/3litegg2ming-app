@@ -1,7 +1,22 @@
+import type { CSSProperties } from 'react';
 import SmartImg from '@/components/SmartImg';
 import { assetUrl, TEAM_ASSETS, type TeamKey } from '@/lib/teamAssets';
 import type { MatchCentreModel, TeamStatRow } from '@/lib/matchCentreRepo';
 import '@/styles/match-centre-team-stats.css';
+
+const TEAM_STAT_GROUPS = [
+  { title: 'Scoring', labels: ['Score', 'Goals', 'Behinds', 'Goal Kickers'] },
+  {
+    title: 'Possession',
+    labels: ['Disposals', 'Kicks', 'Handballs', 'Contested Possessions', 'Uncontested Possessions'],
+  },
+  {
+    title: 'Field Position',
+    labels: ['Inside 50s', 'Rebound 50s', 'Marks', 'Contested Marks', 'Intercept Marks'],
+  },
+  { title: 'Stoppages', labels: ['Hitouts', 'Clearances'] },
+  { title: 'Defence / Pressure', labels: ['Tackles', 'Spoils', 'Frees For'] },
+] as const;
 
 function slugToTeamKey(slug: string): TeamKey | null {
   const s = String(slug || '').toLowerCase().trim();
@@ -32,45 +47,121 @@ function slugToTeamKey(slug: string): TeamKey | null {
   return aliases[compact] || null;
 }
 
-function tintForStatValue(hex: string, fallback: string) {
-  const h = String(hex || '').replace('#', '').trim();
-  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
-  const r = parseInt(full.slice(0, 2), 16);
-  const g = parseInt(full.slice(2, 4), 16);
-  const b = parseInt(full.slice(4, 6), 16);
-  if (![r, g, b].every(Number.isFinite)) return fallback;
-  const lift = (v: number) => Math.max(120, Math.min(255, v + 35));
-  return `rgb(${lift(r)}, ${lift(g)}, ${lift(b)})`;
+function resolveTeamColor(primary?: string | null, secondary?: string | null, fallback = '#4a7fe1') {
+  const first = String(primary || '').trim();
+  if (first) return first;
+  const second = String(secondary || '').trim();
+  if (second) return second;
+  return fallback;
 }
 
-function StatRow({ stat, homeColor, awayColor }: { stat: TeamStatRow; homeColor: string; awayColor: string }) {
-  const maxMatch = Math.max(stat.homeMatch, stat.awayMatch, 1);
-  const homePercent = (stat.homeMatch / maxMatch) * 100;
-  const awayPercent = (stat.awayMatch / maxMatch) * 100;
-  const homeTint = tintForStatValue(homeColor, '#FFD44A');
-  const awayTint = tintForStatValue(awayColor, '#7BD6FF');
+function ScoreHero({
+  stat,
+  homeName,
+  awayName,
+  homeColor,
+  awayColor,
+}: {
+  stat: TeamStatRow;
+  homeName: string;
+  awayName: string;
+  homeColor: string;
+  awayColor: string;
+}) {
+  const homeLeading = stat.homeMatch > stat.awayMatch;
+  const awayLeading = stat.awayMatch > stat.homeMatch;
 
   return (
-    <div className="mcTeamStatRow">
-      <div className="mcTeamStatRow__home">
-        <span className="mcTeamStatRow__value" style={{ color: homeTint }}>
-          {stat.homeMatch}
-        </span>
+    <div className="mcTeamStats__scoreHero">
+      <div
+        className={`mcTeamStats__scoreSide mcTeamStats__scoreSide--home${homeLeading ? ' is-leading' : ''}`}
+        style={{ ['--mc-score-glow' as string]: homeColor }}
+      >
+        <span className="mcTeamStats__scoreLabel">Home</span>
+        <span className="mcTeamStats__scoreTeam">{homeName}</span>
+        <span className={`mcTeamStats__scoreValue${homeLeading ? ' is-leading' : ''}`}>{stat.homeMatch}</span>
+      </div>
+
+      <div className="mcTeamStats__scoreCentre">
+        <span className="mcTeamStats__scoreEyebrow">Match Score</span>
+        <span className="mcTeamStats__scoreDivider" aria-hidden="true" />
+        <span className="mcTeamStats__scoreMeta">Published result comparison</span>
+      </div>
+
+      <div
+        className={`mcTeamStats__scoreSide mcTeamStats__scoreSide--away${awayLeading ? ' is-leading' : ''}`}
+        style={{ ['--mc-score-glow' as string]: awayColor }}
+      >
+        <span className="mcTeamStats__scoreLabel">Away</span>
+        <span className="mcTeamStats__scoreTeam">{awayName}</span>
+        <span className={`mcTeamStats__scoreValue${awayLeading ? ' is-leading' : ''}`}>{stat.awayMatch}</span>
+      </div>
+    </div>
+  );
+}
+
+function StatRow({
+  stat,
+  homeColor,
+  awayColor,
+  rowIndex,
+}: {
+  stat: TeamStatRow;
+  homeColor: string;
+  awayColor: string;
+  rowIndex: number;
+}) {
+  const bothZero = stat.homeMatch === 0 && stat.awayMatch === 0;
+  const maxMatch = Math.max(stat.homeMatch, stat.awayMatch, 1);
+  const homePercent = bothZero ? 100 : (stat.homeMatch / maxMatch) * 100;
+  const awayPercent = bothZero ? 100 : (stat.awayMatch / maxMatch) * 100;
+  const neutralFill = 'rgba(148, 163, 184, 0.24)';
+  const rowStyle = {
+    ['--mc-row-index' as string]: rowIndex,
+  } as CSSProperties;
+
+  return (
+    <div className="mcTeamStatRow" style={rowStyle}>
+      <div className="mcTeamStatRow__metric">
+        <span className="mcTeamStatRow__value">{stat.homeMatch}</span>
       </div>
 
       <div className="mcTeamStatRow__centre">
-        <span className="mcTeamStatRow__label">{stat.label}</span>
+        <div className="mcTeamStatRow__topline">
+          <span className="mcTeamStatRow__label">{stat.label}</span>
+          <span className="mcTeamStatRow__split">
+            {stat.homeMatch} - {stat.awayMatch}
+          </span>
+        </div>
         <div className="mcTeamStatRow__bar">
-          <div className="mcTeamStatRow__barHome" style={{ width: `${homePercent}%`, background: homeColor }} />
+          <div className="mcTeamStatRow__track mcTeamStatRow__track--home">
+            <div
+              className={`mcTeamStatRow__fill mcTeamStatRow__fill--home${bothZero ? ' is-neutral' : ''}`}
+              style={
+                {
+                  ['--mc-bar-width' as string]: `${homePercent}%`,
+                  ['--mc-bar-color' as string]: bothZero ? neutralFill : homeColor,
+                } as CSSProperties
+              }
+            />
+          </div>
           <div className="mcTeamStatRow__barDivider" />
-          <div className="mcTeamStatRow__barAway" style={{ width: `${awayPercent}%`, background: awayColor }} />
+          <div className="mcTeamStatRow__track mcTeamStatRow__track--away">
+            <div
+              className={`mcTeamStatRow__fill mcTeamStatRow__fill--away${bothZero ? ' is-neutral' : ''}`}
+              style={
+                {
+                  ['--mc-bar-width' as string]: `${awayPercent}%`,
+                  ['--mc-bar-color' as string]: bothZero ? neutralFill : awayColor,
+                } as CSSProperties
+              }
+            />
+          </div>
         </div>
       </div>
 
-      <div className="mcTeamStatRow__away">
-        <span className="mcTeamStatRow__value" style={{ color: awayTint }}>
-          {stat.awayMatch}
-        </span>
+      <div className="mcTeamStatRow__metric mcTeamStatRow__metric--away">
+        <span className="mcTeamStatRow__value">{stat.awayMatch}</span>
       </div>
     </div>
   );
@@ -86,37 +177,58 @@ export default function TeamStats({ model, loading }: { model: MatchCentreModel 
   const homeLogo = home?.logoUrl || (homeKey ? assetUrl(TEAM_ASSETS[homeKey].logoFile ?? '') : assetUrl('elite-gaming-logo.png'));
   const awayLogo = away?.logoUrl || (awayKey ? assetUrl(TEAM_ASSETS[awayKey].logoFile ?? '') : assetUrl('elite-gaming-logo.png'));
 
+  const homeColor = resolveTeamColor(home?.color, home?.colour, '#4a7fe1');
+  const awayColor = resolveTeamColor(away?.color, away?.colour, '#e14a4a');
+  const shellStyle = {
+    ['--mc-team-home-color' as string]: homeColor,
+    ['--mc-team-away-color' as string]: awayColor,
+  } as CSSProperties;
+
   const stats = model?.teamStats || [];
+  const scoreStat = stats.find((row) => row.label === 'Score') || null;
+  const groupedSections = TEAM_STAT_GROUPS.map((group) => ({
+    title: group.title,
+    rows: group.labels
+      .map((label) => stats.find((row) => row.label === label))
+      .filter((row): row is TeamStatRow => Boolean(row)),
+  })).filter((group) => group.rows.length > 0);
   const isLoadingShell = !!loading && !model;
   const isEmpty = !isLoadingShell && stats.length === 0;
   const desc = model?.hasSubmissionData
-    ? 'Side-by-side team comparison from the published result'
-    : 'A richer stat pack will turn this into a live team comparison after submission';
+    ? 'Published match comparison'
+    : 'Missing stat fields currently fall back to 0 until richer match data is submitted';
+  let rowAnimationIndex = 0;
 
   return (
     <section className="mcTeamStats">
       <div className="mcTeamStats__header">
-        <h2 className="mcTeamStats__title">Team Stats</h2>
-        <p className="mcTeamStats__desc">{desc}</p>
+        <div>
+          <h2 className="mcTeamStats__title">Team Stats</h2>
+          <p className="mcTeamStats__desc">{desc}</p>
+        </div>
+        <span className="mcTeamStats__badge">Match Comparison</span>
       </div>
 
       {isLoadingShell ? (
         <div className="mcTeamStats__empty">
           <div className="mcTeamStats__emptyText">Loading team stats…</div>
-          <p className="mcTeamStats__emptyDesc">The baseline fixture is loading now.</p>
+          <p className="mcTeamStats__emptyDesc">The published result is loading now.</p>
         </div>
       ) : isEmpty ? (
         <div className="mcTeamStats__empty">
           <div className="mcTeamStats__emptyText">Team stats not available yet</div>
-          <p className="mcTeamStats__emptyDesc">If a richer stat pack is submitted later, it will appear here automatically.</p>
+          <p className="mcTeamStats__emptyDesc">The match centre is still loading its comparison data.</p>
         </div>
       ) : (
-        <div className="mcTeamStats__shell">
+        <div className="mcTeamStats__shell" style={shellStyle}>
           <div className="mcTeamStats__teams">
             <div className="mcTeamStats__team">
               <SmartImg src={homeLogo} alt={home?.fullName || 'Home'} className="mcTeamStats__logo" fallbackText={home?.abbreviation || 'H'} />
               <div className="mcTeamStats__teamMeta">
-                <span className="mcTeamStats__teamLabel">Home</span>
+                <span className="mcTeamStats__teamTopAccent" style={{ backgroundColor: homeColor }} aria-hidden="true" />
+                <span className="mcTeamStats__teamLabel">
+                  Home
+                </span>
                 <span className="mcTeamStats__teamName">{home?.fullName || '—'}</span>
               </div>
             </div>
@@ -125,22 +237,54 @@ export default function TeamStats({ model, loading }: { model: MatchCentreModel 
 
             <div className="mcTeamStats__team mcTeamStats__team--away">
               <div className="mcTeamStats__teamMeta mcTeamStats__teamMeta--away">
-                <span className="mcTeamStats__teamLabel">Away</span>
+                <span className="mcTeamStats__teamTopAccent mcTeamStats__teamTopAccent--away" style={{ backgroundColor: awayColor }} aria-hidden="true" />
+                <span className="mcTeamStats__teamLabel mcTeamStats__teamLabel--away">
+                  Away
+                </span>
                 <span className="mcTeamStats__teamName">{away?.fullName || '—'}</span>
               </div>
               <SmartImg src={awayLogo} alt={away?.fullName || 'Away'} className="mcTeamStats__logo" fallbackText={away?.abbreviation || 'A'} />
             </div>
           </div>
 
-          <div className="mcTeamStats__card">
-            {stats.map((stat: any, idx: number) => (
-              <StatRow
-                key={stat?.label || idx}
-                stat={stat}
-                homeColor={home?.color || '#4a7fe1'}
-                awayColor={away?.color || '#e14a4a'}
-              />
-            ))}
+          <div className="mcTeamStats__sections">
+            {groupedSections.map((section) => {
+              const sectionRows =
+                section.title === 'Scoring'
+                  ? section.rows.filter((row) => row.label !== 'Score')
+                  : section.rows;
+
+              return (
+                <section className="mcTeamStats__section" key={section.title}>
+                  <div className="mcTeamStats__sectionHeader">
+                    <h3 className="mcTeamStats__sectionTitle">{section.title}</h3>
+                    <span className="mcTeamStats__sectionRule" aria-hidden="true" />
+                  </div>
+
+                  {section.title === 'Scoring' && scoreStat ? (
+                    <ScoreHero
+                      stat={scoreStat}
+                      homeName={home?.abbreviation || home?.shortName || home?.fullName || 'Home'}
+                      awayName={away?.abbreviation || away?.shortName || away?.fullName || 'Away'}
+                      homeColor={homeColor}
+                      awayColor={awayColor}
+                    />
+                  ) : null}
+
+                  <div className="mcTeamStats__sectionBody">
+                    {sectionRows.map((stat, idx) => (
+                      <StatRow
+                        key={`${section.title}:${stat.label || idx}`}
+                        stat={stat}
+                        homeColor={homeColor}
+                        awayColor={awayColor}
+                        rowIndex={rowAnimationIndex++}
+                      />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         </div>
       )}

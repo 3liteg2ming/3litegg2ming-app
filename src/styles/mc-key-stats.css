@@ -1,0 +1,188 @@
+.mcKeyStatsBlock {
+  width: 100%;
+  min-width: 0;
+}
+
+.mcKeyStatsBlock__header {
+  display: none;
+}
+
+.mcKeyStatsBlock__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+
+.mcKeyStatsBlock__card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 120px;
+  padding: 14px;
+  border-radius: 18px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.01) 18%, transparent 36%),
+    rgba(18, 23, 34, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow:
+    0 18px 28px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.mcKeyStatsBlock__card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.mcKeyStatsBlock__cardAtmosphere {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.mcKeyStatsBlock__cardGlow {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(36px);
+  opacity: 0.6;
+}
+
+.mcKeyStatsBlock__card.is-home .mcKeyStatsBlock__cardGlow--home {
+  width: 70%;
+  height: 50%;
+  left: -20%;
+  top: -10%;
+  background: radial-gradient(circle, rgba(95, 128, 255, 0.2) 0%, rgba(95, 128, 255, 0.04) 50%, transparent 78%);
+}
+
+.mcKeyStatsBlock__card.is-away .mcKeyStatsBlock__cardGlow--away {
+  width: 70%;
+  height: 50%;
+  right: -20%;
+  bottom: -10%;
+  background: radial-gradient(circle, rgba(245, 196, 0, 0.18) 0%, rgba(245, 196, 0, 0.04) 50%, transparent 78%);
+}
+
+.mcKeyStatsBlock__label {
+  justify-self: flex-start;
+  min-height: 26px;
+  max-width: 100%;
+  padding: 0 10px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(224, 232, 247, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mcKeyStatsBlock__values {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.mcKeyStatsBlock__value {
+  font-size: 34px;
+  line-height: 0.9;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+  color: rgba(247, 251, 255, 0.92);
+}
+
+.mcKeyStatsBlock__value--home {
+  text-align: left;
+}
+
+.mcKeyStatsBlock__value--away {
+  text-align: right;
+}
+
+.mcKeyStatsBlock__card.is-home .mcKeyStatsBlock__value--home,
+.mcKeyStatsBlock__card.is-away .mcKeyStatsBlock__value--away {
+  color: rgba(255, 236, 174, 0.94);
+}
+
+.mcKeyStatsBlock__card.is-home .mcKeyStatsBlock__value--away,
+.mcKeyStatsBlock__card.is-away .mcKeyStatsBlock__value--home {
+  opacity: 0.65;
+}
+
+.mcKeyStatsBlock__vs {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(184, 199, 228, 0.3);
+}
+
+.mcKeyStatsBlock__footer {
+  margin-top: auto;
+}
+
+.mcKeyStatsBlock__bar {
+  position: relative;
+  height: 7px;
+  display: flex;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.mcKeyStatsBlock__barFill {
+  height: 100%;
+}
+
+.mcKeyStatsBlock__barFill--home {
+  background: rgba(126, 144, 255, 0.7);
+}
+
+.mcKeyStatsBlock__barFill--away {
+  background: rgba(245, 196, 0, 0.7);
+}
+
+.mcKeyStatsBlock__card.is-home .mcKeyStatsBlock__barFill--home,
+.mcKeyStatsBlock__card.is-away .mcKeyStatsBlock__barFill--away {
+  background: rgba(255, 236, 174, 0.8);
+}
+
+.mcKeyStatsBlock__card.is-home .mcKeyStatsBlock__barFill--away,
+.mcKeyStatsBlock__card.is-away .mcKeyStatsBlock__barFill--home {
+  background: rgba(180, 190, 210, 0.25);
+}
+
+.mcKeyStatsBlock__barFill.is-neutral {
+  background: rgba(180, 190, 210, 0.2);
+}
+
+.mcKeyStatsBlock__barNeedle {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  width: 1px;
+  margin-left: -0.5px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.mcKeyStatsBlock__miniSplit {
+  display: none;
+}

@@ -1,212 +1,350 @@
-import { type KeyboardEvent, useMemo } from 'react';
+import { type CSSProperties, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import SmartImg from '@/components/SmartImg';
+
 import type { MatchCentreModel, PlayerStatRow } from '@/lib/matchCentreRepo';
-import '@/styles/match-centre-player-stats.css';
+import { resolveKnownPlayerHeadshot } from '@/lib/playerHeadshots';
+import '@/styles/mc-player-table.css';
 
-type StatKey = 'G' | 'D' | 'M' | 'T' | 'CLR' | 'K' | 'H';
+type TeamFilter = 'all' | 'home' | 'away';
+type SortKey = 'FP' | 'G' | 'D' | 'CLR' | 'M' | 'T';
+type SortDirection = 'desc' | 'asc';
 
-const statOrder: { key: StatKey; label: string }[] = [
-  { key: 'G', label: 'G' },
-  { key: 'D', label: 'D' },
-  { key: 'M', label: 'M' },
-  { key: 'T', label: 'T' },
-  { key: 'CLR', label: 'CLR' },
-  { key: 'K', label: 'K' },
-  { key: 'H', label: 'H' },
+type PlayerDisplayRow = {
+  key: string;
+  row: PlayerStatRow;
+  teamKey: 'home' | 'away';
+};
+
+type StatColumn = {
+  key: SortKey;
+  label: string;
+  getValue: (row: PlayerStatRow) => number;
+};
+
+const STAT_COLUMNS: StatColumn[] = [
+  { key: 'FP', label: 'FP', getValue: fantasyPoints },
+  { key: 'G', label: 'G', getValue: (row) => safeStat(row.G) },
+  { key: 'D', label: 'D', getValue: (row) => safeStat(row.D) },
+  { key: 'CLR', label: 'CLR', getValue: (row) => safeStat(row.CLR) },
+  { key: 'M', label: 'M', getValue: (row) => safeStat(row.M) },
+  { key: 'T', label: 'T', getValue: (row) => safeStat(row.T) },
 ];
 
 function initials(name: string) {
-  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
-  const a = parts[0]?.[0] ?? '';
-  const b = parts.length > 1 ? parts[parts.length - 1]?.[0] ?? '' : parts[0]?.[1] ?? '';
-  return (a + b).toUpperCase() || 'EG';
+  const parts = String(name || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  const first = parts[0]?.[0] ?? '';
+  const second = parts.length > 1 ? parts[parts.length - 1]?.[0] ?? '' : parts[0]?.[1] ?? '';
+  return (first + second).toUpperCase() || 'EG';
 }
 
 function isUuidLike(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || '').trim());
 }
 
-function rowStatValue(row: PlayerStatRow, key: StatKey) {
-  const value = row[key];
-  return value === null || value === undefined ? null : Number(value);
+function safeStat(value: number | null | undefined) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 }
 
-function teamRows(rows: PlayerStatRow[], teamName: string) {
-  return rows
-    .filter((row) => row.team === teamName)
-    .sort((a, b) => {
-      if ((a.number || 0) !== (b.number || 0)) return (a.number || 0) - (b.number || 0);
-      return a.name.localeCompare(b.name);
-    });
+function fantasyPoints(row: PlayerStatRow) {
+  return safeStat(row.D) + safeStat(row.M) * 3 + safeStat(row.T) * 4 + safeStat(row.G) * 6;
+}
+
+function normalizeText(value?: string | null) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function resolveSideKey(row: PlayerStatRow, model: MatchCentreModel): 'home' | 'away' {
+  const rowTeamId = String(row.teamId || '').trim();
+  const homeTeamId = String(model.home.id || '').trim();
+  const awayTeamId = String(model.away.id || '').trim();
+
+  if (rowTeamId && awayTeamId && rowTeamId === awayTeamId) return 'away';
+  if (rowTeamId && homeTeamId && rowTeamId === homeTeamId) return 'home';
+
+  const rowTeam = normalizeText(row.team);
+  if (rowTeam && rowTeam === normalizeText(model.away.fullName)) return 'away';
+  if (rowTeam && rowTeam === normalizeText(model.home.fullName)) return 'home';
+
+  return 'home';
 }
 
 export default function PlayerStatsTable({ model }: { model: MatchCentreModel | null }) {
   const navigate = useNavigate();
+  const [teamFilter, setTeamFilter] = useState<TeamFilter>('all');
+  const [sortKey, setSortKey] = useState<SortKey>('FP');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
-  const rows = model?.playerStats || [];
-  const homeRows = useMemo(() => teamRows(rows, model?.home.fullName || ''), [model?.home.fullName, rows]);
-  const awayRows = useMemo(() => teamRows(rows, model?.away.fullName || ''), [model?.away.fullName, rows]);
+  const playerRows = model?.playerStats ?? [];
 
-  const visibleStats = useMemo(() => {
-    return statOrder.filter(({ key }) =>
-      rows.some((row) => {
-        const value = rowStatValue(row, key);
-        return value !== null && value > 0;
-      }),
-    );
-  }, [rows]);
+  if (import.meta.env.DEV) {
+    console.log('[PlayerStatsTable] incoming data', {
+      modelExists: !!model,
+      playerRowsCount: playerRows.length,
+      homeTeam: model?.home.fullName,
+      awayTeam: model?.away.fullName,
+      homeCount: playerRows.filter(r => r.team === model?.home.fullName).length,
+      awayCount: playerRows.filter(r => r.team === model?.away.fullName).length,
+    });
+  }
 
-  const hasStatOverlay = visibleStats.length > 0;
-
-  const handleRowClick = (row: PlayerStatRow) => {
-    if (!isUuidLike(row.playerId)) return;
-    navigate(`/player/${row.playerId}`);
-  };
-
-  const handleRowKeyDown = (event: KeyboardEvent<HTMLButtonElement>, row: PlayerStatRow) => {
-    if (!isUuidLike(row.playerId)) return;
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      navigate(`/player/${row.playerId}`);
+  const rowsByTeam = useMemo(() => {
+    if (!model) {
+      return {
+        home: [] as PlayerStatRow[],
+        away: [] as PlayerStatRow[],
+      };
     }
-  };
+
+    return playerRows.reduce(
+      (acc, row) => {
+        const teamKey = resolveSideKey(row, model);
+        acc[teamKey].push(row);
+        return acc;
+      },
+      {
+        home: [] as PlayerStatRow[],
+        away: [] as PlayerStatRow[],
+      },
+    );
+  }, [model, playerRows]);
+
+  if (import.meta.env.DEV) {
+    console.log('[PlayerStatsTable] rowsByTeam after split', {
+      homeCount: rowsByTeam.home.length,
+      awayCount: rowsByTeam.away.length,
+    });
+  }
+
+  const displayRows = useMemo<PlayerDisplayRow[]>(() => {
+    if (!model) return [];
+
+    const homeRows = rowsByTeam.home.map((row, index) => ({
+      key: `${row.playerId || row.name}-home-${index}`,
+      row,
+      teamKey: 'home' as const,
+      originalIndex: index,
+    }));
+
+    const awayRows = rowsByTeam.away.map((row, index) => ({
+      key: `${row.playerId || row.name}-away-${index}`,
+      row,
+      teamKey: 'away' as const,
+      originalIndex: rowsByTeam.home.length + index,
+    }));
+
+    const filtered = teamFilter === 'home' ? homeRows : teamFilter === 'away' ? awayRows : [...homeRows, ...awayRows];
+    const activeColumn = STAT_COLUMNS.find((column) => column.key === sortKey) ?? STAT_COLUMNS[0];
+    const hasSortableStats = filtered.some((item) => activeColumn.getValue(item.row) > 0);
+
+    if (import.meta.env.DEV) {
+    const allRowsUnfiltered = [...homeRows, ...awayRows];
+    console.log('[PlayerStatsTable] rows debug', {
+      incomingRowsCount: playerRows.length,
+      homeRowsCount: homeRows.length,
+      awayRowsCount: awayRows.length,
+      allRowsUnfiltered: allRowsUnfiltered.length,
+      teamFilter,
+      filteredRowsForTab: filtered.length,
+      hasSortableStats,
+    });
+  }
+
+    if (!hasSortableStats) {
+      return filtered.map(({ originalIndex: _originalIndex, ...item }) => item);
+    }
+
+    return [...filtered]
+      .sort((a, b) => {
+        const diff =
+          sortDirection === 'desc'
+            ? activeColumn.getValue(b.row) - activeColumn.getValue(a.row)
+            : activeColumn.getValue(a.row) - activeColumn.getValue(b.row);
+
+        if (diff !== 0) return diff;
+        return a.originalIndex - b.originalIndex;
+      })
+      .map(({ originalIndex: _originalIndex, ...item }) => item);
+  }, [model, rowsByTeam.away, rowsByTeam.home, sortDirection, sortKey, teamFilter]);
+
+  if (import.meta.env.DEV) {
+    console.log('[PlayerStatsTable] FINAL displayRows', {
+      count: displayRows.length,
+      empty: displayRows.length === 0,
+      sample: displayRows.slice(0, 3).map(d => ({ name: d.row.name, team: d.row.team })),
+    });
+  }
+
+  const filters = [
+    { key: 'all' as const, label: 'All' },
+    { key: 'home' as const, label: model?.home.abbreviation || 'Home' },
+    { key: 'away' as const, label: model?.away.abbreviation || 'Away' },
+  ];
 
   return (
-    <section className="mc-playerstats">
-      <div className="mc-playerstats__header">
-        <div className="mc-playerstats__titleWrap">
-          <div className="mc-playerstats__kicker">Match Squad</div>
-          <div className="mc-playerstats__title">Player Stats</div>
+    <section className="mcPlayerTable" aria-label="Player stats">
+      <div className="mcPlayerTable__header">
+        <div className="mcPlayerTable__titleBlock">
+          <h2 className="mcPlayerTable__title">Player Stats</h2>
+          <p className="mcPlayerTable__subtext">Sort by tapping a stat column. Player names stay wider on mobile for easier scanning.</p>
         </div>
-        <div className="mc-playerstats__note">
-          {hasStatOverlay
-            ? 'Full match roster with submitted player stats overlay.'
-            : 'Full match roster is live. Match stats will appear after submission.'}
-        </div>
-      </div>
 
-      <div className="mc-playerstats__groups">
-        <SquadGroup
-          heading={model?.home.fullName || 'Home Team'}
-          subheading={`${homeRows.length} players`}
-          logoUrl={model?.home.logoUrl}
-          fallbackLogo={model?.home.abbreviation || 'H'}
-          rows={homeRows}
-          emptyText="Home squad unavailable"
-          visibleStats={visibleStats}
-          hasStatOverlay={hasStatOverlay}
-          onRowClick={handleRowClick}
-          onRowKeyDown={handleRowKeyDown}
-        />
-
-        <SquadGroup
-          heading={model?.away.fullName || 'Away Team'}
-          subheading={`${awayRows.length} players`}
-          logoUrl={model?.away.logoUrl}
-          fallbackLogo={model?.away.abbreviation || 'A'}
-          rows={awayRows}
-          emptyText="Away squad unavailable"
-          visibleStats={visibleStats}
-          hasStatOverlay={hasStatOverlay}
-          onRowClick={handleRowClick}
-          onRowKeyDown={handleRowKeyDown}
-        />
-      </div>
-    </section>
-  );
-}
-
-function SquadGroup({
-  heading,
-  subheading,
-  logoUrl,
-  fallbackLogo,
-  rows,
-  emptyText,
-  visibleStats,
-  hasStatOverlay,
-  onRowClick,
-  onRowKeyDown,
-}: {
-  heading: string;
-  subheading: string;
-  logoUrl?: string;
-  fallbackLogo: string;
-  rows: PlayerStatRow[];
-  emptyText: string;
-  visibleStats: { key: StatKey; label: string }[];
-  hasStatOverlay: boolean;
-  onRowClick: (row: PlayerStatRow) => void;
-  onRowKeyDown: (event: KeyboardEvent<HTMLButtonElement>, row: PlayerStatRow) => void;
-}) {
-  return (
-    <article className="mc-playerstats__group">
-      <div className="mc-playerstats__groupHead">
-        <div className="mc-playerstats__groupIdentity">
-            <div className="mc-playerstats__groupLogo">
-            <SmartImg src={logoUrl || ''} alt={heading} className="mc-playerstats__groupLogoImg" fallbackText={fallbackLogo} />
-            </div>
-          <div>
-            <div className="mc-playerstats__groupTitle">{heading}</div>
-            <div className="mc-playerstats__groupSub">{subheading}</div>
-          </div>
-        </div>
-      </div>
-
-      {rows.length === 0 ? (
-        <div className="mc-playerstats__empty">{emptyText}</div>
-      ) : (
-        <div className="mc-playerstats__list">
-          {rows.map((row, index) => {
-            const rowClickable = isUuidLike(row.playerId);
+        <div className="mcPlayerTable__filters" aria-label="Filter player stats by team">
+          {filters.map((option) => {
+            const isActive = option.key === teamFilter;
             return (
               <button
-                key={`${row.playerId || row.name}-${index}`}
+                key={option.key}
                 type="button"
-                className={`mc-playerstats__row ${rowClickable ? 'is-linkable' : ''}`}
-                onClick={rowClickable ? () => onRowClick(row) : undefined}
-                onKeyDown={(event) => onRowKeyDown(event, row)}
+                className={`mcPlayerTable__filter ${isActive ? 'mcPlayerTable__filter--active' : ''}`}
+                onClick={() => setTeamFilter(option.key)}
+                aria-pressed={isActive}
               >
-                <div className="mc-playerstats__identity">
-                  <div className="mc-playerstats__avatar">
-                    {row.photoUrl ? (
-                      <SmartImg src={row.photoUrl} alt={row.name} className="mc-playerstats__avatarImg" />
-                    ) : (
-                      <div className="mc-playerstats__avatarFallback">{initials(row.name)}</div>
-                    )}
-                  </div>
-                  <div className="mc-playerstats__meta">
-                    <div className="mc-playerstats__nameRow">
-                      <span className="mc-playerstats__name">{row.name}</span>
-                      {row.number ? <span className="mc-playerstats__number">#{row.number}</span> : null}
-                    </div>
-                    <div className="mc-playerstats__subRow">
-                      {row.position ? <span className="mc-playerstats__pos">{row.position}</span> : <span className="mc-playerstats__pos">Squad</span>}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mc-playerstats__stats">
-                  {hasStatOverlay ? (
-                    visibleStats.map(({ key, label }) => {
-                      const value = rowStatValue(row, key);
-                      return (
-                        <div key={key} className="mc-playerstats__statChip">
-                          <span className="mc-playerstats__statLabel">{label}</span>
-                          <span className="mc-playerstats__statValue">{value === null ? '—' : value}</span>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="mc-playerstats__rowHint">Roster ready</div>
-                  )}
-                </div>
+                {option.label}
               </button>
             );
           })}
         </div>
+      </div>
+
+      {!model ? (
+        <div className="mcPlayerTable__empty">Loading player stats...</div>
+      ) : displayRows.length === 0 ? (
+        <div className="mcPlayerTable__empty">Player stats are not available for this fixture yet.</div>
+      ) : (
+        <div className="mcPlayerTable__shell">
+          <table className="mcPlayerTable__table">
+            <thead>
+              <tr>
+                <th scope="col" className="mcPlayerTable__headCell mcPlayerTable__headCell--player">
+                  Player
+                </th>
+                {STAT_COLUMNS.map((column) => {
+                  const isActive = sortKey === column.key;
+                  return (
+                    <th key={column.key} scope="col" className={`mcPlayerTable__headCell mcPlayerTable__headCell--stat ${isActive ? 'is-active' : ''}`}>
+                      <button
+                        type="button"
+                        className="mcPlayerTable__sortButton"
+                        aria-pressed={isActive}
+                        aria-label={`Sort by ${column.label}, ${isActive && sortDirection === 'desc' ? 'lowest to highest' : 'highest to lowest'}`}
+                        onClick={() => {
+                          if (sortKey === column.key) {
+                            setSortDirection((current) => (current === 'desc' ? 'asc' : 'desc'));
+                            return;
+                          }
+                          setSortKey(column.key);
+                          setSortDirection('desc');
+                        }}
+                      >
+                        {column.label}
+                      </button>
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+
+            <tbody>
+              {displayRows.map((item) => {
+                const row = item.row;
+                const canOpenProfile = isUuidLike(row.playerId);
+                const teamMeta =
+                  item.teamKey === 'away'
+                    ? { label: model.away.abbreviation || 'Away', accent: model.away.colour || model.away.color || '#b9c7dd' }
+                    : { label: model.home.abbreviation || 'Home', accent: model.home.colour || model.home.color || '#d7b56d' };
+                const accentStyle = { '--mc-player-accent': teamMeta.accent } as CSSProperties;
+                const tileText = initials(row.name);
+
+                const identity = (
+                  <>
+                    <PlayerMedia photoUrl={row.photoUrl || ''} name={row.name} tileText={tileText} accentStyle={accentStyle} />
+                    <span className="mcPlayerTable__identityMeta">
+                      <span className="mcPlayerTable__name" title={row.name}>
+                        {row.name}
+                      </span>
+                      <span className="mcPlayerTable__teamPill" style={accentStyle}>
+                        <span className="mcPlayerTable__teamDot" aria-hidden="true" />
+                        {teamMeta.label}
+                      </span>
+                    </span>
+                  </>
+                );
+
+                return (
+                  <tr key={item.key} className="mcPlayerTable__row">
+                    <td className="mcPlayerTable__cell mcPlayerTable__cell--player">
+                      {canOpenProfile ? (
+                        <button
+                          type="button"
+                          className="mcPlayerTable__playerButton"
+                          onClick={() => navigate(`/player/${row.playerId}`)}
+                          aria-label={`Open ${row.name}`}
+                        >
+                          {identity}
+                        </button>
+                      ) : (
+                        <div className="mcPlayerTable__playerButton mcPlayerTable__playerButton--static">
+                          {identity}
+                        </div>
+                      )}
+                    </td>
+
+                    {STAT_COLUMNS.map((column) => (
+                      <td key={`${item.key}-${column.key}`} className="mcPlayerTable__cell mcPlayerTable__cell--stat">
+                        {column.getValue(row)}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
-    </article>
+    </section>
+  );
+}
+
+function PlayerMedia({
+  photoUrl,
+  name,
+  tileText,
+  accentStyle,
+}: {
+  photoUrl: string;
+  name: string;
+  tileText: string;
+  accentStyle: CSSProperties;
+}) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const src = useMemo(() => resolveKnownPlayerHeadshot({ name, photoUrl }), [name, photoUrl]);
+  const hasPhoto = Boolean(src) && !imageFailed;
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [src, name]);
+
+  return (
+    <span className="mcPlayerTable__media" style={accentStyle}>
+      {hasPhoto ? (
+        <img
+          src={src || ''}
+          alt={name}
+          className="mcPlayerTable__photo"
+          width={40}
+          height={40}
+          loading="lazy"
+          decoding="async"
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        <span className="mcPlayerTable__numberTile" aria-hidden="true">
+          {tileText}
+        </span>
+      )}
+    </span>
   );
 }

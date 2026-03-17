@@ -1,6 +1,7 @@
 import { requireSupabaseClient } from '../lib/supabaseClient';
 import { fetchActiveCompetitionBaseline } from '../lib/seasonParticipantsRepo';
 import { resolveKnownPlayerHeadshot } from '../lib/playerHeadshots';
+import { resolveTeamKey } from '../lib/entityResolvers';
 
 const supabase = requireSupabaseClient();
 
@@ -34,12 +35,19 @@ type CsvPlayerRow = {
   id: string;
   name: string;
   headshotUrl?: string;
+  photoUrl?: string;
+  teamId?: string;
+  teamKey?: string;
   teamName?: string;
   position?: string;
   number?: number;
 };
 
-let cache: { at: number; players: AflPlayer[] } | null = null;
+const caches: Record<'default' | 'allTeams', { at: number; players: AflPlayer[] } | null> = {
+  default: null,
+  allTeams: null,
+};
+
 let bundledCsvCache: CsvPlayerRow[] | null = null;
 const TTL_MS = 5 * 60_000;
 
@@ -82,17 +90,13 @@ function normalizeTeamToken(value: unknown) {
 
 async function fetchPlayersRaw() {
   const selectAttempts = [
-    // Keep live roster fetches on the stable core schema only.
+    'id,name,team_id,team_key,team_name,position,number,headshot_url,photo_url',
+    'id,name,team_id,team_name,position,number,headshot_url,photo_url',
     'id,name,team_id,position,number,headshot_url,photo_url',
-    'id,name,team_id,position,number,headshot_url',
-    'id,name,team_id,headshot_url,photo_url',
-    'id,name,team_id,headshot_url',
-    'id,name,position,number,headshot_url,photo_url',
-    'id,name,headshot_url,photo_url',
-    'id,display_name,team_id,position,number,headshot_url,photo_url',
-    'id,full_name,team_id,position,number,headshot_url,photo_url',
-    'id,display_name,headshot_url,photo_url',
-    'id,full_name,headshot_url,photo_url',
+    'id,name,team_id,name,headshot_url,photo_url',
+    'id,name,team_id,display_name,full_name,first_name,last_name,position,number,headshot_url,photo_url',
+    'id,display_name,team_id,team_key,team_name,position,number,headshot_url,photo_url',
+    'id,full_name,team_id,team_key,team_name,position,number,headshot_url,photo_url',
   ] as const;
 
   let data: any[] = [];
@@ -144,10 +148,18 @@ function parseCsvLine(line: string): string[] {
   return out.map((value) => value.trim());
 }
 
+function normalizeHeaderName(value: string) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[\s_]+/g, '')
+    .trim();
+}
+
 async function fetchBundledPlayersCsv(): Promise<CsvPlayerRow[]> {
   if (bundledCsvCache) return bundledCsvCache;
 
-  const response = await fetch('/data/afl-players-2026.csv', { cache: 'force-cache' });
+  const CSV_VERSION = '2026-03-16-headshots-v3';
+  const response = await fetch(`/data/afl-players-2026.csv?v=${CSV_VERSION}`, { cache: 'no-store' });
   if (!response.ok) {
     throw new Error(`Failed to load bundled players CSV: ${response.status}`);
   }
@@ -164,27 +176,76 @@ async function fetchBundledPlayersCsv(): Promise<CsvPlayerRow[]> {
   }
 
   const headers = parseCsvLine(lines[0]);
-  const column = (name: string) => headers.indexOf(name);
+  const headerIndex = new Map<string, number>();
+  headers.forEach((raw, index) => {
+    const normalized = normalizeHeaderName(raw);
+    if (normalized) headerIndex.set(normalized, index);
+  });
+
+  const column = (...names: string[]) => {
+    for (const name of names) {
+      const idx = headerIndex.get(normalizeHeaderName(name));
+      if (typeof idx === 'number' && idx >= 0) return idx;
+    }
+    return -1;
+  };
+
+  const readCell = (cells: string[], ...names: string[]) => {
+    const index = column(...names);
+    return index >= 0 ? String(cells[index] || '').trim() : '';
+  };
+
   const players: CsvPlayerRow[] = [];
 
   for (const line of lines.slice(1)) {
     const cells = parseCsvLine(line);
-    const read = (name: string) => {
-      const index = column(name);
-      return index >= 0 ? String(cells[index] || '').trim() : '';
-    };
 
-    const id = read('ID');
-    const name = read('Player Name');
+    const id =
+      readCell(cells, 'id', 'ID', 'player_id', 'Player ID');
+
+    const name =
+      readCell(cells, 'name', 'Name', 'player_name', 'Player Name', 'full_name', 'display_name');
+
     if (!id || !name) continue;
 
     players.push({
       id,
       name,
-      headshotUrl: strOrUndef(read('Headshot URL')) || undefined,
-      teamName: strOrUndef(read('Team')) || undefined,
-      position: strOrUndef(read('Position')) || undefined,
-      number: numOrUndef(read('Jumper Number')),
+      headshotUrl:
+        strOrUndef(readCell(cells, 'headshot_url', 'Headshot URL', 'headshot')) ||
+        undefined,
+      photoUrl:
+        strOrUndef(readCell(cells, 'photo_url', 'Photo URL')) ||
+        undefined,
+      teamId:
+        strOrUndef(readCell(cells, 'team_id', 'Team ID')) ||
+        undefined,
+      teamKey:
+        normalizeTeamKey(
+          readCell(cells, 'team_key', 'Team Key', 'slug', 'team_slug'),
+        ) || undefined,
+      teamName:
+        strOrUndef(readCell(cells, 'team_name', 'Team Name', 'team', 'Team')) ||
+        undefined,
+      position:
+        strOrUndef(readCell(cells, 'position', 'Position')) ||
+        undefined,
+      number:
+        numOrUndef(readCell(cells, 'number', 'Number', 'jumper_number', 'Jumper Number')),
+    });
+  }
+
+  if (import.meta.env.DEV) {
+    console.log('[aflPlayers] csv parse debug', {
+      headers,
+      parsedCount: players.length,
+      sample: players.slice(0, 3).map((p) => ({
+        id: p.id,
+        name: p.name,
+        teamId: p.teamId,
+        teamKey: p.teamKey,
+        teamName: p.teamName,
+      })),
     });
   }
 
@@ -197,6 +258,7 @@ async function fetchTeamsById(): Promise<Map<string, TeamLookup>> {
 
   const attempts = ['id,name,team_key,slug', 'id,name,slug', 'id,name,team_key', 'id,name'] as const;
   let rows: any[] = [];
+
   for (const sel of attempts) {
     const res = await supabase.from('eg_teams').select(sel).limit(300);
     if (!res.error) {
@@ -208,18 +270,25 @@ async function fetchTeamsById(): Promise<Map<string, TeamLookup>> {
   for (const row of rows) {
     const id = strOrUndef((row as any).id);
     if (!id) continue;
+
     const rawTeamKey =
       strOrUndef((row as any).team_key) ||
       strOrUndef((row as any).slug) ||
       undefined;
-    const normalizedKey = normalizeTeamKey(rawTeamKey)?.replace(/-/g, '');
+
+    const resolvedKey = resolveTeamKey({
+      slug: rawTeamKey,
+      teamKey: rawTeamKey,
+      name: strOrUndef((row as any).name),
+    });
 
     out.set(id, {
       id,
       name: strOrUndef((row as any).name),
-      teamKey: normalizedKey,
+      teamKey: String(resolvedKey) !== 'unknown' ? resolvedKey : undefined,
     });
   }
+
   return out;
 }
 
@@ -228,15 +297,27 @@ function resolveTeamFields(p: any, teamById: Map<string, TeamLookup>) {
   const nestedTeam = Array.isArray(p?.eg_teams) ? p.eg_teams[0] : p?.eg_teams;
 
   const nestedName = strOrUndef(nestedTeam?.name);
-  const nestedKey = normalizeTeamKey(strOrUndef(nestedTeam?.team_key) || strOrUndef(nestedTeam?.slug))?.replace(/-/g, '');
+  const nestedKeyResult = resolveTeamKey({
+    slug: strOrUndef(nestedTeam?.team_key) || strOrUndef(nestedTeam?.slug),
+    teamKey: strOrUndef(nestedTeam?.team_key),
+    name: nestedName,
+  });
   const byId = teamId ? teamById.get(teamId) : undefined;
 
-  const rowTeamKey = normalizeTeamKey(strOrUndef(p?.team_key))?.replace(/-/g, '');
+  const rowTeamKeyResult = resolveTeamKey({
+    teamKey: strOrUndef(p?.team_key),
+    slug: strOrUndef(p?.team_key),
+    name: strOrUndef(p?.team_name),
+  });
+
   const rowTeamName = strOrUndef(p?.team_name);
   const rowTeamText = typeof p?.team === 'string' ? strOrUndef(p.team) : undefined;
 
   const teamName = rowTeamName || nestedName || byId?.name || rowTeamText;
-  const teamKey = rowTeamKey || nestedKey || byId?.teamKey;
+  const teamKey =
+    (String(rowTeamKeyResult) !== 'unknown' ? rowTeamKeyResult : undefined) ||
+    (String(nestedKeyResult) !== 'unknown' ? nestedKeyResult : undefined) ||
+    byId?.teamKey;
 
   return { teamId, teamName, teamKey };
 }
@@ -247,6 +328,7 @@ function toAflPlayer(p: any, teamById: Map<string, TeamLookup>): AflPlayer | nul
   const last = strOrUndef(p?.last_name);
   const combined = `${first || ''} ${last || ''}`.trim();
   const name = strOrUndef(p?.name) || combined || strOrUndef(p?.display_name) || strOrUndef(p?.full_name);
+
   if (!id || !name) return null;
 
   const { teamId, teamName, teamKey } = resolveTeamFields(p, teamById);
@@ -270,13 +352,13 @@ function toAflPlayer(p: any, teamById: Map<string, TeamLookup>): AflPlayer | nul
     handballs: numOrUndef(p?.handballs),
     marks: numOrUndef(p?.marks),
     tackles: numOrUndef(p?.tackles),
+    clearances: numOrUndef(p?.clearances),
     hitOuts: numOrUndef(p?.hit_outs),
     fantasyPoints: numOrUndef(p?.fantasy_points),
   };
 }
 
 function mergePreferBetter(prev: AflPlayer, next: AflPlayer): AflPlayer {
-  // Prefer rows with a headshot; otherwise prefer rows with more populated fields.
   const score = (p: AflPlayer) =>
     (p.headshotUrl ? 4 : 0) +
     (p.teamId ? 2 : 0) +
@@ -305,23 +387,110 @@ function mergePreferBetter(prev: AflPlayer, next: AflPlayer): AflPlayer {
     handballs: best.handballs ?? other.handballs,
     marks: best.marks ?? other.marks,
     tackles: best.tackles ?? other.tackles,
+    clearances: best.clearances ?? other.clearances,
     hitOuts: best.hitOuts ?? other.hitOuts,
     fantasyPoints: best.fantasyPoints ?? other.fantasyPoints,
   };
 }
 
-export async function fetchAflPlayers(): Promise<AflPlayer[]> {
+function toCsvAflPlayer(csv: CsvPlayerRow, teamById: Map<string, TeamLookup>): AflPlayer {
+  const csvTeamId = strOrUndef(csv.teamId);
+  const csvTeamKeyRaw = normalizeTeamKey(csv.teamKey);
+  const csvTeamName = strOrUndef(csv.teamName);
+
+  const byId = csvTeamId ? teamById.get(csvTeamId) : undefined;
+
+  const resolvedCsvKey = (() => {
+    if (csvTeamKeyRaw) {
+      const result = resolveTeamKey({ teamKey: csvTeamKeyRaw, slug: csvTeamKeyRaw, name: csvTeamName });
+      if (String(result) !== 'unknown') return result;
+    }
+    if (csvTeamName) {
+      const result = resolveTeamKey({ name: csvTeamName, teamKey: csvTeamKeyRaw, slug: csvTeamKeyRaw });
+      if (String(result) !== 'unknown') return result;
+    }
+    return undefined;
+  })();
+
+  const matchedByName = !byId && (csvTeamName || resolvedCsvKey)
+    ? Array.from(teamById.values()).find((team) => {
+        const teamNameToken = normalizeTeamToken(team.name);
+        const teamKeyToken = normalizeTeamToken(team.teamKey);
+        const csvNameToken = normalizeTeamToken(csvTeamName);
+        const csvKeyToken = normalizeTeamToken(resolvedCsvKey || csvTeamKeyRaw);
+        return (
+          (csvNameToken && csvNameToken === teamNameToken) ||
+          (csvKeyToken && csvKeyToken === teamKeyToken)
+        );
+      })
+    : undefined;
+
+  const finalTeamId = csvTeamId || matchedByName?.id;
+  const finalTeamName = csvTeamName || byId?.name || matchedByName?.name;
+  const finalTeamKey =
+    resolvedCsvKey ||
+    byId?.teamKey ||
+    matchedByName?.teamKey ||
+    undefined;
+
+  return {
+    id: csv.id,
+    name: csv.name,
+    headshotUrl:
+      pickHeadshot({
+        name: csv.name,
+        headshot_url: csv.headshotUrl,
+        photo_url: csv.photoUrl || csv.headshotUrl,
+      }) || undefined,
+    teamId: finalTeamId,
+    teamName: finalTeamName,
+    teamKey: finalTeamKey,
+    position: csv.position,
+    number: csv.number,
+    gamesPlayed: 0,
+    goals: 0,
+    disposals: 0,
+    kicks: 0,
+    handballs: 0,
+    marks: 0,
+    tackles: 0,
+    clearances: 0,
+    hitOuts: 0,
+    fantasyPoints: 0,
+  };
+}
+
+export async function fetchAflPlayers(options?: { includeAllTeams?: boolean }): Promise<AflPlayer[]> {
+  const includeAllTeams = Boolean(options?.includeAllTeams);
+  const cacheKey = includeAllTeams ? 'allTeams' : 'default';
   const now = Date.now();
-  if (cache && now - cache.at < TTL_MS) return cache.players;
+  const activeCache = caches[cacheKey];
+
+  if (activeCache && now - activeCache.at < TTL_MS) {
+    if (import.meta.env.DEV) {
+      console.log('[aflPlayers] using cached players', { cacheKey, count: activeCache.players.length });
+    }
+    return activeCache.players;
+  }
 
   let rawPlayers: RawPlayerRow[] = [];
-  const baseline = await fetchActiveCompetitionBaseline().catch(() => null);
+  const baseline = includeAllTeams ? null : await fetchActiveCompetitionBaseline().catch(() => null);
+
   try {
     rawPlayers = await fetchPlayersRaw();
   } catch {
     rawPlayers = [];
   }
+
   const teamById = await fetchTeamsById();
+
+  if (import.meta.env.DEV) {
+    console.log('[aflPlayers] after fetchPlayersRaw', {
+      rawPlayersCount: rawPlayers.length,
+      teamByIdCount: teamById.size,
+      sampleTeams: Array.from(teamById.values()).slice(0, 2),
+    });
+  }
 
   const byId = new Map<string, AflPlayer>();
   for (const row of rawPlayers || []) {
@@ -331,43 +500,57 @@ export async function fetchAflPlayers(): Promise<AflPlayer[]> {
     byId.set(mapped.id, prev ? mergePreferBetter(prev, mapped) : mapped);
   }
 
-  if (byId.size === 0) {
-    const bundledPlayers = await fetchBundledPlayersCsv().catch(() => [] as CsvPlayerRow[]);
-    for (const player of bundledPlayers) {
-      const normalizedTeamName = strOrUndef(player.teamName) || '';
-      const matchedTeam = Array.from(teamById.values()).find((team) => {
-        const nameToken = normalizeTeamToken(team.name);
-        const keyToken = normalizeTeamToken(team.teamKey);
-        const playerToken = normalizeTeamToken(normalizedTeamName);
-        return playerToken && (playerToken === nameToken || playerToken === keyToken);
-      });
+  const beforeMergeMissingTeam = Array.from(byId.values()).filter(
+    (p) => !p.teamName && !p.teamKey && !p.teamId,
+  ).length;
 
-      const mapped: AflPlayer = {
-        id: player.id,
-        name: player.name,
-        headshotUrl: pickHeadshot({
-          name: player.name,
-          headshot_url: player.headshotUrl,
-          photo_url: player.headshotUrl,
-        }) || undefined,
-        teamId: matchedTeam?.id,
-        teamName: matchedTeam?.name || normalizedTeamName || undefined,
-        teamKey: matchedTeam?.teamKey || normalizeTeamKey(normalizedTeamName)?.replace(/_/g, '') || undefined,
-        position: player.position,
-        number: player.number,
-        gamesPlayed: 0,
-        goals: 0,
-        disposals: 0,
-        kicks: 0,
-        handballs: 0,
-        marks: 0,
-        tackles: 0,
-        hitOuts: 0,
-        fantasyPoints: 0,
-      };
+  if (import.meta.env.DEV) {
+    console.log('[aflPlayers] after toAflPlayer', {
+      byIdCount: byId.size,
+      missingTeamLinkageBeforeCsvMerge: beforeMergeMissingTeam,
+      samplePlayers: Array.from(byId.values()).slice(0, 3).map((p) => ({
+        id: p.id,
+        name: p.name,
+        teamId: p.teamId,
+        teamName: p.teamName,
+        teamKey: p.teamKey,
+      })),
+    });
+  }
 
-      byId.set(mapped.id, mapped);
+  const bundledPlayers = await fetchBundledPlayersCsv().catch(() => [] as CsvPlayerRow[]);
+
+  for (const csvPlayer of bundledPlayers) {
+    const csvMapped = toCsvAflPlayer(csvPlayer, teamById);
+    const existing = byId.get(csvPlayer.id);
+
+    if (existing) {
+      byId.set(csvPlayer.id, mergePreferBetter(existing, csvMapped));
+    } else {
+      byId.set(csvPlayer.id, csvMapped);
     }
+  }
+
+  const afterMergeMissingTeam = Array.from(byId.values()).filter(
+    (p) => !p.teamName && !p.teamKey && !p.teamId,
+  ).length;
+
+  if (import.meta.env.DEV) {
+    console.log('[aflPlayers] merge debug', {
+      rawPlayersCount: rawPlayers.length,
+      dbDerivedPlayersCount: rawPlayers.length,
+      mergedPlayersCount: byId.size,
+      bundledCsvCount: bundledPlayers.length,
+      missingTeamLinkageBeforeMerge: beforeMergeMissingTeam,
+      missingTeamLinkageAfterMerge: afterMergeMissingTeam,
+      sampleAfterMerge: Array.from(byId.values()).slice(0, 5).map((p) => ({
+        id: p.id,
+        name: p.name,
+        teamId: p.teamId,
+        teamName: p.teamName,
+        teamKey: p.teamKey,
+      })),
+    });
   }
 
   const allPlayers = Array.from(byId.values());
@@ -404,10 +587,28 @@ export async function fetchAflPlayers(): Promise<AflPlayer[]> {
   }
 
   players.sort((a, b) => a.name.localeCompare(b.name));
-  cache = { at: now, players };
+
+  if (import.meta.env.DEV) {
+    console.log('[aflPlayers] final players', {
+      count: players.length,
+      sampleByTeam: Array.from(new Map(players.map((p) => [p.teamKey || p.teamName || p.id, p])).entries())
+        .slice(0, 5)
+        .map(([key, p]) => ({
+          team: key,
+          player: p.name,
+          teamId: p.teamId,
+          teamName: p.teamName,
+          teamKey: p.teamKey,
+        })),
+    });
+  }
+
+  caches[cacheKey] = { at: now, players };
   return players;
 }
 
 export function clearAflPlayersCache() {
-  cache = null;
+  caches.default = null;
+  caches.allTeams = null;
+  bundledCsvCache = null;
 }

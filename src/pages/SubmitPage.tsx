@@ -86,6 +86,7 @@ type DraftPayload = {
   awayBehinds: string;
   homeGoalMap: Record<string, number>;
   awayGoalMap: Record<string, number>;
+  manualTeamStats?: ManualTeamStatInputs;
   manualHomePlayers?: PlayerLite[];
   manualAwayPlayers?: PlayerLite[];
   notes: string;
@@ -106,6 +107,28 @@ const STEP_LABELS: Record<Step, string> = {
   5: 'Review',
 };
 
+const MANUAL_TEAM_STAT_FIELDS = [
+  { key: 'disposals', label: 'Disposals' },
+  { key: 'kicks', label: 'Kicks' },
+  { key: 'handballs', label: 'Handballs' },
+  { key: 'inside50s', label: 'Inside 50s' },
+  { key: 'rebound50s', label: 'Rebound 50s' },
+  { key: 'freesFor', label: 'Frees For' },
+  { key: 'hitOuts', label: 'Hitouts' },
+  { key: 'clearances', label: 'Clearances' },
+  { key: 'contestedPossessions', label: 'Contested Possessions' },
+  { key: 'uncontestedPossessions', label: 'Uncontested Possessions' },
+  { key: 'marks', label: 'Marks' },
+  { key: 'contestedMarks', label: 'Contested Marks' },
+  { key: 'interceptMarks', label: 'Intercept Marks' },
+  { key: 'tackles', label: 'Tackles' },
+  { key: 'spoils', label: 'Spoils' },
+] as const;
+
+type ManualTeamStatKey = (typeof MANUAL_TEAM_STAT_FIELDS)[number]['key'];
+
+type ManualTeamStatInputs = Record<ManualTeamStatKey, { home: string; away: string }>;
+
 function uuid() {
   try {
     return crypto.randomUUID();
@@ -121,6 +144,67 @@ function safeNum(v: any) {
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
+}
+
+function sanitizeOptionalStatInput(value: unknown) {
+  return String(value ?? '').replace(/[^\d]/g, '');
+}
+
+function parseOptionalStatInput(value: unknown): number | null {
+  const cleaned = sanitizeOptionalStatInput(value);
+  if (!cleaned) return null;
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : null;
+}
+
+function createEmptyManualTeamStats(): ManualTeamStatInputs {
+  return {
+    disposals: { home: '', away: '' },
+    kicks: { home: '', away: '' },
+    handballs: { home: '', away: '' },
+    inside50s: { home: '', away: '' },
+    rebound50s: { home: '', away: '' },
+    freesFor: { home: '', away: '' },
+    hitOuts: { home: '', away: '' },
+    clearances: { home: '', away: '' },
+    contestedPossessions: { home: '', away: '' },
+    uncontestedPossessions: { home: '', away: '' },
+    marks: { home: '', away: '' },
+    contestedMarks: { home: '', away: '' },
+    interceptMarks: { home: '', away: '' },
+    tackles: { home: '', away: '' },
+    spoils: { home: '', away: '' },
+  };
+}
+
+function hydrateManualTeamStats(value: unknown): ManualTeamStatInputs {
+  const next = createEmptyManualTeamStats();
+  if (!value || typeof value !== 'object') return next;
+
+  for (const field of MANUAL_TEAM_STAT_FIELDS) {
+    const row = (value as Partial<Record<ManualTeamStatKey, { home?: unknown; away?: unknown }>>)[field.key];
+    next[field.key] = {
+      home: sanitizeOptionalStatInput(row?.home),
+      away: sanitizeOptionalStatInput(row?.away),
+    };
+  }
+
+  return next;
+}
+
+function buildManualTeamStatsPayload(value: ManualTeamStatInputs) {
+  const home: Partial<Record<ManualTeamStatKey, number>> = {};
+  const away: Partial<Record<ManualTeamStatKey, number>> = {};
+
+  for (const field of MANUAL_TEAM_STAT_FIELDS) {
+    const homeValue = parseOptionalStatInput(value[field.key]?.home);
+    const awayValue = parseOptionalStatInput(value[field.key]?.away);
+    if (homeValue !== null) home[field.key] = homeValue;
+    if (awayValue !== null) away[field.key] = awayValue;
+  }
+
+  if (!Object.keys(home).length && !Object.keys(away).length) return null;
+  return { home, away };
 }
 
 function bytesToKb(n: number) {
@@ -358,6 +442,7 @@ export default function SubmitPage() {
 
   const [homeGoalMap, setHomeGoalMap] = useState<Record<string, number>>({});
   const [awayGoalMap, setAwayGoalMap] = useState<Record<string, number>>({});
+  const [manualTeamStats, setManualTeamStats] = useState<ManualTeamStatInputs>(() => createEmptyManualTeamStats());
   const [manualHomePlayers, setManualHomePlayers] = useState<PlayerLite[]>([]);
   const [manualAwayPlayers, setManualAwayPlayers] = useState<PlayerLite[]>([]);
 
@@ -396,6 +481,15 @@ export default function SubmitPage() {
   const homeTaggedGoals = useMemo(() => Object.values(homeGoalMap).reduce((sum, value) => sum + safeNum(value), 0), [homeGoalMap]);
   const awayTaggedGoals = useMemo(() => Object.values(awayGoalMap).reduce((sum, value) => sum + safeNum(value), 0), [awayGoalMap]);
   const totalTaggedGoals = useMemo(() => homeTaggedGoals + awayTaggedGoals, [awayTaggedGoals, homeTaggedGoals]);
+  const manualTeamStatsPayload = useMemo(() => buildManualTeamStatsPayload(manualTeamStats), [manualTeamStats]);
+  const manualTeamStatsCount = useMemo(
+    () =>
+      MANUAL_TEAM_STAT_FIELDS.reduce((count, field) => {
+        const row = manualTeamStats[field.key];
+        return parseOptionalStatInput(row.home) !== null || parseOptionalStatInput(row.away) !== null ? count + 1 : count;
+      }, 0),
+    [manualTeamStats],
+  );
 
   const kickoffLabel = useMemo(() => formatKickoff(fixture?.startTime), [fixture?.startTime]);
   const isMyFixtureSideHome = useMemo(
@@ -612,6 +706,7 @@ export default function SubmitPage() {
     setAwayBehinds('');
     setHomeGoalMap({});
     setAwayGoalMap({});
+    setManualTeamStats(createEmptyManualTeamStats());
     setManualHomePlayers([]);
     setManualAwayPlayers([]);
     setNotes('');
@@ -638,6 +733,7 @@ export default function SubmitPage() {
       setAwayBehinds(String(draft.awayBehinds || ''));
       setHomeGoalMap(draft.homeGoalMap || {});
       setAwayGoalMap(draft.awayGoalMap || {});
+      setManualTeamStats(hydrateManualTeamStats(draft.manualTeamStats));
       setManualHomePlayers(Array.isArray(draft.manualHomePlayers) ? draft.manualHomePlayers : []);
       setManualAwayPlayers(Array.isArray(draft.manualAwayPlayers) ? draft.manualAwayPlayers : []);
       setNotes(String(draft.notes || ''));
@@ -660,6 +756,7 @@ export default function SubmitPage() {
       awayBehinds,
       homeGoalMap,
       awayGoalMap,
+      manualTeamStats,
       manualHomePlayers,
       manualAwayPlayers,
       notes,
@@ -683,6 +780,7 @@ export default function SubmitPage() {
     awayBehinds,
     homeGoalMap,
     awayGoalMap,
+    manualTeamStats,
     manualHomePlayers,
     manualAwayPlayers,
     notes,
@@ -917,6 +1015,17 @@ export default function SubmitPage() {
     });
   };
 
+  const setManualTeamStatValue = (key: ManualTeamStatKey, side: 'home' | 'away', rawValue: string) => {
+    const nextValue = sanitizeOptionalStatInput(rawValue);
+    setManualTeamStats((prev) => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        [side]: nextValue,
+      },
+    }));
+  };
+
   const submit = async () => {
     if (!fixture || !myTeamId || !canSubmit) return;
     if (!sessionUserId) {
@@ -934,6 +1043,10 @@ export default function SubmitPage() {
 
     try {
       uploadedAssets = await uploadEvidenceFiles(fixture.id, sessionUserId, uploaded);
+      const submitOcrPayload = {
+        screenshots: uploadedAssets,
+        ...(manualTeamStatsPayload ? { teamStats: manualTeamStatsPayload } : {}),
+      };
 
       const { data: rpcData, error: rpcErr } = await supabase.rpc('eg_submit_result_v2', {
         p_fixture_id: fixture.id,
@@ -944,7 +1057,7 @@ export default function SubmitPage() {
         p_venue: venue || null,
         p_goal_kickers_home: homeGoalKickers.length ? homeGoalKickers : null,
         p_goal_kickers_away: awayGoalKickers.length ? awayGoalKickers : null,
-        p_ocr: { screenshots: uploadedAssets },
+        p_ocr: submitOcrPayload,
         p_notes: notes || null,
       });
 
@@ -1312,7 +1425,7 @@ export default function SubmitPage() {
                   <div className="mdcRequirementCard">
                     <div className="mdcRequirementCard__title">Screenshots required</div>
                     <div className="mdcRequirementCard__text">
-                      Upload at least one scoreboard or match-summary screenshot. OCR is not used in the launch submit flow.
+                      Upload at least one scoreboard or match-summary screenshot. OCR is not used in the launch submit flow, but optional manual team stats can be sent with the result now.
                     </div>
                   </div>
 
@@ -1339,6 +1452,112 @@ export default function SubmitPage() {
                       ))}
                     </div>
                   )}
+
+                  <div className="mdcReviewBlock">
+                    <div className="mdcReviewBlock__title">Team Stats (Optional)</div>
+                    <div
+                      style={{
+                        marginBottom: 14,
+                        fontSize: 13,
+                        lineHeight: 1.5,
+                        color: 'rgba(221, 231, 241, 0.78)',
+                      }}
+                    >
+                      Add any verified team totals you have now. Leave blanks to skip them and submit the result normally.
+                    </div>
+
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'minmax(0, 1.7fr) minmax(92px, 120px) minmax(92px, 120px)',
+                        gap: 10,
+                        alignItems: 'center',
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 11,
+                          letterSpacing: '0.12em',
+                          textTransform: 'uppercase',
+                          color: 'rgba(221, 231, 241, 0.5)',
+                        }}
+                      >
+                        Stat
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          letterSpacing: '0.12em',
+                          textTransform: 'uppercase',
+                          color: 'rgba(221, 231, 241, 0.5)',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {homeDisplayName}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          letterSpacing: '0.12em',
+                          textTransform: 'uppercase',
+                          color: 'rgba(221, 231, 241, 0.5)',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {awayDisplayName}
+                      </div>
+
+                      {MANUAL_TEAM_STAT_FIELDS.map((field) => (
+                        <React.Fragment key={field.key}>
+                          <div
+                            style={{
+                              fontSize: 13,
+                              fontWeight: 600,
+                              color: 'rgba(243, 247, 252, 0.92)',
+                            }}
+                          >
+                            {field.label}
+                          </div>
+                          <input
+                            inputMode="numeric"
+                            value={manualTeamStats[field.key].home}
+                            onChange={(e) => setManualTeamStatValue(field.key, 'home', e.target.value)}
+                            placeholder="--"
+                            aria-label={`${field.label} ${homeDisplayName}`}
+                            style={{
+                              width: '100%',
+                              minWidth: 0,
+                              textAlign: 'center',
+                              borderRadius: 12,
+                              border: '1px solid rgba(255,255,255,0.12)',
+                              background: 'rgba(255,255,255,0.04)',
+                              color: '#f3f7fc',
+                              padding: '10px 12px',
+                              fontSize: 14,
+                            }}
+                          />
+                          <input
+                            inputMode="numeric"
+                            value={manualTeamStats[field.key].away}
+                            onChange={(e) => setManualTeamStatValue(field.key, 'away', e.target.value)}
+                            placeholder="--"
+                            aria-label={`${field.label} ${awayDisplayName}`}
+                            style={{
+                              width: '100%',
+                              minWidth: 0,
+                              textAlign: 'center',
+                              borderRadius: 12,
+                              border: '1px solid rgba(255,255,255,0.12)',
+                              background: 'rgba(255,255,255,0.04)',
+                              color: '#f3f7fc',
+                              padding: '10px 12px',
+                              fontSize: 14,
+                            }}
+                          />
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  </div>
 
                   {!uploaded.length ? (
                     <div className="mdcStatus mdcStatus--danger mdcStatus--inline">
@@ -1373,6 +1592,7 @@ export default function SubmitPage() {
                     <div className={`mdcChecklist__row ${isStep2Valid ? 'is-ok' : ''}`}><Check size={13} /> Score entered</div>
                     <div className={`mdcChecklist__row ${(homeGoalKickers.length + awayGoalKickers.length) > 0 ? 'is-ok' : ''}`}><Check size={13} /> Goal kickers added</div>
                     <div className={`mdcChecklist__row ${uploaded.length > 0 ? 'is-ok' : ''}`}><Check size={13} /> Screenshots uploaded ({uploaded.length})</div>
+                    <div className={`mdcChecklist__row ${manualTeamStatsCount > 0 ? 'is-ok' : ''}`}><Check size={13} /> Optional team stats {manualTeamStatsCount > 0 ? `added (${manualTeamStatsCount})` : 'skipped'}</div>
                   </div>
 
                   <div className="mdcReviewBlock">
@@ -1393,6 +1613,27 @@ export default function SubmitPage() {
                   <div className="mdcReviewBlock">
                     <div className="mdcReviewBlock__title">Notes</div>
                     <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Any details for admins?" />
+                  </div>
+
+                  <div className="mdcReviewBlock">
+                    <div className="mdcReviewBlock__title">Manual Team Stats</div>
+                    {manualTeamStatsCount > 0 ? (
+                      MANUAL_TEAM_STAT_FIELDS.filter((field) => {
+                        const row = manualTeamStats[field.key];
+                        return parseOptionalStatInput(row.home) !== null || parseOptionalStatInput(row.away) !== null;
+                      }).map((field) => (
+                        <div key={field.key} className="mdcReviewKicker">
+                          <div className="mdcReviewKicker__left">
+                            <span>{field.label}</span>
+                          </div>
+                          <strong>
+                            {manualTeamStats[field.key].home || '—'} / {manualTeamStats[field.key].away || '—'}
+                          </strong>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="mdcStatus mdcStatus--muted">No optional team stats added. Score submission still works normally.</div>
+                    )}
                   </div>
 
                   <div className="mdcReviewBlock">

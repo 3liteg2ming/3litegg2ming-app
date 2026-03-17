@@ -1,4 +1,7 @@
 import { TEAM_ASSETS, assetUrl, type TeamKey } from '@/lib/teamAssets';
+import { resolveKnownPlayerHeadshot } from '@/lib/playerHeadshots';
+
+const INVALID_IMAGE_VALUE = /^(null|undefined|n\/a|na|none|false)$/i;
 
 const TEAM_KEY_ALIASES: Record<string, TeamKey> = {
   adelaidecrows: 'adelaide',
@@ -78,6 +81,33 @@ function normalizeStoragePath(path: string): string {
     .replace(/^assets\//i, '');
 }
 
+function resolveExplicitAssetUrl(rawValue?: string | null): string | null {
+  const raw = String(rawValue || '').trim();
+  if (!raw || INVALID_IMAGE_VALUE.test(raw)) return null;
+
+  if (/^https?:\/\//i.test(raw) || raw.startsWith('data:') || raw.startsWith('blob:')) {
+    if (/^https?:\/\//i.test(raw)) {
+      try {
+        const parsed = new URL(raw);
+        if (!parsed.pathname || parsed.pathname === '/') return null;
+      } catch {
+        return null;
+      }
+    }
+
+    return raw;
+  }
+
+  const normalized = normalizeStoragePath(raw);
+  if (!normalized) return null;
+
+  const basename = normalized.split('/').pop() || normalized;
+  const stem = basename.replace(/\.[a-z0-9]+$/i, '');
+  if (!stem || INVALID_IMAGE_VALUE.test(stem)) return null;
+
+  return assetUrl(normalized);
+}
+
 export function resolveTeamLogoUrl(input: {
   logoUrl?: string | null;
   slug?: string | null;
@@ -85,15 +115,8 @@ export function resolveTeamLogoUrl(input: {
   name?: string | null;
   fallbackPath?: string;
 }): string {
-  const raw = String(input.logoUrl || '').trim();
-
-  if (raw) {
-    if (/^https?:\/\//i.test(raw) || raw.startsWith('data:') || raw.startsWith('blob:')) {
-      return raw;
-    }
-    const normalized = normalizeStoragePath(raw);
-    if (normalized) return assetUrl(normalized);
-  }
+  const explicit = resolveExplicitAssetUrl(input.logoUrl);
+  if (explicit) return explicit;
 
   const key = resolveTeamKey({ slug: input.slug, teamKey: input.teamKey, name: input.name });
   const assetPath = TEAM_ASSETS[key]?.logoFile || TEAM_ASSETS[key]?.logoPath || input.fallbackPath || 'elite-gaming-logo.png';
@@ -115,12 +138,28 @@ export function resolvePlayerDisplayName(input: {
   return joined || 'Player not linked';
 }
 
-export function resolvePlayerPhotoUrl(input: { photoUrl?: string | null; headshotUrl?: string | null; fallbackPath?: string }): string {
-  const raw = String(input.photoUrl || input.headshotUrl || '').trim();
-  if (raw) {
-    if (/^https?:\/\//i.test(raw) || raw.startsWith('data:') || raw.startsWith('blob:')) return raw;
-    const normalized = normalizeStoragePath(raw);
-    if (normalized) return assetUrl(normalized);
-  }
+export function resolveOptionalPlayerPhotoUrl(input: {
+  name?: string | null;
+  photoUrl?: string | null;
+  headshotUrl?: string | null;
+  alternateNames?: Array<string | null | undefined>;
+}): string | null {
+  return resolveKnownPlayerHeadshot({
+    name: input.name,
+    photoUrl: input.photoUrl,
+    headshotUrl: input.headshotUrl,
+    alternateNames: input.alternateNames,
+  });
+}
+
+export function resolvePlayerPhotoUrl(input: {
+  name?: string | null;
+  photoUrl?: string | null;
+  headshotUrl?: string | null;
+  alternateNames?: Array<string | null | undefined>;
+  fallbackPath?: string;
+}): string {
+  const resolved = resolveOptionalPlayerPhotoUrl(input);
+  if (resolved) return resolved;
   return assetUrl(input.fallbackPath || 'elite-gaming-logo.png');
 }

@@ -8,14 +8,15 @@ import {
 } from '@/lib/fixturesRepo';
 import { resolveSeasonRecord } from '@/lib/seasonResolver';
 import { TEAM_ASSETS, type TeamKey } from '@/lib/teamAssets';
-import { fetchAflPlayers } from '@/data/aflPlayers';
+import { fetchAflPlayers, type AflPlayer } from '@/data/aflPlayers';
 import {
   resolvePlayerDisplayName,
+  resolveOptionalPlayerPhotoUrl,
   resolveTeamKey,
   resolveTeamLogoUrl,
   resolveTeamName,
 } from '@/lib/entityResolvers';
-import { resolveKnownPlayerHeadshot } from '@/lib/playerHeadshots';
+import { buildPlayerNameLookupKeys, normalizePlayerNameForLookup } from '@/lib/playerHeadshots';
 
 const supabase = requireSupabaseClient();
 
@@ -61,6 +62,8 @@ type TeamRow = {
 type DbPlayerRow = {
   id: string;
   name?: string | null;
+  display_name?: string | null;
+  full_name?: string | null;
   first_name?: string | null;
   last_name?: string | null;
   position?: string | null;
@@ -68,6 +71,8 @@ type DbPlayerRow = {
   headshot_url?: string | null;
   photo_url?: string | null;
   team_id?: string | null;
+  team_key?: string | null;
+  team_name?: string | null;
 };
 
 function normalizeSlug(value: unknown): string {
@@ -232,18 +237,129 @@ async function fetchTeamBySlug(slug: string | null | undefined): Promise<TeamRow
 
 function mergePlayerName(p: DbPlayerRow): string {
   return resolvePlayerDisplayName({
+    displayName: p.display_name,
+    fullName: p.full_name,
     name: p.name,
     firstName: p.first_name,
     lastName: p.last_name,
   });
 }
 
+function dbPlayerIdentityKey(player: DbPlayerRow): string {
+  const id = String(player.id || '').trim();
+  if (id) return `id:${id}`;
+
+  const name = normalizeToken(mergePlayerName(player));
+  const teamId = normalizeToken(String(player.team_id || ''));
+  const teamName = normalizeToken(String(player.team_name || ''));
+  const number = safeNum(player.number);
+
+  if (teamId && name) return `team-id-name:${teamId}:${name}`;
+  if (teamName && name) return `team-name-name:${teamName}:${name}`;
+  if (teamId && number > 0) return `team-id-number:${teamId}:${number}`;
+  if (teamName && number > 0) return `team-name-number:${teamName}:${number}`;
+  if (name) return `name:${name}`;
+  if (number > 0) return `number:${number}`;
+  return `row:${Math.random().toString(36).slice(2)}`;
+}
+
+function mergeDbPlayerRows(base: DbPlayerRow, incoming: DbPlayerRow): DbPlayerRow {
+  const baseName = mergePlayerName(base);
+  const incomingName = mergePlayerName(incoming);
+  const preferredName = pickPreferredPlayerName(baseName, incomingName);
+
+  return {
+    ...base,
+    ...incoming,
+    id: String(base.id || incoming.id || '').trim(),
+    name: preferredName || incoming.name || base.name || null,
+    display_name: incoming.display_name || base.display_name || null,
+    full_name: incoming.full_name || base.full_name || null,
+    first_name: incoming.first_name || base.first_name || null,
+    last_name: incoming.last_name || base.last_name || null,
+    position: incoming.position || base.position || null,
+    number: safeNum(incoming.number) > 0 ? incoming.number : base.number,
+    headshot_url: incoming.headshot_url || base.headshot_url || null,
+    photo_url: incoming.photo_url || base.photo_url || null,
+    team_id: incoming.team_id || base.team_id || null,
+    team_key: incoming.team_key || base.team_key || null,
+    team_name: incoming.team_name || base.team_name || null,
+  };
+}
+
+function mergeDbPlayerLists(lists: DbPlayerRow[][]): DbPlayerRow[] {
+  const merged = new Map<string, DbPlayerRow>();
+  for (const list of lists) {
+    for (const player of list || []) {
+      const key = dbPlayerIdentityKey(player);
+      const existing = merged.get(key);
+      merged.set(key, existing ? mergeDbPlayerRows(existing, player) : player);
+    }
+  }
+  return Array.from(merged.values());
+}
+
+function playerNameCandidates(player?: DbPlayerRow | null): string[] {
+  if (!player) return [];
+
+  const combined = `${String(player.first_name || '').trim()} ${String(player.last_name || '').trim()}`.trim();
+  return Array.from(
+    new Set(
+      [
+        resolvePlayerDisplayName({
+          displayName: player.display_name,
+          fullName: player.full_name,
+          name: player.name,
+          firstName: player.first_name,
+          lastName: player.last_name,
+        }),
+        String(player.name || '').trim(),
+        String(player.display_name || '').trim(),
+        String(player.full_name || '').trim(),
+        combined,
+      ].filter(Boolean),
+    ),
+  );
+}
+
 function resolveRosterPhotoUrl(args: {
   name?: string | null;
   photoUrl?: string | null;
   headshotUrl?: string | null;
+  teamId?: string | null;
+  teamName?: string | null;
+  teamKey?: string | null;
+  number?: number | null;
+  alternateNames?: Array<string | null | undefined>;
+  supplementalResolver?: ((args: {
+    name?: string | null;
+    teamId?: string | null;
+    teamName?: string | null;
+    teamKey?: string | null;
+    number?: number | null;
+    alternateNames?: Array<string | null | undefined>;
+  }) => string | null) | null;
 }): string | undefined {
-  return resolveKnownPlayerHeadshot(args) || undefined;
+  const direct =
+    resolveOptionalPlayerPhotoUrl({
+      name: args.name,
+      photoUrl: args.photoUrl,
+      headshotUrl: args.headshotUrl,
+      alternateNames: args.alternateNames,
+    }) || undefined;
+
+  if (direct) return direct;
+
+  return (
+    args.supplementalResolver?.({
+      name: args.name,
+      teamId: args.teamId,
+      teamName: args.teamName,
+      teamKey: args.teamKey,
+      number: args.number,
+      alternateNames: args.alternateNames,
+    }) || undefined
+  );
 }
 
 function normalizeToken(value: string): string {
@@ -252,6 +368,168 @@ function normalizeToken(value: string): string {
     .trim()
     .replace(/&/g, 'and')
     .replace(/[^a-z0-9]/g, '');
+}
+
+function buildTeamAnchors(args: { teamId?: string | null; teamName?: string | null; teamKey?: string | null }) {
+  return Array.from(
+    new Set(
+      [args.teamId, args.teamName, args.teamKey]
+        .map((value) => normalizeToken(String(value || '')))
+        .filter(Boolean),
+    ),
+  );
+}
+
+type SupplementalHeadshotCandidate = {
+  url: string;
+  normalizedName: string;
+  nameKeys: string[];
+  teamAnchors: string[];
+  number: number;
+  inMatchup: boolean;
+};
+
+function createSupplementalHeadshotResolver(args: {
+  players: AflPlayer[];
+  home: MatchCentreTeam;
+  away: MatchCentreTeam;
+}) {
+  const matchupAnchors = new Set(
+    [args.home, args.away].flatMap((team) =>
+      buildTeamAnchors({
+        teamId: team.id,
+        teamName: team.fullName,
+        teamKey: team.key,
+      }),
+    ),
+  );
+
+  const candidates = args.players
+    .map<SupplementalHeadshotCandidate | null>((player) => {
+      const url =
+        resolveOptionalPlayerPhotoUrl({
+          name: player.name,
+          photoUrl: player.headshotUrl,
+          headshotUrl: player.headshotUrl,
+        }) || null;
+      const normalizedName = normalizePlayerNameForLookup(player.name);
+      const nameKeys = buildPlayerNameLookupKeys(player.name);
+      if (!url || !normalizedName || !nameKeys.length) return null;
+
+      const teamAnchors = buildTeamAnchors({
+        teamId: player.teamId,
+        teamName: player.teamName,
+        teamKey: player.teamKey,
+      });
+
+      return {
+        url,
+        normalizedName,
+        nameKeys,
+        teamAnchors,
+        number: safeNum(player.number),
+        inMatchup: teamAnchors.some((anchor) => matchupAnchors.has(anchor)),
+      };
+    })
+    .filter(Boolean) as SupplementalHeadshotCandidate[];
+
+  const matchupCandidates = candidates.filter((candidate) => candidate.inMatchup);
+  const primaryPool = matchupCandidates.length ? matchupCandidates : candidates;
+  const fallbackPool = primaryPool === candidates ? null : candidates;
+
+  const scorePool = (
+    pool: SupplementalHeadshotCandidate[],
+    request: {
+      name?: string | null;
+      teamId?: string | null;
+      teamName?: string | null;
+      teamKey?: string | null;
+      number?: number | null;
+      alternateNames?: Array<string | null | undefined>;
+    },
+  ) => {
+    const requestedNames = Array.from(
+      new Set(
+        [request.name, ...(request.alternateNames || [])]
+          .map((value) => String(value || '').trim())
+          .filter(Boolean),
+      ),
+    );
+    const requestedNormalizedNames = new Set(
+      requestedNames.map((value) => normalizePlayerNameForLookup(value)).filter(Boolean),
+    );
+    const requestedNameKeys = new Set(requestedNames.flatMap((value) => buildPlayerNameLookupKeys(value)));
+    const requestedTeamAnchors = new Set(
+      buildTeamAnchors({
+        teamId: request.teamId,
+        teamName: request.teamName,
+        teamKey: request.teamKey,
+      }),
+    );
+    const requestedNumber = safeNum(request.number);
+
+    let best: SupplementalHeadshotCandidate | null = null;
+    let bestScore = -1;
+    let secondScore = -1;
+
+    for (const candidate of pool) {
+      let score = 0;
+      const teamMatch = candidate.teamAnchors.some((anchor) => requestedTeamAnchors.has(anchor));
+      let aliasMatches = 0;
+
+      for (const key of candidate.nameKeys) {
+        if (requestedNameKeys.has(key)) aliasMatches += 1;
+      }
+
+      if (requestedNormalizedNames.has(candidate.normalizedName)) {
+        score += 120;
+      } else if (aliasMatches > 0) {
+        score += 74 + Math.min(24, aliasMatches * 6);
+      }
+
+      if (!score && requestedNumber > 0 && candidate.number === requestedNumber) {
+        score += 22;
+      }
+
+      if (teamMatch) {
+        score += 34;
+      } else if (requestedTeamAnchors.size > 0) {
+        score -= 18;
+      }
+
+      if (requestedNumber > 0 && candidate.number === requestedNumber) {
+        score += 18;
+      }
+
+      if (!score) continue;
+
+      if (score > bestScore) {
+        secondScore = bestScore;
+        bestScore = score;
+        best = candidate;
+        continue;
+      }
+
+      if (score > secondScore) {
+        secondScore = score;
+      }
+    }
+
+    if (!best) return null;
+    if (bestScore >= 128) return best.url;
+    if (bestScore >= 96 && bestScore - secondScore >= 16) return best.url;
+    if (bestScore >= 82 && secondScore < 0) return best.url;
+    return null;
+  };
+
+  return (request: {
+    name?: string | null;
+    teamId?: string | null;
+    teamName?: string | null;
+    teamKey?: string | null;
+    number?: number | null;
+    alternateNames?: Array<string | null | undefined>;
+  }) => scorePool(primaryPool, request) || (fallbackPool ? scorePool(fallbackPool, request) : null);
 }
 
 export type MatchCentreTeam = {
@@ -306,6 +584,204 @@ export type PlayerStatRow = {
   T: number | null;
   CLR: number | null;
 };
+
+const PLAYER_STAT_KEYS = ['G', 'D', 'K', 'H', 'M', 'T', 'CLR'] as const;
+
+function normalizeTeamAbbreviation(teamKey: TeamKey, shortName: string, fullName: string) {
+  if (teamKey === 'goldcoast') return 'GC';
+  if (teamKey === 'gws') return 'GWS';
+
+  const short = String(shortName || '').trim();
+  if (short) return short.slice(0, 3).toUpperCase();
+  return String(fullName || '').trim().slice(0, 3).toUpperCase();
+}
+
+function buildPlayerIdentityAliases(args: {
+  playerId?: string | null;
+  teamId?: string | null;
+  teamName?: string | null;
+  number?: number | null;
+  name?: string | null;
+  alternateNames?: Array<string | null | undefined>;
+}) {
+  const playerId = String(args.playerId || '').trim();
+  const teamId = String(args.teamId || '').trim();
+  const teamName = normalizeToken(String(args.teamName || '').trim());
+  const number = safeNum(args.number);
+  const keys = new Set<string>();
+  const nameKeys = new Set<string>();
+
+  for (const candidate of [args.name, ...(args.alternateNames || [])]) {
+    for (const key of buildPlayerNameLookupKeys(candidate)) {
+      nameKeys.add(key);
+    }
+  }
+
+  if (isUuidLike(playerId)) keys.add(`id:${playerId}`);
+
+  const teamAnchors = [teamId, teamName].filter(Boolean);
+  for (const teamAnchor of teamAnchors) {
+    if (number > 0) keys.add(`team-number:${teamAnchor}:${number}`);
+    for (const nameKey of nameKeys) {
+      keys.add(`team-name:${teamAnchor}:${nameKey}`);
+    }
+  }
+
+  for (const nameKey of nameKeys) {
+    keys.add(`name:${nameKey}`);
+  }
+
+  if (!keys.size && number > 0) keys.add(`number:${number}`);
+  return Array.from(keys);
+}
+
+function playerStatIdentityKeys(row: PlayerStatRow) {
+  return buildPlayerIdentityAliases({
+    playerId: row.playerId,
+    teamId: row.teamId,
+    teamName: row.team,
+    number: row.number,
+    name: row.name,
+  });
+}
+
+function findMatchingPlayerStatRow(
+  rows: PlayerStatRow[],
+  args: {
+    playerId?: string | null;
+    teamId?: string | null;
+    teamName?: string | null;
+    number?: number | null;
+    name?: string | null;
+    alternateNames?: Array<string | null | undefined>;
+  },
+) {
+  const aliases = buildPlayerIdentityAliases(args);
+  if (!aliases.length) return null;
+
+  const aliasSet = new Set(aliases);
+  for (const row of rows) {
+    if (playerStatIdentityKeys(row).some((alias) => aliasSet.has(alias))) {
+      return row;
+    }
+  }
+  return null;
+}
+
+function playerStatStatStrength(row: PlayerStatRow) {
+  const nonZeroCount = PLAYER_STAT_KEYS.reduce((score, key) => score + (safeNum(row[key]) > 0 ? 1 : 0), 0);
+  const populatedCount = PLAYER_STAT_KEYS.reduce((score, key) => score + (row[key] === null || row[key] === undefined ? 0 : 1), 0);
+  return nonZeroCount * 1000 + (nonZeroCount > 0 ? populatedCount * 10 : 0);
+}
+
+function playerStatDisplayStrength(row: PlayerStatRow) {
+  return (
+    (row.photoUrl ? 40 : 0) +
+    (safeNum(row.number) > 0 ? 20 : 0) +
+    (String(row.team || '').trim() ? 10 : 0) +
+    (String(row.name || '').trim() ? 6 : 0) +
+    (String(row.position || '').trim() ? 2 : 0)
+  );
+}
+
+function playerStatStrength(row: PlayerStatRow) {
+  return playerStatStatStrength(row) + playerStatDisplayStrength(row) + PLAYER_STAT_KEYS.reduce((score, key) => {
+    const value = row[key];
+    if (value === null || value === undefined) return score;
+    return score + 1 + safeNum(value);
+  }, 0);
+}
+
+function hasAnyNonZeroPlayerStats(row: PlayerStatRow) {
+  return PLAYER_STAT_KEYS.some((key) => safeNum(row[key]) > 0);
+}
+
+function pickPreferredPlayerName(primary: string, secondary: string) {
+  const a = String(primary || '').trim();
+  const b = String(secondary || '').trim();
+  if (!a) return b;
+  if (!b) return a;
+  if (a.split(/\s+/).length !== b.split(/\s+/).length) {
+    return a.split(/\s+/).length > b.split(/\s+/).length ? a : b;
+  }
+  return a.length >= b.length ? a : b;
+}
+
+function pickPreferredPlayerStatRow(base: PlayerStatRow, incoming: PlayerStatRow) {
+  const baseHasStats = hasAnyNonZeroPlayerStats(base);
+  const incomingHasStats = hasAnyNonZeroPlayerStats(incoming);
+
+  if (baseHasStats !== incomingHasStats) {
+    return baseHasStats ? base : incoming;
+  }
+
+  if (!baseHasStats && !incomingHasStats) {
+    return playerStatDisplayStrength(incoming) > playerStatDisplayStrength(base) ? incoming : base;
+  }
+
+  return playerStatStrength(incoming) > playerStatStrength(base) ? incoming : base;
+}
+
+function mergePlayerStatPair(base: PlayerStatRow, incoming: PlayerStatRow): PlayerStatRow {
+  const preferred = pickPreferredPlayerStatRow(base, incoming);
+  const fallback = preferred === base ? incoming : base;
+
+  const merged: PlayerStatRow = {
+    ...preferred,
+    playerId: isUuidLike(preferred.playerId) ? preferred.playerId : isUuidLike(fallback.playerId) ? fallback.playerId : preferred.playerId || fallback.playerId,
+    name: pickPreferredPlayerName(preferred.name, fallback.name),
+    teamId: preferred.teamId || fallback.teamId,
+    team: preferred.team || fallback.team,
+    number: preferred.number || fallback.number,
+    position: preferred.position || fallback.position,
+    photoUrl: preferred.photoUrl || fallback.photoUrl,
+    G: null,
+    D: null,
+    K: null,
+    H: null,
+    M: null,
+    T: null,
+    CLR: null,
+  };
+
+  for (const key of PLAYER_STAT_KEYS) {
+    const preferredValue = preferred[key];
+    const fallbackValue = fallback[key];
+    if (preferredValue === null || preferredValue === undefined) {
+      merged[key] = fallbackValue;
+      continue;
+    }
+    if (fallbackValue === null || fallbackValue === undefined) {
+      merged[key] = preferredValue;
+      continue;
+    }
+    merged[key] = Math.max(safeNum(preferredValue), safeNum(fallbackValue));
+  }
+
+  return merged;
+}
+
+function dedupePlayerStats(rows: PlayerStatRow[]): PlayerStatRow[] {
+  const merged = new Map<string, PlayerStatRow>();
+  const canonicalByAlias = new Map<string, string>();
+  let nextCanonicalId = 0;
+
+  for (const row of rows) {
+    const aliases = playerStatIdentityKeys(row);
+    const existingCanonical = aliases.find((alias) => canonicalByAlias.has(alias));
+    const canonicalKey = existingCanonical ? canonicalByAlias.get(existingCanonical)! : `merged:${nextCanonicalId++}`;
+    const existing = merged.get(canonicalKey);
+    const nextRow = existing ? mergePlayerStatPair(existing, row) : row;
+
+    merged.set(canonicalKey, nextRow);
+
+    for (const alias of [...aliases, ...playerStatIdentityKeys(nextRow)]) {
+      canonicalByAlias.set(alias, canonicalKey);
+    }
+  }
+
+  return Array.from(merged.values());
+}
 
 export type TeamStatRow = {
   label: string;
@@ -459,9 +935,8 @@ const TEAM_STAT_PAYLOAD_CONFIGS: TeamStatPayloadConfig[] = [
   { label: 'Handballs', aliases: ['handballs'] },
   { label: 'Inside 50s', aliases: ['inside50s', 'inside_50s', 'inside50', 'inside_50'] },
   { label: 'Rebound 50s', aliases: ['rebound50s', 'rebound_50s', 'rebound50', 'rebound_50'] },
-  { label: 'Frees For', aliases: ['freesFor', 'frees_for'] },
-  { label: '50m Penalties', aliases: ['fiftyMetrePenalties', 'fifty_metre_penalties', 'fiftyMeterPenalties', '50mPenalties', 'fiftys'] },
-  { label: 'Hit Outs', aliases: ['hitOuts', 'hit_outs', 'hitouts'] },
+  { label: 'Frees For', aliases: ['freesFor', 'frees_for', 'freeKicksFor', 'free_kicks_for', 'frees'] },
+  { label: 'Hitouts', aliases: ['hitOuts', 'hit_outs', 'hitouts'] },
   { label: 'Clearances', aliases: ['clearances'] },
   { label: 'Contested Possessions', aliases: ['contestedPossessions', 'contested_possessions'] },
   { label: 'Uncontested Possessions', aliases: ['uncontestedPossessions', 'uncontested_possessions'] },
@@ -471,6 +946,28 @@ const TEAM_STAT_PAYLOAD_CONFIGS: TeamStatPayloadConfig[] = [
   { label: 'Tackles', aliases: ['tackles'] },
   { label: 'Spoils', aliases: ['spoils'] },
 ];
+
+const TEAM_STAT_DISPLAY_ORDER = [
+  'Score',
+  'Goals',
+  'Behinds',
+  'Goal Kickers',
+  'Disposals',
+  'Kicks',
+  'Handballs',
+  'Inside 50s',
+  'Rebound 50s',
+  'Frees For',
+  'Hitouts',
+  'Clearances',
+  'Contested Possessions',
+  'Uncontested Possessions',
+  'Marks',
+  'Contested Marks',
+  'Intercept Marks',
+  'Tackles',
+  'Spoils',
+] as const;
 
 function parseJsonArray(value: unknown): any[] {
   if (Array.isArray(value)) return value;
@@ -1027,46 +1524,56 @@ async function fetchFixtureTeamPlayers(args: {
 }): Promise<PlayerStatRow[]> {
   const { fixture, home, away, homeTeamRow, awayTeamRow } = args;
   const { homeTeamId, awayTeamId } = await resolveFixtureTeamIds(fixture, homeTeamRow, awayTeamRow);
+  const baselinePlayers = await fetchAflPlayers({ includeAllTeams: true }).catch(() => []);
+  const supplementalHeadshotResolver = createSupplementalHeadshotResolver({
+    players: baselinePlayers,
+    home,
+    away,
+  });
 
   const orderedTeamIds = [homeTeamId, awayTeamId].filter(Boolean);
-  let players = await fetchPlayersByTeamIds(orderedTeamIds);
+  const playersByTeamIds = orderedTeamIds.length ? await fetchPlayersByTeamIds(orderedTeamIds) : [];
+  const playersBySlugs = await fetchPlayersByTeamSlugs([
+    String(fixture.home_team_slug || ''),
+    String(fixture.away_team_slug || ''),
+  ]);
+  const playersByNames = await fetchPlayersByTeamNames([home.fullName, away.fullName]);
+
+  const normalizedHome = normalizeToken(home.fullName);
+  const normalizedAway = normalizeToken(away.fullName);
+  const baselineRoster = baselinePlayers
+    .filter((player) => {
+      const teamName = normalizeToken(String(player.teamName || ''));
+      const teamKey = normalizeToken(String(player.teamKey || ''));
+      return (
+        teamName === normalizedHome ||
+        teamName === normalizedAway ||
+        teamKey === normalizeToken(home.key) ||
+        teamKey === normalizeToken(away.key)
+      );
+    })
+    .map((player) => ({
+      id: player.id,
+      name: player.name,
+      position: player.position,
+      number: player.number,
+      team_id:
+        normalizeToken(String(player.teamName || '')) === normalizedAway ||
+        normalizeToken(String(player.teamKey || '')) === normalizeToken(away.key)
+          ? awayTeamId || away.id || ''
+          : homeTeamId || home.id || '',
+      team_name:
+        normalizeToken(String(player.teamName || '')) === normalizedAway ||
+        normalizeToken(String(player.teamKey || '')) === normalizeToken(away.key)
+          ? away.fullName
+          : home.fullName,
+      photo_url: player.headshotUrl || null,
+      headshot_url: player.headshotUrl || null,
+    })) as DbPlayerRow[];
+
+  let players = mergeDbPlayerLists([playersByTeamIds, playersBySlugs, playersByNames, baselineRoster]);
   if (!players.length) {
-    players = await fetchPlayersByTeamSlugs([
-      String(fixture.home_team_slug || ''),
-      String(fixture.away_team_slug || ''),
-    ]);
-  }
-  if (!players.length) {
-    players = await fetchPlayersByTeamNames([home.fullName, away.fullName]);
-  }
-  if (!players.length) {
-    const baselinePlayers = await fetchAflPlayers().catch(() => []);
-    const normalizedHome = normalizeToken(home.fullName);
-    const normalizedAway = normalizeToken(away.fullName);
-    players = baselinePlayers
-      .filter((player) => {
-        const teamName = normalizeToken(String(player.teamName || ''));
-        const teamKey = normalizeToken(String(player.teamKey || ''));
-        return (
-          teamName === normalizedHome ||
-          teamName === normalizedAway ||
-          teamKey === normalizeToken(home.key) ||
-          teamKey === normalizeToken(away.key)
-        );
-      })
-      .map((player) => ({
-        id: player.id,
-        name: player.name,
-        position: player.position,
-        number: player.number,
-        team_id:
-          normalizeToken(String(player.teamName || '')) === normalizedAway ||
-          normalizeToken(String(player.teamKey || '')) === normalizeToken(away.key)
-            ? awayTeamId || away.id || ''
-            : homeTeamId || home.id || '',
-        photo_url: player.headshotUrl || null,
-        headshot_url: player.headshotUrl || null,
-      })) as DbPlayerRow[];
+    players = baselineRoster;
   }
 
   const teamOrder = new Map<string, number>();
@@ -1087,18 +1594,25 @@ async function fetchFixtureTeamPlayers(args: {
       teamName ||
       (teamId && teamId === String(homeTeamId || '') ? home.fullName : '') ||
       (teamId && teamId === String(awayTeamId || '') ? away.fullName : '');
+    const mergedName = mergePlayerName(p);
 
     return {
       playerId: String(p.id),
-      name: mergePlayerName(p),
+      name: mergedName,
       teamId,
       team: resolvedTeamName || home.fullName,
       number: safeNum(p.number),
       position: String(p.position || '').trim(),
       photoUrl: resolveRosterPhotoUrl({
-        name: mergePlayerName(p),
+        name: mergedName,
         photoUrl: p.photo_url,
         headshotUrl: p.headshot_url,
+        teamId,
+        teamName: resolvedTeamName || teamName,
+        teamKey: teamId === homeTeamId ? home.key : teamId === awayTeamId ? away.key : undefined,
+        number: safeNum(p.number),
+        alternateNames: playerNameCandidates(p),
+        supplementalResolver: supplementalHeadshotResolver,
       }),
       G: null,
       D: null,
@@ -1119,6 +1633,204 @@ async function fetchFixtureTeamPlayers(args: {
   });
 
   return rows;
+}
+
+async function fetchPlayersByTeamKey(teamKey: string): Promise<DbPlayerRow[]> {
+  const key = String(teamKey || '').trim();
+  if (!key) return [];
+
+  const attempts = [
+    'id,team_id,team_key,team_name,name,position,number,headshot_url,photo_url',
+    'id,team_id,team_key,name,position,number,headshot_url,photo_url',
+    'id,team_key,name,position,number,headshot_url,photo_url',
+    'id,team_key,name,headshot_url,photo_url',
+  ] as const;
+
+  for (const selectCols of attempts) {
+    const { data, error } = await supabase.from('eg_players').select(selectCols).eq('team_key', key).limit(800);
+    if (!error) return (data || []) as unknown as DbPlayerRow[];
+  }
+
+  return [];
+}
+
+async function fetchPlayersByNormalizedTeamName(teamName: string): Promise<DbPlayerRow[]> {
+  const wanted = normalizeToken(String(teamName || ''));
+  if (!wanted) return [];
+
+  const attempts = [
+    'id,team_id,team_name,team_key,name,display_name,full_name,first_name,last_name,position,number,headshot_url,photo_url',
+    'id,team_id,team_name,name,display_name,full_name,first_name,last_name,position,number,headshot_url,photo_url',
+    'id,team_name,name,display_name,full_name,first_name,last_name,position,number,headshot_url,photo_url',
+  ] as const;
+
+  for (const selectCols of attempts) {
+    const response = await (supabase.from('eg_players') as any).select(selectCols).limit(6000);
+    const data = response?.data;
+    const error = response?.error;
+    if (error) continue;
+    const rows = (data || []) as DbPlayerRow[];
+    const filtered = rows.filter((p) => normalizeToken(String((p as any).team_name || '')) === wanted);
+    if (filtered.length) return filtered;
+  }
+
+  return [];
+}
+
+async function fetchFullFixtureRoster(args: {
+  fixture: FixtureRow;
+  home: MatchCentreTeam;
+  away: MatchCentreTeam;
+  homeTeamRow: TeamRow | null;
+  awayTeamRow: TeamRow | null;
+  supplementalHeadshotResolver: ReturnType<typeof createSupplementalHeadshotResolver>;
+}): Promise<{
+  homeTeamId: string;
+  awayTeamId: string;
+  homePlayers: DbPlayerRow[];
+  awayPlayers: DbPlayerRow[];
+  baseRows: PlayerStatRow[];
+}> {
+  const { fixture, home, away, homeTeamRow, awayTeamRow, supplementalHeadshotResolver } = args;
+  const { homeTeamId, awayTeamId } = await resolveFixtureTeamIds(fixture, homeTeamRow, awayTeamRow);
+
+  const resolvedHomeKey = resolveTeamKey({ slug: home.slug, teamKey: home.key, name: home.fullName });
+  const resolvedAwayKey = resolveTeamKey({ slug: away.slug, teamKey: away.key, name: away.fullName });
+  const allMasterPlayers = await fetchAflPlayers({ includeAllTeams: true }).catch(() => []);
+
+  const filterMasterPlayersForSide = (side: 'home' | 'away'): DbPlayerRow[] => {
+    const wantedTeamId = side === 'home' ? homeTeamId : awayTeamId;
+    const wantedTeamKey = normalizeToken(
+      String(side === 'home' ? (home.key || resolvedHomeKey || '') : (away.key || resolvedAwayKey || '')),
+    );
+    const wantedTeamName = normalizeToken(side === 'home' ? home.fullName : away.fullName);
+
+    return allMasterPlayers
+      .filter((player) => {
+        const pTeamId = String(player.teamId || '').trim();
+        const pTeamKey = normalizeToken(String(player.teamKey || ''));
+        const pTeamName = normalizeToken(String(player.teamName || ''));
+
+        return (
+          (wantedTeamId && pTeamId === wantedTeamId) ||
+          (wantedTeamKey && pTeamKey === wantedTeamKey) ||
+          (wantedTeamName && pTeamName === wantedTeamName)
+        );
+      })
+      .map((player) => ({
+        id: String(player.id || '').trim(),
+        name: String(player.name || '').trim(),
+        position: String(player.position || '').trim() || null,
+        number: safeNum(player.number) || null,
+        headshot_url: player.headshotUrl || null,
+        photo_url: player.headshotUrl || null,
+        team_id: player.teamId || null,
+        team_key: player.teamKey || null,
+        team_name: player.teamName || null,
+      }));
+  };
+
+  const chooseLargestRoster = (candidates: Array<{ label: string; rows: DbPlayerRow[] }>) => {
+    return candidates.reduce(
+      (best, current) => (current.rows.length > best.rows.length ? current : best),
+      { label: 'none', rows: [] as DbPlayerRow[] },
+    );
+  };
+
+  const loadRosterForSide = async (side: 'home' | 'away') => {
+    const teamId = side === 'home' ? homeTeamId : awayTeamId;
+    const teamKey =
+      side === 'home'
+        ? String(home.key || resolvedHomeKey || '').trim()
+        : String(away.key || resolvedAwayKey || '').trim();
+    const teamName = side === 'home' ? home.fullName : away.fullName;
+
+    const [byTeamId, byTeamKey, byTeamName, byNormalizedTeamName] = await Promise.all([
+      teamId ? fetchPlayersByTeamIds([teamId]) : Promise.resolve([] as DbPlayerRow[]),
+      teamKey ? fetchPlayersByTeamKey(teamKey) : Promise.resolve([] as DbPlayerRow[]),
+      teamName ? fetchPlayersByTeamNames([teamName]) : Promise.resolve([] as DbPlayerRow[]),
+      teamName ? fetchPlayersByNormalizedTeamName(teamName) : Promise.resolve([] as DbPlayerRow[]),
+    ]);
+
+    const byMasterPlayers = filterMasterPlayersForSide(side);
+
+    const chosen = chooseLargestRoster([
+      { label: 'team_id', rows: mergeDbPlayerLists([byTeamId]) },
+      { label: 'team_key', rows: mergeDbPlayerLists([byTeamKey]) },
+      { label: 'team_name', rows: mergeDbPlayerLists([byTeamName]) },
+      { label: 'normalized_team_name', rows: mergeDbPlayerLists([byNormalizedTeamName]) },
+      { label: 'master_players', rows: mergeDbPlayerLists([byMasterPlayers]) },
+    ]);
+
+    if (import.meta.env.DEV) {
+      console.log('[matchCentreRepo] roster source counts', {
+        fixtureId: fixture.id,
+        side,
+        teamId,
+        teamKey,
+        teamName,
+        byTeamId: byTeamId.length,
+        byTeamKey: byTeamKey.length,
+        byTeamName: byTeamName.length,
+        byNormalizedTeamName: byNormalizedTeamName.length,
+        byMasterPlayers: byMasterPlayers.length,
+        chosenSource: chosen.label,
+        chosenCount: chosen.rows.length,
+      });
+    }
+
+    return chosen.rows;
+  };
+
+  const [homePlayersRaw, awayPlayersRaw] = await Promise.all([
+    loadRosterForSide('home'),
+    loadRosterForSide('away'),
+  ]);
+
+  const homePlayers = mergeDbPlayerLists([homePlayersRaw]);
+  const awayPlayers = mergeDbPlayerLists([awayPlayersRaw]);
+
+  const toBaseRow = (p: DbPlayerRow, side: 'home' | 'away'): PlayerStatRow => {
+    const teamId = side === 'home' ? homeTeamId : awayTeamId;
+    const team = side === 'home' ? home.fullName : away.fullName;
+    const teamKey = side === 'home' ? home.key : away.key;
+    const name = mergePlayerName(p);
+    const number = safeNum(p.number);
+
+    return {
+      playerId: String(p.id || '').trim() || `row:${side}:${normalizeToken(name)}:${number || 0}`,
+      name,
+      teamId,
+      team,
+      number,
+      position: String(p.position || '').trim(),
+      photoUrl: resolveRosterPhotoUrl({
+        name,
+        photoUrl: p.photo_url,
+        headshotUrl: p.headshot_url,
+        teamId,
+        teamName: team,
+        teamKey,
+        number,
+        alternateNames: playerNameCandidates(p),
+        supplementalResolver: supplementalHeadshotResolver,
+      }),
+      G: 0,
+      D: 0,
+      K: 0,
+      H: 0,
+      M: 0,
+      T: 0,
+      CLR: 0,
+    };
+  };
+
+  const baseRows = [
+    ...homePlayers.map((p) => toBaseRow(p, 'home')),
+    ...awayPlayers.map((p) => toBaseRow(p, 'away')),
+  ];
+
+  return { homeTeamId, awayTeamId, homePlayers, awayPlayers, baseRows };
 }
 
 export async function fetchMatchCentre(matchId: string): Promise<MatchCentreModel> {
@@ -1176,7 +1888,7 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
     name: homeName,
     fullName: homeName,
     shortName: homeShort,
-    abbreviation: String(homeShort || homeName).slice(0, 3).toUpperCase(),
+    abbreviation: normalizeTeamAbbreviation(homeKey, homeShort, homeName),
     colour: teamColour(homeTeamRow, homeKey),
     color: teamColour(homeTeamRow, homeKey),
     logoUrl: teamLogo(homeTeamRow, homeKey),
@@ -1192,7 +1904,7 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
     name: awayName,
     fullName: awayName,
     shortName: awayShort,
-    abbreviation: String(awayShort || awayName).slice(0, 3).toUpperCase(),
+    abbreviation: normalizeTeamAbbreviation(awayKey, awayShort, awayName),
     colour: teamColour(awayTeamRow, awayKey),
     color: teamColour(awayTeamRow, awayKey),
     logoUrl: teamLogo(awayTeamRow, awayKey),
@@ -1212,14 +1924,49 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
     normalizeFixtureStatus(fixture.status, fixture as any) === 'LIVE' ||
     [hG, hB, aG, aB, safeNum(hT), safeNum(aT)].some((value) => value > 0);
 
-  let playerStats = await fetchFixtureTeamPlayers({
+  const existingPlayerStats = await fetchFixtureTeamPlayers({
     fixture,
     home,
     away,
     homeTeamRow,
     awayTeamRow,
   });
-  const playerById = new Map(playerStats.map((row) => [String(row.playerId), row]));
+
+  const baselinePlayers = await fetchAflPlayers({ includeAllTeams: true }).catch(() => []);
+  const supplementalHeadshotResolver = createSupplementalHeadshotResolver({
+    players: baselinePlayers,
+    home,
+    away,
+  });
+
+  const rebuiltRoster = await fetchFullFixtureRoster({
+    fixture,
+    home,
+    away,
+    homeTeamRow,
+    awayTeamRow,
+    supplementalHeadshotResolver,
+  });
+
+  const existingCount = existingPlayerStats.length;
+  let playerStats: PlayerStatRow[] =
+    rebuiltRoster.baseRows.length > existingCount ? rebuiltRoster.baseRows : existingPlayerStats;
+
+  if (import.meta.env.DEV) {
+    console.log('[matchCentreRepo] FINAL rebuilt playerStats debug', {
+      fixtureId: fixture.id,
+      existingPlayerStatsCountBeforeReplacement: existingCount,
+      rebuiltHomeRosterCount: rebuiltRoster.homePlayers.length,
+      rebuiltAwayRosterCount: rebuiltRoster.awayPlayers.length,
+      rebuiltCombinedCount: rebuiltRoster.baseRows.length,
+      finalChosenPlayerStatsCount: playerStats.length,
+      fallbackUsed: playerStats === existingPlayerStats,
+    });
+  }
+
+  const playerById = new Map<string, PlayerStatRow>(
+    playerStats.map((row): [string, PlayerStatRow] => [String(row.playerId), row]),
+  );
 
   const goalKickers = [
     ...normalizeGoalKickers(primarySubmission?.goal_kickers_home, String(home.id || fixture.home_team_id || ''), home.fullName),
@@ -1233,29 +1980,70 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
 
     for (const kicker of goalKickers) {
       const linkedPlayer = playersById.get(kicker.playerId);
-      let target = playerById.get(kicker.playerId);
+      const linkedNames = playerNameCandidates(linkedPlayer);
+      const linkedDisplayName =
+        kicker.name ||
+        linkedNames[0] ||
+        resolvePlayerDisplayName({
+          name: linkedPlayer?.name,
+          displayName: linkedPlayer?.display_name,
+          fullName: linkedPlayer?.full_name,
+          firstName: linkedPlayer?.first_name,
+          lastName: linkedPlayer?.last_name,
+        });
+      let target =
+        playerById.get(kicker.playerId) ||
+        findMatchingPlayerStatRow(playerStats, {
+          playerId: kicker.playerId,
+          teamId: kicker.teamId,
+          teamName: kicker.teamName,
+          number: linkedPlayer?.number,
+          name: kicker.name,
+          alternateNames: [linkedDisplayName, ...linkedNames],
+        });
+
+      if (target && isUuidLike(kicker.playerId)) {
+        playerById.set(kicker.playerId, target);
+      }
 
       if (!target) {
         target = {
           playerId: kicker.playerId,
-          name:
-            kicker.name ||
-            resolvePlayerDisplayName({
-              name: linkedPlayer?.name,
-              firstName: linkedPlayer?.first_name,
-              lastName: linkedPlayer?.last_name,
-            }),
+          name: linkedDisplayName,
           teamId: kicker.teamId,
           team: kicker.teamName,
           number: safeNum(linkedPlayer?.number),
           position: String(linkedPlayer?.position || '').trim(),
           photoUrl: linkedPlayer
             ? resolveRosterPhotoUrl({
-                name: kicker.name,
+                name: linkedDisplayName,
                 photoUrl: linkedPlayer.photo_url,
                 headshotUrl: linkedPlayer.headshot_url,
+                teamId: kicker.teamId,
+                teamName: kicker.teamName,
+                teamKey:
+                  kicker.teamId === String(home.id || fixture.home_team_id || '')
+                    ? home.key
+                    : kicker.teamId === String(away.id || fixture.away_team_id || '')
+                      ? away.key
+                      : undefined,
+                number: safeNum(linkedPlayer.number),
+                alternateNames: [kicker.name, ...linkedNames],
+                supplementalResolver: supplementalHeadshotResolver,
               })
-            : resolveRosterPhotoUrl({ name: kicker.name }),
+            : resolveRosterPhotoUrl({
+                name: linkedDisplayName,
+                teamId: kicker.teamId,
+                teamName: kicker.teamName,
+                teamKey:
+                  kicker.teamId === String(home.id || fixture.home_team_id || '')
+                    ? home.key
+                    : kicker.teamId === String(away.id || fixture.away_team_id || '')
+                      ? away.key
+                      : undefined,
+                alternateNames: [kicker.name],
+                supplementalResolver: supplementalHeadshotResolver,
+              }),
           G: null,
           D: null,
           K: null,
@@ -1278,14 +2066,40 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
         target.position = target.position || String(linkedPlayer.position || '').trim();
         if (!target.photoUrl) {
           target.photoUrl = resolveRosterPhotoUrl({
-            name: target.name,
+            name: target.name || linkedDisplayName,
             photoUrl: linkedPlayer.photo_url,
             headshotUrl: linkedPlayer.headshot_url,
+            teamId: target.teamId || kicker.teamId,
+            teamName: target.team || kicker.teamName,
+            teamKey:
+              (target.teamId || kicker.teamId) === String(home.id || fixture.home_team_id || '')
+                ? home.key
+                : (target.teamId || kicker.teamId) === String(away.id || fixture.away_team_id || '')
+                  ? away.key
+                  : undefined,
+            number: target.number || safeNum(linkedPlayer.number),
+            alternateNames: [kicker.name, linkedDisplayName, ...linkedNames],
+            supplementalResolver: supplementalHeadshotResolver,
           });
         }
+      } else if (!target.photoUrl) {
+        target.photoUrl = resolveRosterPhotoUrl({
+          name: target.name || linkedDisplayName,
+          teamId: target.teamId || kicker.teamId,
+          teamName: target.team || kicker.teamName,
+          teamKey:
+            (target.teamId || kicker.teamId) === String(home.id || fixture.home_team_id || '')
+              ? home.key
+              : (target.teamId || kicker.teamId) === String(away.id || fixture.away_team_id || '')
+                ? away.key
+                : undefined,
+          number: target.number,
+          alternateNames: [kicker.name, linkedDisplayName, ...linkedNames],
+          supplementalResolver: supplementalHeadshotResolver,
+        });
       }
 
-      target.name = kicker.name || target.name;
+      target.name = kicker.name || target.name || linkedDisplayName;
       target.teamId = target.teamId || kicker.teamId;
       target.team = target.team || kicker.teamName;
       target.G = kicker.goals;
@@ -1293,6 +2107,9 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
   }
 
   if (fixturePlayerStats.length > 0) {
+    if (import.meta.env.DEV) {
+      console.log('[matchCentreRepo] fixturePlayerStats count', fixturePlayerStats.length);
+    }
     const statPlayerIds = Array.from(
       new Set(
         fixturePlayerStats
@@ -1300,45 +2117,82 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
           .filter((value) => isUuidLike(value)),
       ),
     );
-    const statPlayersById = new Map((await fetchPlayersByIds(statPlayerIds)).map((p) => [String(p.id), p]));
+    const statPlayersById = new Map<string, DbPlayerRow>(
+      (await fetchPlayersByIds(statPlayerIds)).map((p): [string, DbPlayerRow] => [String(p.id), p]),
+    );
 
     for (const statRow of fixturePlayerStats) {
       const playerId = String(statRow.player_id || '').trim();
       if (!playerId) continue;
 
       const linkedPlayer = statPlayersById.get(playerId);
-      let target = playerById.get(playerId);
+      const linkedNames = playerNameCandidates(linkedPlayer);
+      const resolvedLinkedName = resolvePlayerDisplayName({
+        name: linkedPlayer?.name,
+        displayName: linkedPlayer?.display_name,
+        fullName: linkedPlayer?.full_name,
+        firstName: linkedPlayer?.first_name,
+        lastName: linkedPlayer?.last_name,
+      });
+      const teamName =
+        String(statRow.team_id || '') === String(home.id || fixture.home_team_id || '')
+          ? home.fullName
+          : String(statRow.team_id || '') === String(away.id || fixture.away_team_id || '')
+            ? away.fullName
+            : home.fullName;
+      let target =
+        playerById.get(playerId) ||
+        findMatchingPlayerStatRow(playerStats, {
+          playerId,
+          teamId: String(statRow.team_id || '').trim(),
+          teamName,
+          number: linkedPlayer?.number,
+          name: resolvedLinkedName,
+          alternateNames: linkedNames,
+        });
+
+      if (target) {
+        playerById.set(playerId, target);
+      }
 
       if (!target) {
-        const teamName =
-          String(statRow.team_id || '') === String(home.id || fixture.home_team_id || '')
-            ? home.fullName
-            : String(statRow.team_id || '') === String(away.id || fixture.away_team_id || '')
-              ? away.fullName
-              : home.fullName;
-
         target = {
           playerId,
-          name: resolvePlayerDisplayName({
-            name: linkedPlayer?.name,
-            firstName: linkedPlayer?.first_name,
-            lastName: linkedPlayer?.last_name,
-          }),
+          name: resolvedLinkedName,
           teamId: String(statRow.team_id || '').trim(),
           team: teamName,
           number: safeNum(linkedPlayer?.number),
           position: String(linkedPlayer?.position || '').trim(),
           photoUrl: linkedPlayer
             ? resolveRosterPhotoUrl({
-                name: resolvePlayerDisplayName({
-                  name: linkedPlayer?.name,
-                  firstName: linkedPlayer?.first_name,
-                  lastName: linkedPlayer?.last_name,
-                }),
+                name: resolvedLinkedName,
                 photoUrl: linkedPlayer.photo_url,
                 headshotUrl: linkedPlayer.headshot_url,
+                teamId: String(statRow.team_id || '').trim(),
+                teamName,
+                teamKey:
+                  String(statRow.team_id || '') === String(home.id || fixture.home_team_id || '')
+                    ? home.key
+                    : String(statRow.team_id || '') === String(away.id || fixture.away_team_id || '')
+                      ? away.key
+                      : undefined,
+                number: safeNum(linkedPlayer?.number),
+                alternateNames: linkedNames,
+                supplementalResolver: supplementalHeadshotResolver,
               })
-            : undefined,
+            : resolveRosterPhotoUrl({
+                name: resolvedLinkedName,
+                teamId: String(statRow.team_id || '').trim(),
+                teamName,
+                teamKey:
+                  String(statRow.team_id || '') === String(home.id || fixture.home_team_id || '')
+                    ? home.key
+                    : String(statRow.team_id || '') === String(away.id || fixture.away_team_id || '')
+                      ? away.key
+                      : undefined,
+                alternateNames: linkedNames,
+                supplementalResolver: supplementalHeadshotResolver,
+              }),
           G: null,
           D: null,
           K: null,
@@ -1349,6 +2203,45 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
         };
         playerById.set(playerId, target);
         playerStats.push(target);
+      } else {
+        target.name = target.name || resolvedLinkedName;
+        target.teamId = target.teamId || String(statRow.team_id || '').trim();
+        target.team = target.team || teamName;
+        target.number = target.number || safeNum(linkedPlayer?.number);
+        target.position = target.position || String(linkedPlayer?.position || '').trim();
+        if (!target.photoUrl && linkedPlayer) {
+          target.photoUrl = resolveRosterPhotoUrl({
+            name: target.name || resolvedLinkedName,
+            photoUrl: linkedPlayer.photo_url,
+            headshotUrl: linkedPlayer.headshot_url,
+            teamId: target.teamId || String(statRow.team_id || '').trim(),
+            teamName: target.team || teamName,
+            teamKey:
+              (target.teamId || String(statRow.team_id || '').trim()) === String(home.id || fixture.home_team_id || '')
+                ? home.key
+                : (target.teamId || String(statRow.team_id || '').trim()) === String(away.id || fixture.away_team_id || '')
+                  ? away.key
+                  : undefined,
+            number: target.number || safeNum(linkedPlayer?.number),
+            alternateNames: linkedNames,
+            supplementalResolver: supplementalHeadshotResolver,
+          });
+        } else if (!target.photoUrl) {
+          target.photoUrl = resolveRosterPhotoUrl({
+            name: target.name || resolvedLinkedName,
+            teamId: target.teamId || String(statRow.team_id || '').trim(),
+            teamName: target.team || teamName,
+            teamKey:
+              (target.teamId || String(statRow.team_id || '').trim()) === String(home.id || fixture.home_team_id || '')
+                ? home.key
+                : (target.teamId || String(statRow.team_id || '').trim()) === String(away.id || fixture.away_team_id || '')
+                  ? away.key
+                  : undefined,
+            number: target.number,
+            alternateNames: linkedNames,
+            supplementalResolver: supplementalHeadshotResolver,
+          });
+        }
       }
 
       target.D = safeNum(statRow.disposals);
@@ -1359,6 +2252,28 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
       target.CLR = safeNum(statRow.clearances);
     }
   }
+
+  const homeMatchTeamId = String(home.id || fixture.home_team_id || '').trim();
+  const awayMatchTeamId = String(away.id || fixture.away_team_id || '').trim();
+
+  const playerStatsBeforeDedupe = playerStats.length;
+  playerStats = dedupePlayerStats(playerStats).map((row) => {
+    if (row.photoUrl) return row;
+
+    const teamId = String(row.teamId || '').trim();
+    return {
+      ...row,
+      photoUrl: resolveRosterPhotoUrl({
+        name: row.name,
+        teamId: row.teamId,
+        teamName: row.team,
+        teamKey: teamId === homeMatchTeamId ? home.key : teamId === awayMatchTeamId ? away.key : undefined,
+        number: row.number,
+        alternateNames: [row.name],
+        supplementalResolver: supplementalHeadshotResolver,
+      }),
+    };
+  });
 
   const teamOrder = new Map<string, number>([
     [String(home.id || fixture.home_team_id || ''), 0],
@@ -1439,6 +2354,16 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
       awayMatch: playerStats.filter((p) => p.team === away.fullName).reduce((acc, p) => acc + safeNum(p.D), 0),
     },
     {
+      label: 'Kicks',
+      homeMatch: playerStats.filter((p) => p.team === home.fullName).reduce((acc, p) => acc + safeNum(p.K), 0),
+      awayMatch: playerStats.filter((p) => p.team === away.fullName).reduce((acc, p) => acc + safeNum(p.K), 0),
+    },
+    {
+      label: 'Handballs',
+      homeMatch: playerStats.filter((p) => p.team === home.fullName).reduce((acc, p) => acc + safeNum(p.H), 0),
+      awayMatch: playerStats.filter((p) => p.team === away.fullName).reduce((acc, p) => acc + safeNum(p.H), 0),
+    },
+    {
       label: 'Marks',
       homeMatch: playerStats.filter((p) => p.team === home.fullName).reduce((acc, p) => acc + safeNum(p.M), 0),
       awayMatch: playerStats.filter((p) => p.team === away.fullName).reduce((acc, p) => acc + safeNum(p.M), 0),
@@ -1453,8 +2378,10 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
       homeMatch: playerStats.filter((p) => p.team === home.fullName).reduce((acc, p) => acc + safeNum(p.CLR), 0),
       awayMatch: playerStats.filter((p) => p.team === away.fullName).reduce((acc, p) => acc + safeNum(p.CLR), 0),
     },
-  ].filter((row) => row.homeMatch > 0 || row.awayMatch > 0);
-  const submissionTeamStats = parseSubmissionTeamStats((primarySubmission as any)?.team_stats) || parseSubmissionTeamStats((primarySubmission as any)?.ocr_team_stats);
+  ];
+  const directSubmissionTeamStats = parseSubmissionTeamStats((primarySubmission as any)?.team_stats);
+  const ocrSubmissionTeamStats = parseSubmissionTeamStats((primarySubmission as any)?.ocr_team_stats);
+  const submissionTeamStats = directSubmissionTeamStats.length ? directSubmissionTeamStats : ocrSubmissionTeamStats;
   const mergedTeamStats = new Map<string, TeamStatRow>();
 
   for (const row of [...baseTeamStats, ...submissionTeamStats, ...derivedStatRows]) {
@@ -1472,11 +2399,19 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
     }
   }
 
-  const teamStats: TeamStatRow[] = Array.from(mergedTeamStats.values()).map((row) => ({
-    ...row,
-    homeValue: row.homeMatch,
-    awayValue: row.awayMatch,
-  }));
+  const teamStats: TeamStatRow[] = TEAM_STAT_DISPLAY_ORDER.map((label) => {
+    const existing = mergedTeamStats.get(label.toLowerCase());
+    const homeMatch = safeNum(existing?.homeMatch ?? existing?.homeValue);
+    const awayMatch = safeNum(existing?.awayMatch ?? existing?.awayValue);
+
+    return {
+      label,
+      homeMatch,
+      awayMatch,
+      homeValue: homeMatch,
+      awayValue: awayMatch,
+    };
+  });
 
   const quarterProgression =
     parseQuarterProgressionFromOcrRaw(String((primarySubmission as any)?.ocr_raw_text || '')) ||
@@ -1506,6 +2441,18 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
     hasSubmissionData,
     quarterProgression,
   };
+}
+
+function resolveSideFromFixture(
+  row: { teamId?: string; team?: string },
+  args: { homeTeamId: string; awayTeamId: string; homeName: string; awayName: string },
+): 'home' | 'away' {
+  const rowTeamId = String(row.teamId || '').trim();
+  if (rowTeamId && args.awayTeamId && rowTeamId === args.awayTeamId) return 'away';
+  if (rowTeamId && args.homeTeamId && rowTeamId === args.homeTeamId) return 'home';
+  const teamName = String(row.team || '').trim().toLowerCase();
+  if (teamName && teamName === String(args.awayName || '').trim().toLowerCase()) return 'away';
+  return 'home';
 }
 
 export async function fetchLatestMatchCentre(): Promise<MatchCentreModel> {

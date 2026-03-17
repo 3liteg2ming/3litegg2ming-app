@@ -7,14 +7,16 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 2px;
 }
 
 .mcTabs__container {
   width: 100%;
-  max-width: 740px;
+  max-width: 768px;
   margin: 0 auto;
-  padding: 7px 16px;
+  padding: 11px 14px 8px;
   min-width: 0;
+  box-sizing: border-box;
 }
 
 .mcTabs__track {
@@ -24,6 +26,7 @@
   width: 100%;
   min-width: 0;
   padding: 4px;
+  box-sizing: border-box;
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.04);
@@ -69,25 +72,14 @@
 
 .mcTabs__label {
   min-width: 0;
-  white-space: nowrap;
-  overflow: visible;
-  text-overflow: clip;
   font-size: 10px;
-  font-weight: 850;
+  font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 @media (max-width: 520px) {
-  .mcTabs__container {
-    padding: 7px 12px;
-  }
-
-  .mcTabs__track {
-    gap: 3px;
-    padding: 4px;
-  }
-
   .mcTabs__button {
     height: 32px;
     padding: 0 5px;

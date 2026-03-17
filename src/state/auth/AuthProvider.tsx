@@ -7,7 +7,7 @@ import { fetchCoachProfile } from '../../lib/profileRepo';
 import { getSupabaseClient, hasSupabaseEnv, requireSupabaseClient } from '../../lib/supabaseClient';
 import { fetchTeamsByIds } from '../../lib/teamsRepo';
 
-const PUBLIC_REGISTRATION_ONLY_MODE = true;
+const PUBLIC_REGISTRATION_ONLY_MODE = !import.meta.env.DEV; // LOCAL DEV UNLOCK: keep public-mode redirects disabled during local Vite development.
 const PUBLIC_LAUNCH_FALLBACK_PATH = '/preseason-registration';
 const PUBLIC_LAUNCH_ALLOWED_PATHS = new Set([
   '/preseason-registration',

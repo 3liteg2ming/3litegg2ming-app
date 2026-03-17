@@ -1,0 +1,633 @@
+[     233ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[     234ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[     237ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:4173/favicon.ico:0
+[ 2876073ms] [ERROR] [EG CRASH] window.error Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20) @ http://127.0.0.1:4173/src/main.tsx:22
+[ 2876078ms] [ERROR] Warning: Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render%s AppRoutes HeaderAuthPill HeaderAuthPill 
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx:31:15)
+    at div
+    at div
+    at header
+    at TopHeader (http://127.0.0.1:4173/src/components/TopHeader.tsx:24:15)
+    at AppRoutes (http://127.0.0.1:4173/src/App.tsx:146:20)
+    at QueryClientProvider (http://127.0.0.1:4173/node_modules/.vite/deps/@tanstack_react-query.js?v=47aa2e9b:3103:3)
+    at div
+    at div
+    at AppShell (http://127.0.0.1:4173/src/App.tsx:582:20)
+    at App
+    at Router (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4543:15)
+    at BrowserRouter (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:5289:5)
+    at AuthProvider (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773622345783:200:32) @ http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:520
+[ 2876150ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+[ 2876093ms] [ERROR] [EG CRASH] window.error Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20) @ http://127.0.0.1:4173/src/main.tsx:22
+[ 2876152ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+[ 2876104ms] [ERROR] The above error occurred in the <HeaderAuthPill> component:
+
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx:31:15)
+    at div
+    at div
+    at header
+    at TopHeader (http://127.0.0.1:4173/src/components/TopHeader.tsx:24:15)
+    at AppRoutes (http://127.0.0.1:4173/src/App.tsx:146:20)
+    at QueryClientProvider (http://127.0.0.1:4173/node_modules/.vite/deps/@tanstack_react-query.js?v=47aa2e9b:3103:3)
+    at div
+    at div
+    at AppShell (http://127.0.0.1:4173/src/App.tsx:582:20)
+    at App
+    at Router (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4543:15)
+    at BrowserRouter (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:5289:5)
+    at AuthProvider (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773622345783:200:32)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. @ http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14079
+[ 2876112ms] [ERROR] [EG CRASH] unhandledrejection Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19806:22)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+    at workLoopSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19190:13)
+    at renderRootSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19169:15)
+    at recoverFromConcurrentError (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:18786:28) @ http://127.0.0.1:4173/src/main.tsx:39
+[ 2876154ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19806:22)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+    at workLoopSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19190:13)
+    at renderRootSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19169:15)
+    at recoverFromConcurrentError (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:18786:28)
+[ 2876625ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[ 2876625ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[ 2879894ms] [ERROR] [EG CRASH] window.error Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773622345783:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773622345783:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20) @ http://127.0.0.1:4173/src/main.tsx?t=1773622345783:22
+[ 2879896ms] [ERROR] Warning: Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render%s AppRoutes HeaderAuthPill HeaderAuthPill 
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773622345783:31:15)
+    at div
+    at div
+    at header
+    at TopHeader (http://127.0.0.1:4173/src/components/TopHeader.tsx?t=1773622345783:24:15)
+    at AppRoutes (http://127.0.0.1:4173/src/App.tsx?t=1773622345783:146:20)
+    at QueryClientProvider (http://127.0.0.1:4173/node_modules/.vite/deps/@tanstack_react-query.js?v=47aa2e9b:3103:3)
+    at div
+    at div
+    at AppShell (http://127.0.0.1:4173/src/App.tsx?t=1773622345783:582:20)
+    at App
+    at Router (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4543:15)
+    at BrowserRouter (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:5289:5)
+    at AuthProvider (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773622349576:200:32) @ http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:520
+[ 2879915ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773622345783:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773622345783:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+[ 2879903ms] [ERROR] [EG CRASH] window.error Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773622345783:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773622345783:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20) @ http://127.0.0.1:4173/src/main.tsx?t=1773622345783:22
+[ 2879917ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773622345783:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773622345783:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+[ 2879908ms] [ERROR] The above error occurred in the <HeaderAuthPill> component:
+
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773622345783:31:15)
+    at div
+    at div
+    at header
+    at TopHeader (http://127.0.0.1:4173/src/components/TopHeader.tsx?t=1773622345783:24:15)
+    at AppRoutes (http://127.0.0.1:4173/src/App.tsx?t=1773622345783:146:20)
+    at QueryClientProvider (http://127.0.0.1:4173/node_modules/.vite/deps/@tanstack_react-query.js?v=47aa2e9b:3103:3)
+    at div
+    at div
+    at AppShell (http://127.0.0.1:4173/src/App.tsx?t=1773622345783:582:20)
+    at App
+    at Router (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4543:15)
+    at BrowserRouter (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:5289:5)
+    at AuthProvider (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773622349576:200:32)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. @ http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14079
+[ 2879910ms] [ERROR] [EG CRASH] unhandledrejection Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773622345783:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773622345783:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19806:22)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+    at workLoopSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19190:13)
+    at renderRootSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19169:15)
+    at recoverFromConcurrentError (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:18786:28) @ http://127.0.0.1:4173/src/main.tsx?t=1773622345783:39
+[ 2879919ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773622345783:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773622345783:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19806:22)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+    at workLoopSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19190:13)
+    at renderRootSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19169:15)
+    at recoverFromConcurrentError (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:18786:28)
+[ 2880399ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[ 2880399ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[ 4905951ms] [ERROR] [EG CRASH] window.error Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773622349576:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773622349576:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20) @ http://127.0.0.1:4173/src/main.tsx?t=1773622349576:22
+[ 4905956ms] [ERROR] Warning: Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render%s AppRoutes HeaderAuthPill HeaderAuthPill 
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773622349576:31:15)
+    at div
+    at div
+    at header
+    at TopHeader (http://127.0.0.1:4173/src/components/TopHeader.tsx?t=1773622349576:24:15)
+    at AppRoutes (http://127.0.0.1:4173/src/App.tsx?t=1773622349576:146:20)
+    at QueryClientProvider (http://127.0.0.1:4173/node_modules/.vite/deps/@tanstack_react-query.js?v=47aa2e9b:3103:3)
+    at div
+    at div
+    at AppShell (http://127.0.0.1:4173/src/App.tsx?t=1773622349576:582:20)
+    at App
+    at Router (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4543:15)
+    at BrowserRouter (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:5289:5)
+    at AuthProvider (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624375435:200:32) @ http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:520
+[ 4906100ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773622349576:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773622349576:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+[ 4905971ms] [ERROR] [EG CRASH] window.error Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773622349576:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773622349576:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20) @ http://127.0.0.1:4173/src/main.tsx?t=1773622349576:22
+[ 4906109ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773622349576:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773622349576:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+[ 4905986ms] [ERROR] The above error occurred in the <HeaderAuthPill> component:
+
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773622349576:31:15)
+    at div
+    at div
+    at header
+    at TopHeader (http://127.0.0.1:4173/src/components/TopHeader.tsx?t=1773622349576:24:15)
+    at AppRoutes (http://127.0.0.1:4173/src/App.tsx?t=1773622349576:146:20)
+    at QueryClientProvider (http://127.0.0.1:4173/node_modules/.vite/deps/@tanstack_react-query.js?v=47aa2e9b:3103:3)
+    at div
+    at div
+    at AppShell (http://127.0.0.1:4173/src/App.tsx?t=1773622349576:582:20)
+    at App
+    at Router (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4543:15)
+    at BrowserRouter (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:5289:5)
+    at AuthProvider (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624375435:200:32)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. @ http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14079
+[ 4905991ms] [ERROR] [EG CRASH] unhandledrejection Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773622349576:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773622349576:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19806:22)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+    at workLoopSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19190:13)
+    at renderRootSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19169:15)
+    at recoverFromConcurrentError (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:18786:28) @ http://127.0.0.1:4173/src/main.tsx?t=1773622349576:39
+[ 4906127ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773622349576:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773622349576:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19806:22)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+    at workLoopSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19190:13)
+    at renderRootSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19169:15)
+    at recoverFromConcurrentError (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:18786:28)
+[ 4907719ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[ 4907719ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[ 4936417ms] [ERROR] [EG CRASH] window.error Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624375435:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624375435:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20) @ http://127.0.0.1:4173/src/main.tsx?t=1773624375435:22
+[ 4936420ms] [ERROR] Warning: Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render%s AppRoutes HeaderAuthPill HeaderAuthPill 
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624375435:31:15)
+    at div
+    at div
+    at header
+    at TopHeader (http://127.0.0.1:4173/src/components/TopHeader.tsx?t=1773624375435:24:15)
+    at AppRoutes (http://127.0.0.1:4173/src/App.tsx?t=1773624375435:146:20)
+    at QueryClientProvider (http://127.0.0.1:4173/node_modules/.vite/deps/@tanstack_react-query.js?v=47aa2e9b:3103:3)
+    at div
+    at div
+    at AppShell (http://127.0.0.1:4173/src/App.tsx?t=1773624375435:582:20)
+    at App
+    at Router (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4543:15)
+    at BrowserRouter (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:5289:5)
+    at AuthProvider (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624405935:200:32) @ http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:520
+[ 4936469ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624375435:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624375435:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+[ 4936434ms] [ERROR] [EG CRASH] window.error Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624375435:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624375435:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20) @ http://127.0.0.1:4173/src/main.tsx?t=1773624375435:22
+[ 4936472ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624375435:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624375435:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+[ 4936447ms] [ERROR] The above error occurred in the <HeaderAuthPill> component:
+
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624375435:31:15)
+    at div
+    at div
+    at header
+    at TopHeader (http://127.0.0.1:4173/src/components/TopHeader.tsx?t=1773624375435:24:15)
+    at AppRoutes (http://127.0.0.1:4173/src/App.tsx?t=1773624375435:146:20)
+    at QueryClientProvider (http://127.0.0.1:4173/node_modules/.vite/deps/@tanstack_react-query.js?v=47aa2e9b:3103:3)
+    at div
+    at div
+    at AppShell (http://127.0.0.1:4173/src/App.tsx?t=1773624375435:582:20)
+    at App
+    at Router (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4543:15)
+    at BrowserRouter (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:5289:5)
+    at AuthProvider (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624405935:200:32)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. @ http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14079
+[ 4936450ms] [ERROR] [EG CRASH] unhandledrejection Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624375435:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624375435:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19806:22)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+    at workLoopSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19190:13)
+    at renderRootSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19169:15)
+    at recoverFromConcurrentError (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:18786:28) @ http://127.0.0.1:4173/src/main.tsx?t=1773624375435:39
+[ 4936473ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624375435:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624375435:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19806:22)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+    at workLoopSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19190:13)
+    at renderRootSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19169:15)
+    at recoverFromConcurrentError (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:18786:28)
+[ 4937177ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[ 4937178ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[ 5273411ms] [ERROR] [EG CRASH] window.error Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624405935:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624405935:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20) @ http://127.0.0.1:4173/src/main.tsx?t=1773624405935:22
+[ 5273415ms] [ERROR] Warning: Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render%s AppRoutes HeaderAuthPill HeaderAuthPill 
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624405935:31:15)
+    at div
+    at div
+    at header
+    at TopHeader (http://127.0.0.1:4173/src/components/TopHeader.tsx?t=1773624405935:24:15)
+    at AppRoutes (http://127.0.0.1:4173/src/App.tsx?t=1773624405935:146:20)
+    at QueryClientProvider (http://127.0.0.1:4173/node_modules/.vite/deps/@tanstack_react-query.js?v=47aa2e9b:3103:3)
+    at div
+    at div
+    at AppShell (http://127.0.0.1:4173/src/App.tsx?t=1773624405935:582:20)
+    at App
+    at Router (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4543:15)
+    at BrowserRouter (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:5289:5)
+    at AuthProvider (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624742709:200:32) @ http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:520
+[ 5273501ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624405935:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624405935:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+[ 5273425ms] [ERROR] [EG CRASH] window.error Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624405935:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624405935:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20) @ http://127.0.0.1:4173/src/main.tsx?t=1773624405935:22
+[ 5273503ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624405935:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624405935:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+[ 5273434ms] [ERROR] The above error occurred in the <HeaderAuthPill> component:
+
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624405935:31:15)
+    at div
+    at div
+    at header
+    at TopHeader (http://127.0.0.1:4173/src/components/TopHeader.tsx?t=1773624405935:24:15)
+    at AppRoutes (http://127.0.0.1:4173/src/App.tsx?t=1773624405935:146:20)
+    at QueryClientProvider (http://127.0.0.1:4173/node_modules/.vite/deps/@tanstack_react-query.js?v=47aa2e9b:3103:3)
+    at div
+    at div
+    at AppShell (http://127.0.0.1:4173/src/App.tsx?t=1773624405935:582:20)
+    at App
+    at Router (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4543:15)
+    at BrowserRouter (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:5289:5)
+    at AuthProvider (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624742709:200:32)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. @ http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14079
+[ 5273437ms] [ERROR] [EG CRASH] unhandledrejection Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624405935:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624405935:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19806:22)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+    at workLoopSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19190:13)
+    at renderRootSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19169:15)
+    at recoverFromConcurrentError (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:18786:28) @ http://127.0.0.1:4173/src/main.tsx?t=1773624405935:39
+[ 5273506ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624405935:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624405935:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19806:22)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+    at workLoopSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19190:13)
+    at renderRootSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19169:15)
+    at recoverFromConcurrentError (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:18786:28)
+[ 5275444ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[ 5275445ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[ 7553886ms] [ERROR] [vite] SyntaxError: The requested module '/src/lib/playerHeadshots.ts?t=1773627023246' does not provide an export named 'lookupPlayerHeadshotByName' @ http://127.0.0.1:4173/@vite/client:808
+[ 7553886ms] [ERROR] [vite] Failed to reload /src/pages/StatLeadersPage.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:4173/@vite/client:808
+[ 7553887ms] [ERROR] [vite] SyntaxError: The requested module '/src/lib/playerHeadshots.ts?t=1773627023246' does not provide an export named 'resolveKnownPlayerHeadshot' @ http://127.0.0.1:4173/@vite/client:808
+[ 7553887ms] [ERROR] [vite] Failed to reload /src/components/match-centre/broadcast/HeroHeader.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:4173/@vite/client:808
+[ 7553887ms] [ERROR] [vite] SyntaxError: The requested module '/src/lib/playerHeadshots.ts?t=1773627023246' does not provide an export named 'resolveKnownPlayerHeadshot' @ http://127.0.0.1:4173/@vite/client:808
+[ 7553887ms] [ERROR] [vite] Failed to reload /src/components/match-centre/broadcast/PlayerStatsTable.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:4173/@vite/client:808
+[ 7553900ms] [ERROR] [vite] SyntaxError: The requested module '/src/lib/playerHeadshots.ts?t=1773627023246' does not provide an export named 'resolveKnownPlayerHeadshot' @ http://127.0.0.1:4173/@vite/client:808
+[ 7553900ms] [ERROR] [vite] Failed to reload /src/components/BottomNav.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:4173/@vite/client:808
+[ 7553900ms] [ERROR] [vite] SyntaxError: The requested module '/src/lib/playerHeadshots.ts?t=1773627023246' does not provide an export named 'resolveKnownPlayerHeadshot' @ http://127.0.0.1:4173/@vite/client:808
+[ 7553900ms] [ERROR] [vite] Failed to reload /src/state/auth/AuthProvider.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:4173/@vite/client:808
+[ 7554054ms] [ERROR] [vite] SyntaxError: The requested module '/src/lib/playerHeadshots.ts?t=1773627023246' does not provide an export named 'resolveKnownPlayerHeadshot' @ http://127.0.0.1:4173/@vite/client:808
+[ 7554054ms] [ERROR] [vite] Failed to reload /src/components/match-centre/broadcast/MatchSummaryTab.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:4173/@vite/client:808
+[ 7554054ms] [ERROR] [vite] SyntaxError: The requested module '/src/lib/playerHeadshots.ts?t=1773627023246' does not provide an export named 'resolveKnownPlayerHeadshot' @ http://127.0.0.1:4173/@vite/client:808
+[ 7554054ms] [ERROR] [vite] Failed to reload /src/pages/MatchCentrePage.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:4173/@vite/client:808
+[ 7554055ms] [ERROR] [vite] SyntaxError: The requested module '/src/lib/playerHeadshots.ts?t=1773627023246' does not provide an export named 'resolveKnownPlayerHeadshot' @ http://127.0.0.1:4173/@vite/client:808
+[ 7554055ms] [ERROR] [vite] Failed to reload /src/components/match-centre/broadcast/MatchLeaders.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:4173/@vite/client:808
+[ 7554072ms] [ERROR] [vite] SyntaxError: The requested module '/src/lib/playerHeadshots.ts?t=1773627023246' does not provide an export named 'resolveKnownPlayerHeadshot' @ http://127.0.0.1:4173/@vite/client:808
+[ 7554072ms] [ERROR] [vite] Failed to reload /src/pages/MembersPage.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://127.0.0.1:4173/@vite/client:808
+[ 7571542ms] [ERROR] [EG CRASH] window.error Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624742709:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624742709:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20) @ http://127.0.0.1:4173/src/main.tsx?t=1773624742709:22
+[ 7571548ms] [ERROR] Warning: Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render%s AppRoutes HeaderAuthPill HeaderAuthPill 
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624742709:31:15)
+    at div
+    at div
+    at header
+    at TopHeader (http://127.0.0.1:4173/src/components/TopHeader.tsx?t=1773624742709:24:15)
+    at AppRoutes (http://127.0.0.1:4173/src/App.tsx?t=1773624742709:146:20)
+    at QueryClientProvider (http://127.0.0.1:4173/node_modules/.vite/deps/@tanstack_react-query.js?v=47aa2e9b:3103:3)
+    at div
+    at div
+    at AppShell (http://127.0.0.1:4173/src/App.tsx?t=1773624742709:582:20)
+    at App
+    at Router (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4543:15)
+    at BrowserRouter (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:5289:5)
+    at AuthProvider (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773627041173:200:32) @ http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:520
+[ 7571918ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624742709:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624742709:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+[ 7571565ms] [ERROR] [EG CRASH] window.error Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624742709:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624742709:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20) @ http://127.0.0.1:4173/src/main.tsx?t=1773624742709:22
+[ 7571939ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624742709:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624742709:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3680:22)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3705:24)
+    at invokeGuardedCallback (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:3739:39)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19818:15)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+[ 7571580ms] [ERROR] The above error occurred in the <HeaderAuthPill> component:
+
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624742709:31:15)
+    at div
+    at div
+    at header
+    at TopHeader (http://127.0.0.1:4173/src/components/TopHeader.tsx?t=1773624742709:24:15)
+    at AppRoutes (http://127.0.0.1:4173/src/App.tsx?t=1773624742709:146:20)
+    at QueryClientProvider (http://127.0.0.1:4173/node_modules/.vite/deps/@tanstack_react-query.js?v=47aa2e9b:3103:3)
+    at div
+    at div
+    at AppShell (http://127.0.0.1:4173/src/App.tsx?t=1773624742709:582:20)
+    at App
+    at Router (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4543:15)
+    at BrowserRouter (http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:5289:5)
+    at AuthProvider (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773627041173:200:32)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. @ http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14079
+[ 7571581ms] [ERROR] [EG CRASH] unhandledrejection Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624742709:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624742709:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19806:22)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+    at workLoopSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19190:13)
+    at renderRootSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19169:15)
+    at recoverFromConcurrentError (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:18786:28) @ http://127.0.0.1:4173/src/main.tsx?t=1773624742709:39
+[ 7572033ms] Error: useAuth must be used within <AuthProvider>
+    at useAuth (http://127.0.0.1:4173/src/state/auth/AuthProvider.tsx?t=1773624742709:459:19)
+    at HeaderAuthPill (http://127.0.0.1:4173/src/components/HeaderAuthPill.tsx?t=1773624742709:32:38)
+    at renderWithHooks (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:11596:26)
+    at mountIndeterminateComponent (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:14974:21)
+    at beginWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:15962:22)
+    at beginWork$1 (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19806:22)
+    at performUnitOfWork (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19251:20)
+    at workLoopSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19190:13)
+    at renderRootSync (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:19169:15)
+    at recoverFromConcurrentError (http://127.0.0.1:4173/node_modules/.vite/deps/chunk-GG6IGNHI.js?v=47aa2e9b:18786:28)
+[ 7573098ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434
+[ 7573098ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=47aa2e9b:4434

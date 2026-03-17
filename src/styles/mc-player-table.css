@@ -1,0 +1,268 @@
+.mcPlayerTable {
+  width: 100%;
+  min-width: 0;
+  padding: 0 12px 24px;
+  box-sizing: border-box;
+}
+
+.mcPlayerTable__header {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 14px;
+  padding: 4px 4px 0;
+}
+
+.mcPlayerTable__title {
+  margin: 0 0 2px;
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  color: rgba(245, 249, 255, 0.96);
+}
+
+.mcPlayerTable__subtext {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: rgba(207, 219, 238, 0.6);
+  max-width: 420px;
+}
+
+.mcPlayerTable__filters {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mcPlayerTable__filter {
+  min-height: 28px;
+  padding: 0 11px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(203, 217, 239, 0.7);
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mcPlayerTable__filter--active {
+  border-color: rgba(255, 215, 117, 0.2);
+  background: rgba(255, 215, 117, 0.1);
+  color: rgba(255, 244, 210, 0.9);
+}
+
+.mcPlayerTable__shell,
+.mcPlayerTable__empty {
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(16, 20, 30, 0.4);
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.mcPlayerTable__table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.mcPlayerTable__headCell,
+.mcPlayerTable__cell {
+  padding: 12px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-variant-numeric: tabular-nums;
+  vertical-align: middle;
+}
+
+.mcPlayerTable__headCell {
+  background: rgba(11, 15, 24, 0.5);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(220, 231, 248, 0.75);
+  text-align: center;
+}
+
+.mcPlayerTable__headCell--player,
+.mcPlayerTable__cell--player {
+  width: 55%;
+  text-align: left;
+  padding-left: 12px;
+}
+
+.mcPlayerTable__headCell.is-active {
+  color: rgba(255, 244, 210, 0.94);
+}
+
+.mcPlayerTable__sortButton {
+  all: unset;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mcPlayerTable__cell {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: rgba(245, 249, 255, 0.88);
+}
+
+.mcPlayerTable__row:last-child .mcPlayerTable__cell {
+  border-bottom: none;
+}
+
+.mcPlayerTable__playerButton {
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mcPlayerTable__playerButton--static {
+  cursor: default;
+}
+
+.mcPlayerTable__media {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+}
+
+.mcPlayerTable__photo,
+.mcPlayerTable__numberTile {
+  width: 100%;
+  height: 100%;
+  border-radius: 11px;
+}
+
+.mcPlayerTable__photo {
+  display: block;
+  object-fit: cover;
+  object-position: center top;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.mcPlayerTable__numberTile {
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--mc-player-accent, #f6cf74) 12%, transparent), transparent),
+    rgba(255, 255, 255, 0.05);
+  border: 1px solid color-mix(in srgb, var(--mc-player-accent, #f6cf74) 20%, transparent);
+  color: rgba(248, 251, 255, 0.85);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.mcPlayerTable__identityMeta {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding-top: 1px;
+}
+
+.mcPlayerTable__name {
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: rgba(246, 250, 255, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mcPlayerTable__teamPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 16px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0 5px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(223, 233, 247, 0.65);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.mcPlayerTable__teamDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--mc-player-accent, #f6cf74);
+  flex: 0 0 auto;
+}
+
+.mcPlayerTable__empty {
+  padding: 22px 14px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(194, 210, 236, 0.65);
+}
+
+@media (min-width: 641px) {
+  .mcPlayerTable__header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+
+  .mcPlayerTable__filters {
+    justify-content: flex-end;
+  }
+
+  .mcPlayerTable__headCell--player,
+  .mcPlayerTable__cell--player {
+    width: 40%;
+  }
+}
+
+@media (max-width: 420px) {
+  .mcPlayerTable__headCell,
+  .mcPlayerTable__cell {
+    padding: 12px 4px;
+  }
+
+  .mcPlayerTable__headCell--player,
+  .mcPlayerTable__cell--player {
+    padding-left: 10px;
+  }
+
+  .mcPlayerTable__media {
+    width: 32px;
+    height: 32px;
+  }
+
+  .mcPlayerTable__playerButton {
+    gap: 10px;
+  }
+
+  .mcPlayerTable__name {
+    font-size: 12px;
+  }
+}
