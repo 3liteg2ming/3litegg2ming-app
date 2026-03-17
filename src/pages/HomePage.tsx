@@ -53,8 +53,8 @@ export default function HomePage() {
         <section className="homeHeroIntro" aria-label="Launch intro">
           <div className="homeHeroIntro__copy">
             <div className="homeDashLabel">Elite Gaming</div>
-            <h1 className="homeHeroIntro__title">AFL 26 Preseason Knockout</h1>
-            <p className="homeHeroIntro__sub">The public microsite for coach registration, club preferences, and preseason launch updates.</p>
+            <h1 className="homeHeroIntro__title">AFL 26 Season Two</h1>
+            <p className="homeHeroIntro__sub">Fixtures, ladder, stats and match centre for Elite Gaming AFL 26.</p>
           </div>
         </section>
 

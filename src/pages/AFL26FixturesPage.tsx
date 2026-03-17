@@ -160,8 +160,8 @@ function mapToPosterMatch(
 }
 
 function getCompetitionOptions(): Array<{ key: CompetitionKey; label: string }> {
+  // UI-only filter: hide Knockout preseason, keep AFL26 Season Two visible
   return [
-    { key: 'preseason', label: 'Knockout Preseason' },
     { key: 'afl26', label: 'AFL 26 Season Two' },
   ];
 }

@@ -19,15 +19,8 @@ type TournamentCard = {
   cta: string;
 };
 
+// UI-only filter: hide Knockout Preseason card, keep AFL26 Season Two and Match Centre visible
 const UPCOMING: TournamentCard[] = [
-  {
-    title: 'Knockout Preseason Cup',
-    subtitle: '10 teams • Knockout format • Fast chaos',
-    badge: 'Registration Open',
-    accent: 'green',
-    href: '/preseason',
-    cta: 'Register now',
-  },
   {
     title: 'AFL 26 Season Two',
     subtitle: 'Coach fixtures • ladder • stats • match centre',

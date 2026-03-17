@@ -96,8 +96,8 @@ const ADMIN_TOKEN_KEY = 'eg_admin_token';
 const ADMIN_TOKEN_EXPIRES_AT_KEY = 'eg_admin_token_expires_at';
 const REG_TABLE_CANDIDATES = ['eg_preseason_registrations_pretty'] as const;
 
+// UI-only filter: hide Knockout preseason from admin UI, keep AFL26 Season Two visible
 const competitions: Array<AdminConsoleCompetition> = [
-  { key: 'preseason', label: 'Knockout Preseason', slug: 'preseason' },
   { key: 'afl26', label: 'AFL26 Season Two', slug: 'afl26-season-two' },
 ];
 
