@@ -1,78 +1,108 @@
 :root {
-  --eg-announce-h: 27px;
-  --eg-header-h: 74px;
-  --eg-header-side-col: 132px;
-  --eg-header-badge-size: 46px;
+  --eg-header-shell-h: 76px;
+  --eg-header-inner-max: 1120px;
+  --eg-header-side-col: 140px;
   --eg-header-brand-w: 140px;
   --eg-header-brand-h: 40px;
-  --eg-header-brand-img-h: 108px;
-  --eg-header-brand-shift-y: -18px;
-  --eg-header-pill-h: 34px;
-}
-
-.egAnnounceBar {
-  display: none !important;
+  --eg-header-brand-img-h: 98px;
+  --eg-header-brand-shift-y: -16px;
+  --eg-header-pill-h: 40px;
 }
 
 .egTopHeader {
-  position: sticky;
-  top: 0;
-  z-index: 900;
+  position: relative;
+  z-index: 80;
+  isolation: isolate;
   width: 100%;
-  background:
-    linear-gradient(180deg, rgba(8, 11, 17, 0.975), rgba(7, 10, 15, 0.94)),
-    rgba(7, 10, 15, 0.96);
-  border-bottom: 1px solid rgba(245, 196, 0, 0.12);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  padding: 8px 12px 6px;
+  background: transparent;
 }
 
-.egTopHeader::after {
-  content: '';
-  position: absolute;
-  inset: auto 0 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(245, 196, 0, 0.2), transparent);
-  pointer-events: none;
-}
-
-.egTopHeader__announce {
-  min-height: var(--eg-announce-h);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.035);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
-    rgba(10, 13, 18, 0.9);
-}
-
-.egTopHeader__announceInner {
-  width: min(1120px, 100%);
-  text-align: center;
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(255, 235, 187, 0.82);
+.egTopHeader__borderAccent,
+.egTopHeader__backdrop {
+  display: none;
 }
 
 .egTopHeader__inner {
-  width: min(1120px, 100%);
+  position: relative;
+  z-index: 1;
+  width: min(var(--eg-header-inner-max), 100%);
+  min-height: var(--eg-header-shell-h);
   margin: 0 auto;
-  min-height: var(--eg-header-h);
-  padding: 0 12px;
+  padding: 8px 14px;
   display: grid;
   grid-template-columns: var(--eg-header-side-col) minmax(0, 1fr) var(--eg-header-side-col);
   align-items: center;
-  column-gap: 6px;
+  column-gap: 10px;
+  border-radius: 20px;
+  overflow: visible;
+  background:
+    radial-gradient(
+      ellipse 520px 160px at 50% -15%,
+      rgba(245, 196, 0, 0.04),
+      transparent 62%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(10, 13, 21, 0.98),
+      rgba(7, 10, 16, 0.99)
+    ),
+    linear-gradient(
+      135deg,
+      rgba(245, 196, 0, 0.012),
+      rgba(245, 196, 0, 0.006)
+    );
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.36),
+    0 6px 16px rgba(0, 0, 0, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -1px 0 rgba(245, 196, 0, 0.05);
+  backdrop-filter: blur(16px) saturate(112%);
+  -webkit-backdrop-filter: blur(16px) saturate(112%);
+  -webkit-mask-image: radial-gradient(999px at 50% 50%, black 99%, transparent 100%);
+  mask-image: radial-gradient(999px at 50% 50%, black 99%, transparent 100%);
+}
+
+.egTopHeader__inner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.028),
+      rgba(255, 255, 255, 0.008) 35%,
+      transparent 70%
+    );
+  border-radius: 20px;
+}
+
+.egTopHeader__inner::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 1px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(245, 196, 0, 0.16),
+    rgba(255, 255, 255, 0.05),
+    rgba(245, 196, 0, 0.16),
+    transparent
+  );
+  pointer-events: none;
 }
 
 .egTopHeader__left,
 .egTopHeader__center,
 .egTopHeader__right {
+  position: relative;
+  z-index: 2;
   width: 100%;
   min-width: 0;
   display: flex;
@@ -81,6 +111,7 @@
 
 .egTopHeader__left {
   justify-content: flex-start;
+  padding-left: 2px;
 }
 
 .egTopHeader__center {
@@ -90,91 +121,75 @@
 
 .egTopHeader__right {
   justify-content: flex-end;
+  padding-right: 2px;
 }
 
-.egTopHeader__compPill,
-.egTopHeader__brand,
-.egTopHeader .authPill--signedOut,
-.egTopHeader .authPill--account,
-.egTopHeader .authPillPopover__item {
-  transition:
-    border-color 160ms ease,
-    background-color 160ms ease,
-    box-shadow 160ms ease,
-    transform 160ms ease;
+.egTopHeader__labelStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  line-height: 1;
 }
 
-.egTopHeader__compPill,
-.egTopHeader__brand {
-  cursor: pointer;
+.egTopHeader__labelSecondary {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: rgba(180, 195, 220, 0.55);
+  line-height: 1;
 }
 
-.egTopHeader__compPill {
+.egTopHeader__logoWrapper {
   position: relative;
-  width: var(--eg-header-badge-size);
-  height: var(--eg-header-badge-size);
-  padding: 0;
-  border-radius: 999px;
-  border: 1px solid rgba(245, 196, 0, 0.26);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)),
-    rgba(10, 14, 20, 0.95);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 5px 12px rgba(0, 0, 0, 0.16);
-}
-
-.egTopHeader__compPill::before {
-  content: '';
-  position: absolute;
-  inset: 4px;
-  border-radius: 999px;
-  border: 1px solid rgba(245, 196, 0, 0.14);
-  pointer-events: none;
-}
-
-.egTopHeader__compPill:hover,
-.egTopHeader__compPill:focus-visible {
-  border-color: rgba(245, 196, 0, 0.38);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 8px 16px rgba(0, 0, 0, 0.18);
-}
-
-.egTopHeader__compPillMark {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  display: inline-flex;
-  align-items: center;
+  display: flex;
   justify-content: center;
-  color: rgba(255, 237, 190, 0.95);
-  font-size: 14px;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  text-indent: 0.04em;
+  align-items: center;
+  min-width: 0;
+}
+
+.egTopHeader__logoGlow {
+  position: absolute;
+  inset: -12px -20px;
+  border-radius: 999px;
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(245, 196, 0, 0.10) 0%,
+      rgba(245, 196, 0, 0.04) 34%,
+      rgba(90, 130, 210, 0.03) 56%,
+      transparent 72%
+    );
+  filter: blur(14px);
+  pointer-events: none;
+  opacity: 0.95;
 }
 
 .egTopHeader__brand {
+  position: relative;
+  z-index: 2;
   width: var(--eg-header-brand-w);
   padding: 0;
   border: 0;
   background: transparent;
   display: flex;
-  justify-content: center;
   align-items: center;
-  transform: translateY(-1px);
+  justify-content: center;
+  transform: translateY(-1px) scale(1);
+  transition: transform 220ms ease, filter 220ms ease;
+}
+
+.egTopHeader__logoWrapper:hover .egTopHeader__brand {
+  transform: translateY(-2px) scale(1.02);
 }
 
 .egTopHeader__brandCrop {
   width: var(--eg-header-brand-w);
   height: var(--eg-header-brand-h);
   display: flex;
-  align-items: flex-start;
   justify-content: center;
+  align-items: flex-start;
   overflow: hidden;
-  transform: translateY(-2px);
 }
 
 .egTopHeader__brandLogo {
@@ -185,12 +200,15 @@
   object-fit: contain;
   object-position: center top;
   transform: translateY(var(--eg-header-brand-shift-y));
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+  filter:
+    drop-shadow(0 10px 20px rgba(245, 196, 0, 0.10))
+    drop-shadow(0 4px 10px rgba(0, 0, 0, 0.22));
 }
 
 .egTopHeader .authPillMenu--header {
   position: relative;
   max-width: 100%;
+  z-index: 100;
 }
 
 .egTopHeader .authPill--signedOut,
@@ -198,58 +216,74 @@
 .egTopHeader .authPill--loading {
   min-height: var(--eg-header-pill-h);
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1.5px solid rgba(245, 196, 0, 0.20);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)),
-    rgba(10, 14, 20, 0.94);
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.09),
+      rgba(255, 255, 255, 0.022)
+    ),
+    linear-gradient(
+      135deg,
+      rgba(245, 196, 0, 0.030),
+      rgba(245, 196, 0, 0.010)
+    ),
+    rgba(9, 12, 20, 0.96);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.035),
-    0 5px 12px rgba(0, 0, 0, 0.16);
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+    0 10px 22px rgba(0, 0, 0, 0.30),
+    0 0 0 1px rgba(245, 196, 0, 0.03);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
 }
 
 .egTopHeader .authPill--signedOut:hover,
 .egTopHeader .authPill--signedOut:focus-visible,
 .egTopHeader .authPill--account:hover,
 .egTopHeader .authPill--account:focus-visible {
-  border-color: rgba(245, 196, 0, 0.18);
+  transform: translateY(-1px);
+  border-color: rgba(245, 196, 0, 0.32);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.045),
-    0 8px 16px rgba(0, 0, 0, 0.18);
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+    0 12px 24px rgba(0, 0, 0, 0.34),
+    0 0 14px rgba(245, 196, 0, 0.07);
 }
 
 .egTopHeader .authPill--signedOut {
-  padding: 0 13px;
-  font-size: 10px;
+  padding: 0 14px;
+  font-size: 10.4px;
   font-weight: 800;
-  color: rgba(248, 250, 255, 0.96);
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.95);
   white-space: nowrap;
 }
 
-.egTopHeader .authPill--account {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  max-width: 108px;
-  padding: 0 8px 0 5px;
-}
-
+.egTopHeader .authPill--account,
 .egTopHeader .authPill--loading {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  max-width: 108px;
-  padding: 0 8px 0 5px;
-  color: rgba(214, 224, 242, 0.46);
+  gap: 6px;
+  max-width: 112px;
+  padding: 0 9px 0 6px;
 }
 
 .egTopHeader .authPillAvatar {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   border-radius: 999px;
   overflow: hidden;
   flex: 0 0 auto;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(245, 196, 0, 0.15);
+  background:
+    linear-gradient(135deg, rgba(245, 196, 0, 0.05), rgba(245, 196, 0, 0.03)),
+    rgba(255, 255, 255, 0.04);
 }
 
 .egTopHeader .authPillTeamLogo {
@@ -264,17 +298,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 900;
-  color: rgba(248, 250, 255, 0.96);
+  color: rgba(248, 250, 255, 0.95);
 }
 
 .egTopHeader .authPillText {
   min-width: 0;
   max-width: 50px;
-  font-size: 9.8px;
-  font-weight: 800;
-  color: rgba(248, 250, 255, 0.96);
+  font-size: 9.4px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.95);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -282,27 +317,41 @@
 
 .egTopHeader .authPillChevron {
   flex: 0 0 auto;
-  color: rgba(219, 229, 245, 0.56);
-  transition: transform 150ms ease, color 150ms ease;
+  color: rgba(200, 220, 240, 0.50);
+  transition: transform 160ms ease, color 160ms ease;
 }
 
 .egTopHeader .authPillChevron.is-open {
   transform: rotate(180deg);
-  color: rgba(248, 250, 255, 0.82);
+  color: rgba(255, 255, 255, 0.76);
 }
 
 .egTopHeader .authPillPopover {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 10px);
   right: 0;
-  width: 146px;
+  width: 156px;
   padding: 5px;
-  border-radius: 14px;
-  background: rgba(9, 13, 19, 0.97);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  border-radius: 13px;
+  z-index: 101;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.07),
+      rgba(255, 255, 255, 0.012)
+    ),
+    linear-gradient(
+      135deg,
+      rgba(245, 196, 0, 0.022),
+      rgba(245, 196, 0, 0.008)
+    ),
+    rgba(10, 13, 21, 0.98);
+  border: 1px solid rgba(245, 196, 0, 0.12);
+  box-shadow:
+    0 16px 32px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .egTopHeader .authPillPopover__item {
@@ -312,22 +361,24 @@
   align-items: center;
   gap: 8px;
   padding: 0 10px;
-  border-radius: 10px;
+  border-radius: 8px;
   background: transparent;
   border: 0;
-  color: rgba(238, 243, 252, 0.94);
-  font-size: 11.4px;
-  font-weight: 700;
+  color: rgba(235, 240, 250, 0.90);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   text-align: left;
   cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease;
 }
 
 .egTopHeader .authPillPopover__item:hover,
 .egTopHeader .authPillPopover__item:focus-visible {
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(245, 196, 0, 0.07);
+  color: rgba(255, 255, 255, 0.95);
 }
 
-.egTopHeader__compPill:focus-visible,
 .egTopHeader__brand:focus-visible,
 .egTopHeader .authPill--signedOut:focus-visible,
 .egTopHeader .authPill--account:focus-visible,
@@ -338,41 +389,40 @@
 
 @media (max-width: 760px) {
   :root {
-    --eg-announce-h: 26px;
-    --eg-header-h: 72px;
-    --eg-header-side-col: 96px;
-    --eg-header-badge-size: 44px;
-    --eg-header-brand-w: 120px;
-    --eg-header-brand-h: 34px;
-    --eg-header-brand-img-h: 94px;
-    --eg-header-brand-shift-y: -16px;
-    --eg-header-pill-h: 32px;
+    --eg-header-shell-h: 68px;
+    --eg-header-side-col: 92px;
+    --eg-header-brand-w: 110px;
+    --eg-header-brand-h: 32px;
+    --eg-header-brand-img-h: 78px;
+    --eg-header-brand-shift-y: -12px;
+    --eg-header-pill-h: 36px;
   }
 
-  .egTopHeader__announce {
-    padding: 0 8px;
-  }
-
-  .egTopHeader__announceInner {
-    font-size: 7.3px;
-    letter-spacing: 0.1em;
-  }
-
-  .egTopHeader__brandCrop {
-    transform: translateY(-1px);
-  }
-
-  .egTopHeader__brand {
-    transform: translateY(-1px);
+  .egTopHeader {
+    padding: 7px 9px 5px;
   }
 
   .egTopHeader__inner {
-    padding: 0 8px;
-    column-gap: 4px;
+    padding: 6px 9px;
+    column-gap: 7px;
+    border-radius: 16px;
   }
 
-  .egTopHeader__compPillMark {
-    font-size: 13px;
+  .egTopHeader__inner::before {
+    border-radius: 16px;
+  }
+
+  .egTopHeader__left {
+    padding-left: 1px;
+  }
+
+  .egTopHeader__right {
+    padding-right: 1px;
+  }
+
+  .egTopHeader__labelSecondary {
+    font-size: 7.2px;
+    letter-spacing: 0.16em;
   }
 
   .egTopHeader .authPill--signedOut {
@@ -382,22 +432,32 @@
 
   .egTopHeader .authPill--account,
   .egTopHeader .authPill--loading {
-    max-width: 92px;
-    gap: 4px;
-    padding: 0 7px 0 4px;
+    max-width: 90px;
+    gap: 5px;
+    padding: 0 7px 0 5px;
   }
 
   .egTopHeader .authPillAvatar {
-    width: 21px;
-    height: 21px;
+    width: 23px;
+    height: 23px;
+  }
+
+  .egTopHeader .authPillInitials {
+    font-size: 9.5px;
   }
 
   .egTopHeader .authPillText {
-    max-width: 38px;
-    font-size: 9px;
+    max-width: 36px;
+    font-size: 8.6px;
   }
 
   .egTopHeader .authPillPopover {
-    width: 138px;
+    width: 140px;
+  }
+
+  .egTopHeader .authPillPopover__item {
+    min-height: 32px;
+    padding: 0 9px;
+    font-size: 9.6px;
   }
 }

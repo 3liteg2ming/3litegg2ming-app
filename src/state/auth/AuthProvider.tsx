@@ -10,11 +10,33 @@ import { fetchTeamsByIds } from '../../lib/teamsRepo';
 const PUBLIC_REGISTRATION_ONLY_MODE = false; // DISABLED: Normal routing restored. Set to true to restrict to registration-only mode.
 const PUBLIC_LAUNCH_FALLBACK_PATH = '/preseason-registration';
 const PUBLIC_LAUNCH_ALLOWED_PATHS = new Set([
+  '/',
+  '/preseason',
   '/preseason-registration',
+  '/preseason/register',
+  '/fixtures',
+  '/ladder',
+  '/stats',
+  '/stats3',
+  '/stats/leaders',
+  '/stats3/leaders',
+  '/stats3/compare',
+  '/player',
   '/auth/sign-in',
   '/auth/sign-up',
   '/auth/forgot-password',
   '/auth/callback',
+  '/sign-in',
+  '/signin',
+  '/login',
+  '/create-account',
+  '/register',
+  '/auth/confirm',
+  '/profile',
+  '/pro-team',
+  '/admin',
+  '/match-centre',
+  '/coming-soon',
 ]);
 
 type AuthContextValue = AuthState & {
@@ -73,7 +95,15 @@ function normalizePublicPath(pathname: string): string {
 }
 
 function isPublicLaunchAllowedPath(pathname: string): boolean {
-  return PUBLIC_LAUNCH_ALLOWED_PATHS.has(normalizePublicPath(pathname));
+  const normalized = normalizePublicPath(pathname);
+  if (PUBLIC_LAUNCH_ALLOWED_PATHS.has(normalized)) return true;
+
+  // Check if pathname starts with any allowed base path (for dynamic routes like /player/:id)
+  for (const allowedPath of PUBLIC_LAUNCH_ALLOWED_PATHS) {
+    if (normalized.startsWith(allowedPath + '/')) return true;
+  }
+
+  return false;
 }
 
 function toLoggableError(error: unknown) {

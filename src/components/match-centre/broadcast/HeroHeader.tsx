@@ -1,10 +1,10 @@
-import { type CSSProperties, useMemo, memo } from 'react';
+import { type CSSProperties, useMemo } from 'react';
 import { ChevronLeft } from 'lucide-react';
 
 import SmartImg from '@/components/SmartImg';
 import type { MatchCentreModel } from '@/lib/matchCentreRepo';
 import { resolveTeamKey, resolveTeamLogoUrl } from '@/lib/entityResolvers';
-import { TEAM_ASSETS, assetUrl, type TeamKey } from '@/lib/teamAssets';
+import { TEAM_ASSETS, type TeamKey } from '@/lib/teamAssets';
 import '@/styles/mc-hero.css';
 
 type Props = {
@@ -116,55 +116,29 @@ function computeResultSummary(
   };
 }
 
-function HeroHeaderComponent({ onBack, model, loading }: Props) {
+export default function HeroHeader({ onBack, model, loading }: Props) {
+  const isLoadingShell = !!loading && !model;
   const home = model?.home;
   const away = model?.away;
 
   const homeKey = slugToTeamKey(home?.slug);
   const awayKey = slugToTeamKey(away?.slug);
 
-  // Resolve team logos with smart fallback: only use Elite Gaming logo if we truly have no team identity
-  const homeLogo = useMemo(() => {
-    if (home?.logoUrl) {
-      const resolved = resolveTeamLogoUrl({
-        logoUrl: home.logoUrl,
-        slug: home.slug,
-        teamKey: homeKey || undefined,
-        name: home.fullName,
-      });
-      if (resolved && !resolved.includes('elite-gaming-logo.png')) return resolved;
-    }
-    
-    // If we have a team key, use its asset logo directly
-    if (homeKey && TEAM_ASSETS[homeKey]) {
-      const assetPath = TEAM_ASSETS[homeKey].logoFile || TEAM_ASSETS[homeKey].logoPath;
-      if (assetPath) return assetUrl(assetPath);
-    }
-    
-    // Only fall back to empty string to prevent flicker - SmartImg will show initials
-    return '';
-  }, [home?.logoUrl, home?.slug, home?.fullName, homeKey]);
+  const homeLogo = resolveTeamLogoUrl({
+    logoUrl: home?.logoUrl,
+    slug: home?.slug,
+    teamKey: homeKey || undefined,
+    name: home?.fullName,
+    fallbackPath: homeKey ? TEAM_ASSETS[homeKey]?.logoFile || TEAM_ASSETS[homeKey]?.logoPath : 'elite-gaming-logo.png',
+  });
 
-  const awayLogo = useMemo(() => {
-    if (away?.logoUrl) {
-      const resolved = resolveTeamLogoUrl({
-        logoUrl: away.logoUrl,
-        slug: away.slug,
-        teamKey: awayKey || undefined,
-        name: away.fullName,
-      });
-      if (resolved && !resolved.includes('elite-gaming-logo.png')) return resolved;
-    }
-    
-    // If we have a team key, use its asset logo directly
-    if (awayKey && TEAM_ASSETS[awayKey]) {
-      const assetPath = TEAM_ASSETS[awayKey].logoFile || TEAM_ASSETS[awayKey].logoPath;
-      if (assetPath) return assetUrl(assetPath);
-    }
-    
-    // Only fall back to empty string to prevent flicker - SmartImg will show initials
-    return '';
-  }, [away?.logoUrl, away?.slug, away?.fullName, awayKey]);
+  const awayLogo = resolveTeamLogoUrl({
+    logoUrl: away?.logoUrl,
+    slug: away?.slug,
+    teamKey: awayKey || undefined,
+    name: away?.fullName,
+    fallbackPath: awayKey ? TEAM_ASSETS[awayKey]?.logoFile || TEAM_ASSETS[awayKey]?.logoPath : 'elite-gaming-logo.png',
+  });
 
   const homeTint = pickTeamTint(homeKey, home?.fullName, home?.color || home?.colour);
   const awayTint = pickTeamTint(awayKey, away?.fullName, away?.color || away?.colour);
@@ -172,8 +146,7 @@ function HeroHeaderComponent({ onBack, model, loading }: Props) {
   const homeRgb = hexToRgb(homeTint);
   const awayRgb = hexToRgb(awayTint);
 
-  const isLoadingShell = !!loading && !model;
-  const rawStatus = model?.statusLabel || (isLoadingShell ? 'UPCOMING' : 'UPCOMING');
+  const rawStatus = model?.statusLabel || 'UPCOMING';
   const displayStatus = statusToDisplayLabel(rawStatus);
   const tone = statusTone(displayStatus);
 
@@ -254,14 +227,7 @@ function HeroHeaderComponent({ onBack, model, loading }: Props) {
             >
               <span className="mcHeroShell__teamGlow mcHeroShell__teamGlow--home" aria-hidden="true" />
               <div className="mcHeroShell__logoWrap">
-                <SmartImg 
-                  src={homeLogo} 
-                  alt={home?.fullName || 'Home'} 
-                  className="mcHeroShell__logo" 
-                  fallbackText={homeAbbr}
-                  loading="eager"
-                  fetchPriority="high"
-                />
+                <SmartImg src={homeLogo} alt={home?.fullName || 'Home'} className="mcHeroShell__logo" fallbackText={homeAbbr} loading="eager" fetchPriority="high" />
               </div>
               <div className="mcHeroShell__teamText">
                 <div className="mcHeroShell__teamName">{home?.fullName || 'Home Team'}</div>
@@ -305,14 +271,7 @@ function HeroHeaderComponent({ onBack, model, loading }: Props) {
             >
               <span className="mcHeroShell__teamGlow mcHeroShell__teamGlow--away" aria-hidden="true" />
               <div className="mcHeroShell__logoWrap">
-                <SmartImg 
-                  src={awayLogo} 
-                  alt={away?.fullName || 'Away'} 
-                  className="mcHeroShell__logo" 
-                  fallbackText={awayAbbr}
-                  loading="eager"
-                  fetchPriority="high"
-                />
+                <SmartImg src={awayLogo} alt={away?.fullName || 'Away'} className="mcHeroShell__logo" fallbackText={awayAbbr} loading="eager" fetchPriority="high" />
               </div>
               <div className="mcHeroShell__teamText">
                 <div className="mcHeroShell__teamName">{away?.fullName || 'Away Team'}</div>
@@ -326,5 +285,3 @@ function HeroHeaderComponent({ onBack, model, loading }: Props) {
     </section>
   );
 }
-
-export default memo(HeroHeaderComponent);

@@ -59,7 +59,7 @@ export default function StatsPage() {
   const statsCategoriesQuery = useStatsCategories(mode);
   const cats = statsCategoriesQuery.data ?? [];
   const loading = statsCategoriesQuery.isLoading;
-  const competitionLabel = getStoredCompetitionKey() === 'preseason' ? 'Knockout Preseason' : 'AFL 26 Season Two';
+  const competitionLabel = 'AFL 26 Season Two';
 
   const filteredCats = useMemo(() => {
     const q = search.trim().toLowerCase();

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Users, ArrowRight } from 'lucide-react';
+import { User, Users, ArrowRight, Search, X } from 'lucide-react';
 import {
   PLAYER_STAT_CONFIGS,
   TEAM_STAT_CONFIGS,
@@ -101,50 +101,75 @@ function resolveTeamColors(teamLabel: string) {
   return { primary: '#283443', secondary: '#6d8098' };
 }
 
-async function fetchStatsPlayersFromDb(): Promise<StatsPlayerRow[]> {
-  const rows = await fetchAflPlayers();
-  return rows
-    .filter((row) => String(row.id || '').trim())
-    .map((row) => {
-      const teamName = String(row.teamName || '').trim() || 'Unassigned';
-      const isUnassignedTeam = teamName === 'Unassigned';
-      const assets = !isUnassignedTeam ? getTeamAssets(teamName) : null;
-      const logo = isUnassignedTeam ? '' : resolveLogoUrl(assets?.logo || '');
+async function buildStatsPlayersFromDb(): Promise<StatsPlayerRow[]> {
+  // Fetch the full competition roster
+  const baseline = await fetchActiveCompetitionBaseline();
+  const allAflPlayers = await fetchAflPlayers();
 
-      const tint = isUnassignedTeam
-        ? { primary: '#2a2f38', secondary: '#4f5563' }
-        : resolveTeamColors(teamName);
+  // Build a map of players by ID for quick lookup
+  const playerMap = new Map<string, typeof allAflPlayers[0]>();
+  for (const p of allAflPlayers) {
+    playerMap.set(p.id, p);
+  }
 
-      return {
-        id: String(row.id || ''),
-        name: String(row.name || '').trim() || 'Player',
-        teamName,
-        teamLogo: logo || undefined,
+  // Build a map of players by team for quick lookup
+  const playersByTeam = new Map<string, typeof allAflPlayers>();
+  for (const player of allAflPlayers) {
+    const teamKey = String(player.teamKey || player.teamName || '').toLowerCase();
+    if (!playersByTeam.has(teamKey)) {
+      playersByTeam.set(teamKey, []);
+    }
+    playersByTeam.get(teamKey)!.push(player);
+  }
+
+  // Create result array that includes all players from all teams in the baseline
+  const result: StatsPlayerRow[] = [];
+  const seen = new Set<string>();
+
+  // Go through baseline teams and include all their players
+  for (const team of baseline.teams) {
+    const teamPlayers = playersByTeam.get(team.teamKey.toLowerCase()) || [];
+
+    for (const player of teamPlayers) {
+      if (seen.has(player.id)) continue;
+      seen.add(player.id);
+
+      const tint = resolveTeamColors(player.teamName || team.name);
+
+      result.push({
+        id: String(player.id || ''),
+        name: String(player.name || '').trim() || 'Player',
+        teamName: String(player.teamName || team.name),
+        teamLogo: resolveLogoUrl(
+          player.teamName ? (getTeamAssets(player.teamName)?.logo || '') : (team.logoUrl || '')
+        ) || undefined,
         teamPrimaryColor: tint.primary,
         teamSecondaryColor: tint.secondary,
-        position: String(row.position || '').trim(),
-        number: parsePlayerNumber(row.number),
-        headshotUrl: String(row.headshotUrl || '').trim(),
-        gamesPlayed: Number(row.gamesPlayed || 0),
+        position: String(player.position || '').trim(),
+        number: parsePlayerNumber(player.number),
+        headshotUrl: String(player.headshotUrl || '').trim(),
+        gamesPlayed: Number(player.gamesPlayed || 0),
         stats: {
-          goals: Number(row.goals || 0),
-          disposals: Number(row.disposals || 0),
-          marks: Number(row.marks || 0),
-          tackles: Number(row.tackles || 0),
-          clearances: Number(row.clearances || 0),
+          goals: Number(player.goals || 0),
+          disposals: Number(player.disposals || 0),
+          marks: Number(player.marks || 0),
+          tackles: Number(player.tackles || 0),
+          clearances: Number(player.clearances || 0),
           fantasyPoints:
-            Number(row.fantasyPoints || 0) ||
-            Number(row.disposals || 0) +
-              Number(row.marks || 0) * 3 +
-              Number(row.tackles || 0) * 4 +
-              Number(row.goals || 0) * 6,
+            Number(player.fantasyPoints || 0) ||
+            Number(player.disposals || 0) +
+              Number(player.marks || 0) * 3 +
+              Number(player.tackles || 0) * 4 +
+              Number(player.goals || 0) * 6,
         },
-      } satisfies StatsPlayerRow;
-    })
-    .sort((a, b) => a.name.localeCompare(b.name));
+      });
+    }
+  }
+
+  return result.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-async function fetchStatsTeamsFromDb(): Promise<StatsTeamRow[]> {
+async function buildStatsTeamsFromDb(): Promise<StatsTeamRow[]> {
   const baseline = await fetchActiveCompetitionBaseline();
   return baseline.teams
     .map((team) => ({
@@ -176,6 +201,8 @@ const StatsHomePage: React.FC = () => {
   const [teamCompareIds, setTeamCompareIds] = useState<[string | null, string | null]>([null, null]);
   const [playerPickerSlot, setPlayerPickerSlot] = useState<CompareSlot | null>(null);
   const [teamPickerSlot, setTeamPickerSlot] = useState<CompareSlot | null>(null);
+  const [playerPickerSearch, setPlayerPickerSearch] = useState<string>('');
+  const [teamPickerSearch, setTeamPickerSearch] = useState<string>('');
   const navigate = useNavigate();
   const competitionLabel = getStoredCompetitionKey() === 'preseason' ? 'Knockout Preseason' : 'AFL 26 Season Two';
 
@@ -186,7 +213,7 @@ const StatsHomePage: React.FC = () => {
     setPlayersLoading(true);
     setPlayersError(null);
 
-    fetchStatsPlayersFromDb()
+    buildStatsPlayersFromDb()
       .then((rows) => {
         if (cancelled) return;
         setPlayers(rows);
@@ -209,7 +236,7 @@ const StatsHomePage: React.FC = () => {
     let cancelled = false;
     setTeamsLoading(true);
     setTeamsError(null);
-    fetchStatsTeamsFromDb()
+    buildStatsTeamsFromDb()
       .then((rows) => {
         if (cancelled) return;
         setTeams(rows);
@@ -284,14 +311,37 @@ const StatsHomePage: React.FC = () => {
     [teamCompareIds, teams],
   );
 
+  const filteredPlayers = useMemo(() => {
+    if (!playerPickerSearch.trim()) return players;
+    const search = playerPickerSearch.toLowerCase();
+    return players.filter(
+      (p) =>
+        p.name.toLowerCase().includes(search) ||
+        p.teamName.toLowerCase().includes(search) ||
+        p.position.toLowerCase().includes(search)
+    );
+  }, [players, playerPickerSearch]);
+
+  const filteredTeams = useMemo(() => {
+    if (!teamPickerSearch.trim()) return teams;
+    const search = teamPickerSearch.toLowerCase();
+    return teams.filter(
+      (t) =>
+        t.name.toLowerCase().includes(search) ||
+        t.shortName.toLowerCase().includes(search)
+    );
+  }, [teams, teamPickerSearch]);
+
   const selectComparedPlayer = (slot: CompareSlot, id: string) => {
     setPlayerCompareIds((current) => (slot === 'left' ? [id, current[1] || id] : [current[0] || id, id]));
     setPlayerPickerSlot(null);
+    setPlayerPickerSearch('');
   };
 
   const selectComparedTeam = (slot: CompareSlot, id: string) => {
     setTeamCompareIds((current) => (slot === 'left' ? [id, current[1] || id] : [current[0] || id, id]));
     setTeamPickerSlot(null);
+    setTeamPickerSearch('');
   };
 
   return (
@@ -383,6 +433,8 @@ const StatsHomePage: React.FC = () => {
                   mode={mode}
                   scope={scope}
                   remoteCategory={remoteCategories.find((c) => c.statKey === (cfg.key as any))}
+                  allPlayers={mode === 'players' ? players : []}
+                  allTeams={mode === 'teams' ? teams : []}
                   deferFallback={leadersLoading && remoteCategories.length === 0}
                 />
               ))}
@@ -500,24 +552,56 @@ const StatsHomePage: React.FC = () => {
 
       {playerPickerSlot ? (
         <div className="eg-compare-modal">
-          <button type="button" className="eg-compare-modal__backdrop" onClick={() => setPlayerPickerSlot(null)} aria-label="Close player picker" />
+          <button type="button" className="eg-compare-modal__backdrop" onClick={() => {
+            setPlayerPickerSlot(null);
+            setPlayerPickerSearch('');
+          }} aria-label="Close player picker" />
           <div className="eg-compare-modal__sheet eg-glass">
             <div className="eg-compare-modal__head">
               <h4>{playerPickerSlot === 'left' ? 'Select left player' : 'Select right player'}</h4>
-              <button type="button" className="eg-compare-modal__close" onClick={() => setPlayerPickerSlot(null)}>×</button>
+              <button type="button" className="eg-compare-modal__close" onClick={() => {
+                setPlayerPickerSlot(null);
+                setPlayerPickerSearch('');
+              }}>×</button>
+            </div>
+            <div className="eg-compare-modal__search">
+              <Search size={16} />
+              <input
+                type="text"
+                placeholder="Search by name, team, or position…"
+                value={playerPickerSearch}
+                onChange={(e) => setPlayerPickerSearch(e.target.value)}
+                autoFocus
+              />
+              {playerPickerSearch && (
+                <button
+                  type="button"
+                  onClick={() => setPlayerPickerSearch('')}
+                  className="eg-compare-modal__search-clear"
+                  aria-label="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
             <div className="eg-compare-modal__list">
-              {players.map((player) => (
-                <button key={player.id} type="button" className="eg-compare-modal__item" onClick={() => selectComparedPlayer(playerPickerSlot, player.id)}>
-                  <div className="eg-compare-modal__avatar">
-                    {player.headshotUrl ? <img src={player.headshotUrl} alt={player.name} loading="lazy" decoding="async" /> : <span className="mini-initials">{getInitials(player.name)}</span>}
-                  </div>
-                  <div className="eg-compare-modal__meta">
-                    <span>{player.name}</span>
-                    <small>{player.teamName}{player.position ? ` • ${player.position}` : ''}</small>
-                  </div>
-                </button>
-              ))}
+              {filteredPlayers.length > 0 ? (
+                filteredPlayers.map((player) => (
+                  <button key={player.id} type="button" className="eg-compare-modal__item" onClick={() => selectComparedPlayer(playerPickerSlot, player.id)}>
+                    <div className="eg-compare-modal__avatar">
+                      {player.headshotUrl ? <img src={player.headshotUrl} alt={player.name} loading="lazy" decoding="async" /> : <span className="mini-initials">{getInitials(player.name)}</span>}
+                    </div>
+                    <div className="eg-compare-modal__meta">
+                      <span>{player.name}</span>
+                      <small>{player.teamName}{player.position ? ` • ${player.position}` : ''}</small>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="eg-compare-modal__empty">
+                  No players match your search
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -525,24 +609,56 @@ const StatsHomePage: React.FC = () => {
 
       {teamPickerSlot ? (
         <div className="eg-compare-modal">
-          <button type="button" className="eg-compare-modal__backdrop" onClick={() => setTeamPickerSlot(null)} aria-label="Close team picker" />
+          <button type="button" className="eg-compare-modal__backdrop" onClick={() => {
+            setTeamPickerSlot(null);
+            setTeamPickerSearch('');
+          }} aria-label="Close team picker" />
           <div className="eg-compare-modal__sheet eg-glass">
             <div className="eg-compare-modal__head">
               <h4>{teamPickerSlot === 'left' ? 'Select left team' : 'Select right team'}</h4>
-              <button type="button" className="eg-compare-modal__close" onClick={() => setTeamPickerSlot(null)}>×</button>
+              <button type="button" className="eg-compare-modal__close" onClick={() => {
+                setTeamPickerSlot(null);
+                setTeamPickerSearch('');
+              }}>×</button>
+            </div>
+            <div className="eg-compare-modal__search">
+              <Search size={16} />
+              <input
+                type="text"
+                placeholder="Search by team name…"
+                value={teamPickerSearch}
+                onChange={(e) => setTeamPickerSearch(e.target.value)}
+                autoFocus
+              />
+              {teamPickerSearch && (
+                <button
+                  type="button"
+                  onClick={() => setTeamPickerSearch('')}
+                  className="eg-compare-modal__search-clear"
+                  aria-label="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
             <div className="eg-compare-modal__list">
-              {teams.map((team) => (
-                <button key={team.id} type="button" className="eg-compare-modal__item" onClick={() => selectComparedTeam(teamPickerSlot, team.id)}>
-                  <div className="eg-compare-modal__avatar">
-                    {team.logoUrl ? <img src={team.logoUrl} alt={team.name} loading="lazy" decoding="async" /> : <span className="mini-initials">{getInitials(team.name)}</span>}
-                  </div>
-                  <div className="eg-compare-modal__meta">
-                    <span>{team.name}</span>
-                    <small>{team.shortName}</small>
-                  </div>
-                </button>
-              ))}
+              {filteredTeams.length > 0 ? (
+                filteredTeams.map((team) => (
+                  <button key={team.id} type="button" className="eg-compare-modal__item" onClick={() => selectComparedTeam(teamPickerSlot, team.id)}>
+                    <div className="eg-compare-modal__avatar">
+                      {team.logoUrl ? <img src={team.logoUrl} alt={team.name} loading="lazy" decoding="async" /> : <span className="mini-initials">{getInitials(team.name)}</span>}
+                    </div>
+                    <div className="eg-compare-modal__meta">
+                      <span>{team.name}</span>
+                      <small>{team.shortName}</small>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="eg-compare-modal__empty">
+                  No teams match your search
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -559,6 +675,8 @@ interface LeaderCardProps {
   mode: StatsMode;
   scope: StatsScope;
   remoteCategory?: StatLeaderCategory;
+  allPlayers: StatsPlayerRow[];
+  allTeams: StatsTeamRow[];
   deferFallback?: boolean;
 }
 
@@ -567,16 +685,49 @@ const LeaderCard: React.FC<LeaderCardProps> = ({
   mode,
   scope,
   remoteCategory,
+  allPlayers,
+  allTeams,
   deferFallback = false,
 }) => {
   const navigate = useNavigate();
 
+  // Get roster based on mode
+  const roster = mode === 'players' ? allPlayers : allTeams;
+
   const sorted = useMemo(() => {
     if (deferFallback && !remoteCategory?.top) return [];
-    if (!remoteCategory?.top) return [];
+    if (!remoteCategory?.top) {
+      // No remote stats yet, sort roster alphabetically
+      if (mode === 'players') {
+        return (allPlayers || []).slice(0, 5).map((p) => ({
+          id: p.id,
+          name: p.name,
+          teamName: p.teamName,
+          teamKey: p.teamName,
+          teamResolved: true,
+          headshotUrl: p.headshotUrl || '',
+          logoUrl: '',
+          total: 0,
+          average: 0,
+        }));
+      } else {
+        return (allTeams || []).slice(0, 5).map((t) => ({
+          id: t.id,
+          name: t.name,
+          teamName: t.name,
+          teamKey: t.name,
+          teamResolved: true,
+          headshotUrl: '',
+          logoUrl: t.logoUrl || '',
+          total: 0,
+          average: 0,
+        }));
+      }
+    }
 
     const rows = [remoteCategory.top, ...remoteCategory.others].slice(0, 5);
     return rows.map((r) => ({
+      id: r.id || '',
       name: r.name,
       teamName: r.teamName,
       teamKey: r.teamKey,
@@ -586,7 +737,7 @@ const LeaderCard: React.FC<LeaderCardProps> = ({
       total: r.valueTotal,
       average: r.valueAvg,
     }));
-  }, [deferFallback, remoteCategory]);
+  }, [deferFallback, remoteCategory, allPlayers, allTeams, mode]);
 
   const leader = sorted[0];
   if (!leader) {
@@ -641,7 +792,7 @@ const LeaderCard: React.FC<LeaderCardProps> = ({
   const lastName = mode === 'players' ? String((leader as any).name || '').split(' ').slice(1).join(' ') : '';
   const imgSrc = mode === 'players' ? ((leader as any).headshotUrl || (leader as any).photoUrl || '') : ((leader as any).logoUrl || (leader as any).photoUrl || '');
   const leaderName = String((leader as any).name || '');
-  const leaderPlayerId = mode === 'players' ? String((remoteCategory?.top as any)?.id || '') : '';
+  const leaderPlayerId = mode === 'players' ? String((remoteCategory?.top as any)?.id || (leader as any).id || '') : '';
   const leaderClickable = mode === 'players' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(leaderPlayerId);
 
   const handleFull = () => navigate(`/stats3/leaders?mode=${mode}&stat=${cfg.key}&scope=${scope}`);
@@ -663,7 +814,7 @@ const LeaderCard: React.FC<LeaderCardProps> = ({
           }}
         />
 
-        {teamAsset.logo && (
+        {mode === 'players' && teamAsset.logo && (
           <div className="eg-leader-team-logo">
             <img src={teamAsset.logo} alt={leaderTeamName} />
           </div>

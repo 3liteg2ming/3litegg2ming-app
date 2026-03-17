@@ -127,14 +127,7 @@ function AppRoutes() {
 
   return (
     <>
-      {!hideTopHeader ? (
-        <>
-          <div className="egAnnounceBar" role="status" aria-live="polite">
-            <div className="egAnnounceBar__inner">Website is in development. Thanks for understanding.</div>
-          </div>
-          <TopHeader />
-        </>
-      ) : null}
+      {!hideTopHeader ? <TopHeader /> : null}
 
       <main className="eg-content-scroll" role="main">
         {globalCrash ? (

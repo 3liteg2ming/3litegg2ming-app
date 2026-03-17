@@ -9,6 +9,9 @@ import {
 } from '@/types/stats2';
 import { usePlayerPhotos } from '@/lib/usePlayerPhoto';
 import type { Mode as LeadersMode, StatKey as LeadersStatKey, StatLeaders } from '@/lib/stats-leaders-cache';
+import { fetchAflPlayers } from '@/data/aflPlayers';
+import { fetchActiveCompetitionBaseline } from '@/lib/seasonParticipantsRepo';
+import { assetUrl, getTeamAssets } from '@/lib/teamAssets';
 import '@/styles/stat-leaders.css';
 
 const getInitials = (name: string) =>
@@ -31,13 +34,14 @@ const StatLeadersPage: React.FC = () => {
   const [scope, setScope] = useState<StatsScope>(scopeParam);
   const [remoteLeaders, setRemoteLeaders] = useState<StatLeaders | null>(null);
   const [remoteLoading, setRemoteLoading] = useState(false);
+  const [fallbackRosterRows, setFallbackRosterRows] = useState<any[]>([]);
 
   const playerNames = useMemo(
     () =>
       modeParam === 'players'
-        ? remoteLeaders?.rows?.map((r) => r.name) || []
+        ? (remoteLeaders?.rows || fallbackRosterRows)?.map((r) => r.name) || []
         : [],
-    [modeParam, remoteLeaders],
+    [modeParam, remoteLeaders, fallbackRosterRows],
   );
   const { photos: supabasePhotos } = usePlayerPhotos(playerNames);
 
@@ -61,6 +65,8 @@ const StatLeadersPage: React.FC = () => {
 
     setRemoteLeaders(null);
     setRemoteLoading(true);
+    setFallbackRosterRows([]);
+
     import('@/lib/stats-leaders-cache')
       .then((mod) => mod.fetchStatLeaders(mode, statKey))
       .then((data) => {
@@ -78,19 +84,102 @@ const StatLeadersPage: React.FC = () => {
     };
   }, [modeParam, stat]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const buildFallbackRoster = async () => {
+      const mode = modeParam as LeadersMode;
+      const statKey = stat as LeadersStatKey;
+
+      if (remoteLeaders?.rows && remoteLeaders.rows.length > 0) {
+        // If we have remote data, don't build fallback
+        setFallbackRosterRows([]);
+        return;
+      }
+
+      if (mode === 'players') {
+        const [allAflPlayers, baseline] = await Promise.all([
+          fetchAflPlayers().catch(() => []),
+          fetchActiveCompetitionBaseline().catch(() => ({ teams: [] })),
+        ]);
+
+        const playersByTeam = new Map<string, typeof allAflPlayers>();
+        for (const player of allAflPlayers) {
+          const teamKey = String(player.teamKey || player.teamName || '').toLowerCase();
+          if (!playersByTeam.has(teamKey)) {
+            playersByTeam.set(teamKey, []);
+          }
+          playersByTeam.get(teamKey)!.push(player);
+        }
+
+        const rows: any[] = [];
+        const seen = new Set<string>();
+
+        for (const team of (baseline.teams || [])) {
+          const teamPlayers = playersByTeam.get(team.teamKey.toLowerCase()) || [];
+          for (const player of teamPlayers) {
+            if (seen.has(player.id)) continue;
+            seen.add(player.id);
+            rows.push({
+              playerId: String(player.id || ''),
+              rank: rows.length + 1,
+              name: String(player.name || '').trim() || 'Player',
+              teamName: String(player.teamName || team.name),
+              headshotUrl: String(player.headshotUrl || '').trim(),
+              logoUrl: String(player.headshotUrl || '').trim(),
+              total: 0,
+              average: 0,
+            });
+          }
+        }
+
+        if (!cancelled) {
+          setFallbackRosterRows(rows.sort((a, b) => a.name.localeCompare(b.name)));
+        }
+      } else {
+        const baseline = await fetchActiveCompetitionBaseline().catch(() => ({ teams: [] }));
+        const rows = (baseline.teams || []).map((team, idx) => ({
+          playerId: team.id,
+          rank: idx + 1,
+          name: team.name,
+          teamName: team.name,
+          headshotUrl: '',
+          logoUrl: assetUrl(team.logoUrl || '') || '',
+          total: 0,
+          average: 0,
+        }));
+
+        if (!cancelled) {
+          setFallbackRosterRows(rows);
+        }
+      }
+    };
+
+    buildFallbackRoster().catch(() => {
+      if (!cancelled) setFallbackRosterRows([]);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [modeParam, stat, remoteLeaders]);
+
   const rows = useMemo(() => {
-    if (!remoteLeaders?.rows?.length) return [];
-    return remoteLeaders.rows.map((r) => ({
-      playerId: (r as any).playerId || '',
-      rank: r.rank,
-      name: r.name,
-      teamName: r.sub || '',
-      headshotUrl: r.imgUrl || '',
-      logoUrl: r.imgUrl || '',
-      total: r.total,
-      average: r.average,
-    }));
-  }, [remoteLeaders]);
+    if (remoteLeaders?.rows?.length) {
+      return remoteLeaders.rows.map((r) => ({
+        playerId: (r as any).playerId || '',
+        rank: r.rank,
+        name: r.name,
+        teamName: r.sub || '',
+        headshotUrl: r.imgUrl || '',
+        logoUrl: r.imgUrl || '',
+        total: r.total,
+        average: r.average,
+      }));
+    }
+    // Use fallback roster when no remote data
+    return fallbackRosterRows;
+  }, [remoteLeaders, fallbackRosterRows]);
 
   const isValidPlayerId = (value: string) =>
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || '').trim());
@@ -194,12 +283,12 @@ const StatLeadersPage: React.FC = () => {
           );
         })}
 
-        {!remoteLoading && rows.length === 0 && (
+        {!remoteLoading && rows.length === 0 && fallbackRosterRows.length === 0 && (
           <div className="eg-list-row">
             <span className="eg-list-rank">—</span>
             <div className="eg-list-info">
-              <div className="eg-list-name">No live season data yet</div>
-              <div className="eg-list-team">Awaiting submitted match data for this category</div>
+              <div className="eg-list-name">Unable to load roster</div>
+              <div className="eg-list-team">Check your connection and try again</div>
             </div>
             <span className="eg-list-value">—</span>
           </div>

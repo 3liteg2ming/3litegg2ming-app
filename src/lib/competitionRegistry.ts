@@ -30,7 +30,7 @@ export const COMPETITIONS: CompetitionConfig[] = [
 ];
 
 export function getDefaultCompetitionKey(): CompetitionKey {
-  return 'preseason';
+  return 'afl26';
 }
 
 export function getCompetitionByKey(key: CompetitionKey): CompetitionConfig {

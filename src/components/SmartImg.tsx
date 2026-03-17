@@ -55,7 +55,7 @@ export default function SmartImg({
 
   const resolvedLoading = loading ?? 'lazy';
   const resolvedDecoding = decoding ?? 'async';
-  const resolvedPriority = fetchPriority ?? (resolvedLoading === 'lazy' ? 'low' : 'auto');
+  const resolvedPriority = fetchPriority ?? (resolvedLoading === 'eager' ? 'high' : resolvedLoading === 'lazy' ? 'low' : 'auto');
 
   return (
     <img

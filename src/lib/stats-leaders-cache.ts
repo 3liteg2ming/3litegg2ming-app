@@ -141,7 +141,7 @@ const LABELS: Record<StatKey, string> = {
   goalEfficiency: 'Goal Efficiency',
 };
 
-const CATEGORY_KEYS: StatKey[] = ['goals', 'disposals', 'marks', 'tackles', 'clearances'];
+const CATEGORY_KEYS: StatKey[] = ['goals', 'disposals', 'marks', 'tackles', 'clearances', 'fantasyPoints'];
 const LIVE_SUPPORTED_STATS = new Set<StatKey>([
   'goals',
   'disposals',
@@ -150,6 +150,7 @@ const LIVE_SUPPORTED_STATS = new Set<StatKey>([
   'marks',
   'tackles',
   'clearances',
+  'fantasyPoints',
   'goalEfficiency',
 ]);
 const leadersCache = new Map<string, LeadersCacheEntry>();
@@ -597,7 +598,8 @@ async function fetchLivePlayerMetrics(): Promise<PlayerMetricRow[]> {
       row.totals.handballs > 0 ||
       row.totals.marks > 0 ||
       row.totals.tackles > 0 ||
-      row.totals.clearances > 0,
+      row.totals.clearances > 0 ||
+      row.totals.fantasyPoints > 0,
     );
 
   liveMetricCache.set(cacheKey, { at: Date.now(), value: rows });
@@ -635,6 +637,23 @@ async function buildPlayers(statKey: StatKey): Promise<PlayerMetricRow[]> {
   }
 
   return Array.from(rowsById.values())
+    .map((row) => {
+      // Calculate Fantasy Points if needed based on other stats
+      // Formula: goals*6 + marks*3 + tackles*4 + disposals*1
+      if (row.totals.fantasyPoints === 0 && statKey === 'fantasyPoints') {
+        row.totals.fantasyPoints =
+          row.totals.goals * 6 +
+          row.totals.marks * 3 +
+          row.totals.tackles * 4 +
+          row.totals.disposals * 1;
+        row.avgs.fantasyPoints =
+          row.avgs.goals * 6 +
+          row.avgs.marks * 3 +
+          row.avgs.tackles * 4 +
+          row.avgs.disposals * 1;
+      }
+      return row;
+    })
     .sort((a, b) => {
       const diff = b.totals[statKey] - a.totals[statKey];
       if (Math.abs(diff) > 0.0001) return diff;
@@ -731,9 +750,10 @@ export async function fetchLeaderCategories(mode: Mode): Promise<StatLeaderCateg
   const value = await Promise.all(
     CATEGORY_KEYS.map(async (statKey) => {
       const rows = mode === 'teams' ? await buildTeams(statKey) : await buildPlayers(statKey);
-      const meaningfulRows = rows.filter((row) => hasMeaningfulValue(row, statKey));
-      const top = meaningfulRows[0] ? toLeaderPerson(meaningfulRows[0], statKey) : null;
-      const others = meaningfulRows.slice(1, 5).map((row) => toLeaderPerson(row, statKey));
+      // Include all eligible players/teams, not just those with meaningful stats
+      // This ensures full roster coverage even when stats are zero
+      const top = rows[0] ? toLeaderPerson(rows[0], statKey) : null;
+      const others = rows.slice(1, 5).map((row) => toLeaderPerson(row, statKey));
       return {
         statKey,
         label: LABELS[statKey],
