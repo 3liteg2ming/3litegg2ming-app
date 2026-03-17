@@ -27,9 +27,19 @@ export default function SmartImg({
   width,
   height,
 }: SmartImgProps) {
-  const [ok, setOk] = useState(true);
+  const [ok, setOk] = useState(Boolean(src));
+  const [actualSrc, setActualSrc] = useState(src);
 
-  if (!ok) {
+  // Reset state when src changes
+  React.useEffect(() => {
+    if (src !== actualSrc) {
+      setActualSrc(src);
+      setOk(Boolean(src));
+    }
+  }, [src, actualSrc]);
+
+  // If no src or failed, show fallback
+  if (!ok || !src) {
     return (
       <div
         className={className}

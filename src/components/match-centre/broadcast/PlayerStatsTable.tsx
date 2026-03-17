@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useMemo, useState } from 'react';
+import { type CSSProperties, useEffect, useMemo, useState, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import type { MatchCentreModel, PlayerStatRow } from '@/lib/matchCentreRepo';
@@ -71,7 +71,7 @@ function resolveSideKey(row: PlayerStatRow, model: MatchCentreModel): 'home' | '
   return 'home';
 }
 
-export default function PlayerStatsTable({ model }: { model: MatchCentreModel | null }) {
+function PlayerStatsTableComponent({ model }: { model: MatchCentreModel | null }) {
   const navigate = useNavigate();
   const [teamFilter, setTeamFilter] = useState<TeamFilter>('all');
   const [sortKey, setSortKey] = useState<SortKey>('FP');
@@ -308,7 +308,7 @@ export default function PlayerStatsTable({ model }: { model: MatchCentreModel | 
   );
 }
 
-function PlayerMedia({
+const PlayerMedia = memo(function PlayerMedia({
   photoUrl,
   name,
   tileText,
@@ -347,4 +347,6 @@ function PlayerMedia({
       )}
     </span>
   );
-}
+});
+
+export default memo(PlayerStatsTableComponent);

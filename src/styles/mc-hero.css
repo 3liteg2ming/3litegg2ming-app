@@ -255,14 +255,19 @@
 }
 
 .mcHeroShell__teamName {
-  max-width: 100px;
+  max-width: 110px;
   font-size: 10px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.3;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgba(243, 247, 255, 0.9);
   text-wrap: balance;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
 }
 
 .mcHeroShell__scoreCol {
@@ -404,7 +409,7 @@
   }
 
   .mcHeroShell__teamName {
-    max-width: 90px;
+    max-width: 98px;
     font-size: 9.5px;
   }
 

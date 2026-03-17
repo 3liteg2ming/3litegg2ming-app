@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { type CSSProperties, memo } from 'react';
 import SmartImg from '@/components/SmartImg';
 import { assetUrl, TEAM_ASSETS, type TeamKey } from '@/lib/teamAssets';
 import type { MatchCentreModel, TeamStatRow } from '@/lib/matchCentreRepo';
@@ -167,7 +167,7 @@ function StatRow({
   );
 }
 
-export default function TeamStats({ model, loading }: { model: MatchCentreModel | null; loading?: boolean }) {
+function TeamStatsComponent({ model, loading }: { model: MatchCentreModel | null; loading?: boolean }) {
   const home = model?.home;
   const away = model?.away;
 
@@ -291,3 +291,5 @@ export default function TeamStats({ model, loading }: { model: MatchCentreModel 
     </section>
   );
 }
+
+export default memo(TeamStatsComponent);

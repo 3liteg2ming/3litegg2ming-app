@@ -187,9 +187,12 @@
   font-weight: 800;
   letter-spacing: -0.01em;
   color: rgba(246, 250, 255, 0.9);
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.3;
+  word-break: break-word;
 }
 
 .mcPlayerTable__teamPill {
@@ -264,5 +267,6 @@
 
   .mcPlayerTable__name {
     font-size: 12px;
+    -webkit-line-clamp: 2;
   }
 }
