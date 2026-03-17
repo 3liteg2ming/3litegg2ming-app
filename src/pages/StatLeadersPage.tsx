@@ -10,6 +10,7 @@ import {
 import { usePlayerPhotos } from '@/lib/usePlayerPhoto';
 import type { Mode as LeadersMode, StatKey as LeadersStatKey, StatLeaders } from '@/lib/stats-leaders-cache';
 import { fetchAflPlayers } from '@/data/aflPlayers';
+import type { AflPlayer } from '@/data/aflPlayers';
 import { fetchActiveCompetitionBaseline } from '@/lib/seasonParticipantsRepo';
 import { assetUrl, getTeamAssets } from '@/lib/teamAssets';
 import '@/styles/stat-leaders.css';
@@ -99,11 +100,11 @@ const StatLeadersPage: React.FC = () => {
 
       if (mode === 'players') {
         const [allAflPlayers, baseline] = await Promise.all([
-          fetchAflPlayers().catch(() => []),
+          fetchAflPlayers().catch((): AflPlayer[] => []),
           fetchActiveCompetitionBaseline().catch(() => ({ teams: [] })),
         ]);
 
-        const playersByTeam = new Map<string, typeof allAflPlayers>();
+        const playersByTeam = new Map<string, AflPlayer[]>();
         for (const player of allAflPlayers) {
           const teamKey = String(player.teamKey || player.teamName || '').toLowerCase();
           if (!playersByTeam.has(teamKey)) {
