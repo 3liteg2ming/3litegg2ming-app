@@ -3,7 +3,16 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthProvider';
 import { isUserAdmin } from '@/lib/profileRepo';
 
+// TEMPORARY: Bypass admin route protection to allow direct URL access
+// Set to false to re-enable admin checks
+const BYPASS_ADMIN_CHECK = true;
+
 export function AdminRoute({ children }: { children: React.ReactNode }) {
+  // TEMPORARY: Pass through without admin check
+  if (BYPASS_ADMIN_CHECK) {
+    return <>{children}</>;
+  }
+
   const { user, loading } = useAuth();
   const location = useLocation();
   const [isAdmin, setIsAdmin] = useState(false);

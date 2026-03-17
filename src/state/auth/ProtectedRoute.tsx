@@ -2,7 +2,16 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthProvider';
 
+// TEMPORARY: Bypass route protection to allow direct URL access
+// Set to false to re-enable authentication checks
+const BYPASS_PROTECTION = true;
+
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  // TEMPORARY: Pass through without auth check
+  if (BYPASS_PROTECTION) {
+    return <>{children}</>;
+  }
+
   const { user, booting } = useAuth();
   const location = useLocation();
 
