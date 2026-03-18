@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState, type CSSProperties } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -100,8 +100,67 @@ function AppRoutes() {
   const hideNav = HIDE_NAV;
   const hideTopHeader = isAdminRoute;
 
+  const [navHidden, setNavHidden] = useState(false);
+  const navHiddenRef = useRef(false);
+
+  useEffect(() => {
+    const scrollEl = document.querySelector('.eg-content-scroll') as HTMLElement | null;
+    if (!scrollEl) return;
+
+    let lastScrollTop = scrollEl.scrollTop;
+    let ticking = false;
+    let lastActionTime = performance.now();
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+
+      requestAnimationFrame(() => {
+        const current = scrollEl.scrollTop;
+        const delta = current - lastScrollTop;
+        const hideThreshold = 32;
+        const showThreshold = 16;
+        const atTop = current < 64;
+        const now = performance.now();
+
+        // Avoid rapid hide/show toggles
+        if (now - lastActionTime < 120) {
+          lastScrollTop = current;
+          ticking = false;
+          return;
+        }
+
+        // Show when near the top or when scrolling up significantly
+        if ((atTop || delta < -showThreshold) && navHiddenRef.current) {
+          navHiddenRef.current = false;
+          setNavHidden(false);
+          lastActionTime = now;
+        }
+
+        // Hide when scrolling down past threshold (and not at the top)
+        if (current >= 64 && delta > hideThreshold && !navHiddenRef.current) {
+          navHiddenRef.current = true;
+          setNavHidden(true);
+          lastActionTime = now;
+        }
+
+        lastScrollTop = current;
+        ticking = false;
+      });
+    };
+
+    scrollEl.addEventListener('scroll', onScroll, { passive: true });
+    return () => scrollEl.removeEventListener('scroll', onScroll);
+  }, []);
+
   useEffect(() => {
     setGlobalCrash(null);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    // Reset nav visibility when navigating between pages
+    navHiddenRef.current = false;
+    setNavHidden(false);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -214,7 +273,7 @@ function AppRoutes() {
         )}
       </main>
 
-      {!hideNav ? <BottomNav hidden={false} /> : null}
+      {!hideNav ? <BottomNav hidden={navHidden} /> : null}
     </>
   );
 }
@@ -225,17 +284,7 @@ function AppShell() {
 
   return (
     <div className="eg-viewport">
-      <div
-        className={`eg-device${isAdminRoute ? ' eg-device--admin' : ''}`}
-        style={
-          {
-            '--bottom-nav-h': '0px',
-            '--eg-bottom-nav-height': '0px',
-          } as CSSProperties
-        }
-        role="application"
-        aria-label="Elite Gaming App"
-      >
+      <div className={`eg-device${isAdminRoute ? ' eg-device--admin' : ''}`} role="application" aria-label="Elite Gaming App">
         <QueryClientProvider client={queryClient}>
           <AppRoutes />
         </QueryClientProvider>
@@ -243,6 +292,7 @@ function AppShell() {
     </div>
   );
 }
+
 
 export default function App() {
   return <AppShell />;

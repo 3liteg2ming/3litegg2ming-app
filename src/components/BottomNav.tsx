@@ -77,7 +77,7 @@ export default function BottomNav({ hidden = false }: { hidden?: boolean }) {
   }, []);
 
   return (
-    <div className="egNavDock">
+    <div className={`egNavDock${hidden ? ' egNavDock--hidden' : ''}`} aria-hidden={hidden ? 'true' : undefined}>
       <div className="egNavDock__glass">
         <div className="egNavDock__row">
           {NAV.map(({ label, href, Icon }) => (

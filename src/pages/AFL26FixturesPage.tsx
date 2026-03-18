@@ -240,15 +240,25 @@ export default function AFL26FixturesPage() {
     }
   }, [activeStageId, regularStageGroups]);
 
+  const isTeamView = selectedTeamId !== 'ALL';
+
   const scopeMatches = useMemo(() => {
     if (!allFixtures.length) return [];
+
+    if (isTeamView) {
+      return allFixtures.filter((fixture) => {
+        const homeId = String(fixture.home_team_id || '');
+        const awayId = String(fixture.away_team_id || '');
+        return homeId === selectedTeamId || awayId === selectedTeamId;
+      });
+    }
 
     const stage = regularStageGroups.find((entry) => entry.id === activeStageId) || regularStageGroups[0];
     const stageMatches = stage?.matches || [];
     if (stageMatches.length) return stageMatches;
 
     return allFixtures;
-  }, [activeStageId, allFixtures, regularStageGroups]);
+  }, [activeStageId, allFixtures, regularStageGroups, selectedTeamId, isTeamView]);
 
   const venueOptions = useMemo(() => {
     return Array.from(new Set(allFixtures.map((fixture) => String(fixture.venue || '').trim()).filter(Boolean))).sort((a, b) =>
@@ -269,6 +279,11 @@ export default function AFL26FixturesPage() {
       return teamPass && venuePass;
     });
   }, [scopeMatches, selectedTeamId, selectedVenue]);
+
+  const selectedTeamName = useMemo(() => {
+    if (selectedTeamId === 'ALL') return '';
+    return teamOptions.find((t) => t.id === selectedTeamId)?.name || '';
+  }, [selectedTeamId, teamOptions]);
 
   const counts = useMemo(() => {
     const all = matchesAfterFilterSheet.length;
@@ -364,8 +379,12 @@ export default function AFL26FixturesPage() {
               <button
                 key={stage.id}
                 type="button"
-                className={`fxAflRoundChip ${stage.id === activeStageId ? 'is-active' : ''}`}
-                onClick={() => setActiveStageId(stage.id)}
+                disabled={isTeamView}
+                className={`fxAflRoundChip ${!isTeamView && stage.id === activeStageId ? 'is-active' : ''} ${isTeamView ? 'is-disabled' : ''}`}
+                onClick={() => {
+                  if (!isTeamView) setActiveStageId(stage.id);
+                }}
+                aria-disabled={isTeamView ? 'true' : undefined}
               >
                 {stage.label}
               </button>
@@ -387,7 +406,13 @@ export default function AFL26FixturesPage() {
           </div>
 
           <div className="fxAflMetaLine">
-            {isLoading ? 'Loading fixtures…' : `Scheduled ${counts.scheduled} • Final ${counts.final} • ${displayedMatches.length}/${activeMatchCount}`}
+            {isLoading ? (
+              'Loading fixtures…'
+            ) : isTeamView ? (
+              `Showing ${counts.all} fixtures for ${selectedTeamName || 'selected team'}`
+            ) : (
+              `Scheduled ${counts.scheduled} • Final ${counts.final} • ${displayedMatches.length}/${activeMatchCount}`
+            )}
           </div>
         </div>
 

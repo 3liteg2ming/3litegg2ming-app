@@ -190,6 +190,16 @@
   box-shadow: 0 8px 18px rgba(245, 196, 0, 0.22);
 }
 
+.fxAflRoundChip.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.25);
+}
+
+.fxAflRoundChip:disabled {
+  pointer-events: none;
+}
+
 .fxAflStatusRow {
   display: flex;
   gap: 6px;
