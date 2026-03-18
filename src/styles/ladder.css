@@ -1,138 +1,149 @@
 /* =========================
-   Elite Gaming — Ladder (AFL-style)
+   Elite Gaming — Ladder (Premium AFL-style)
    ========================= */
 
 .ladderPage {
   width: 100%;
   min-height: 100%;
   padding: 0 0 20px;
-  color: rgba(255,255,255,0.92);
+  color: rgba(255, 255, 255, 0.92);
 }
 
-/* IMPORTANT: stop any parent clipping */
 .ladderWrap {
   width: 100%;
   max-width: 980px;
   margin: 0 auto;
-  padding: 14px 14px 0;
+  padding: 10px 12px 0;
 }
 
-/* HERO (keeps your existing style hooks) */
+/* HERO — Premium section header */
 .ladderHero {
-  border-radius: 20px;
-  padding: 14px 16px 16px;
+  border-radius: 18px;
+  padding: 12px 14px;
   background:
-    radial-gradient(ellipse 120% 100% at 50% 0%, rgba(245, 196, 0, 0.05), transparent 70%),
-    rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06);
+    radial-gradient(ellipse 140% 120% at 50% -10%, rgba(245, 196, 0, 0.04), transparent 65%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.005)),
+    rgba(8, 11, 18, 0.85);
+  border: 1px solid rgba(245, 196, 0, 0.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
 }
 
 .ladderHero .heroTop {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   align-items: flex-start;
 }
 
 .ladderHero .kicker {
-  font-size: 12px;
-  letter-spacing: 0.6px;
-  color: rgba(255,255,255,0.58);
-  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: rgba(255, 255, 255, 0.48);
+  font-weight: 800;
   text-transform: uppercase;
 }
 
 .ladderHero .title {
-  font-size: 38px;
+  font-size: 32px;
   line-height: 1;
   font-weight: 900;
-  margin-top: 5px;
+  margin-top: 3px;
   color: rgba(245, 249, 255, 0.96);
 }
 
 .ladderHero .rule {
   height: 2px;
-  width: 76px;
-  margin-top: 9px;
+  width: 64px;
+  margin-top: 6px;
   border-radius: 999px;
-  background: rgba(245,196,0,0.92);
-  box-shadow: 0 0 12px rgba(245,196,0,0.2);
+  background: rgba(245, 196, 0, 0.88);
+  box-shadow: 0 0 8px rgba(245, 196, 0, 0.14);
 }
 
 .ladderHero .hint {
-  margin-top: 7px;
-  font-size: 14px;
-  color: rgba(255,255,255,0.58);
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.50);
   font-weight: 600;
 }
 
 .ladderHero .seasonPill {
   flex: 0 0 auto;
-  background: linear-gradient(180deg, rgba(245,196,0,0.95), rgba(212,160,0,0.95));
-  color: rgba(0,0,0,0.9);
+  background: linear-gradient(180deg, rgba(245, 196, 0, 0.93), rgba(212, 160, 0, 0.93));
+  color: rgba(0, 0, 0, 0.88);
   font-weight: 900;
   border-radius: 999px;
-  padding: 9px 15px;
-  border: 1px solid rgba(255,255,255,0.22);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3);
-  font-size: 11px;
-  letter-spacing: 0.3px;
+  padding: 7px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  font-size: 10px;
+  letter-spacing: 0.08em;
 }
 
-/* TABS — smaller + AFL-like */
+/* TABS — Premium tab styling */
 .aflTabsWrap {
-  margin-top: 12px;
+  margin-top: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding-top: 0;
+  padding-bottom: 8px;
+  background: linear-gradient(180deg, rgba(1, 2, 5, 0.88) 0%, rgba(1, 2, 5, 0.40) 75%, rgba(1, 2, 5, 0) 100%);
+  backdrop-filter: blur(8px);
 }
 
 .aflTabs {
   display: flex;
-  gap: 9px;
+  gap: 8px;
   align-items: center;
 }
 
 .aflTabs .t {
   appearance: none;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.03);
-  color: rgba(255,255,255,0.75);
-  border-radius: 10px;
-  padding: 9px 13px;
-  font-weight: 900;
-  font-size: 15px;
-  letter-spacing: 0.15px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.68);
+  border-radius: 9px;
+  padding: 8px 12px;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.08em;
   line-height: 1;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.14s ease;
 }
 
 .aflTabs .t:active {
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .aflTabs .t.isOn {
-  background: rgba(245,196,0,0.12);
-  border-color: rgba(245,196,0,0.48);
-  color: rgba(245,196,0,0.96);
-  box-shadow: 0 0 0 1px rgba(245,196,0,0.1) inset;
+  background: rgba(245, 196, 0, 0.10);
+  border-color: rgba(245, 196, 0, 0.40);
+  color: rgba(245, 196, 0, 0.94);
+  box-shadow: 0 0 0 1px rgba(245, 196, 0, 0.08) inset;
 }
 
-/* TABLE WRAP */
+/* TABLE WRAP — Premium glass container */
 .aflTable {
-  margin-top: 12px;
-  border-radius: 16px;
-  background: rgba(10,12,16,0.24);
-  border: 1px solid rgba(255,255,255,0.08);
+  margin-top: 8px;
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.003)),
+    rgba(6, 8, 13, 0.12);
+  border: 1px solid rgba(245, 196, 0, 0.05);
   overflow: hidden;
   width: 100%;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
 }
 
 .aflScroll {
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 6px;
+  padding-bottom: 4px;
 }
 
 .aflInner {
@@ -140,23 +151,24 @@
   min-width: var(--ladder-min-width, 100%);
 }
 
-/* Head row */
+/* HEAD ROW — Premium table header */
 .aflHead {
   display: grid;
-  grid-template-columns: 38px minmax(168px, 1fr) auto;
+  grid-template-columns: 30px minmax(160px, 1fr) auto;
   align-items: center;
-  gap: 10px;
-  padding: 12px 16px 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.03);
+  gap: 9px;
+  padding: 9px 11px 7px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.01);
   min-width: var(--ladder-min-width, 100%);
 }
 
-.hPos, .hClub {
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.6px;
-  color: rgba(255,255,255,0.60);
+.hPos,
+.hClub {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.52);
   text-transform: uppercase;
   text-align: left;
 }
@@ -165,80 +177,86 @@
   display: grid;
   align-items: center;
   justify-items: center;
-  gap: 12px;
+  gap: 11px;
   flex: 0 0 auto;
 }
 
 .hCols[data-mode="SUMMARY"] {
-  grid-template-columns: repeat(3, 52px);
-  gap: 10px;
+  grid-template-columns: repeat(3, 50px);
+  gap: 9px;
 }
 
 .hCols[data-mode="EXTENDED"] {
-  grid-template-columns: repeat(5, 48px);
-  gap: 6px;
+  grid-template-columns: repeat(5, 46px);
+  gap: 5px;
 }
 
 .hCols[data-mode="FORM"] {
-  grid-template-columns: 92px 74px;
-  gap: 10px;
+  grid-template-columns: 88px 70px;
+  gap: 9px;
 }
 
 .hCols .h {
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.6px;
-  color: rgba(255,255,255,0.55);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.48);
   justify-self: center;
   text-transform: uppercase;
-  min-width: 50px;
+  min-width: 48px;
   text-align: center;
 }
 
-/* Rows */
+/* ROWS LIST */
 .aflList {
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 10px 0;
+  padding: 8px 0;
 }
 
 .loading {
-  padding: 18px;
-  color: rgba(255,255,255,0.65);
-  font-weight: 800;
+  padding: 16px;
+  color: rgba(255, 255, 255, 0.60);
+  font-weight: 700;
 }
 
-/* One row container - full width team card */
+/* PREMIUM ROW — High-quality team card */
 .egAflRow {
   display: grid;
-  grid-template-columns: 32px minmax(168px, 1fr) auto;
+  grid-template-columns: 30px minmax(160px, 1fr) auto;
   align-items: center;
-  gap: 10px;
-  padding: 4px 14px;
-  margin-bottom: 9px;
-  border-radius: 14px;
+  gap: 9px;
+  padding: 2px 11px;
+  margin-bottom: 6px;
+  border-radius: 11px;
   position: relative;
-  background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-  border: 1px solid rgba(255,255,255,0.1);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.02),
+    rgba(255, 255, 255, 0.008) 50%,
+    rgba(255, 255, 255, 0.01)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.05);
   min-width: var(--ladder-min-width, 100%);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(8px);
   overflow: visible;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
-  min-height: 66px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+  min-height: 58px;
+  transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
 }
 
-/* Team color tint background */
+/* Team color tint background - subtle gradient */
 .egAflRow::before {
   content: "";
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(120px 120px at 15% 50%, var(--teamA), transparent 60%),
-    radial-gradient(140px 140px at 85% 50%, var(--teamB), transparent 70%);
-  opacity: 0.7;
+    radial-gradient(100px 100px at 12% 50%, var(--teamA), transparent 50%),
+    radial-gradient(120px 120px at 88% 50%, var(--teamB), transparent 60%);
+  opacity: 0.50;
   pointer-events: none;
-  border-radius: 16px;
+  border-radius: 11px;
 }
 
 /* Ensure content sits above background */
@@ -247,51 +265,51 @@
   z-index: 1;
 }
 
-/* Pos */
+/* POSITION */
 .cPos {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
-  color: rgba(255,255,255,0.65);
+  color: rgba(255, 255, 255, 0.60);
   text-align: center;
   flex: 0 0 auto;
 }
 
-/* Club pill - now stretches to fill space */
+/* CLUB PILL — Premium team display */
 .cClub {
-  height: 56px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: linear-gradient(90deg, rgba(0,0,0,0.08), rgba(0,0,0,0.03));
+  height: 50px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.01));
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 11px;
-  padding: 3px 11px;
+  gap: 9px;
+  padding: 2px 9px;
   position: relative;
   overflow: hidden;
   min-width: 0;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .clubLogo {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
   display: grid;
   place-items: center;
   background: linear-gradient(135deg, var(--teamA), var(--teamB));
-  border: 1px solid rgba(255,255,255,0.15);
-  flex: 0 0 36px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  flex: 0 0 32px;
   position: static;
   transform: none;
   z-index: 2;
-  box-shadow: 0 6px 14px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.1);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   overflow: hidden;
 }
 
 .logoImg {
-  width: 27px;
-  height: 27px;
+  width: 23px;
+  height: 23px;
   object-fit: contain;
   display: block;
   max-width: 100%;
@@ -302,15 +320,15 @@
   position: static;
   transform: none;
   z-index: 3;
-  font-size: 14px;
-  font-weight: 850;
-  color: rgba(255,255,255,0.85);
+  font-size: 12.5px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.80);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: none;
   flex: 1 1 auto;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.16);
   display: block;
 }
 
@@ -322,29 +340,29 @@
   justify-content: flex-start;
 }
 
-/* Right columns */
+/* RIGHT COLUMNS */
 .cCols {
   display: grid;
   align-items: center;
   justify-items: center;
-  gap: 12px;
-  padding-left: 8px;
+  gap: 11px;
+  padding-left: 6px;
   flex: 0 0 auto;
 }
 
 .cCols[data-mode="SUMMARY"] {
-  grid-template-columns: repeat(3, 52px);
-  gap: 10px;
+  grid-template-columns: repeat(3, 50px);
+  gap: 9px;
 }
 
 .cCols[data-mode="EXTENDED"] {
-  grid-template-columns: repeat(5, 48px);
-  gap: 6px;
+  grid-template-columns: repeat(5, 46px);
+  gap: 5px;
 }
 
 .cCols[data-mode="FORM"] {
-  grid-template-columns: 92px 74px;
-  gap: 10px;
+  grid-template-columns: 88px 70px;
+  gap: 9px;
 }
 
 .cell {
@@ -355,32 +373,32 @@
   align-items: center;
   gap: 2px;
   padding: 0;
-  min-height: 32px;
-  min-width: 44px;
+  min-height: 30px;
+  min-width: 42px;
 }
 
 .cell .k {
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.6px;
-  color: rgba(255,255,255,0.55);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.48);
   text-transform: uppercase;
   line-height: 1;
 }
 
 .cell .v {
-  font-size: 16px;
-  font-weight: 950;
-  color: rgba(255,255,255,0.98);
+  font-size: 15px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.96);
   line-height: 1;
 }
 
 .cell .vPts {
-  color: rgba(245,196,0,0.98);
-  text-shadow: 0 0 16px rgba(245,196,0,0.15);
+  color: rgba(245, 196, 0, 0.96);
+  text-shadow: 0 0 14px rgba(245, 196, 0, 0.12);
 }
 
-/* Form column */
+/* FORM COLUMN */
 .formCol,
 .oddsCol {
   display: flex;
@@ -388,16 +406,16 @@
   justify-content: center;
   align-items: center;
   padding: 0;
-  min-height: 32px;
-  gap: 4px;
+  min-height: 30px;
+  gap: 3px;
 }
 
 .formCol .k,
 .oddsCol .k {
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.6px;
-  color: rgba(255,255,255,0.55);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.48);
   text-align: center;
   text-transform: uppercase;
   line-height: 1;
@@ -407,101 +425,167 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
 .dot {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   border-radius: 999px;
-  box-shadow: inset 0 0 0 1.5px rgba(0,0,0,0.4);
-  border: 1px solid rgba(255,255,255,0.15);
-  background: rgba(255,255,255,0.12);
-  flex: 0 0 14px;
+  box-shadow: inset 0 0 0 1.2px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.10);
+  flex: 0 0 12px;
 }
 
-.dot.w { background: rgba(36, 196, 108, 0.95); }
-.dot.l { background: rgba(255, 72, 72, 0.95); }
-.dot.d { background: rgba(245, 196, 0, 0.95); }
-.dot.n { background: rgba(255,255,255,0.18); }
+.dot.w {
+  background: rgba(36, 196, 108, 0.92);
+}
+.dot.l {
+  background: rgba(255, 72, 72, 0.92);
+}
+.dot.d {
+  background: rgba(245, 196, 0, 0.92);
+}
+.dot.n {
+  background: rgba(255, 255, 255, 0.15);
+}
 
 .oddsPill {
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  padding: 6px 12px;
+  padding: 5px 10px;
   border-radius: 999px;
-  font-size: 16px;
-  font-weight: 950;
-  color: rgba(255,255,255,0.95);
-  background: rgba(0,0,0,0.2);
-  border: 1px solid rgba(255,255,255,0.15);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 12px rgba(0,0,0,0.25);
+  font-size: 15px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(0, 0, 0, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 3px 10px rgba(0, 0, 0, 0.20);
   white-space: nowrap;
-  min-width: 64px;
+  min-width: 60px;
   text-align: center;
 }
 
-/* Bottom spacer */
+/* BOTTOM SPACER */
 .safeBottom,
 .ladderSafeBottom {
   height: 110px;
 }
 
-/* Mobile responsiveness */
+/* MOBILE RESPONSIVENESS */
 @media (max-width: 768px) {
-  .ladderWrap { padding: 11px 10px 0; }
-  .ladderHero { padding: 12px 12px 14px; }
-  .ladderHero .title { font-size: 32px; margin-top: 4px; }
-  .ladderHero .kicker { font-size: 11px; }
-  .ladderHero .hint { font-size: 13px; margin-top: 6px; }
-  .ladderHero .rule { width: 68px; margin-top: 8px; height: 2px; }
+  .ladderWrap {
+    padding: 8px 10px 0;
+  }
+
+  .ladderHero {
+    padding: 10px 12px;
+    border-radius: 16px;
+  }
+
+  .ladderHero .title {
+    font-size: 28px;
+    margin-top: 2px;
+  }
+
+  .ladderHero .kicker {
+    font-size: 9px;
+  }
+
+  .ladderHero .hint {
+    font-size: 11px;
+    margin-top: 3px;
+  }
+
+  .ladderHero .rule {
+    width: 60px;
+    margin-top: 5px;
+    height: 2px;
+  }
 
   .egAflRow {
-    gap: 8px;
-    padding: 4px 10px;
-    margin-bottom: 8px;
-    min-height: 62px;
-    border-radius: 12px;
+    gap: 7px;
+    padding: 2px 9px;
+    margin-bottom: 5px;
+    min-height: 56px;
+    border-radius: 10px;
   }
 
   .aflHead {
-    grid-template-columns: 30px minmax(140px, 1fr) auto;
-    gap: 8px;
-    padding: 10px 10px 8px;
+    grid-template-columns: 26px minmax(130px, 1fr) auto;
+    gap: 7px;
+    padding: 8px 9px 6px;
   }
 
   .egAflRow {
-    grid-template-columns: 28px minmax(140px, 1fr) auto;
+    grid-template-columns: 26px minmax(130px, 1fr) auto;
   }
 
-  .cPos { font-size: 13px; color: rgba(255,255,255,0.58); }
-  .clubLogo { width: 32px; height: 32px; flex-basis: 32px; }
-  .logoImg { width: 22px; height: 22px; }
-  .clubName { font-size: 12px; display: block; }
-  .cClub { height: 52px; padding: 3px 9px; gap: 9px; }
+  .cPos {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.50);
+  }
+
+  .clubLogo {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+    border-radius: 6px;
+  }
+
+  .logoImg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .clubName {
+    font-size: 11px;
+    display: block;
+  }
+
+  .cClub {
+    height: 48px;
+    padding: 2px 8px;
+    gap: 7px;
+  }
 
   .hCols[data-mode="SUMMARY"],
   .cCols[data-mode="SUMMARY"] {
-    grid-template-columns: repeat(3, 44px);
+    grid-template-columns: repeat(3, 38px);
     gap: 6px;
   }
 
   .hCols[data-mode="EXTENDED"],
   .cCols[data-mode="EXTENDED"] {
-    grid-template-columns: repeat(5, 40px);
+    grid-template-columns: repeat(5, 34px);
     gap: 4px;
   }
 
   .hCols[data-mode="FORM"],
   .cCols[data-mode="FORM"] {
-    grid-template-columns: 80px 62px;
-    gap: 8px;
+    grid-template-columns: 70px 54px;
+    gap: 6px;
   }
 
-  .cell .v { font-size: 14px; }
-  .cell .k { font-size: 8px; }
-  .dot { width: 11px; height: 11px; }
-  .oddsPill { font-size: 12px; padding: 5px 8px; min-width: 56px; }
+  .cell .v {
+    font-size: 13px;
+  }
+
+  .cell .k {
+    font-size: 7px;
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+  }
+
+  .oddsPill {
+    font-size: 13px;
+    padding: 4px 8px;
+    min-width: 54px;
+  }
 }

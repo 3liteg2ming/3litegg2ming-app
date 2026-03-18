@@ -28,7 +28,7 @@
     url('https://zohtixrgskbzosgfluni.supabase.co/storage/v1/object/public/Assets/mcg.png');
   background-size: cover, 140% 140%, 130% 130%, cover;
   background-position: center, left top, right top, center;
-  padding-bottom: calc(var(--bottom-nav-h, 108px) + env(safe-area-inset-bottom, 0px) + 8px);
+  padding-bottom: calc(var(--bottom-nav-h, 108px) + env(safe-area-inset-bottom, 0px) + 6px);
 }
 
 .homePage::before,
@@ -57,9 +57,9 @@
   z-index: 1;
   width: min(860px, 100%);
   margin: 0 auto;
-  padding: 28px 16px 0;
+  padding: 12px 14px 0;
   display: grid;
-  gap: 16px;
+  gap: 10px;
 }
 
 .homeHeroIntro {
@@ -69,7 +69,7 @@
 
 .homeHeroIntro__copy {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -118,18 +118,18 @@
 }
 
 .homeHeroCard {
-  border-radius: 30px;
+  border-radius: 24px;
   display: block;
   background:
-    linear-gradient(135deg, rgba(3, 8, 16, 0.94), rgba(5, 9, 16, 0.78)),
-    radial-gradient(92% 124% at 16% 16%, rgba(245, 196, 0, 0.15), transparent 64%),
-    radial-gradient(92% 124% at 88% 18%, rgba(73, 147, 255, 0.14), transparent 66%);
+    linear-gradient(135deg, rgba(4, 9, 18, 0.93), rgba(4, 8, 16, 0.78)),
+    radial-gradient(92% 120% at 16% 16%, rgba(245, 196, 0, 0.08), transparent 58%),
+    radial-gradient(92% 120% at 88% 18%, rgba(73, 147, 255, 0.07), transparent 60%);
   background-size: cover;
   background-position: center;
   box-shadow:
     0 0 0 1px rgba(245, 196, 0, 0.06),
-    0 26px 58px rgba(1, 5, 14, 0.42),
-    0 0 40px rgba(245, 196, 0, 0.05);
+    0 16px 40px rgba(0, 4, 12, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .homeHeroCard::after {
@@ -137,12 +137,12 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(0deg, rgba(5, 8, 14, 0.2), rgba(5, 8, 14, 0.2)),
+    linear-gradient(0deg, rgba(5, 8, 14, 0.15), rgba(5, 8, 14, 0.15)),
     url('https://zohtixrgskbzosgfluni.supabase.co/storage/v1/object/public/Assets/mcg.png');
   background-size: cover;
   background-position: center;
   mix-blend-mode: soft-light;
-  opacity: 0.34;
+  opacity: 0.26;
   pointer-events: none;
 }
 
@@ -150,9 +150,9 @@
   position: relative;
   z-index: 1;
   min-width: 0;
-  padding: 24px 22px;
+  padding: 18px 17px;
   display: grid;
-  gap: 14px;
+  gap: 9px;
 }
 
 .homeHeroCard__topline {
@@ -335,46 +335,47 @@
 }
 
 .homeCard {
-  border-radius: 24px;
-  padding: 22px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  border-radius: 20px;
+  padding: 16px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .homeCard--compact {
-  padding: 18px;
+  padding: 14px;
 }
 
 .homeCard--quiet {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.018));
-  box-shadow: 0 16px 34px rgba(2, 6, 14, 0.22);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.006));
+  box-shadow: 0 10px 22px rgba(0, 3, 10, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .homeSectionHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .homeSectionHead__left {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
 }
 
 .homeSectionHead__icon {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.03);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: rgba(250, 252, 255, 0.94);
+  color: rgba(250, 252, 255, 0.90);
 }
 
 .homeSectionHead h2 {
@@ -420,8 +421,8 @@
 
 .homeAnnouncementItem {
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 15px;
 }
 
 .homeAnnouncementItem h3,
@@ -500,8 +501,8 @@
 
 .homeLeaderCard {
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 16px;
 }
 
 .homeLeaderCard__head {
@@ -601,12 +602,12 @@
 
 .homeTable__row {
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 14px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
+  gap: 11px;
 }
 
 .homeTable__rank {
@@ -783,20 +784,21 @@
 @media (max-width: 720px) {
   .homeShell {
     padding-inline: 12px;
-    padding-top: 22px;
-    gap: 14px;
+    padding-top: 12px;
+    gap: 9px;
   }
 
   .homeHeroCard {
-    border-radius: 24px;
+    border-radius: 18px;
   }
 
   .homeHeroCard__content {
-    padding: 20px 18px;
+    padding: 16px 14px;
+    gap: 8px;
   }
 
   .homeHeroCard__heroLogo {
-    width: 62px;
+    width: 52px;
   }
 
   .homeHeroCard__actions {
@@ -810,8 +812,8 @@
   }
 
   .homeCard {
-    padding: 18px;
-    border-radius: 22px;
+    padding: 14px;
+    border-radius: 18px;
   }
 
   .homeLeadersCarousel {

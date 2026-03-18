@@ -6,16 +6,16 @@
 }
 
 .fxPosterCard {
-  --padX: 18px;
-  --radius: 28px;
-  --tile: 68px;
-  --logo: 42px;
-  --gap: 14px;
+  --padX: 17px;
+  --radius: 24px;
+  --tile: 66px;
+  --logo: 40px;
+  --gap: 13px;
   --score: clamp(24px, 3.6vw, 40px);
   --dash: clamp(14px, 2vw, 18px);
   --minor: 13px;
-  --statusH: 28px;
-  --statusW: 118px;
+  --statusH: 26px;
+  --statusW: 110px;
 
   position: relative;
   width: 100%;
@@ -25,19 +25,19 @@
   color: rgba(255, 255, 255, 0.92);
 
   background:
-    radial-gradient(ellipse 62% 80% at 15% 45%, rgba(var(--homeR), var(--homeG), var(--homeB), 0.18) 0%, rgba(0, 0, 0, 0) 72%),
-    radial-gradient(ellipse 62% 80% at 85% 45%, rgba(var(--awayR), var(--awayG), var(--awayB), 0.18) 0%, rgba(0, 0, 0, 0) 72%),
-    linear-gradient(150deg, rgba(20, 23, 34, 0.68) 0%, rgba(10, 12, 19, 0.8) 56%, rgba(7, 10, 16, 0.9) 100%);
+    radial-gradient(ellipse 60% 76% at 15% 45%, rgba(var(--homeR), var(--homeG), var(--homeB), 0.12) 0%, rgba(0, 0, 0, 0) 70%),
+    radial-gradient(ellipse 60% 76% at 85% 45%, rgba(var(--awayR), var(--awayG), var(--awayB), 0.12) 0%, rgba(0, 0, 0, 0) 70%),
+    linear-gradient(150deg, rgba(20, 23, 34, 0.66) 0%, rgba(10, 12, 19, 0.78) 56%, rgba(7, 10, 16, 0.88) 100%);
 
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(38px) saturate(1.35);
-  -webkit-backdrop-filter: blur(38px) saturate(1.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(36px) saturate(1.32);
+  -webkit-backdrop-filter: blur(36px) saturate(1.32);
 
   box-shadow:
-    0 26px 58px -14px rgba(0, 0, 0, 0.72),
-    0 0 0 1px rgba(255, 255, 255, 0.03),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+    0 20px 48px -14px rgba(0, 0, 0, 0.64),
+    0 0 0 1px rgba(255, 255, 255, 0.02),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .fxPosterCard__watermark {
@@ -106,37 +106,37 @@
   display: inline-flex;
   align-items: center;
   min-height: var(--statusH);
-  padding: 0 12px;
+  padding: 0 11px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: rgba(226, 236, 248, 0.82);
-  font-size: 9px;
-  font-weight: 900;
-  letter-spacing: 0.1em;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(226, 236, 248, 0.74);
+  font-size: 8.6px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   line-height: 1;
 }
 
 .fxPosterCard__statusPill {
-  min-width: 108px;
+  min-width: 100px;
   height: var(--statusH);
   border-radius: 999px;
 
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 5px;
 
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 
   box-shadow:
-    0 12px 24px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 10px 20px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .fxPosterCard__statusDot {
@@ -220,19 +220,19 @@
 .fxPosterCard__teamBox {
   width: var(--tile);
   height: var(--tile);
-  border-radius: 15px;
+  border-radius: 14px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  background: rgba(255, 255, 255, 0.032);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.07);
 
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.16);
 }
 
 .fxPosterCard__logo {
@@ -337,20 +337,20 @@
 }
 
 .fxPosterCard__minor {
-  margin-top: 8px;
+  margin-top: 7px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 11px;
 
-  padding: 6px 12px;
+  padding: 5px 11px;
   border-radius: 999px;
 
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.07);
 
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .fxPosterCard--final .fxPosterCard__minor {
@@ -430,10 +430,10 @@
 
 .fxPosterCard__infoCard {
   min-width: 0;
-  border-radius: 14px;
-  padding: 10px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.024);
+  border-radius: 12px;
+  padding: 9px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.012);
 }
 
 .fxPosterCard__infoCard--away {
