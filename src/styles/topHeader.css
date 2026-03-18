@@ -1,12 +1,12 @@
 :root {
-  --eg-header-shell-h: 56px;
+  --eg-header-shell-h: 58px;
   --eg-header-inner-max: 1120px;
   --eg-header-side-col: auto;
-  --eg-header-brand-w: 120px;
-  --eg-header-brand-h: 32px;
-  --eg-header-brand-img-h: 80px;
-  --eg-header-brand-shift-y: -14px;
-  --eg-header-pill-h: 26px;
+  --eg-header-brand-w: 124px;
+  --eg-header-brand-h: 34px;
+  --eg-header-brand-img-h: 84px;
+  --eg-header-brand-shift-y: -15px;
+  --eg-header-pill-h: 27px;
 }
 
 .egTopHeader {
@@ -14,7 +14,7 @@
   z-index: 80;
   isolation: isolate;
   width: 100%;
-  padding: 2px 4px 1px;
+  padding: 3px 5px 2px;
   background: transparent;
 }
 
@@ -29,12 +29,12 @@
   width: min(var(--eg-header-inner-max), 100%);
   min-height: var(--eg-header-shell-h);
   margin: 0 auto;
-  padding: 2px 5px;
+  padding: 3px 6px;
   display: grid;
   grid-template-columns: minmax(0, auto) 1fr minmax(0, auto);
   align-items: center;
-  column-gap: 4px;
-  border-radius: 11px;
+  column-gap: 5px;
+  border-radius: 12px;
   overflow: visible;
   background:
     radial-gradient(
@@ -392,22 +392,22 @@
 
 @media (max-width: 760px) {
   :root {
-    --eg-header-shell-h: 52px;
-    --eg-header-brand-w: 100px;
-    --eg-header-brand-h: 28px;
-    --eg-header-brand-img-h: 74px;
-    --eg-header-brand-shift-y: -11px;
-    --eg-header-pill-h: 24px;
+    --eg-header-shell-h: 54px;
+    --eg-header-brand-w: 104px;
+    --eg-header-brand-h: 30px;
+    --eg-header-brand-img-h: 76px;
+    --eg-header-brand-shift-y: -12px;
+    --eg-header-pill-h: 25px;
   }
 
   .egTopHeader {
-    padding: 2px 3px 1px;
+    padding: 2px 4px 2px;
   }
 
   .egTopHeader__inner {
-    padding: 2px 4px;
-    column-gap: 3px;
-    border-radius: 10px;
+    padding: 3px 5px;
+    column-gap: 4px;
+    border-radius: 11px;
   }
 
   .egTopHeader__inner::before {
