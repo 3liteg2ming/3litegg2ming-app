@@ -29,14 +29,24 @@ export default function SmartImg({
 }: SmartImgProps) {
   const [ok, setOk] = useState(Boolean(src));
   const [actualSrc, setActualSrc] = useState(src);
+  const [loaded, setLoaded] = useState(false);
+  const imgRef = React.useRef<HTMLImageElement | null>(null);
 
   // Reset state when src changes
   React.useEffect(() => {
     if (src !== actualSrc) {
       setActualSrc(src);
       setOk(Boolean(src));
+      setLoaded(false);
     }
   }, [src, actualSrc]);
+
+  // If image already loaded (e.g. from cache), ensure we show it immediately.
+  React.useEffect(() => {
+    if (ok && imgRef.current?.complete) {
+      setLoaded(true);
+    }
+  }, [ok, src]);
 
   // If no src or failed, show fallback
   if (!ok || !src) {
@@ -57,9 +67,12 @@ export default function SmartImg({
   const resolvedDecoding = decoding ?? 'async';
   const resolvedPriority = fetchPriority ?? (resolvedLoading === 'eager' ? 'high' : resolvedLoading === 'lazy' ? 'low' : 'auto');
 
+  const imgClassName = [className, 'smartImg'].filter(Boolean).join(' ');
+
   return (
     <img
-      className={className}
+      ref={imgRef}
+      className={imgClassName}
       src={src}
       alt={alt}
       style={style}
@@ -71,6 +84,8 @@ export default function SmartImg({
       {...({ fetchpriority: resolvedPriority } as any)}
       draggable={false}
       onError={() => setOk(false)}
+      onLoad={() => setLoaded(true)}
+      data-loaded={loaded ? 'true' : 'false'}
     />
   );
 }
