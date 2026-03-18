@@ -16,30 +16,30 @@
 .fxAflInner {
   max-width: 100%;
   margin: 0 auto;
-  padding: 6px 0 0;
+  padding: 4px 0 0;
 }
 
 .fxAflStickyNav {
   position: sticky;
   top: var(--fx-sticky-top);
   z-index: 42;
-  margin-bottom: 12px;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 8px;
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(12, 15, 23, 0.86);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
-  padding: 10px 10px 9px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  padding: 8px 9px 8px;
   isolation: isolate;
   will-change: padding, border-color, box-shadow;
   transition: padding 280ms cubic-bezier(0.2, 0.8, 0.2, 1), border-color 280ms ease, box-shadow 280ms ease;
 }
 
 .fxAflStickyNav.is-compact {
-  padding: 6px 6px 5px;
-  border-color: rgba(255, 255, 255, 0.13);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
+  padding: 5px 6px 4px;
+  border-color: rgba(255, 255, 255, 0.10);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
 }
 
 .fxAflStickyNav::before {
@@ -55,65 +55,65 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 9px;
+  gap: 8px;
 }
 
 .fxAflHeaderTitle {
-  font-size: 25px;
+  font-size: 26px;
   line-height: 1;
   font-weight: 900;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   color: rgba(255, 255, 255, 0.96);
 }
 
 .fxAflCountPill {
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 9px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 8px;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   line-height: 1;
-  padding: 6px 10px;
+  padding: 5px 8px;
   white-space: nowrap;
 }
 
 .fxAflControlRow {
-  margin-top: 8px;
+  margin-top: 6px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
+  gap: 6px;
 }
 
 .fxAflCompetitionBar {
   width: 100%;
   position: relative;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(0, 0, 0, 0.28);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.24);
   color: inherit;
   text-align: left;
-  padding: 6px 34px 6px 10px;
+  padding: 5px 32px 5px 9px;
 }
 
 .fxAflCompetitionBar__label {
   display: block;
-  font-size: 10px;
+  font-size: 8px;
   font-weight: 900;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.54);
+  color: rgba(255, 255, 255, 0.50);
 }
 
 .fxAflCompetitionBar__value {
   display: block;
-  margin-top: 2px;
-  font-size: 15px;
+  margin-top: 1px;
+  font-size: 13px;
   font-weight: 860;
   letter-spacing: -0.01em;
-  color: rgba(255, 255, 255, 0.94);
+  color: rgba(255, 255, 255, 0.92);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -121,27 +121,28 @@
 
 .fxAflCompetitionBar__chev {
   position: absolute;
-  right: 11px;
+  right: 10px;
   top: 50%;
   transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.64);
 }
 
 .fxAflFilterBtn {
-  min-width: 88px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(0, 0, 0, 0.3);
-  color: rgba(255, 255, 255, 0.84);
-  font-size: 10px;
+  min-width: 80px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.24);
+  color: rgba(255, 255, 255, 0.80);
+  font-size: 8px;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  padding: 0 10px;
+  padding: 0 9px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 5px;
+  line-height: 1.2;
 }
 
 .fxAflFormatStrip {
@@ -183,9 +184,9 @@
 
 .fxAflRoundStrip {
   display: flex;
-  gap: 5px;
+  gap: 4px;
   overflow-x: auto;
-  padding: 7px 0 4px;
+  padding: 5px 0 3px;
   scrollbar-width: none;
 }
 
@@ -195,17 +196,17 @@
 }
 
 .fxAflRoundChip {
-  min-width: 46px;
-  height: 29px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.34);
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 9px;
+  min-width: 44px;
+  height: 27px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 8px;
   font-weight: 860;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  padding: 0 10px;
+  padding: 0 9px;
   white-space: nowrap;
 }
 
@@ -218,40 +219,40 @@
 
 .fxAflStatusRow {
   display: flex;
-  gap: 5px;
+  gap: 4px;
   overflow-x: auto;
-  padding: 6px 0 2px;
+  padding: 5px 0 1px;
   scrollbar-width: none;
 }
 
 .fxAflStatusPill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.32);
-  color: rgba(255, 255, 255, 0.68);
-  font-size: 9px;
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(0, 0, 0, 0.26);
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 8px;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
 .fxAflStatusPill__count {
-  min-width: 17px;
-  height: 17px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.08);
+  min-width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
+  font-size: 7px;
   font-weight: 900;
-  color: rgba(255, 255, 255, 0.88);
+  color: rgba(255, 255, 255, 0.84);
 }
 
 .fxAflStatusPill.is-active {
@@ -268,24 +269,24 @@
 }
 
 .fxAflMetaLine {
-  margin-top: 7px;
-  color: rgba(255, 255, 255, 0.38);
-  font-size: 9px;
+  margin-top: 5px;
+  color: rgba(255, 255, 255, 0.36);
+  font-size: 8px;
   font-weight: 560;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
 }
 
 .fxAflPanel {
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 12px 12px 20px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 10px 11px 18px;
 }
 
 .fxAflList {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 24px;
 }
 
 .fxAflLoadSentinel {
@@ -339,27 +340,28 @@
 .fxSheet__panel {
   position: relative;
   z-index: 1;
-  border-radius: 22px 22px 0 0;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px 20px 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.10);
   background: linear-gradient(180deg, rgba(16, 20, 29, 0.98), rgba(9, 12, 18, 0.98));
-  padding: 12px;
+  padding: 11px;
   max-height: min(72vh, 620px);
   overflow: auto;
 }
 
 .fxSheet__handle {
-  width: 48px;
-  height: 4px;
+  width: 40px;
+  height: 3px;
   border-radius: 999px;
-  margin: 2px auto 10px;
-  background: rgba(255, 255, 255, 0.2);
+  margin: 2px auto 8px;
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .fxSheet__title {
-  margin: 0 0 10px;
-  font-size: 18px;
+  margin: 0 0 8px;
+  font-size: 17px;
   line-height: 1.1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
+  font-weight: 900;
 }
 
 .fxSheet__copy {
@@ -370,32 +372,32 @@
 }
 
 .fxSheet__section {
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
 .fxSheet__sectionTitle {
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 900;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.56);
-  margin-bottom: 8px;
+  color: rgba(255, 255, 255, 0.50);
+  margin-bottom: 6px;
 }
 
 .fxSheet__list {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .fxSheet__item {
   width: 100%;
   text-align: left;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.88);
-  padding: 11px 12px;
-  font-size: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.86);
+  padding: 10px 11px;
+  font-size: 13px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -410,10 +412,10 @@
 }
 
 .fxSheet__actions {
-  margin-top: 14px;
+  margin-top: 12px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 6px;
 }
 
 .fxSheet__actions--single {
@@ -422,12 +424,12 @@
 
 .fxSheet__reset,
 .fxSheet__done {
-  border-radius: 12px;
-  font-size: 13px;
+  border-radius: 10px;
+  font-size: 11px;
   font-weight: 900;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 11px;
+  padding: 9px;
 }
 
 .fxSheet__reset {
@@ -448,12 +450,18 @@
   }
 
   .fxAflStickyNav {
-    border-radius: 14px;
+    border-radius: 12px;
     padding: 6px 0 5px;
+    margin-bottom: 6px;
   }
 
   .fxAflStickyNav.is-compact {
-    padding: 5px 5px 4px;
+    padding: 4px 5px 3px;
+  }
+
+  .fxAflTopHead {
+    gap: 6px;
+    padding: 0 8px;
   }
 
   .fxAflHeaderTitle {
@@ -461,36 +469,130 @@
   }
 
   .fxAflCountPill {
-    font-size: 9px;
-    padding: 6px 8px;
+    font-size: 7px;
+    padding: 4px 7px;
+  }
+
+  .fxAflControlRow {
+    margin-top: 4px;
+    gap: 5px;
+    padding: 0 8px;
+  }
+
+  .fxAflCompetitionBar {
+    border-radius: 9px;
+    padding: 4px 28px 4px 8px;
+  }
+
+  .fxAflCompetitionBar__label {
+    font-size: 7px;
   }
 
   .fxAflCompetitionBar__value {
-    font-size: 14px;
+    font-size: 12px;
+    margin-top: 0;
+  }
+
+  .fxAflCompetitionBar__chev {
+    right: 8px;
   }
 
   .fxAflFilterBtn {
-    min-width: 80px;
-    font-size: 10px;
-    padding: 0 9px;
+    min-width: 74px;
+    font-size: 7px;
+    padding: 0 8px;
+    border-radius: 9px;
+  }
+
+  .fxAflRoundStrip {
+    padding: 4px 8px 2px;
   }
 
   .fxAflRoundChip {
-    min-width: 44px;
-    height: 27px;
-    font-size: 9px;
+    min-width: 40px;
+    height: 24px;
+    font-size: 7px;
+    padding: 0 8px;
+    border-radius: 6px;
+  }
+
+  .fxAflStatusRow {
+    padding: 4px 8px 0;
   }
 
   .fxAflStatusPill {
-    padding: 6px 9px;
-    font-size: 9px;
+    padding: 4px 7px;
+    font-size: 7px;
+    gap: 4px;
+    border-radius: 6px;
+  }
+
+  .fxAflStatusPill__count {
+    min-width: 14px;
+    height: 14px;
+    font-size: 6px;
+    border-radius: 3px;
+  }
+
+  .fxAflMetaLine {
+    margin-top: 4px;
+    padding: 0 8px;
+    font-size: 7px;
   }
 
   .fxAflPanel {
-    padding: 11px 0 16px;
+    border-radius: 16px;
+    padding: 9px 10px 14px;
+    margin: 0 8px;
   }
 
   .fxAflList {
-    gap: 22px;
+    gap: 20px;
+  }
+
+  .fxSheet__panel {
+    border-radius: 18px 18px 0 0;
+    padding: 10px;
+  }
+
+  .fxSheet__handle {
+    width: 36px;
+    margin: 2px auto 7px;
+  }
+
+  .fxSheet__title {
+    font-size: 16px;
+    margin: 0 0 6px;
+  }
+
+  .fxSheet__section {
+    margin-top: 8px;
+  }
+
+  .fxSheet__sectionTitle {
+    font-size: 8px;
+    margin-bottom: 5px;
+  }
+
+  .fxSheet__list {
+    gap: 5px;
+  }
+
+  .fxSheet__item {
+    padding: 9px 10px;
+    font-size: 12px;
+    border-radius: 9px;
+  }
+
+  .fxSheet__actions {
+    margin-top: 10px;
+    gap: 5px;
+  }
+
+  .fxSheet__reset,
+  .fxSheet__done {
+    padding: 8px;
+    font-size: 10px;
+    border-radius: 9px;
   }
 }
