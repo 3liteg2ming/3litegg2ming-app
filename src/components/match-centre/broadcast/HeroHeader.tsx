@@ -237,12 +237,8 @@ export default function HeroHeader({ onBack, model, loading }: Props) {
             <div className="mcHeroShell__scoreCol">
               <div className="mcHeroShell__scoreAura" aria-hidden="true" />
               {isDashDisplay ? (
-                <div className={scoreClassName} aria-label="Match not started">
-                  <span>–</span>
-                  <span className="mcHeroShell__dash" aria-hidden="true">
-                    &ndash;
-                  </span>
-                  <span>–</span>
+                <div className={`${scoreClassName} mcHeroShell__score--vs`} aria-label="Match not started">
+                  <span className="mcHeroShell__vsLabel">VS</span>
                 </div>
               ) : (
                 <div className={scoreClassName} aria-label={`Score ${homeScore} to ${awayScore}`}>

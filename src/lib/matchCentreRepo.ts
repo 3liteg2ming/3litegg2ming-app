@@ -1846,18 +1846,24 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
   let homeTeamRow: TeamRow | null = null;
   let awayTeamRow: TeamRow | null = null;
   const teamIds = [fixture.home_team_id, fixture.away_team_id].filter(Boolean) as string[];
+
+  // Parallelize team fetches
   if (teamIds.length > 0) {
     const list = await fetchTeamsByIds(teamIds);
     homeTeamRow = list.find((t) => String(t.id) === String(fixture.home_team_id)) ?? null;
     awayTeamRow = list.find((t) => String(t.id) === String(fixture.away_team_id)) ?? null;
   }
 
+  // Fallback team lookups by slug if not found (can be parallelized)
+  const slugFetches: Promise<TeamRow | null>[] = [];
   if (!homeTeamRow && fixture.home_team_slug) {
-    homeTeamRow = await fetchTeamBySlug(fixture.home_team_slug);
+    slugFetches.push(fetchTeamBySlug(fixture.home_team_slug).then((r) => { homeTeamRow = r; return r; }));
   }
-
   if (!awayTeamRow && fixture.away_team_slug) {
-    awayTeamRow = await fetchTeamBySlug(fixture.away_team_slug);
+    slugFetches.push(fetchTeamBySlug(fixture.away_team_slug).then((r) => { awayTeamRow = r; return r; }));
+  }
+  if (slugFetches.length > 0) {
+    await Promise.all(slugFetches);
   }
 
   const homeSlug = String(homeTeamRow?.slug || fixture.home_team_slug || '').trim();
@@ -1913,8 +1919,19 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
     score: safeNum(aT),
   };
 
-  const submissions = await fetchFixtureSubmissionsOrdered(fixture.id);
-  const fixturePlayerStats = await fetchFixturePlayerStatPack(fixture.id);
+  // Parallelize critical data fetches
+  const [submissions, fixturePlayerStats, existingPlayerStats, baselinePlayers] = await Promise.all([
+    fetchFixtureSubmissionsOrdered(fixture.id),
+    fetchFixturePlayerStatPack(fixture.id),
+    fetchFixtureTeamPlayers({
+      fixture,
+      home,
+      away,
+      homeTeamRow,
+      awayTeamRow,
+    }),
+    fetchAflPlayers({ includeAllTeams: true }).catch(() => []),
+  ]);
 
   const hasSubmissionData = (submissions || []).length > 0;
   const primarySubmission = (submissions || [])[0];
@@ -1923,16 +1940,6 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
     normalizeFixtureStatus(fixture.status, fixture as any) === 'FINAL' ||
     normalizeFixtureStatus(fixture.status, fixture as any) === 'LIVE' ||
     [hG, hB, aG, aB, safeNum(hT), safeNum(aT)].some((value) => value > 0);
-
-  const existingPlayerStats = await fetchFixtureTeamPlayers({
-    fixture,
-    home,
-    away,
-    homeTeamRow,
-    awayTeamRow,
-  });
-
-  const baselinePlayers = await fetchAflPlayers({ includeAllTeams: true }).catch(() => []);
   const supplementalHeadshotResolver = createSupplementalHeadshotResolver({
     players: baselinePlayers,
     home,

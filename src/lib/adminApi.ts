@@ -175,7 +175,7 @@ export async function listPlayers(
   const [from, to] = rangeFromPage(params);
   let query = supabase
     .from('eg_players')
-    .select('id,name,full_name,display_name,team_id,goals,behinds,disposals', { count: 'exact' });
+    .select('id,name,full_name,display_name,team_id', { count: 'exact' });
 
   if (params.search?.trim()) {
     const q = params.search.trim();

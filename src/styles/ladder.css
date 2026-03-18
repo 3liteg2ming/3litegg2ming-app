@@ -19,100 +19,113 @@
 
 /* HERO (keeps your existing style hooks) */
 .ladderHero {
-  border-radius: 22px;
-  padding: 14px 16px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.10);
-  box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+  border-radius: 20px;
+  padding: 14px 16px 16px;
+  background:
+    radial-gradient(ellipse 120% 100% at 50% 0%, rgba(245, 196, 0, 0.05), transparent 70%),
+    rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06);
 }
 
 .ladderHero .heroTop {
   display: flex;
   justify-content: space-between;
-  gap: 14px;
+  gap: 12px;
   align-items: flex-start;
 }
 
 .ladderHero .kicker {
-  font-size: 14px;
-  letter-spacing: 0.4px;
-  color: rgba(255,255,255,0.62);
+  font-size: 12px;
+  letter-spacing: 0.6px;
+  color: rgba(255,255,255,0.58);
   font-weight: 700;
+  text-transform: uppercase;
 }
 
 .ladderHero .title {
-  font-size: 42px;
+  font-size: 38px;
   line-height: 1;
   font-weight: 900;
-  margin-top: 6px;
+  margin-top: 5px;
+  color: rgba(245, 249, 255, 0.96);
 }
 
 .ladderHero .rule {
-  height: 3px;
-  width: 82px;
-  margin-top: 10px;
+  height: 2px;
+  width: 76px;
+  margin-top: 9px;
   border-radius: 999px;
-  background: rgba(245,196,0,0.95);
-  box-shadow: 0 0 18px rgba(245,196,0,0.25);
+  background: rgba(245,196,0,0.92);
+  box-shadow: 0 0 12px rgba(245,196,0,0.2);
 }
 
 .ladderHero .hint {
-  margin-top: 8px;
-  font-size: 15px;
-  color: rgba(255,255,255,0.55);
-  font-weight: 700;
+  margin-top: 7px;
+  font-size: 14px;
+  color: rgba(255,255,255,0.58);
+  font-weight: 600;
 }
 
 .ladderHero .seasonPill {
   flex: 0 0 auto;
-  background: linear-gradient(180deg, rgba(245,196,0,1), rgba(212,160,0,1));
-  color: rgba(0,0,0,0.88);
+  background: linear-gradient(180deg, rgba(245,196,0,0.95), rgba(212,160,0,0.95));
+  color: rgba(0,0,0,0.9);
   font-weight: 900;
   border-radius: 999px;
-  padding: 10px 16px;
-  border: 1px solid rgba(255,255,255,0.18);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.35);
+  padding: 9px 15px;
+  border: 1px solid rgba(255,255,255,0.22);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3);
+  font-size: 11px;
+  letter-spacing: 0.3px;
 }
 
 /* TABS — smaller + AFL-like */
 .aflTabsWrap {
-  margin-top: 14px;
+  margin-top: 12px;
 }
 
 .aflTabs {
   display: flex;
-  gap: 10px;
+  gap: 9px;
   align-items: center;
 }
 
 .aflTabs .t {
   appearance: none;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.04);
-  color: rgba(255,255,255,0.78);
-  border-radius: 12px;
-  padding: 10px 14px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+  color: rgba(255,255,255,0.75);
+  border-radius: 10px;
+  padding: 9px 13px;
   font-weight: 900;
-  font-size: 18px;
-  letter-spacing: 0.2px;
+  font-size: 15px;
+  letter-spacing: 0.15px;
   line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.aflTabs .t:active {
+  background: rgba(255,255,255,0.06);
 }
 
 .aflTabs .t.isOn {
-  background: rgba(245,196,0,0.14);
-  border-color: rgba(245,196,0,0.55);
-  color: rgba(245,196,0,0.98);
-  box-shadow: 0 0 0 1px rgba(245,196,0,0.12) inset;
+  background: rgba(245,196,0,0.12);
+  border-color: rgba(245,196,0,0.48);
+  color: rgba(245,196,0,0.96);
+  box-shadow: 0 0 0 1px rgba(245,196,0,0.1) inset;
 }
 
 /* TABLE WRAP */
 .aflTable {
   margin-top: 12px;
-  border-radius: 18px;
-  background: rgba(10,12,16,0.34);
-  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 16px;
+  background: rgba(10,12,16,0.24);
+  border: 1px solid rgba(255,255,255,0.08);
   overflow: hidden;
   width: 100%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
 
 .aflScroll {
@@ -202,17 +215,17 @@
   grid-template-columns: 32px minmax(168px, 1fr) auto;
   align-items: center;
   gap: 10px;
-  padding: 3px 14px;
-  margin-bottom: 10px;
-  border-radius: 16px;
+  padding: 4px 14px;
+  margin-bottom: 9px;
+  border-radius: 14px;
   position: relative;
-  background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
-  border: 1px solid rgba(255,255,255,0.12);
+  background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.1);
   min-width: var(--ladder-min-width, 100%);
   backdrop-filter: blur(10px);
   overflow: visible;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-  min-height: 68px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+  min-height: 66px;
 }
 
 /* Team color tint background */
@@ -245,34 +258,34 @@
 
 /* Club pill - now stretches to fill space */
 .cClub {
-  height: 58px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: linear-gradient(90deg, rgba(0,0,0,0.1), rgba(0,0,0,0.05));
+  height: 56px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: linear-gradient(90deg, rgba(0,0,0,0.08), rgba(0,0,0,0.03));
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 12px;
-  padding: 2px 12px;
+  gap: 11px;
+  padding: 3px 11px;
   position: relative;
   overflow: hidden;
   min-width: 0;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 .clubLogo {
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: grid;
   place-items: center;
   background: linear-gradient(135deg, var(--teamA), var(--teamB));
-  border: 1px solid rgba(255,255,255,0.18);
-  flex: 0 0 38px;
+  border: 1px solid rgba(255,255,255,0.15);
+  flex: 0 0 36px;
   position: static;
   transform: none;
   z-index: 2;
-  box-shadow: 0 8px 18px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.12);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.1);
   overflow: hidden;
 }
 
@@ -438,54 +451,57 @@
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
-  .ladderWrap { padding: 12px 10px 0; }
-  .ladderHero { padding: 12px 12px; }
-  .ladderHero .title { font-size: 32px; }
-  .ladderHero .hint { font-size: 13px; }
+  .ladderWrap { padding: 11px 10px 0; }
+  .ladderHero { padding: 12px 12px 14px; }
+  .ladderHero .title { font-size: 32px; margin-top: 4px; }
+  .ladderHero .kicker { font-size: 11px; }
+  .ladderHero .hint { font-size: 13px; margin-top: 6px; }
+  .ladderHero .rule { width: 68px; margin-top: 8px; height: 2px; }
 
   .egAflRow {
     gap: 8px;
-    padding: 3px 10px;
+    padding: 4px 10px;
     margin-bottom: 8px;
-    min-height: 64px;
+    min-height: 62px;
+    border-radius: 12px;
   }
 
   .aflHead {
-    grid-template-columns: 32px minmax(144px, 1fr) auto;
+    grid-template-columns: 30px minmax(140px, 1fr) auto;
     gap: 8px;
     padding: 10px 10px 8px;
   }
 
   .egAflRow {
-    grid-template-columns: 28px minmax(144px, 1fr) auto;
+    grid-template-columns: 28px minmax(140px, 1fr) auto;
   }
 
-  .cPos { font-size: 14px; color: rgba(255,255,255,0.60); }
-  .clubLogo { width: 34px; height: 34px; flex-basis: 34px; }
-  .logoImg { width: 24px; height: 24px; }
+  .cPos { font-size: 13px; color: rgba(255,255,255,0.58); }
+  .clubLogo { width: 32px; height: 32px; flex-basis: 32px; }
+  .logoImg { width: 22px; height: 22px; }
   .clubName { font-size: 12px; display: block; }
-  .cClub { height: 54px; padding: 2px 10px; gap: 10px; }
+  .cClub { height: 52px; padding: 3px 9px; gap: 9px; }
 
   .hCols[data-mode="SUMMARY"],
   .cCols[data-mode="SUMMARY"] {
-    grid-template-columns: repeat(3, 46px);
+    grid-template-columns: repeat(3, 44px);
     gap: 6px;
   }
 
   .hCols[data-mode="EXTENDED"],
   .cCols[data-mode="EXTENDED"] {
-    grid-template-columns: repeat(5, 42px);
+    grid-template-columns: repeat(5, 40px);
     gap: 4px;
   }
 
   .hCols[data-mode="FORM"],
   .cCols[data-mode="FORM"] {
-    grid-template-columns: 82px 64px;
+    grid-template-columns: 80px 62px;
     gap: 8px;
   }
 
-  .cell .v { font-size: 15px; }
-  .cell .k { font-size: 9px; }
-  .dot { width: 12px; height: 12px; }
-  .oddsPill { font-size: 13px; padding: 5px 8px; min-width: 58px; }
+  .cell .v { font-size: 14px; }
+  .cell .k { font-size: 8px; }
+  .dot { width: 11px; height: 11px; }
+  .oddsPill { font-size: 12px; padding: 5px 8px; min-width: 56px; }
 }

@@ -127,8 +127,8 @@
 .egTopHeader__labelStack {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  line-height: 1;
+  gap: 1px;
+  line-height: 1.1;
 }
 
 .egTopHeader__labelSecondary {
@@ -137,7 +137,8 @@
   letter-spacing: 0.20em;
   text-transform: uppercase;
   color: rgba(180, 195, 220, 0.55);
-  line-height: 1;
+  line-height: 1.1;
+  display: block;
 }
 
 .egTopHeader__logoWrapper {
@@ -208,7 +209,7 @@
 .egTopHeader .authPillMenu--header {
   position: relative;
   max-width: 100%;
-  z-index: 100;
+  z-index: 120;
 }
 
 .egTopHeader .authPill--signedOut,
@@ -333,7 +334,7 @@
   width: 156px;
   padding: 5px;
   border-radius: 13px;
-  z-index: 101;
+  z-index: 1000;
   background:
     linear-gradient(
       180deg,
@@ -390,8 +391,8 @@
 @media (max-width: 760px) {
   :root {
     --eg-header-shell-h: 68px;
-    --eg-header-side-col: 92px;
-    --eg-header-brand-w: 110px;
+    --eg-header-side-col: 64px;
+    --eg-header-brand-w: 100px;
     --eg-header-brand-h: 32px;
     --eg-header-brand-img-h: 78px;
     --eg-header-brand-shift-y: -12px;
@@ -399,65 +400,84 @@
   }
 
   .egTopHeader {
-    padding: 7px 9px 5px;
+    padding: 6px 8px 4px;
   }
 
   .egTopHeader__inner {
-    padding: 6px 9px;
-    column-gap: 7px;
-    border-radius: 16px;
+    padding: 5px 8px;
+    column-gap: 6px;
+    border-radius: 14px;
   }
 
   .egTopHeader__inner::before {
-    border-radius: 16px;
+    border-radius: 14px;
   }
 
   .egTopHeader__left {
-    padding-left: 1px;
+    padding-left: 0;
+    min-width: 0;
+    white-space: nowrap;
   }
 
   .egTopHeader__right {
-    padding-right: 1px;
+    padding-right: 0;
   }
 
   .egTopHeader__labelSecondary {
-    font-size: 7.2px;
-    letter-spacing: 0.16em;
+    font-size: 6.8px;
+    letter-spacing: 0.14em;
+    white-space: nowrap;
+  }
+
+  .egTopHeader__labelLine1 {
+    max-width: 52px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .egTopHeader__labelLine2 {
+    max-width: 52px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .egTopHeader .authPill--signedOut {
-    padding: 0 11px;
-    font-size: 9.4px;
+    padding: 0 10px;
+    font-size: 9.2px;
+    white-space: nowrap;
   }
 
   .egTopHeader .authPill--account,
   .egTopHeader .authPill--loading {
-    max-width: 90px;
-    gap: 5px;
-    padding: 0 7px 0 5px;
+    max-width: 82px;
+    gap: 4px;
+    padding: 0 6px 0 5px;
   }
 
   .egTopHeader .authPillAvatar {
-    width: 23px;
-    height: 23px;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
   }
 
   .egTopHeader .authPillInitials {
-    font-size: 9.5px;
+    font-size: 9.2px;
   }
 
   .egTopHeader .authPillText {
-    max-width: 36px;
-    font-size: 8.6px;
+    max-width: 32px;
+    font-size: 8.4px;
+    white-space: nowrap;
   }
 
   .egTopHeader .authPillPopover {
-    width: 140px;
+    width: 136px;
+    z-index: 2001;
   }
 
   .egTopHeader .authPillPopover__item {
     min-height: 32px;
     padding: 0 9px;
-    font-size: 9.6px;
+    font-size: 9.4px;
   }
 }

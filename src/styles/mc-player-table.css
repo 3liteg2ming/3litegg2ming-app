@@ -88,6 +88,7 @@
   text-transform: uppercase;
   color: rgba(220, 231, 248, 0.75);
   text-align: center;
+  padding: 14px 6px;
 }
 
 .mcPlayerTable__headCell--player,
@@ -104,12 +105,20 @@
 .mcPlayerTable__sortButton {
   all: unset;
   width: 100%;
+  min-height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: inherit;
   -webkit-tap-highlight-color: transparent;
+  padding: 0 6px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.mcPlayerTable__sortButton:active {
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
 .mcPlayerTable__cell {
@@ -248,6 +257,14 @@
   .mcPlayerTable__headCell,
   .mcPlayerTable__cell {
     padding: 12px 4px;
+  }
+
+  .mcPlayerTable__headCell {
+    padding: 12px 4px;
+  }
+
+  .mcPlayerTable__sortButton {
+    min-height: 44px;
   }
 
   .mcPlayerTable__headCell--player,

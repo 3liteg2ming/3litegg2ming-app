@@ -10,8 +10,15 @@
 
 /* Page padding helpers (used instead of Tailwind utilities) */
 .egStatsPad {
-  padding-left: 20px;
-  padding-right: 20px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+@media (min-width: 520px) {
+  .egStatsPad {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
 }
 .egStatsPad--top {
   padding-top: 10px;
@@ -150,9 +157,9 @@
 
 @media (max-width: 480px) {
   .egCompareCard {
-    min-height: 88px;
-    padding: 14px;
-    gap: 12px;
+    min-height: 84px;
+    padding: 12px;
+    gap: 10px;
   }
 }
 
@@ -839,8 +846,14 @@
   outline: none;
   background: transparent;
   color: hsl(0 0% 95%);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
+}
+
+@media (min-width: 481px) {
+  .eg-compare-modal__search input {
+    font-size: 14px;
+  }
 }
 
 .eg-compare-modal__search input::placeholder {

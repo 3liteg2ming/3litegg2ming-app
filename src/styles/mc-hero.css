@@ -235,15 +235,15 @@
 }
 
 .mcHeroShell__logoWrap {
-  width: 58px;
-  height: 58px;
+  width: 56px;
+  height: 56px;
   display: grid;
   place-items: center;
 }
 
 .mcHeroShell__logo {
-  width: 58px;
-  height: 58px;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
   filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.3));
 }
@@ -310,6 +310,21 @@
 .mcHeroShell__score--final {
   font-size: clamp(28px, 4.2vw, 46px);
   letter-spacing: -0.04em;
+}
+
+.mcHeroShell__score--vs {
+  gap: 0;
+}
+
+.mcHeroShell__vsLabel {
+  font-size: clamp(44px, 12vw, 62px);
+  font-weight: 950;
+  letter-spacing: 0.02em;
+  color: rgba(245, 196, 0, 0.9);
+  text-shadow:
+    0 20px 32px rgba(0, 0, 0, 0.45),
+    0 0 20px rgba(245, 196, 0, 0.25);
+  font-variant-numeric: normal;
 }
 
 .mcHeroShell__score .is-leading {
@@ -420,6 +435,14 @@
 
   .mcHeroShell__score--final {
     font-size: 32px;
+  }
+
+  .mcHeroShell__score--vs {
+    gap: 0;
+  }
+
+  .mcHeroShell__vsLabel {
+    font-size: 48px;
   }
 
   .mcHeroShell__resultSummary {

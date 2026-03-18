@@ -93,7 +93,6 @@ function formatDateText(startTime?: string | null): string {
 function mapToPosterMatch(
   fixture: FixtureRow,
   navigate: ReturnType<typeof useNavigate>,
-  isPreseasonMode: boolean,
   coachesByTeamId: Map<string, HomeCoach>,
 ): FixturePosterMatch {
   const roundNumber = deriveFixtureRound(fixture);
@@ -154,7 +153,6 @@ function mapToPosterMatch(
     awayCoachPsn: awayCoach?.psn || undefined,
     homeScore,
     awayScore,
-    headerTag: isPreseasonMode ? `Knockout • Round ${roundNumber}` : undefined,
     onMatchCentreClick: () => navigate(`/match-centre/${fixture.id}`),
   };
 }
@@ -169,13 +167,17 @@ function getCompetitionOptions(): Array<{ key: CompetitionKey; label: string }> 
 export default function AFL26FixturesPage() {
   const navigate = useNavigate();
 
-  const competitionKey = getStoredCompetitionKey();
-  const competitionLabel = competitionKey === 'afl26' ? 'AFL 26 Season Two' : getUiCompetition(competitionKey).label;
+  let competitionKey = getStoredCompetitionKey();
+  // Ensure AFL 26 is always the default on this page
+  if (competitionKey !== 'afl26') {
+    setStoredCompetitionKey('afl26');
+    competitionKey = 'afl26';
+  }
+
+  const competitionLabel = 'AFL 26 Season Two';
   const seasonSlug = getDataSeasonSlugForCompetition(competitionKey);
-  const isPreseasonMode = competitionKey === 'preseason';
 
   const [activeStageId, setActiveStageId] = useState<string>('');
-  const [activeWeek, setActiveWeek] = useState<number>(1);
   const [activeStatus, setActiveStatus] = useState<StatusFilter>('ALL');
   const [visibleCount, setVisibleCount] = useState(INITIAL_RENDER_COUNT);
   const [isDockCompact, setIsDockCompact] = useState(false);
@@ -232,58 +234,21 @@ export default function AFL26FixturesPage() {
   const regularStageGroups = useMemo(() => buildRegularStageGroups(allFixtures), [allFixtures]);
 
   useEffect(() => {
-    if (isPreseasonMode) return;
     const first = regularStageGroups[0]?.id || '';
     if (!activeStageId || !regularStageGroups.some((stage) => stage.id === activeStageId)) {
       setActiveStageId(first);
     }
-  }, [activeStageId, isPreseasonMode, regularStageGroups]);
-
-  const preseasonRounds = useMemo(() => {
-    const rounds = Array.from(
-      new Set(
-        allFixtures
-          .map((fixture) => toPositiveInt(fixture.week_index) ?? toPositiveInt(fixture.stage_index) ?? toPositiveInt(fixture.round))
-          .filter((round): round is number => Boolean(round && round > 0)),
-      ),
-    ).sort((a, b) => a - b);
-
-    const hasFinals = allFixtures.some((fixture) => {
-      const stageName = String(fixture.stage_name || '').toLowerCase();
-      return stageName.includes('semi') || stageName.includes('final') || stageName.includes('grand');
-    });
-
-    if (!hasFinals) {
-      const base = rounds.filter((round) => round <= 2);
-      return base.length ? base : [1, 2];
-    }
-
-    return rounds.length ? rounds : [1, 2];
-  }, [allFixtures]);
-
-  useEffect(() => {
-    if (!isPreseasonMode) return;
-    if (!preseasonRounds.includes(activeWeek)) {
-      setActiveWeek(preseasonRounds[0] || 1);
-    }
-  }, [activeWeek, isPreseasonMode, preseasonRounds]);
+  }, [activeStageId, regularStageGroups]);
 
   const scopeMatches = useMemo(() => {
     if (!allFixtures.length) return [];
-
-    if (isPreseasonMode) {
-      const roundMatches = allFixtures.filter((fixture) => deriveFixtureRound(fixture) === activeWeek);
-      if (roundMatches.length) return roundMatches;
-
-      return allFixtures;
-    }
 
     const stage = regularStageGroups.find((entry) => entry.id === activeStageId) || regularStageGroups[0];
     const stageMatches = stage?.matches || [];
     if (stageMatches.length) return stageMatches;
 
     return allFixtures;
-  }, [activeStageId, activeWeek, allFixtures, isPreseasonMode, regularStageGroups]);
+  }, [activeStageId, allFixtures, regularStageGroups]);
 
   const venueOptions = useMemo(() => {
     return Array.from(new Set(allFixtures.map((fixture) => String(fixture.venue || '').trim()).filter(Boolean))).sort((a, b) =>
@@ -321,13 +286,13 @@ export default function AFL26FixturesPage() {
   }, [activeStatus, matchesAfterFilterSheet]);
 
   const uiMatches = useMemo(
-    () => filteredMatches.map((fixture) => mapToPosterMatch(fixture, navigate, isPreseasonMode, coachesByTeamId)),
-    [coachesByTeamId, filteredMatches, isPreseasonMode, navigate],
+    () => filteredMatches.map((fixture) => mapToPosterMatch(fixture, navigate, coachesByTeamId)),
+    [coachesByTeamId, filteredMatches, navigate],
   );
 
   useEffect(() => {
     setVisibleCount(INITIAL_RENDER_COUNT);
-  }, [activeStageId, activeStatus, activeWeek, selectedTeamId, selectedVenue, uiMatches.length]);
+  }, [activeStageId, activeStatus, selectedTeamId, selectedVenue, uiMatches.length]);
 
   useEffect(() => {
     const node = loadMoreRef.current;
@@ -393,43 +358,18 @@ export default function AFL26FixturesPage() {
             </button>
           </div>
 
-          {isPreseasonMode ? (
-            <div className="fxAflFormatStrip" aria-label="Preseason format">
-              <span className="fxAflFormatStrip__label">Format:</span>
-              <span>2 Rounds guaranteed</span>
-              <span className="fxAflFormatStrip__dot" aria-hidden="true">
-                •
-              </span>
-              <span className="fxAflFormatStrip__accent">Top 8 seeded finals</span>
-              <span className="fxAflFormatStrip__dot" aria-hidden="true">
-                •
-              </span>
-              <span>Grand Final</span>
-            </div>
-          ) : null}
 
           <div className="fxAflRoundStrip" aria-label="Round selector">
-            {isPreseasonMode
-              ? preseasonRounds.map((roundNum) => (
-                  <button
-                    key={roundNum}
-                    type="button"
-                    className={`fxAflRoundChip ${roundNum === activeWeek ? 'is-active' : ''}`}
-                    onClick={() => setActiveWeek(roundNum)}
-                  >
-                    {`R${roundNum}`}
-                  </button>
-                ))
-              : regularStageGroups.map((stage) => (
-                  <button
-                    key={stage.id}
-                    type="button"
-                    className={`fxAflRoundChip ${stage.id === activeStageId ? 'is-active' : ''}`}
-                    onClick={() => setActiveStageId(stage.id)}
-                  >
-                    {stage.label}
-                  </button>
-                ))}
+            {regularStageGroups.map((stage) => (
+              <button
+                key={stage.id}
+                type="button"
+                className={`fxAflRoundChip ${stage.id === activeStageId ? 'is-active' : ''}`}
+                onClick={() => setActiveStageId(stage.id)}
+              >
+                {stage.label}
+              </button>
+            ))}
           </div>
 
           <div className="fxAflStatusRow" aria-label="Status filters">

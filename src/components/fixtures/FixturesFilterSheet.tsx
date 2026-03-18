@@ -41,7 +41,10 @@ export default function FixturesFilterSheet({
             <button
               type="button"
               className={`fxSheet__item ${selectedTeamId === 'ALL' ? 'is-active' : ''}`}
-              onClick={() => onTeamChange('ALL')}
+              onClick={() => {
+                onTeamChange('ALL');
+                onClose();
+              }}
             >
               <span>All Teams</span>
             </button>
@@ -50,7 +53,10 @@ export default function FixturesFilterSheet({
                 key={team.id}
                 type="button"
                 className={`fxSheet__item ${selectedTeamId === team.id ? 'is-active' : ''}`}
-                onClick={() => onTeamChange(team.id)}
+                onClick={() => {
+                  onTeamChange(team.id);
+                  onClose();
+                }}
               >
                 <span>{team.name}</span>
               </button>
@@ -64,7 +70,10 @@ export default function FixturesFilterSheet({
             <button
               type="button"
               className={`fxSheet__item ${selectedVenue === 'ALL' ? 'is-active' : ''}`}
-              onClick={() => onVenueChange('ALL')}
+              onClick={() => {
+                onVenueChange('ALL');
+                onClose();
+              }}
             >
               <span>All Venues</span>
             </button>
@@ -73,7 +82,10 @@ export default function FixturesFilterSheet({
                 key={venue}
                 type="button"
                 className={`fxSheet__item ${selectedVenue === venue ? 'is-active' : ''}`}
-                onClick={() => onVenueChange(venue)}
+                onClick={() => {
+                  onVenueChange(venue);
+                  onClose();
+                }}
               >
                 <span>{venue}</span>
               </button>

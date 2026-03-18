@@ -23,13 +23,6 @@ type PlayerRow = {
   full_name?: string | null;
   display_name?: string | null;
   name?: string | null;
-  goals?: number | null;
-  disposals?: number | null;
-  kicks?: number | null;
-  handballs?: number | null;
-  marks?: number | null;
-  tackles?: number | null;
-  clearances?: number | null;
 };
 
 type TeamRow = {
@@ -107,36 +100,60 @@ function teamLogo(team: TeamRow | null): string {
   });
 }
 
-function latestToTiles(row: PlayerRow | null): StatTiles {
+type StatRow = {
+  disposals?: number | null;
+  kicks?: number | null;
+  handballs?: number | null;
+  marks?: number | null;
+  tackles?: number | null;
+  clearances?: number | null;
+  matches?: number | null;
+};
+
+function latestToTiles(row: StatRow | null): StatTiles {
+  if (!row) {
+    return {
+      disposals: null,
+      kicks: null,
+      handballs: null,
+      marks: null,
+      tackles: null,
+      clearances: null,
+    };
+  }
   return {
-    disposals: row?.disposals ?? null,
-    kicks: row?.kicks ?? null,
-    handballs: row?.handballs ?? null,
-    marks: row?.marks ?? null,
-    tackles: row?.tackles ?? null,
-    clearances: row?.clearances ?? null,
+    disposals: row.disposals ?? null,
+    kicks: row.kicks ?? null,
+    handballs: row.handballs ?? null,
+    marks: row.marks ?? null,
+    tackles: row.tackles ?? null,
+    clearances: row.clearances ?? null,
   };
 }
 
-function resolveMatchCount(row: PlayerRow | null): number {
-  if (!row) return 0;
-  const values = [row.disposals, row.kicks, row.handballs, row.marks, row.tackles, row.clearances, row.goals]
-    .map((value) => Number(value))
-    .filter((value) => Number.isFinite(value) && value > 0);
-
-  if (!values.length) return 0;
-  return 1;
+function resolveMatchCount(row: StatRow | null): number {
+  if (!row || !row.matches) return 0;
+  return Number(row.matches);
 }
 
-function averageToTiles(row: PlayerRow | null): StatTiles {
-  const matches = Math.max(1, resolveMatchCount(row));
+function averageToTiles(row: StatRow | null): StatTiles {
+  if (!row) {
+    return {
+      disposals: null,
+      kicks: null,
+      handballs: null,
+      marks: null,
+      tackles: null,
+      clearances: null,
+    };
+  }
   return {
-    disposals: row?.disposals != null ? Number(row.disposals) / matches : null,
-    kicks: row?.kicks != null ? Number(row.kicks) / matches : null,
-    handballs: row?.handballs != null ? Number(row.handballs) / matches : null,
-    marks: row?.marks != null ? Number(row.marks) / matches : null,
-    tackles: row?.tackles != null ? Number(row.tackles) / matches : null,
-    clearances: row?.clearances != null ? Number(row.clearances) / matches : null,
+    disposals: row.disposals ?? null,
+    kicks: row.kicks ?? null,
+    handballs: row.handballs ?? null,
+    marks: row.marks ?? null,
+    tackles: row.tackles ?? null,
+    clearances: row.clearances ?? null,
   };
 }
 
@@ -150,6 +167,11 @@ export default function PlayerProfilePage() {
 
   const [player, setPlayer] = useState<PlayerRow | null>(null);
   const [team, setTeam] = useState<TeamRow | null>(null);
+  const [latestStats, setLatestStats] = useState<StatRow | null>(null);
+  const [seasonStats, setSeasonStats] = useState<StatRow | null>(null);
+  const [careerStats, setCareerStats] = useState<StatRow | null>(null);
+  const [matchCount, setMatchCount] = useState<number>(0);
+
   useEffect(() => {
     if (!playerId) {
       setError('Player not found.');
@@ -165,8 +187,10 @@ export default function PlayerProfilePage() {
 
       try {
         const playerSelects = [
-          'id,team_id,number,position,headshot_url,photo_url,display_name,full_name,name,goals,disposals,kicks,handballs,marks,tackles,clearances',
-          'id,team_id,number,position,headshot_url,photo_url,name,goals,disposals,kicks,handballs,marks,tackles,clearances',
+          'id,team_id,number,position,headshot_url,photo_url,display_name,full_name,name',
+          'id,team_id,number,position,headshot_url,photo_url,name',
+          'id,team_id,number,position,headshot_url,display_name,photo_url',
+          'id,team_id,number,position,headshot_url,name',
           ] as const;
 
         let playerData: any = null;
@@ -187,15 +211,35 @@ export default function PlayerProfilePage() {
 
         const playerRow = playerData as PlayerRow;
 
-        const teamRes = await (
+        const [teamRes, latestRes, seasonRes, careerRes, totalsRes] = await Promise.all([
           playerRow.team_id
             ? supabase
                 .from('eg_teams')
                 .select('id,name,short_name,abbreviation,logo_url,primary_color,colour')
                 .eq('id', playerRow.team_id)
                 .maybeSingle()
-            : Promise.resolve({ data: null, error: null })
-        );
+            : Promise.resolve({ data: null, error: null }),
+          supabase
+            .from('eg_player_latest_fixture_statline')
+            .select('disposals,kicks,handballs,marks,tackles,clearances')
+            .eq('player_id', playerId)
+            .maybeSingle(),
+          supabase
+            .from('eg_player_season_averages')
+            .select('disposals,kicks,handballs,marks,tackles,clearances')
+            .eq('player_id', playerId)
+            .maybeSingle(),
+          supabase
+            .from('eg_player_career_averages')
+            .select('disposals,kicks,handballs,marks,tackles,clearances')
+            .eq('player_id', playerId)
+            .maybeSingle(),
+          supabase
+            .from('eg_player_season_totals_ext')
+            .select('matches')
+            .eq('player_id', playerId)
+            .maybeSingle(),
+        ]);
 
         if (cancelled) return;
 
@@ -203,6 +247,22 @@ export default function PlayerProfilePage() {
 
         if (!teamRes.error) {
           setTeam((teamRes.data as TeamRow | null) || null);
+        }
+
+        if (!latestRes.error && latestRes.data) {
+          setLatestStats(latestRes.data as StatRow);
+        }
+
+        if (!seasonRes.error && seasonRes.data) {
+          setSeasonStats(seasonRes.data as StatRow);
+        }
+
+        if (!careerRes.error && careerRes.data) {
+          setCareerStats(careerRes.data as StatRow);
+        }
+
+        if (!totalsRes.error && totalsRes.data) {
+          setMatchCount(Number(totalsRes.data.matches) || 0);
         }
       } catch (e: any) {
         if (!cancelled) {
@@ -223,13 +283,14 @@ export default function PlayerProfilePage() {
   const numberText = player?.number ? `#${player.number}` : '#—';
 
   const tabTiles = useMemo<StatTiles>(() => {
-    if (tab === 'latest') return latestToTiles(player);
-    return averageToTiles(player);
-  }, [tab, player]);
+    if (tab === 'latest') return latestToTiles(latestStats);
+    if (tab === 'season') return averageToTiles(seasonStats);
+    return averageToTiles(careerStats);
+  }, [tab, latestStats, seasonStats, careerStats]);
 
   const tabMatches = useMemo(() => {
-    return resolveMatchCount(player);
-  }, [player]);
+    return matchCount;
+  }, [matchCount]);
 
   const hasAnyStats = useMemo(() => {
     return TILE_CONFIG.some(({ key }) => tabTiles[key] !== null && tabTiles[key] !== undefined);
