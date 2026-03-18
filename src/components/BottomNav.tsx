@@ -2,7 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import { NavLink } from 'react-router-dom';
 import { BarChart3, CalendarDays, Home, Trophy, Upload } from 'lucide-react';
 import { useAuth } from '../state/auth/AuthProvider';
-import '../styles/bottomNav.css';
+import '../styles/bottomNavPremium.css';
 
 type NavItem = {
   label: string;
@@ -77,31 +77,40 @@ export default function BottomNav({ hidden = false }: { hidden?: boolean }) {
   }, []);
 
   return (
-    <nav className={`egBottomNav ${hidden ? 'egBottomNav--hidden' : ''}`} role="navigation" aria-label="Bottom navigation">
-      <div className="egBottomNav__bar" role="menubar" aria-label="Primary navigation">
-        {NAV.map(({ label, href, Icon }) => (
-          <NavLink
-            key={href}
-            to={href}
-            end={href === '/'}
-            className={({ isActive }) => `egBottomNav__item ${isActive ? 'egBottomNav__item--active' : ''}`}
-            aria-label={label}
-            role="menuitem"
-            onMouseEnter={() => {
-              void prefetchRouteAndData(href);
-            }}
-            onFocus={() => {
-              void prefetchRouteAndData(href);
-            }}
-            onTouchStart={() => {
-              void prefetchRouteAndData(href);
-            }}
-          >
-            <Icon className="egBottomNav__icon" />
-            <span className="egBottomNav__label">{label}</span>
-          </NavLink>
-        ))}
+    <div className="egNavDock">
+      <div className="egNavDock__glass">
+        <div className="egNavDock__row">
+          {NAV.map(({ label, href, Icon }) => (
+            <NavLink
+              key={href}
+              to={href}
+              end={href === '/'}
+              className={({ isActive }) => isActive ? 'egNavDock__pill' : 'egNavDock__btn'}
+              aria-label={label}
+              role="menuitem"
+              onMouseEnter={() => {
+                void prefetchRouteAndData(href);
+              }}
+              onFocus={() => {
+                void prefetchRouteAndData(href);
+              }}
+              onTouchStart={() => {
+                void prefetchRouteAndData(href);
+              }}
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && <div className="egNavDock__pillIcon">
+                    <Icon className="egNavDock__icon--active" />
+                  </div>}
+                  {!isActive && <Icon className="egNavDock__icon" />}
+                  {isActive && <span className="egNavDock__pillText">{label}</span>}
+                </>
+              )}
+            </NavLink>
+          ))}
+        </div>
       </div>
-    </nav>
+    </div>
   );
 }

@@ -95,7 +95,7 @@ function AppRoutes() {
   const [globalCrash, setGlobalCrash] = useState<{ message: string; source: string } | null>(null);
 
   const isAdminRoute = location.pathname.startsWith('/admin');
-  const HIDE_NAV = true;
+  const HIDE_NAV = false;
 
   const hideNav = HIDE_NAV;
   const hideTopHeader = isAdminRoute;

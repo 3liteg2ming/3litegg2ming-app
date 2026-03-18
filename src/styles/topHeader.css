@@ -1,26 +1,46 @@
 :root {
-  --eg-header-shell-h: 50px;
+  --eg-header-shell-h: 80px;
+  --eg-header-shell-radius: 24px;
   --eg-header-inner-max: 1120px;
-  --eg-header-side-col: auto;
-  --eg-header-brand-w: 96px;
-  --eg-header-brand-h: 28px;
-  --eg-header-brand-img-h: 68px;
-  --eg-header-brand-shift-y: -10px;
-  --eg-header-pill-h: 22px;
+  --eg-header-brand-w: 156px;
+  --eg-header-brand-h: 54px;
+  --eg-header-brand-img-h: 96px;
+  --eg-header-brand-shift-y: -6px;
+  --eg-header-pill-h: 44px;
+}
+
+.egAnnounceBar {
+  display: none !important;
 }
 
 .egTopHeader {
-  position: relative;
-  z-index: 80;
-  isolation: isolate;
+  position: sticky;
+  top: 0;
+  z-index: 900;
   width: 100%;
-  padding: 4px 4px 5px;
-  background: transparent;
+  padding:
+    calc(env(safe-area-inset-top, 0px) + 8px)
+    max(10px, env(safe-area-inset-right, 0px))
+    6px
+    max(10px, env(safe-area-inset-left, 0px));
+  background:
+    radial-gradient(120% 120% at 50% -10%, rgba(11, 58, 141, 0.12) 0%, rgba(0, 0, 0, 0) 55%),
+    linear-gradient(180deg, #0d1017 0%, #07090f 100%);
 }
 
-.egTopHeader__borderAccent,
-.egTopHeader__backdrop {
-  display: none;
+.egTopHeader::before {
+  content: '';
+  position: absolute;
+  inset: auto 18px 0 18px;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(245, 196, 0, 0.22),
+    transparent
+  );
+  opacity: 0.95;
 }
 
 .egTopHeader__inner {
@@ -29,123 +49,89 @@
   width: min(var(--eg-header-inner-max), 100%);
   min-height: var(--eg-header-shell-h);
   margin: 0 auto;
-  padding: 4px 6px 5px;
+  padding: 0 14px 0 16px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
-  border-radius: 11px;
-  overflow: visible;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: var(--eg-header-shell-radius);
   background:
-    radial-gradient(
-      ellipse 480px 140px at 50% -12%,
-      rgba(245, 196, 0, 0.022),
-      transparent 60%
-    ),
-    linear-gradient(
-      180deg,
-      rgba(12, 16, 26, 0.95),
-      rgba(6, 9, 16, 0.96)
-    ),
-    linear-gradient(
-      135deg,
-      rgba(245, 196, 0, 0.003),
-      rgba(245, 196, 0, 0.0005)
-    );
-  border: 1px solid rgba(245, 196, 0, 0.04);
+    radial-gradient(240px 100px at 18% 50%, rgba(19, 63, 147, 0.14), transparent 74%),
+    radial-gradient(240px 100px at 82% 48%, rgba(245, 196, 0, 0.08), transparent 76%),
+    linear-gradient(180deg, rgba(13, 18, 27, 0.95), rgba(7, 10, 16, 0.97));
+  border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow:
-    0 5px 12px rgba(0, 0, 0, 0.20),
-    0 1px 3px rgba(0, 0, 0, 0.10),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03),
-    inset 0 -1px 0 rgba(245, 196, 0, 0.02);
-  backdrop-filter: blur(15px) saturate(108%);
-  -webkit-backdrop-filter: blur(15px) saturate(108%);
-  -webkit-mask-image: radial-gradient(999px at 50% 50%, black 99%, transparent 100%);
-  mask-image: radial-gradient(999px at 50% 50%, black 99%, transparent 100%);
+    0 16px 34px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.018);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  overflow: visible;
 }
 
 .egTopHeader__inner::before {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: 1px;
+  border-radius: calc(var(--eg-header-shell-radius) - 1px);
   pointer-events: none;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.028),
-      rgba(255, 255, 255, 0.008) 35%,
-      transparent 70%
-    );
-  border-radius: 20px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.03),
+    rgba(255, 255, 255, 0.008) 44%,
+    transparent 100%
+  );
+  opacity: 0.9;
 }
 
 .egTopHeader__inner::after {
   content: '';
   position: absolute;
-  left: 14px;
-  right: 14px;
+  left: 26px;
+  right: 26px;
   bottom: 0;
-  height: 1px;
+  height: 2px;
   border-radius: 999px;
+  pointer-events: none;
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(245, 196, 0, 0.16),
-    rgba(255, 255, 255, 0.05),
-    rgba(245, 196, 0, 0.16),
+    rgba(245, 196, 0, 0.14) 18%,
+    rgba(245, 196, 0, 0.34) 50%,
+    rgba(245, 196, 0, 0.14) 82%,
     transparent
   );
-  pointer-events: none;
-}
-
-.egTopHeader__logoWrapper {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex: 1;
-  min-width: 0;
-}
-
-.egTopHeader__authContainer {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-shrink: 0;
-}
-
-
-.egTopHeader__logoGlow {
-  display: none;
+  box-shadow: 0 0 12px rgba(245, 196, 0, 0.12);
 }
 
 .egTopHeader__brand {
   position: relative;
   z-index: 2;
+  flex: 0 0 auto;
   width: var(--eg-header-brand-w);
+  min-width: 0;
   padding: 0;
   border: 0;
   background: transparent;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  transform: translateY(-0.5px) scale(1);
-  transition: transform 200ms ease;
+  justify-content: flex-start;
+  cursor: pointer;
+  transition: transform 140ms ease, opacity 140ms ease;
 }
 
-.egTopHeader__logoWrapper:hover .egTopHeader__brand {
-  transform: translateY(-1px) scale(1.01);
+.egTopHeader__brand:hover,
+.egTopHeader__brand:focus-visible {
+  transform: translateY(-1px);
+  opacity: 0.96;
 }
 
 .egTopHeader__brandCrop {
   width: var(--eg-header-brand-w);
   height: var(--eg-header-brand-h);
   display: flex;
-  justify-content: center;
   align-items: flex-start;
+  justify-content: flex-start;
   overflow: hidden;
 }
 
@@ -155,64 +141,67 @@
   max-width: none;
   max-height: none;
   object-fit: contain;
-  object-position: center top;
+  object-position: left top;
   transform: translateY(var(--eg-header-brand-shift-y));
   filter:
-    drop-shadow(0 10px 20px rgba(245, 196, 0, 0.10))
-    drop-shadow(0 4px 10px rgba(0, 0, 0, 0.22));
+    drop-shadow(0 10px 20px rgba(0, 0, 0, 0.22))
+    drop-shadow(0 0 14px rgba(245, 196, 0, 0.04));
+}
+
+.egTopHeader__auth {
+  position: relative;
+  z-index: 1100;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
 }
 
 .egTopHeader .authPillMenu--header {
   position: relative;
+  z-index: 1200;
   max-width: 100%;
-  z-index: 120;
 }
 
 .egTopHeader .authPill--signedOut,
 .egTopHeader .authPill--account,
 .egTopHeader .authPill--loading {
   min-height: var(--eg-header-pill-h);
-  border-radius: 7px;
+  border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.015),
-      rgba(255, 255, 255, 0.002)
-    ),
-    rgba(8, 11, 18, 0.72);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.016)),
+    rgba(10, 14, 22, 0.82);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.025),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.02),
-    0 3px 10px rgba(0, 0, 0, 0.16);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 18px rgba(0, 0, 0, 0.20);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   transition:
-    transform 130ms ease,
-    border-color 130ms ease,
-    box-shadow 130ms ease,
-    background-color 130ms ease;
+    transform 120ms ease,
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease;
 }
 
 .egTopHeader .authPill--signedOut:hover,
 .egTopHeader .authPill--signedOut:focus-visible,
 .egTopHeader .authPill--account:hover,
 .egTopHeader .authPill--account:focus-visible {
-  transform: translateY(-0.5px);
+  transform: translateY(-1px);
   border-color: rgba(245, 196, 0, 0.18);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.06),
-    0 6px 12px rgba(0, 0, 0, 0.18),
-    0 0 8px rgba(245, 196, 0, 0.04);
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 10px 22px rgba(0, 0, 0, 0.22);
 }
 
 .egTopHeader .authPill--signedOut {
-  padding: 0 8px;
-  font-size: 7px;
-  font-weight: 720;
-  letter-spacing: 0.02em;
-  color: rgba(255, 255, 255, 0.80);
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: rgba(248, 250, 255, 0.96);
   white-space: nowrap;
 }
 
@@ -220,21 +209,26 @@
 .egTopHeader .authPill--loading {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  max-width: 92px;
-  padding: 0 5px 0 4px;
+  gap: 8px;
+  max-width: 142px;
+  padding: 0 11px 0 7px;
 }
 
 .egTopHeader .authPillAvatar {
-  width: 15px;
-  height: 15px;
-  border-radius: 3.5px;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
   overflow: hidden;
-  flex: 0 0 15px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  flex: 0 0 32px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
   background:
-    linear-gradient(135deg, rgba(245, 196, 0, 0.01), rgba(245, 196, 0, 0.003)),
-    rgba(255, 255, 255, 0.004);
+    linear-gradient(135deg, rgba(245, 196, 0, 0.10), rgba(255, 255, 255, 0.02)),
+    rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px;
 }
 
 .egTopHeader .authPillTeamLogo {
@@ -249,18 +243,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 7px;
-  font-weight: 920;
-  color: rgba(248, 250, 255, 0.85);
+  font-size: 11px;
+  font-weight: 900;
+  color: rgba(248, 250, 255, 0.88);
 }
 
 .egTopHeader .authPillText {
   min-width: 0;
-  max-width: 40px;
-  font-size: 6.8px;
-  font-weight: 720;
-  letter-spacing: 0.008em;
-  color: rgba(255, 255, 255, 0.82);
+  max-width: 60px;
+  font-size: 11px;
+  font-weight: 760;
+  letter-spacing: 0.004em;
+  color: rgba(248, 250, 255, 0.92);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -268,144 +262,112 @@
 
 .egTopHeader .authPillChevron {
   flex: 0 0 auto;
-  color: rgba(200, 220, 240, 0.40);
+  color: rgba(202, 216, 236, 0.46);
   transition: transform 130ms ease, color 130ms ease;
 }
 
 .egTopHeader .authPillChevron.is-open {
   transform: rotate(180deg);
-  color: rgba(255, 255, 255, 0.70);
+  color: rgba(255, 255, 255, 0.74);
 }
 
 .egTopHeader .authPillPopover {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 10px);
   right: 0;
-  width: 150px;
-  padding: 4px;
-  border-radius: 12px;
-  z-index: 1000;
+  width: 164px;
+  padding: 5px;
+  border-radius: 16px;
+  z-index: 9999;
   background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.05),
-      rgba(255, 255, 255, 0.008)
-    ),
-    linear-gradient(
-      135deg,
-      rgba(245, 196, 0, 0.015),
-      rgba(245, 196, 0, 0.005)
-    ),
-    rgba(10, 13, 21, 0.96);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01)),
+    linear-gradient(135deg, rgba(245, 196, 0, 0.02), rgba(245, 196, 0, 0.005)),
+    rgba(10, 13, 21, 0.98);
   border: 1px solid rgba(245, 196, 0, 0.08);
   box-shadow:
-    0 12px 24px rgba(0, 0, 0, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+    0 16px 34px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .egTopHeader .authPillPopover__item {
   width: 100%;
-  min-height: 32px;
+  min-height: 36px;
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 0 9px;
-  border-radius: 7px;
-  background: transparent;
+  gap: 9px;
+  padding: 0 10px;
   border: 0;
-  color: rgba(235, 240, 250, 0.84);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  border-radius: 12px;
+  background: transparent;
+  color: rgba(241, 245, 255, 0.9);
+  font-size: 12px;
+  font-weight: 700;
   text-align: left;
   cursor: pointer;
-  transition: background-color 130ms ease, color 130ms ease;
 }
 
 .egTopHeader .authPillPopover__item:hover,
 .egTopHeader .authPillPopover__item:focus-visible {
-  background: rgba(245, 196, 0, 0.06);
-  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.98);
 }
 
-.egTopHeader__brand:focus-visible,
-.egTopHeader .authPill--signedOut:focus-visible,
-.egTopHeader .authPill--account:focus-visible,
-.egTopHeader .authPillPopover__item:focus-visible {
-  outline: 2px solid rgba(245, 196, 0, 0.28);
-  outline-offset: 1px;
-}
-
-@media (max-width: 760px) {
+@media (max-width: 520px) {
   :root {
-    --eg-header-shell-h: 48px;
-    --eg-header-brand-w: 88px;
-    --eg-header-brand-h: 26px;
-    --eg-header-brand-img-h: 64px;
-    --eg-header-brand-shift-y: -10px;
-    --eg-header-pill-h: 20px;
+    --eg-header-shell-h: 82px;
+    --eg-header-brand-w: 160px;
+    --eg-header-brand-h: 56px;
+    --eg-header-brand-img-h: 98px;
+    --eg-header-brand-shift-y: -7px;
+    --eg-header-pill-h: 44px;
   }
 
   .egTopHeader {
-    padding: 3px 3px 4px;
+    padding:
+      calc(env(safe-area-inset-top, 0px) + 10px)
+      max(8px, env(safe-area-inset-right, 0px))
+      8px
+      max(8px, env(safe-area-inset-left, 0px));
   }
 
   .egTopHeader__inner {
-    padding: 3px 5px 4px;
-    gap: 14px;
-    border-radius: 10px;
-  }
-
-  .egTopHeader__inner::before {
-    border-radius: 10px;
-  }
-
-  .egTopHeader .authPill--signedOut {
-    padding: 0 6px;
-    font-size: 6.2px;
-    white-space: nowrap;
+    padding: 0 12px 0 14px;
+    gap: 10px;
+    border-radius: 22px;
   }
 
   .egTopHeader .authPill--account,
   .egTopHeader .authPill--loading {
-    max-width: 80px;
-    gap: 2px;
-    padding: 0 3px 0 2px;
+    max-width: 136px;
+    padding: 0 10px 0 7px;
+    gap: 7px;
   }
 
   .egTopHeader .authPillAvatar {
-    width: 12px;
-    height: 12px;
-    flex: 0 0 12px;
-    border-radius: 3px;
-  }
-
-  .egTopHeader .authPillInitials {
-    font-size: 5.8px;
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
   }
 
   .egTopHeader .authPillText {
-    max-width: 36px;
-    font-size: 5.6px;
-    white-space: nowrap;
+    max-width: 58px;
+    font-size: 10.5px;
   }
 
-  .egTopHeader .authPillChevron {
-    width: 11px;
-    height: 11px;
+  .egTopHeader .authPill--signedOut {
+    padding: 0 13px;
+    font-size: 11.5px;
+  }
+}
+
+@media (min-width: 521px) {
+  .egTopHeader {
+    padding-top: 12px;
   }
 
-  .egTopHeader .authPillPopover {
-    width: 120px;
-    z-index: 2001;
-  }
-
-  .egTopHeader .authPillPopover__item {
-    min-height: 26px;
-    padding: 0 8px;
-    font-size: 8px;
-    gap: 6px;
+  .egTopHeader__inner {
+    min-height: 84px;
   }
 }

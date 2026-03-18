@@ -1,28 +1,32 @@
+import { useNavigate } from 'react-router-dom';
 import { assetUrl } from '../lib/teamAssets';
 import { HeaderAuthPill } from './HeaderAuthPill';
 
 import '../styles/topHeader.css';
 
 export default function TopHeader() {
+  const nav = useNavigate();
+
   return (
     <header className="egTopHeader" role="banner">
-      <div className="egTopHeader__backdrop" aria-hidden="true" />
-
       <div className="egTopHeader__inner">
-        <div className="egTopHeader__logoWrapper" aria-hidden="true">
-          <div className="egTopHeader__brand">
-            <span className="egTopHeader__brandCrop">
-              <img
-                className="egTopHeader__brandLogo"
-                src={assetUrl('elite-gaming-logo.png')}
-                alt=""
-                loading="eager"
-              />
-            </span>
-          </div>
-        </div>
+        <button
+          type="button"
+          className="egTopHeader__brand"
+          onClick={() => nav('/')}
+          aria-label="Go to home"
+        >
+          <span className="egTopHeader__brandCrop" aria-hidden="true">
+            <img
+              className="egTopHeader__brandLogo"
+              src={assetUrl('elite-gaming-logo.png')}
+              alt=""
+              loading="eager"
+            />
+          </span>
+        </button>
 
-        <div className="egTopHeader__authContainer">
+        <div className="egTopHeader__auth">
           <HeaderAuthPill />
         </div>
       </div>

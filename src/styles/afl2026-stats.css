@@ -6,6 +6,7 @@
   min-height: 100vh;
   min-height: 100dvh;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  padding-bottom: calc(var(--bottom-nav-h, 108px) + env(safe-area-inset-bottom, 0px) + 6px);
 }
 
 /* Glass card base */
@@ -41,9 +42,9 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 11px 18px; /* slightly taller like AFL */
+  padding: 10px 16px; /* slightly taller like AFL */
   border-radius: 9999px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   color: hsla(0 0% 100% / 0.45);
   transition: all 0.2s ease;
@@ -66,9 +67,9 @@
   gap: 10px; /* AFL spacing */
 }
 .eg-chip {
-  padding: 7px 18px; /* AFL pill size */
+  padding: 6px 16px; /* AFL pill size */
   border-radius: 9999px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   border: 1px solid hsla(0 0% 100% / 0.1);
   background: transparent;
@@ -88,8 +89,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  border-radius: 16px; /* softer */
-  padding: 13px 16px; /* more AFL */
+  border-radius: 14px; /* softer */
+  padding: 11px 14px; /* more AFL */
   background: hsla(0 0% 100% / 0.05);
   border: 1px solid hsla(0 0% 100% / 0.08);
 }

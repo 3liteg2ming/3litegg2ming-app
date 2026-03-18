@@ -269,12 +269,22 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
               {safeMatch.status === 'LIVE' ? <div className="fxPosterCard__liveState">LIVE NOW</div> : null}
               {safeMatch.status === 'FINAL' ? <div className="fxPosterCard__finalState">FULL TIME</div> : null}
 
-              <div className={`fxPosterCard__scoreRow ${safeMatch.status === 'FINAL' ? 'is-final' : safeMatch.status === 'LIVE' ? 'is-live' : ''}`}>
+              <div
+                className={`fxPosterCard__scoreRow ${
+                  safeMatch.status === 'FINAL'
+                    ? 'is-final'
+                    : safeMatch.status === 'LIVE'
+                      ? 'is-live'
+                      : ''
+                }`}
+              >
                 <div
                   className={[
                     'fxPosterCard__score fxMetalText fxScoreTier--hero',
                     !showScore ? 'fxPosterCard__score--placeholder' : '',
-                    showScore && safeMatch.status === 'FINAL' && !homeWins && awayWins ? 'fxPosterCard__score--dim' : '',
+                    showScore && safeMatch.status === 'FINAL' && !homeWins && awayWins
+                      ? 'fxPosterCard__score--dim'
+                      : '',
                   ].join(' ')}
                 >
                   {showScore && homeScore ? homeScore.total : '—'}
@@ -286,7 +296,9 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
                   className={[
                     'fxPosterCard__score fxMetalText fxScoreTier--hero',
                     !showScore ? 'fxPosterCard__score--placeholder' : '',
-                    showScore && safeMatch.status === 'FINAL' && !awayWins && homeWins ? 'fxPosterCard__score--dim' : '',
+                    showScore && safeMatch.status === 'FINAL' && !awayWins && homeWins
+                      ? 'fxPosterCard__score--dim'
+                      : '',
                   ].join(' ')}
                 >
                   {showScore && awayScore ? awayScore.total : '—'}
@@ -334,18 +346,46 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
       {winner ? <div className="fxPosterCard__result">{winner}</div> : null}
 
       <div className="fxPosterCard__infoGrid">
-        <div className="fxPosterCard__infoCard">
-          <div className="fxPosterCard__infoLabel">Coach</div>
-          <div className={`fxPosterCard__infoValue ${homeCoach === 'Coach TBC' ? 'is-tbc' : ''}`}>{homeCoach}</div>
-          <div className="fxPosterCard__infoLabel">PSN</div>
-          <div className={`fxPosterCard__coachPsn ${homePsn === 'PSN TBC' ? 'is-tbc' : ''}`}>{homePsn}</div>
+        <div className="fxPosterCard__metaPill">
+          <div className="fxPosterCard__metaRow">
+            <span className="fxPosterCard__metaKey">Coach</span>
+            <span
+              className={`fxPosterCard__metaValue ${homeCoach === 'Coach TBC' ? 'is-tbc' : ''}`}
+              title={homeCoach}
+            >
+              {homeCoach}
+            </span>
+          </div>
+          <div className="fxPosterCard__metaRow">
+            <span className="fxPosterCard__metaKey">PSN</span>
+            <span
+              className={`fxPosterCard__metaValue fxPosterCard__metaValue--sub ${homePsn === 'PSN TBC' ? 'is-tbc' : ''}`}
+              title={homePsn}
+            >
+              {homePsn}
+            </span>
+          </div>
         </div>
 
-        <div className="fxPosterCard__infoCard fxPosterCard__infoCard--away">
-          <div className="fxPosterCard__infoLabel">Coach</div>
-          <div className={`fxPosterCard__infoValue ${awayCoach === 'Coach TBC' ? 'is-tbc' : ''}`}>{awayCoach}</div>
-          <div className="fxPosterCard__infoLabel">PSN</div>
-          <div className={`fxPosterCard__coachPsn ${awayPsn === 'PSN TBC' ? 'is-tbc' : ''}`}>{awayPsn}</div>
+        <div className="fxPosterCard__metaPill fxPosterCard__metaPill--away">
+          <div className="fxPosterCard__metaRow">
+            <span className="fxPosterCard__metaKey">Coach</span>
+            <span
+              className={`fxPosterCard__metaValue ${awayCoach === 'Coach TBC' ? 'is-tbc' : ''}`}
+              title={awayCoach}
+            >
+              {awayCoach}
+            </span>
+          </div>
+          <div className="fxPosterCard__metaRow">
+            <span className="fxPosterCard__metaKey">PSN</span>
+            <span
+              className={`fxPosterCard__metaValue fxPosterCard__metaValue--sub ${awayPsn === 'PSN TBC' ? 'is-tbc' : ''}`}
+              title={awayPsn}
+            >
+              {awayPsn}
+            </span>
+          </div>
         </div>
       </div>
 
