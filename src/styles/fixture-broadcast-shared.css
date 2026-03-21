@@ -66,12 +66,6 @@
 
 /* Smooth image fade-in for SmartImg */
 .smartImg {
-  opacity: 0;
-  transform: translateY(2px);
-  transition: opacity 220ms ease, transform 220ms ease;
-}
-
-.smartImg[data-loaded="true"] {
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
 }

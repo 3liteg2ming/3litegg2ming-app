@@ -83,7 +83,14 @@ export default function MatchSummaryTab({ model, loading }: Props) {
 
           <div className="mcSummaryTab__wormBody">
             <div className="mcSummaryTab__crestWrap">
-              <SmartImg src={homeLogo} alt={home?.fullName || 'Home'} className="mcSummaryTab__crest" fallbackText={homeAbbr} />
+              <SmartImg
+                src={homeLogo}
+                alt={home?.fullName || 'Home'}
+                className="mcSummaryTab__crest"
+                fallbackText={homeAbbr}
+                loading="eager"
+                fetchPriority="high"
+              />
             </div>
 
             <div className="mcSummaryTab__chart">
@@ -92,7 +99,14 @@ export default function MatchSummaryTab({ model, loading }: Props) {
             </div>
 
             <div className="mcSummaryTab__crestWrap">
-              <SmartImg src={awayLogo} alt={away?.fullName || 'Away'} className="mcSummaryTab__crest" fallbackText={awayAbbr} />
+              <SmartImg
+                src={awayLogo}
+                alt={away?.fullName || 'Away'}
+                className="mcSummaryTab__crest"
+                fallbackText={awayAbbr}
+                loading="eager"
+                fetchPriority="high"
+              />
             </div>
           </div>
 

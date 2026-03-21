@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Filter } from 'lucide-react';
 
@@ -18,6 +18,7 @@ import {
 } from '../lib/competitionRegistry';
 import { resolveTeamKey } from '../lib/entityResolvers';
 import { deriveFixtureRound, normalizeFixtureStatus, type FixtureRow } from '../lib/fixturesRepo';
+import { fetchMatchCentre } from '../lib/matchCentreRepo';
 import { fetchCurrentCoaches, type HomeCoach } from '../lib/homeRepo';
 import '../styles/Fixtures.css';
 
@@ -93,6 +94,7 @@ function formatDateText(startTime?: string | null): string {
 function mapToPosterMatch(
   fixture: FixtureRow,
   navigate: ReturnType<typeof useNavigate>,
+  queryClient: ReturnType<typeof useQueryClient>,
   coachesByTeamId: Map<string, HomeCoach>,
 ): FixturePosterMatch {
   const roundNumber = deriveFixtureRound(fixture);
@@ -137,12 +139,54 @@ function mapToPosterMatch(
     ? coachesByTeamId.get(String(fixture.away_team_id || '').trim()) || null
     : null;
 
+  const posterStatus = normalizeFixtureStatus(fixture.status, fixture) as FixturePosterMatch['status'];
+
+  const previewState = {
+    matchCentrePreview: {
+      fixtureId: fixture.id,
+      round: roundNumber,
+      dateText: formatDateText(fixture.start_time),
+      venue: fixture.venue || 'TBA',
+      statusLabel: posterStatus,
+      home: {
+        id: fixture.home_team_id || undefined,
+        slug: fixture.home_team_slug || home,
+        key: home,
+        name: fixture.home_team_name || fixture.home_team_short_name || home,
+        fullName: fixture.home_team_name || fixture.home_team_short_name || home,
+        shortName: fixture.home_team_short_name || fixture.home_team_name || home,
+        abbreviation: fixture.home_team_short_name || fixture.home_team_name || home,
+        colour: fixture.home_team_colour || '#1e4ed8',
+        color: fixture.home_team_colour || '#1e4ed8',
+        logoUrl: fixture.home_team_logo_url || '',
+        goals: homeScore?.goals ?? 0,
+        behinds: homeScore?.behinds ?? 0,
+        score: homeScore?.total ?? 0,
+      },
+      away: {
+        id: fixture.away_team_id || undefined,
+        slug: fixture.away_team_slug || away,
+        key: away,
+        name: fixture.away_team_name || fixture.away_team_short_name || away,
+        fullName: fixture.away_team_name || fixture.away_team_short_name || away,
+        shortName: fixture.away_team_short_name || fixture.away_team_name || away,
+        abbreviation: fixture.away_team_short_name || fixture.away_team_name || away,
+        colour: fixture.away_team_colour || '#c71f2d',
+        color: fixture.away_team_colour || '#c71f2d',
+        logoUrl: fixture.away_team_logo_url || '',
+        goals: awayScore?.goals ?? 0,
+        behinds: awayScore?.behinds ?? 0,
+        score: awayScore?.total ?? 0,
+      },
+    },
+  } as const;
+
   return {
     id: fixture.id,
     round: roundNumber,
     dateText: formatDateText(fixture.start_time),
     venue: fixture.venue || 'TBA',
-    status: normalizeFixtureStatus(fixture.status, fixture) as FixturePosterMatch['status'],
+    status: posterStatus,
     home: stageHasIdentity(fixture, 'home') ? home : 'unknown',
     away: stageHasIdentity(fixture, 'away') ? away : 'unknown',
     homeCoachName: homeCoach?.display_name || undefined,
@@ -153,7 +197,14 @@ function mapToPosterMatch(
     awayCoachPsn: awayCoach?.psn || undefined,
     homeScore,
     awayScore,
-    onMatchCentreClick: () => navigate(`/match-centre/${fixture.id}`),
+    onMatchCentreClick: () => {
+      void queryClient.prefetchQuery({
+        queryKey: ['match-centre', fixture.id],
+        queryFn: () => fetchMatchCentre(fixture.id),
+        staleTime: 45_000,
+      });
+      navigate(`/match-centre/${fixture.id}`, { state: previewState });
+    },
   };
 }
 
@@ -166,6 +217,7 @@ function getCompetitionOptions(): Array<{ key: CompetitionKey; label: string }> 
 
 export default function AFL26FixturesPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   let competitionKey = getStoredCompetitionKey();
   // Ensure AFL 26 is always the default on this page
@@ -301,8 +353,8 @@ export default function AFL26FixturesPage() {
   }, [activeStatus, matchesAfterFilterSheet]);
 
   const uiMatches = useMemo(
-    () => filteredMatches.map((fixture) => mapToPosterMatch(fixture, navigate, coachesByTeamId)),
-    [coachesByTeamId, filteredMatches, navigate],
+    () => filteredMatches.map((fixture) => mapToPosterMatch(fixture, navigate, queryClient, coachesByTeamId)),
+    [coachesByTeamId, filteredMatches, navigate, queryClient],
   );
 
   useEffect(() => {
@@ -329,8 +381,10 @@ export default function AFL26FixturesPage() {
   const displayedMatches = useMemo(() => uiMatches.slice(0, visibleCount), [uiMatches, visibleCount]);
   const activeMatchCount = filteredMatches.length;
 
+  const [minLoadingDone, setMinLoadingDone] = useState(true);
+
   const hasSettled = seasonFixturesQuery.isSuccess || seasonFixturesQuery.isError;
-  const isLoading = !hasSettled && allFixtures.length === 0;
+  const isLoading = !hasSettled && allFixtures.length === 0 && !minLoadingDone;
   const isError = seasonFixturesQuery.isError;
 
   const statusPills: Array<{ key: StatusFilter; label: string; count: number | string }> = [

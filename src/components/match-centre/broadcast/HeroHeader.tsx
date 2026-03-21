@@ -150,7 +150,7 @@ export default function HeroHeader({ onBack, model, loading }: Props) {
   const displayStatus = statusToDisplayLabel(rawStatus);
   const tone = statusTone(displayStatus);
 
-  const roundLabel = model?.round ? `Round ${model.round}` : isLoadingShell ? 'Match Centre' : 'Round TBC';
+  const roundLabel = model?.round ? `Round ${model.round}` : isLoadingShell ? 'Match Centre' : (tone === 'scheduled' ? '' : 'Round TBC');
 
   const homeScore = Number.isFinite(home?.score) ? Number(home?.score) : 0;
   const awayScore = Number.isFinite(away?.score) ? Number(away?.score) : 0;
@@ -214,7 +214,7 @@ export default function HeroHeader({ onBack, model, loading }: Props) {
           <div className="mcHeroShell__chrome" aria-hidden="true" />
 
           <div className="mcHeroShell__meta">
-            <span className="mcHeroShell__pill mcHeroShell__pill--round">{roundLabel}</span>
+            {roundLabel && <span className="mcHeroShell__pill mcHeroShell__pill--round">{roundLabel}</span>}
             <span className={`mcHeroShell__pill mcHeroShell__pill--status mcHeroShell__pill--${tone}`}>
               <span className={`mcHeroShell__statusDot mcHeroShell__statusDot--${tone}`} aria-hidden="true" />
               {displayStatus}
@@ -234,32 +234,38 @@ export default function HeroHeader({ onBack, model, loading }: Props) {
               </div>
             </div>
 
-            <div className="mcHeroShell__scoreCol">
-              <div className="mcHeroShell__scoreAura" aria-hidden="true" />
-              {isDashDisplay ? (
-                <div className={`${scoreClassName} mcHeroShell__score--vs`} aria-label="Match not started">
-                  <span className="mcHeroShell__vsLabel">VS</span>
-                </div>
-              ) : (
-                <div className={scoreClassName} aria-label={`Score ${homeScore} to ${awayScore}`}>
-                  <span className={homeLeading ? 'is-leading' : awayLeading ? 'is-trailing' : ''}>{homeScore}</span>
-                  <span className="mcHeroShell__dash" aria-hidden="true">
-                    &ndash;
-                  </span>
-                  <span className={awayLeading ? 'is-leading' : homeLeading ? 'is-trailing' : ''}>{awayScore}</span>
-                </div>
-              )}
-              {!isDashDisplay && hasGoalsData && (
-                <div className="mcHeroShell__minor">
-                  <span className={`mcHeroShell__minorVal ${homeLeading ? 'is-leading' : awayLeading ? 'is-trailing' : ''}`}>
-                    {homeGoals}.{homeBehinds}
-                  </span>
-                  <span className="mcHeroShell__minorDivider" />
-                  <span className={`mcHeroShell__minorVal ${awayLeading ? 'is-leading' : homeLeading ? 'is-trailing' : ''}`}>
-                    {awayGoals}.{awayBehinds}
-                  </span>
-                </div>
-              )}
+            <div className="mcHeroShell__centreCol">
+              <div className="mcHeroShell__centreMeta">
+                {isDashDisplay ? (
+                  <>
+                    <div className="mcHeroShell__matchupLabel">MATCHUP</div>
+                    {model?.venue && (
+                      <div className="mcHeroShell__eventCapsule">
+                        <span className="mcHeroShell__eventVenue">{model.venue}</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className={scoreClassName} aria-label={`Score ${homeScore} to ${awayScore}`}>
+                    <span className={homeLeading ? 'is-leading' : awayLeading ? 'is-trailing' : ''}>{homeScore}</span>
+                    <span className="mcHeroShell__dash" aria-hidden="true">
+                      &ndash;
+                    </span>
+                    <span className={awayLeading ? 'is-leading' : homeLeading ? 'is-trailing' : ''}>{awayScore}</span>
+                  </div>
+                )}
+                {!isDashDisplay && hasGoalsData && (
+                  <div className="mcHeroShell__minor">
+                    <span className={`mcHeroShell__minorVal ${homeLeading ? 'is-leading' : awayLeading ? 'is-trailing' : ''}`}>
+                      {homeGoals}.{homeBehinds}
+                    </span>
+                    <span className="mcHeroShell__minorDivider" />
+                    <span className={`mcHeroShell__minorVal ${awayLeading ? 'is-leading' : homeLeading ? 'is-trailing' : ''}`}>
+                      {awayGoals}.{awayBehinds}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div

@@ -1,15 +1,15 @@
 .mcPlayerTable {
   width: 100%;
   min-width: 0;
-  padding: 0 12px 24px;
+  padding: 4px 12px 28px;
   box-sizing: border-box;
 }
 
 .mcPlayerTable__header {
   display: grid;
-  gap: 12px;
-  margin: 0 0 14px;
-  padding: 4px 4px 0;
+  gap: 14px;
+  margin: 0 0 16px;
+  padding: 6px 4px 0;
 }
 
 .mcPlayerTable__title {
@@ -36,8 +36,8 @@
 }
 
 .mcPlayerTable__filter {
-  min-height: 28px;
-  padding: 0 11px;
+  min-height: 36px;
+  padding: 0 14px;
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.03);
@@ -57,7 +57,7 @@
 .mcPlayerTable__shell,
 .mcPlayerTable__empty {
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.07);
   background: rgba(16, 20, 30, 0.4);
   box-shadow:
@@ -74,15 +74,15 @@
 
 .mcPlayerTable__headCell,
 .mcPlayerTable__cell {
-  padding: 12px 8px;
+  padding: 15px 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   font-variant-numeric: tabular-nums;
   vertical-align: middle;
 }
 
 .mcPlayerTable__headCell {
-  background: rgba(11, 15, 24, 0.5);
-  font-size: 9px;
+  background: rgba(11, 15, 24, 0.58);
+  font-size: 9.5px;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -93,9 +93,9 @@
 
 .mcPlayerTable__headCell--player,
 .mcPlayerTable__cell--player {
-  width: 55%;
+  width: 60%;
   text-align: left;
-  padding-left: 12px;
+  padding-left: 14px;
 }
 
 .mcPlayerTable__headCell.is-active {
@@ -105,7 +105,7 @@
 .mcPlayerTable__sortButton {
   all: unset;
   width: 100%;
-  min-height: 40px;
+  min-height: 46px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -122,8 +122,8 @@
 }
 
 .mcPlayerTable__cell {
-  font-size: 12.5px;
-  font-weight: 700;
+  font-size: 13.5px;
+  font-weight: 800;
   color: rgba(245, 249, 255, 0.88);
 }
 
@@ -133,6 +133,7 @@
 
 .mcPlayerTable__playerButton {
   width: 100%;
+  min-height: 56px;
   padding: 0;
   border: none;
   background: transparent;
@@ -151,8 +152,8 @@
 }
 
 .mcPlayerTable__media {
-  width: 36px;
-  height: 36px;
+  width: 52px;
+  height: 52px;
   flex: 0 0 auto;
 }
 
@@ -160,7 +161,7 @@
 .mcPlayerTable__numberTile {
   width: 100%;
   height: 100%;
-  border-radius: 11px;
+  border-radius: 14px;
 }
 
 .mcPlayerTable__photo {
@@ -192,8 +193,8 @@
 }
 
 .mcPlayerTable__name {
-  font-size: 12.5px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 850;
   letter-spacing: -0.01em;
   color: rgba(246, 250, 255, 0.9);
   display: -webkit-box;
@@ -249,14 +250,14 @@
 
   .mcPlayerTable__headCell--player,
   .mcPlayerTable__cell--player {
-    width: 40%;
+    width: 46%;
   }
 }
 
 @media (max-width: 420px) {
   .mcPlayerTable__headCell,
   .mcPlayerTable__cell {
-    padding: 12px 4px;
+    padding: 14px 5px;
   }
 
   .mcPlayerTable__headCell {
@@ -273,8 +274,8 @@
   }
 
   .mcPlayerTable__media {
-    width: 32px;
-    height: 32px;
+    width: 46px;
+    height: 46px;
   }
 
   .mcPlayerTable__playerButton {
@@ -282,6 +283,6 @@
   }
 
   .mcPlayerTable__name {
-    font-size: 12px;
+    font-size: 13px;
   }
 }

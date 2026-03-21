@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
 import SmartImg from './SmartImg';
 import { assetUrl, TEAM_ASSETS, type TeamKey } from '../lib/teamAssets';
 import '../styles/fixture-broadcast-shared.css';
@@ -198,13 +197,9 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
   const awayPsn = displayPsn(safeMatch.awayPsn, safeMatch.awayCoachPsn);
 
   return (
-    <motion.section
+    <section
       className={`fxPosterCard fxPosterCard--${statusClass} ${compactScore ? 'fxPosterCard--compactScore' : ''}`}
       style={cssVars}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.22 }}
-      whileTap={{ scale: 0.997 }}
     >
       <div className="fxPosterCard__topBar">
         <div className="fxPosterCard__headerBadge">{headerMeta}</div>
@@ -392,7 +387,7 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
       <button className="fxPosterCard__cta" type="button" onClick={safeMatch.onMatchCentreClick}>
         MATCH CENTRE
       </button>
-    </motion.section>
+    </section>
   );
 }
 

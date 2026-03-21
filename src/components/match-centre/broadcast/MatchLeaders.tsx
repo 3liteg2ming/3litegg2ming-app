@@ -321,5 +321,17 @@ function LeaderAvatar({ photoUrl, name }: { photoUrl?: string | null; name: stri
     return <div className="mcLeadersRail__avatarFallback">{initials(name)}</div>;
   }
 
-  return <img src={src} alt={name} className="mcLeadersRail__avatar" width={64} height={64} loading="lazy" decoding="async" onError={() => setFailed(true)} />;
+  return (
+    <img
+      src={src}
+      alt={name}
+      className="mcLeadersRail__avatar"
+      width={64}
+      height={64}
+      loading="eager"
+      decoding="async"
+      {...({ fetchpriority: 'high' } as any)}
+      onError={() => setFailed(true)}
+    />
+  );
 }

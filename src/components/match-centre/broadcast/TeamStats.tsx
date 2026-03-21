@@ -223,7 +223,14 @@ function TeamStatsComponent({ model, loading }: { model: MatchCentreModel | null
         <div className="mcTeamStats__shell" style={shellStyle}>
           <div className="mcTeamStats__teams">
             <div className="mcTeamStats__team">
-              <SmartImg src={homeLogo} alt={home?.fullName || 'Home'} className="mcTeamStats__logo" fallbackText={home?.abbreviation || 'H'} />
+              <SmartImg
+                src={homeLogo}
+                alt={home?.fullName || 'Home'}
+                className="mcTeamStats__logo"
+                fallbackText={home?.abbreviation || 'H'}
+                loading="eager"
+                fetchPriority="high"
+              />
               <div className="mcTeamStats__teamMeta">
                 <span className="mcTeamStats__teamTopAccent" style={{ backgroundColor: homeColor }} aria-hidden="true" />
                 <span className="mcTeamStats__teamLabel">
@@ -243,7 +250,14 @@ function TeamStatsComponent({ model, loading }: { model: MatchCentreModel | null
                 </span>
                 <span className="mcTeamStats__teamName">{away?.fullName || '—'}</span>
               </div>
-              <SmartImg src={awayLogo} alt={away?.fullName || 'Away'} className="mcTeamStats__logo" fallbackText={away?.abbreviation || 'A'} />
+              <SmartImg
+                src={awayLogo}
+                alt={away?.fullName || 'Away'}
+                className="mcTeamStats__logo"
+                fallbackText={away?.abbreviation || 'A'}
+                loading="eager"
+                fetchPriority="high"
+              />
             </div>
           </div>
 

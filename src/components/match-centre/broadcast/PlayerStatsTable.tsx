@@ -334,10 +334,11 @@ const PlayerMedia = memo(function PlayerMedia({
           src={src || ''}
           alt={name}
           className="mcPlayerTable__photo"
-          width={40}
-          height={40}
-          loading="lazy"
+          width={44}
+          height={44}
+          loading="eager"
           decoding="async"
+          {...({ fetchpriority: 'high' } as any)}
           onError={() => setImageFailed(true)}
         />
       ) : (

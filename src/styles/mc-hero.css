@@ -1,19 +1,19 @@
 .mcHeroShell {
   width: 100%;
-  padding: calc(env(safe-area-inset-top, 0px) + 4px) 12px 8px;
+  padding: calc(env(safe-area-inset-top, 0px) + 6px) 12px 10px;
   box-sizing: border-box;
 }
 
 .mcHeroShell__inner {
-  width: min(100%, 520px);
+  width: min(100%, 560px);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
 }
 
 .mcHeroShell__toolbar {
-  min-height: 38px;
+  min-height: 42px;
   display: flex;
   align-items: center;
   padding: 0 4px;
@@ -41,8 +41,8 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  border-radius: 24px;
-  padding: 14px 14px 12px;
+  border-radius: 28px;
+  padding: 18px 18px 14px;
   background:
     radial-gradient(ellipse 62% 80% at 15% 45%, rgba(var(--mc-hero-home-r), var(--mc-hero-home-g), var(--mc-hero-home-b), 0.18) 0%, rgba(0, 0, 0, 0) 72%),
     radial-gradient(ellipse 62% 80% at 85% 45%, rgba(var(--mc-hero-away-r), var(--mc-hero-away-g), var(--mc-hero-away-b), 0.18) 0%, rgba(0, 0, 0, 0) 72%),
@@ -138,9 +138,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 2px;
+  margin-bottom: 8px;
 }
 
 .mcHeroShell__pill {
@@ -192,38 +192,39 @@
 }
 
 .mcHeroShell__stage {
-  margin-top: 4px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 4px;
+  gap: 12px;
+  margin-top: 10px;
 }
 
 .mcHeroShell__teamCol {
-  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  text-align: center;
+  gap: 6px;
+  min-width: 0;
   position: relative;
 }
 
 .mcHeroShell__teamGlow {
   position: absolute;
-  inset: -12px;
-  border-radius: 999px;
-  filter: blur(14px);
-  opacity: 0.18;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--mc-hero-home-r), var(--mc-hero-home-g), var(--mc-hero-home-b), 0.15) 0%, transparent 70%);
+  opacity: 0;
+  transform: translateZ(0);
   pointer-events: none;
 }
 
 .mcHeroShell__teamCol--home .mcHeroShell__teamGlow {
-  background: radial-gradient(circle, rgba(var(--mc-hero-home-r), var(--mc-hero-home-g), var(--mc-hero-home-b), 0.62) 0%, rgba(0, 0, 0, 0) 70%);
+  background: radial-gradient(circle, rgba(var(--mc-hero-home-r), var(--mc-hero-home-g), var(--mc-hero-home-b), 0.15) 0%, transparent 70%);
 }
 
 .mcHeroShell__teamCol--away .mcHeroShell__teamGlow {
-  background: radial-gradient(circle, rgba(var(--mc-hero-away-r), var(--mc-hero-away-g), var(--mc-hero-away-b), 0.62) 0%, rgba(0, 0, 0, 0) 70%);
+  background: radial-gradient(circle, rgba(var(--mc-hero-away-r), var(--mc-hero-away-g), var(--mc-hero-away-b), 0.15) 0%, transparent 70%);
 }
 
 .mcHeroShell__teamCol.is-leading .mcHeroShell__teamName {
@@ -235,96 +236,135 @@
 }
 
 .mcHeroShell__logoWrap {
-  width: 56px;
-  height: 56px;
+  position: relative;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   display: grid;
   place-items: center;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .mcHeroShell__logo {
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   object-fit: contain;
-  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .mcHeroShell__teamText {
-  display: grid;
-  gap: 4px;
-  justify-items: center;
+  text-align: center;
+  min-width: 0;
+  max-width: 140px;
+  margin-top: 2px;
 }
 
 .mcHeroShell__teamName {
-  max-width: 110px;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 700;
-  line-height: 1.3;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(243, 247, 255, 0.9);
-  text-wrap: balance;
-  overflow: hidden;
+  color: rgba(246, 249, 255, 0.95);
+  line-height: 1.4;
+  letter-spacing: 0.01em;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.mcHeroShell__scoreCol {
-  position: relative;
-  min-width: 0;
+.mcHeroShell__centreCol {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 4px 0;
+  gap: 4px;
+  min-width: 100px;
+  max-width: 120px;
 }
 
-.mcHeroShell__scoreAura {
+.mcHeroShell__centreMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  position: relative;
+}
+
+.mcHeroShell__centreMeta::before {
+  content: '';
   position: absolute;
-  inset: -12px -20px;
-  background:
-    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04) 36%, transparent 74%);
-  filter: blur(14px);
-  opacity: 0.6;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, rgba(245, 196, 0, 0.2) 20%, rgba(245, 196, 0, 0.2) 80%, transparent);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.mcHeroShell__matchupLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(245, 196, 0, 0.85);
+  text-transform: uppercase;
+  text-shadow: 0 0 6px rgba(245, 196, 0, 0.4);
+}
+
+.mcHeroShell__eventCapsule {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.mcHeroShell__eventDate,
+.mcHeroShell__eventVenue {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(246, 249, 255, 0.85);
+  text-align: center;
+  line-height: 1.2;
 }
 
 .mcHeroShell__score {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  font-size: clamp(34px, 10vw, 50px);
-  line-height: 0.88;
-  font-weight: 950;
-  letter-spacing: -0.06em;
-  color: rgba(248, 251, 255, 0.96);
+  gap: 8px;
+  font-size: 24px;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
-  text-shadow:
-    0 16px 26px rgba(0, 0, 0, 0.42),
-    0 2px 8px rgba(0, 0, 0, 0.35);
+  color: rgba(246, 249, 255, 0.95);
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.1);
+}
+
+.mcHeroShell__score--scheduled {
+  color: rgba(219, 229, 243, 0.6);
 }
 
 .mcHeroShell__score--final {
-  font-size: clamp(28px, 4.2vw, 46px);
-  letter-spacing: -0.04em;
-}
-
-.mcHeroShell__score--vs {
-  gap: 0;
-}
-
-.mcHeroShell__vsLabel {
-  font-size: clamp(44px, 12vw, 62px);
-  font-weight: 950;
-  letter-spacing: 0.02em;
-  color: rgba(245, 196, 0, 0.9);
+  color: rgba(255, 241, 196, 0.98);
   text-shadow:
-    0 20px 32px rgba(0, 0, 0, 0.45),
-    0 0 20px rgba(245, 196, 0, 0.25);
-  font-variant-numeric: normal;
+    0 0 20px rgba(245, 196, 0, 0.3),
+    0 0 40px rgba(245, 196, 0, 0.1);
 }
 
 .mcHeroShell__score .is-leading {
@@ -341,52 +381,41 @@
 }
 
 .mcHeroShell__minor {
-  margin-top: 8px;
+  margin-top: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
-
-.mcHeroShell__card--final .mcHeroShell__minor {
-  border-color: rgba(207, 219, 245, 0.2);
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .mcHeroShell__minorVal {
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-}
-
-.mcHeroShell__minorVal.is-leading {
-  color: rgba(255, 241, 196, 0.85);
-}
-
-.mcHeroShell__minorVal.is-trailing {
-  opacity: 0.7;
+  color: rgba(246, 249, 255, 0.9);
 }
 
 .mcHeroShell__minorDivider {
   width: 1px;
-  height: 14px;
-  background: rgba(255, 255, 255, 0.14);
+  height: 12px;
+  background: rgba(255, 255, 255, 0.2);
 }
+
+
 
 .mcHeroShell__resultSummary {
   position: relative;
   z-index: 1;
   text-align: center;
-  padding: 8px 14px 14px;
-  font-size: 15px;
-  font-weight: 950;
+  padding: 6px 14px 0px;
+  font-size: 13px;
+  font-weight: 600;
   color: rgba(var(--mc-hero-winner-hex), 0.92);
 }
 
@@ -401,13 +430,13 @@
 
 @media (max-width: 420px) {
   .mcHeroShell__card {
-    padding: 14px 12px 14px;
-    border-radius: 22px;
+    padding: 18px 14px 18px;
+    border-radius: 24px;
   }
 
   .mcHeroShell__stage {
-    gap: 4px;
-    margin-top: 6px;
+    gap: 10px;
+    margin-top: 8px;
   }
 
   .mcHeroShell__scoreSweep {
@@ -419,22 +448,22 @@
 
   .mcHeroShell__logoWrap,
   .mcHeroShell__logo {
-    width: 54px;
-    height: 54px;
+    width: 66px;
+    height: 66px;
   }
 
   .mcHeroShell__teamName {
-    max-width: 98px;
-    font-size: 9.5px;
+    max-width: 118px;
+    font-size: 11px;
   }
 
   .mcHeroShell__score {
-    gap: 8px;
-    font-size: 36px;
+    gap: 10px;
+    font-size: 42px;
   }
 
   .mcHeroShell__score--final {
-    font-size: 32px;
+    font-size: 38px;
   }
 
   .mcHeroShell__score--vs {
@@ -442,7 +471,7 @@
   }
 
   .mcHeroShell__vsLabel {
-    font-size: 48px;
+    font-size: 40px;
   }
 
   .mcHeroShell__resultSummary {

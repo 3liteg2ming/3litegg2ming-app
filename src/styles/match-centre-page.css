@@ -16,8 +16,7 @@
   margin: 0 auto;
   position: relative;
   overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow-y: visible;
 }
 
 .mcPage__inner > * {

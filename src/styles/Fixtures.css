@@ -11,8 +11,9 @@
     radial-gradient(120% 120% at 50% -10%, rgba(11, 58, 141, 0.12) 0%, rgba(0, 0, 0, 0) 55%),
     linear-gradient(180deg, var(--fx-bg1) 0%, var(--fx-bg0) 100%);
   padding-top: 8px;
-  padding-bottom: calc(var(--eg-bottom-nav-height, var(--bottom-nav-h, 88px)) + env(safe-area-inset-bottom, 0px) + 6px);
+  padding-bottom: calc(var(--eg-bottom-nav-height, var(--bottom-nav-h, 88px)) + env(safe-area-inset-bottom, 0px) + 4px);
 }
+
 
 .fxAflInner {
   max-width: 100%;
@@ -161,6 +162,8 @@
   overflow-x: auto;
   padding: 8px 0 5px;
   scrollbar-width: none;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 .fxAflRoundStrip::-webkit-scrollbar,
@@ -206,6 +209,8 @@
   overflow-x: auto;
   padding: 3px 0 0;
   scrollbar-width: none;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 .fxAflStatusPill {
