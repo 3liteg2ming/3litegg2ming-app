@@ -16,9 +16,7 @@ import {
   Columns3,
   LogIn,
   Shield,
-  Trophy,
   User,
-  Users,
   Info,
 } from 'lucide-react';
 
@@ -57,7 +55,6 @@ const useHomeCoaches = () => {
     const fetchCoaches = async () => {
       try {
         const repo = await import('../lib/homeRepo');
-        // Safely invoke the repo function regardless of exact exported name
         const fetcher = (repo as any).getHomeCoaches || (repo as any).fetchHomeCoaches || (repo as any).getCoaches;
         if (fetcher) {
           const result = await fetcher();
@@ -162,7 +159,7 @@ const Section: React.FC<{ title: string; ctaLabel?: string; ctaPath?: string; ch
       {ctaLabel && ctaPath && (
         <Link to={ctaPath} className="home-section-cta">
           <span>{ctaLabel}</span>
-          <ChevronRight size={18} />
+          <ChevronRight size={16} />
         </Link>
       )}
     </header>
@@ -206,31 +203,30 @@ const Hero = () => {
         <div className="hero-title-group">
             <p className="hero-kicker">AFL 26 • Season Two</p>
             <h1 className="hero-headline">Elite Gaming Season Two</h1>
-            <p className="hero-subline">Presented by BGL Media</p>
         </div>
         
         {!isLoading && announcement?.message && (
           <div className="hero-ticker">
             <Info size={16} className="hero-ticker-icon" />
-            <p>{announcement.message}</p>
+            <p className="hero-ticker-text">{announcement.message}</p>
           </div>
         )}
 
         <div className="hero-cta-grid">
           <Link to="/ladder" className="hero-cta-item">
-            <div className="cta-icon-wrapper"><Columns3 size={18} /></div>
+            <Columns3 size={16} className="cta-icon" />
             <span>Ladder</span>
           </Link>
           <Link to="/stats3" className="hero-cta-item">
-            <div className="cta-icon-wrapper"><BarChart3 size={18} /></div>
+            <BarChart3 size={16} className="cta-icon" />
             <span>Stats</span>
           </Link>
           <Link to="/fixtures" className="hero-cta-item">
-            <div className="cta-icon-wrapper"><CalendarDays size={18} /></div>
+            <CalendarDays size={16} className="cta-icon" />
             <span>Fixtures</span>
           </Link>
           <Link to={user ? "/members" : "/auth/sign-in"} className="hero-cta-item cta-primary">
-            <div className="cta-icon-wrapper">{user ? <User size={18}/> : <LogIn size={18}/>}</div>
+            {user ? <User size={16} className="cta-icon" /> : <LogIn size={16} className="cta-icon" />}
             <span>{user ? 'Profile' : 'Sign In'}</span>
           </Link>
         </div>
@@ -251,13 +247,13 @@ const StatsSpotlightRail = () => {
           <div className="stats-rail">
             {Array.from({ length: 4 }).map((_, i) => (
               <GlassCard key={i} className="stat-card is-loading">
-                <Skeleton className="h-4 w-24 mb-6" />
-                <Skeleton className="h-12 w-20 mb-6" />
+                <Skeleton className="h-3 w-20 mb-4" />
+                <Skeleton className="h-8 w-16 mb-4" />
                 <div className="stat-card-player">
                   <Skeleton className="stat-card-headshot-skeleton" />
                   <div className="flex-1">
-                    <Skeleton className="h-5 w-32" />
-                    <Skeleton className="h-4 w-24 mt-2" />
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-2 w-16 mt-2" />
                   </div>
                 </div>
               </GlassCard>
@@ -269,14 +265,14 @@ const StatsSpotlightRail = () => {
               <GlassCard key={statKey} className="stat-card" onClick={() => navigate('/stats3')}>
                 <div className="stat-card-header">
                   <h3 className="stat-card-label">{label}</h3>
-                  <div className="stat-card-icon"><BarChart3 size={16} /></div>
+                  <div className="stat-card-icon"><BarChart3 size={14} /></div>
                 </div>
                 <div className="stat-card-body">
                     <span className="stat-card-value">{top.valueTotal}</span>
                 </div>
                 <div className="stat-card-player">
                   <div className="stat-card-headshot">
-                    {top.photoUrl ? <img src={top.photoUrl} alt={top.name} /> : <User size={28} className="fallback-avatar" />}
+                    {top.photoUrl ? <img src={top.photoUrl} alt={top.name} /> : <User size={20} className="fallback-avatar" />}
                   </div>
                   <div className="stat-card-player-details">
                     <p className="stat-card-player-name">{top.name}</p>
@@ -288,7 +284,7 @@ const StatsSpotlightRail = () => {
           </div>
         ) : (
           <div className="home-section-empty-state">
-            <BarChart3 size={32} />
+            <BarChart3 size={24} opacity={0.5} />
             <p>Stat leaderboards will appear after Round 1.</p>
           </div>
         )}
@@ -306,8 +302,8 @@ const LadderSnapshot = () => {
     <Section title="Ladder Snapshot" ctaLabel="Full Ladder" ctaPath="/ladder">
       <GlassCard className="ladder-card p-0 overflow-hidden">
         {isLoading ? (
-          <div className="p-4 space-y-3">
-            {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+          <div className="p-3 space-y-2">
+            {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-8 w-full rounded-md" />)}
           </div>
         ) : ladder.length > 0 ? (
           <div className="ladder-table-wrapper">
@@ -328,7 +324,7 @@ const LadderSnapshot = () => {
                     </td>
                     <td className="team-cell">
                         <div className="ladder-team-logo-wrap">
-                           <img src={teamLogoFallbackUrl(team.team_slug)} alt={team.team_name} className="team-logo" onError={(e) => e.currentTarget.style.display = 'none'} />
+                           <img src={teamLogoFallbackUrl(team.team_slug)} alt={team.team_name} className="team-logo" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                         </div>
                         <span className="team-name">{team.team_name}</span>
                     </td>
@@ -341,7 +337,7 @@ const LadderSnapshot = () => {
           </div>
         ) : (
           <div className="home-section-empty-state">
-            <Columns3 size={32} />
+            <Columns3 size={24} opacity={0.5} />
             <p>The ladder will be available after Round 1.</p>
           </div>
         )}
@@ -357,16 +353,16 @@ const MatchHub = () => {
     const navigate = useNavigate();
 
     // Safely extract the fixture whether the hook returns an array or an object
-    const fixturesArray = Array.isArray(data) ? data : data?.fixtures;
+    const fixturesArray = Array.isArray(data) ? data : (data as any)?.fixtures;
     const fixture = fixturesArray?.[0];
 
-    if(isLoading) return <Section title="Match Hub"><Skeleton className="h-48 w-full" /></Section>;
+    if(isLoading) return <Section title="Featured Match"><Skeleton className="h-40 w-full rounded-2xl" /></Section>;
     
     if(!fixture) {
         return (
-            <Section title="Match Hub">
+            <Section title="Featured Match">
                 <div className="home-section-empty-state">
-                    <CalendarDays size={32} />
+                    <CalendarDays size={24} opacity={0.5} />
                     <p>The schedule for Season Two will be released shortly.</p>
                 </div>
             </Section>
@@ -375,33 +371,45 @@ const MatchHub = () => {
 
     const title = user ? "My Next Match" : "Featured Match";
 
+    // Strictly enforce usage of normalized repo fields
+    const homeName = fixture.home_team_name || fixture.home_team_short_name || fixture.home_team_slug?.replace(/-/g, ' ') || 'TBD';
+    const awayName = fixture.away_team_name || fixture.away_team_short_name || fixture.away_team_slug?.replace(/-/g, ' ') || 'TBD';
+    const homeLogo = fixture.home_team_logo_url || teamLogoFallbackUrl(fixture.home_team_slug || 'unknown');
+    const awayLogo = fixture.away_team_logo_url || teamLogoFallbackUrl(fixture.away_team_slug || 'unknown');
+    
+    let startTimeStr = 'TBD';
+    if (fixture.start_time) {
+        const d = new Date(fixture.start_time);
+        if (!isNaN(d.getTime())) {
+            startTimeStr = d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+        }
+    }
+
     return (
         <Section title={title} ctaLabel="All Fixtures" ctaPath="/fixtures">
             <GlassCard 
-              className="match-hub-card" 
+              className="match-hub-card p-0" 
               onClick={() => navigate(`/match-centre/afl26-season-two/${fixture.round}/${fixture.id}`)}
             >
                 <div className="match-hub-header">
-                    <span className="match-hub-round">Round {fixture.round}</span>
-                    <span className="match-hub-date">
-                        {fixture.scheduled_at ? new Date(fixture.scheduled_at).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' }) : 'TBD'}
-                    </span>
+                    <span className="match-hub-round">Round {fixture.round || '-'}</span>
+                    <span className="match-hub-date">{fixture.status === 'COMPLETED' ? 'Full Time' : startTimeStr}</span>
                 </div>
                 <div className="match-hub-body">
                     <div className="match-team">
                         <div className="match-team-logo-wrapper">
-                            <img src={teamLogoFallbackUrl(fixture.team_a)} alt={fixture.team_a} className="match-team-logo" />
+                            <img src={homeLogo} alt={homeName} className="match-team-logo" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                         </div>
-                        <span className="match-team-name">{fixture.team_a?.replace(/-/g, ' ')}</span>
+                        <span className="match-team-name">{homeName}</span>
                     </div>
                     <div className="match-versus">
                         <span className="vs-badge">VS</span>
                     </div>
                     <div className="match-team">
                          <div className="match-team-logo-wrapper">
-                            <img src={teamLogoFallbackUrl(fixture.team_b)} alt={fixture.team_b} className="match-team-logo" />
+                            <img src={awayLogo} alt={awayName} className="match-team-logo" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                         </div>
-                        <span className="match-team-name">{fixture.team_b?.replace(/-/g, ' ')}</span>
+                        <span className="match-team-name">{awayName}</span>
                     </div>
                 </div>
                 <div className="match-hub-footer">
@@ -444,21 +452,28 @@ const CoachesSpotlight = () => {
 
   return (
     <>
-      <Section title="Coaches Spotlight">
+      <Section title="Coaches">
         <div className="coaches-grid">
           {isLoading ? (
-             Array.from({length: 6}).map((_, i) => <GlassCard key={i} className="coach-card is-loading"><Skeleton className="h-16 w-16 rounded-full" /></GlassCard>)
-          ) : coaches?.slice(0, 6).map(coach => (
-            <GlassCard key={coach.user_id} className="coach-card">
-              <div className="coach-avatar-wrapper">
-                  <img src={coach.team_logo_url || teamLogoFallbackUrl(coach.team_id)} alt={coach.team_name} className="coach-team-logo" />
+             Array.from({length: 6}).map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-xl" />)
+          ) : coaches && coaches.length > 0 ? (
+            coaches.slice(0, 6).map(coach => (
+              <div key={coach.user_id} className="coach-card glass-card-mini">
+                <div className="coach-avatar-wrapper">
+                    <img src={coach.team_logo_url || teamLogoFallbackUrl(coach.team_id)} alt={coach.team_name} className="coach-team-logo" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                </div>
+                <div className="coach-info">
+                  <p className="coach-name">{coach.display_name}</p>
+                  <p className="coach-team-name">{coach.team_name}</p>
+                </div>
               </div>
-              <div className="coach-info">
-                <p className="coach-name">{coach.display_name}</p>
-                <p className="coach-team-name">{coach.team_name}</p>
-              </div>
-            </GlassCard>
-          ))}
+            ))
+          ) : (
+            <div className="home-section-empty-state" style={{ gridColumn: '1 / -1' }}>
+               <Shield size={24} opacity={0.5} />
+               <p>Coaches will be announced shortly.</p>
+            </div>
+          )}
         </div>
         {coaches && coaches.length > 6 && (
             <button className="view-all-coaches-btn" onClick={() => setIsModalOpen(true)}>
@@ -471,20 +486,6 @@ const CoachesSpotlight = () => {
   );
 };
 
-// 5.6 --- QUICK ACCESS ---
-const QuickAccess = () => (
-    <Section title="Quick Access" className="quick-access-section">
-        <div className="quick-access-grid">
-            <Link to="/ladder" className="quick-access-item"><Columns3 size={24} /><span>Ladder</span></Link>
-            <Link to="/stats3" className="quick-access-item"><BarChart3 size={24} /><span>Stats</span></Link>
-            <Link to="/fixtures" className="quick-access-item"><CalendarDays size={24} /><span>Fixtures</span></Link>
-            <Link to="/match-centre" className="quick-access-item"><Trophy size={24} /><span>Matches</span></Link>
-            <Link to="/members" className="quick-access-item"><Users size={24} /><span>Members</span></Link>
-            <Link to="/clubs" className="quick-access-item"><Shield size={24} /><span>Clubs</span></Link>
-        </div>
-    </Section>
-);
-
 // ====================================================================================
 // 6. MAIN PAGE COMPONENT
 // ====================================================================================
@@ -493,19 +494,18 @@ export default function HomePage() {
     <div className="home-page-container">
       <Hero />
       <main className="home-main-content">
-        <Suspense fallback={<Section title="Stats Spotlight"><Skeleton className="h-48 w-full" /></Section>}>
-          <StatsSpotlightRail />
-        </Suspense>
-        <Suspense fallback={<Section title="Match Hub"><Skeleton className="h-64 w-full" /></Section>}>
+        <Suspense fallback={<Section title="Featured Match"><Skeleton className="h-40 w-full rounded-2xl" /></Section>}>
           <MatchHub />
         </Suspense>
-        <Suspense fallback={<Section title="Ladder Snapshot"><Skeleton className="h-96 w-full" /></Section>}>
+        <Suspense fallback={<Section title="Stats Spotlight"><Skeleton className="h-40 w-full rounded-2xl" /></Section>}>
+          <StatsSpotlightRail />
+        </Suspense>
+        <Suspense fallback={<Section title="Ladder Snapshot"><Skeleton className="h-64 w-full rounded-2xl" /></Section>}>
           <LadderSnapshot />
         </Suspense>
-        <Suspense fallback={<Section title="Coaches Spotlight"><Skeleton className="h-64 w-full" /></Section>}>
+        <Suspense fallback={<Section title="Coaches"><Skeleton className="h-40 w-full rounded-2xl" /></Section>}>
           <CoachesSpotlight />
         </Suspense>
-        <QuickAccess />
       </main>
     </div>
   );
