@@ -38,7 +38,6 @@ const teamLogoFallbackUrl = (slug?: string, name?: string, explicitLogo?: string
     fallbackPath: 'elite-gaming-logo.png',
   });
 
-/* ─── stat colour token per statKey ─── */
 const STAT_THEME: Record<string, string> = {
   goals:         'goals',
   fantasyPoints: 'fantasy',
@@ -47,14 +46,15 @@ const STAT_THEME: Record<string, string> = {
   teamDisposals: 'disposals',
 };
 
-/* ─── loose team-name match for signed-in fixture filter ─── */
 function teamNamesOverlap(fixtureName: string, coachTeam: string): boolean {
   if (!fixtureName || !coachTeam) return false;
-  const f = fixtureName.toLowerCase().replace(/-/g, ' ');
-  const c = coachTeam.toLowerCase();
-  const cFirst = c.split(' ')[0];
-  const fFirst = f.split(' ')[0];
-  return f.includes(cFirst) || c.includes(fFirst);
+  const f = fixtureName.toLowerCase().replace(/-/g, ' ').trim();
+  const c = coachTeam.toLowerCase().trim();
+  if (f.includes(c) || c.includes(f)) return true;
+  const cWords = c.split(/\s+/).filter((w) => w.length > 2);
+  if (!cWords.length) return false;
+  const matchCount = cWords.filter((w) => f.includes(w)).length;
+  return matchCount >= Math.min(2, cWords.length);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -95,7 +95,6 @@ function useHomepageStats() {
     return () => { mounted = false; };
   }, []);
 
-  /* Player leaders: goals → fantasy → disposals → marks */
   const playerLeaders = useMemo(() => {
     const keys = ['goals', 'fantasyPoints', 'disposals', 'marks'];
     return keys
@@ -103,7 +102,6 @@ function useHomepageStats() {
       .filter(Boolean) as StatLeaderCategory[];
   }, [playerData]);
 
-  /* Team leaders: first 3 team categories available */
   const teamLeaders = useMemo(() => {
     if (!teamData?.length) return [] as StatLeaderCategory[];
     const preferred = ['goals', 'disposals', 'marks', 'fantasyPoints', 'teamDisposals'];
@@ -139,8 +137,8 @@ function useHomeCoaches() {
   return { data, isLoading };
 }
 
-const Skeleton = ({ className }: { className?: string }) => (
-  <div className={`home-skeleton ${className || ''}`} />
+const Skeleton = ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
+  <div className={`home-skeleton ${className || ''}`} style={style} />
 );
 
 /* ═══════════════════════════════════════════════════════════
@@ -158,7 +156,6 @@ function HeroMasterCard() {
   return (
     <section className="home-hero-wrap">
       <div className="home-hero-card">
-        {/* MCG atmosphere */}
         <div
           className="home-hero-stadium"
           style={{ backgroundImage: `url(${MCG_IMAGE_URL})` }}
@@ -176,36 +173,29 @@ function HeroMasterCard() {
             </span>
           </div>
 
-          {/* ② EG × BGL — two distinct glass panels */}
-          <div className="home-hero-partnerRow">
-            <div className="home-hero-panel home-hero-panel--eg">
-              <div className="home-hero-panel__glow home-hero-panel__glow--eg" aria-hidden="true" />
-              <img
-                src={eliteLogo}
-                alt="Elite Gaming"
-                className="home-hero-logo home-hero-logo--eg"
-                onError={(e) => { e.currentTarget.style.display = 'none'; }}
-              />
-            </div>
-
-            <span className="home-hero-sep" aria-hidden="true">×</span>
-
-            <div className="home-hero-panel home-hero-panel--bgl">
-              <div className="home-hero-panel__glow home-hero-panel__glow--bgl" aria-hidden="true" />
-              <img
-                src={BGL_LOGO_URL}
-                alt="BGL Media"
-                className="home-hero-logo home-hero-logo--bgl"
-                onError={(e) => {
-                  const t = e.currentTarget;
-                  if (t.src !== BGL_LOGO_FALLBACK_URL) { t.src = BGL_LOGO_FALLBACK_URL; return; }
-                  t.style.display = 'none';
-                }}
-              />
-            </div>
+          {/* ② Partnership lockup — one clean bar */}
+          <div className="home-hero-lockup">
+            <div className="home-hero-lockup__glow" aria-hidden="true" />
+            <img
+              src={eliteLogo}
+              alt="Elite Gaming"
+              className="home-hero-lockup__eg"
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            />
+            <div className="home-hero-lockup__divider" aria-hidden="true" />
+            <img
+              src={BGL_LOGO_URL}
+              alt="BGL Media"
+              className="home-hero-lockup__bgl"
+              onError={(e) => {
+                const t = e.currentTarget;
+                if (t.src !== BGL_LOGO_FALLBACK_URL) { t.src = BGL_LOGO_FALLBACK_URL; return; }
+                t.style.display = 'none';
+              }}
+            />
           </div>
 
-          {/* ③ AFL26 — borderless floating */}
+          {/* ③ AFL26 */}
           <div className="home-hero-aflWrap">
             <img src={AFL26_LOGO_URL} alt="AFL26" className="home-hero-aflLogo" />
           </div>
@@ -216,7 +206,7 @@ function HeroMasterCard() {
             <p className="home-hero-sub">
               {user
                 ? 'Your fixtures, ladder and match centre.'
-                : 'Fixtures, ladder and match centre\u00a0— one premium home.'}
+                : 'Fixtures, ladder & match centre\u00a0— one home.'}
             </p>
           </div>
 
@@ -241,7 +231,7 @@ function HeroMasterCard() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   COACH HUB — 2×2 grid, no horizontal scroll
+   COACH HUB — 2-column grid, centred cards, no scroll
 ═══════════════════════════════════════════════════════════ */
 function CommunityPreview() {
   const { user }   = useAuth();
@@ -280,10 +270,12 @@ function CommunityPreview() {
                     ? <img src={coach.team_logo_url} alt={coach.team_name || 'Team'} />
                     : <Users size={18} />}
                 </div>
-                <div className="home-hub-card__meta">
-                  <strong>{coach.display_name || coach.psn || 'Coach'}</strong>
-                  <span>{coach.team_name || 'Team assigned'}</span>
-                </div>
+                <strong className="home-hub-card__name">
+                  {coach.display_name || coach.psn || 'Coach'}
+                </strong>
+                <span className="home-hub-card__team">
+                  {coach.team_name || 'Team assigned'}
+                </span>
               </article>
             ))}
           </div>
@@ -309,7 +301,6 @@ function CommunityPreview() {
 function FeaturedMatchCard() {
   const { user }    = useAuth();
   const navigate    = useNavigate();
-  /* Fetch more fixtures when signed in so we can filter by team */
   const { data, isLoading } = useNextFixtures('afl26-season-two', user ? 20 : 1);
   const { data: coaches }   = useHomeCoaches();
 
@@ -318,18 +309,39 @@ function FeaturedMatchCard() {
     [data],
   );
 
-  /* Try to find the signed-in coach's team fixture */
+  /* Signed-in: find my team's next upcoming fixture via team_id then name */
   const fixture = useMemo(() => {
     if (!allFixtures.length) return null;
     if (!user) return allFixtures[0];
+
     const myCoach = coaches.find((c) => c.user_id === user.id);
-    const myTeam  = myCoach?.team_name || null;
-    if (!myTeam) return allFixtures[0];
-    const match = allFixtures.find((f) =>
-      teamNamesOverlap(f.home_team_name || f.home_team_slug || '', myTeam) ||
-      teamNamesOverlap(f.away_team_name || f.away_team_slug || '', myTeam),
+    if (!myCoach) return allFixtures[0];
+
+    const upcoming = allFixtures.filter(
+      (f) => f.status !== 'FINAL' && f.status !== 'COMPLETED',
     );
-    return match ?? allFixtures[0];
+    const pool = upcoming.length ? upcoming : allFixtures;
+
+    /* 1) exact team_id match — most reliable */
+    if (myCoach.team_id) {
+      const byId = pool.find(
+        (f) => f.home_team_id === myCoach.team_id || f.away_team_id === myCoach.team_id,
+      );
+      if (byId) return byId;
+    }
+
+    /* 2) name-based match */
+    const myTeam = myCoach.team_name;
+    if (myTeam) {
+      const byName = pool.find(
+        (f) =>
+          teamNamesOverlap(f.home_team_name || f.home_team_slug || '', myTeam) ||
+          teamNamesOverlap(f.away_team_name || f.away_team_slug || '', myTeam),
+      );
+      if (byName) return byName;
+    }
+
+    return pool[0] ?? allFixtures[0];
   }, [allFixtures, user, coaches]);
 
   const sectionLabel = user ? 'Your Next Match' : 'Featured Match';
@@ -392,7 +404,7 @@ function FeaturedMatchCard() {
         <div className="home-feature-card__meta">
           <span className="home-feature-card__round">Round {fixture.round || '-'}</span>
           <span className="home-feature-card__date">
-            {fixture.status === 'COMPLETED' ? 'Full Time' : dateText}
+            {fixture.status === 'COMPLETED' || fixture.status === 'FINAL' ? 'Full Time' : dateText}
           </span>
         </div>
         <div className="home-feature-card__main">
@@ -434,11 +446,12 @@ function LeadersPreview() {
     : teamLeaders.slice(0, 3);
 
   const showSkeleton = isLoading && playerLeaders.length === 0 && teamLeaders.length === 0;
+  const isTeamTab = tab === 'teams';
 
   return (
     <section className="home-module home-module--leaders">
       <div className="home-leaders-header">
-        <header className="home-module__header" style={{ flex: 1 }}>
+        <header className="home-module__header" style={{ width: '100%' }}>
           <h2>Season Leaders</h2>
           <Link to="/stats3">Stats Hub<ChevronRight size={13} /></Link>
         </header>
@@ -480,12 +493,11 @@ function LeadersPreview() {
           ))}
         </div>
       ) : displayLeaders.length > 0 ? (
-        <div className="home-leaders-rail">
+        <div className="home-leaders-rail" key={tab}>
           {displayLeaders.map((category) => {
             if (!category?.top) return null;
             const top   = category.top;
             const theme = STAT_THEME[category.statKey] ?? 'default';
-            const isTeam = category.mode === 'teams';
             return (
               <button
                 key={category.statKey}
@@ -495,8 +507,8 @@ function LeadersPreview() {
               >
                 <div className="home-leader-top">
                   <span className="home-leader-label">{category.label}</span>
-                  <span className={`home-leader-chip ${isTeam ? 'home-leader-chip--team' : ''}`}>
-                    {isTeam ? 'Top Team' : 'Top Player'}
+                  <span className={`home-leader-chip ${isTeamTab ? 'home-leader-chip--team' : ''}`}>
+                    {isTeamTab ? 'Top Team' : 'Top Player'}
                   </span>
                 </div>
                 <div className="home-leader-value">{top.valueTotal}</div>
@@ -519,7 +531,7 @@ function LeadersPreview() {
         </div>
       ) : (
         <div className="home-empty">
-          {tab === 'teams'
+          {isTeamTab
             ? 'Team leaderboards will appear once stats are submitted.'
             : 'Player leaderboards will appear once stats are submitted.'}
         </div>
@@ -607,7 +619,7 @@ function LadderSnapshot() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   PAGE — final order: Hero → Hub → Match → Leaders → Ladder
+   PAGE
 ═══════════════════════════════════════════════════════════ */
 export default function HomePage() {
   return (

@@ -1,6 +1,6 @@
 import { ChevronDown, LayoutDashboard, LogOut } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { assetUrl, TEAM_ASSETS, type TeamKey } from '../lib/teamAssets';
 import { useAuth } from '../state/auth/AuthProvider';
 import SmartImg from './SmartImg';
@@ -13,11 +13,14 @@ function firstName(value?: string | null, email?: string | null) {
 
 export function HeaderAuthPill() {
   const nav = useNavigate();
+  const location = useLocation();
   const { user, loading, signOut } = useAuth();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const coachFirstName = firstName(user?.firstName || user?.displayName, user?.email);
   const hasAssignedTeam = Boolean(user?.teamKey || user?.teamLogoUrl || user?.teamName);
+
+  const isAuthPage = location.pathname.startsWith('/auth');
 
   const teamBrand = useMemo(() => {
     const key = user?.teamKey as TeamKey | undefined;
@@ -58,6 +61,9 @@ export function HeaderAuthPill() {
   }
 
   if (!user) {
+    // Hide the generic Sign In pill if we are already in the auth flow to reduce visual clutter
+    if (isAuthPage) return null;
+
     return (
       <button
         type="button"

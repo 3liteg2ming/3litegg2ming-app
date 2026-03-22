@@ -3,9 +3,9 @@
   --eg-header-shell-radius: 24px;
   --eg-header-inner-max: 1120px;
   --eg-header-brand-w: 156px;
-  --eg-header-brand-h: 54px;
-  --eg-header-brand-img-h: 96px;
-  --eg-header-brand-shift-y: -6px;
+  --eg-header-brand-h: 56px;
+  --eg-header-brand-img-h: 110px;
+  --eg-header-brand-shift-y: 6px;
   --eg-header-pill-h: 44px;
 }
 
@@ -49,7 +49,7 @@
   width: min(var(--eg-header-inner-max), 100%);
   min-height: var(--eg-header-shell-h);
   margin: 0 auto;
-  padding: 0 14px 0 16px;
+  padding: 0 14px 0 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -110,6 +110,7 @@
   flex: 0 0 auto;
   width: var(--eg-header-brand-w);
   min-width: 0;
+  margin-left: -24px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -130,7 +131,7 @@
   width: var(--eg-header-brand-w);
   height: var(--eg-header-brand-h);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: flex-start;
   overflow: hidden;
 }
@@ -210,16 +211,16 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  max-width: 142px;
-  padding: 0 11px 0 7px;
+  max-width: 148px;
+  padding: 0 11px 0 8px;
 }
 
 .egTopHeader .authPillAvatar {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
   overflow: hidden;
-  flex: 0 0 32px;
+  flex: 0 0 36px;
   border: 1px solid rgba(255, 255, 255, 0.09);
   background:
     linear-gradient(135deg, rgba(245, 196, 0, 0.10), rgba(255, 255, 255, 0.02)),
@@ -318,9 +319,9 @@
   :root {
     --eg-header-shell-h: 82px;
     --eg-header-brand-w: 160px;
-    --eg-header-brand-h: 56px;
-    --eg-header-brand-img-h: 98px;
-    --eg-header-brand-shift-y: -7px;
+    --eg-header-brand-h: 58px;
+    --eg-header-brand-img-h: 112px;
+    --eg-header-brand-shift-y: 6px;
     --eg-header-pill-h: 44px;
   }
 
@@ -333,22 +334,22 @@
   }
 
   .egTopHeader__inner {
-    padding: 0 12px 0 14px;
+    padding: 0 12px 0 26px;
     gap: 10px;
     border-radius: 22px;
   }
 
   .egTopHeader .authPill--account,
   .egTopHeader .authPill--loading {
-    max-width: 136px;
+    max-width: 142px;
     padding: 0 10px 0 7px;
     gap: 7px;
   }
 
   .egTopHeader .authPillAvatar {
-    width: 32px;
-    height: 32px;
-    flex-basis: 32px;
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
   }
 
   .egTopHeader .authPillText {

@@ -1,10 +1,12 @@
-import { ChevronLeft, Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { ChevronLeft, Eye, EyeOff, Lock, Mail, Sparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { AuthLayout } from '../../components/auth/AuthLayout';
 import { useAuth } from '../../state/auth/AuthProvider';
+import { assetUrl } from '../../lib/teamAssets';
 import '../../styles/auth-premium.css';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_RE = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 const SESSION_PERSIST_BLOCKED_MESSAGE =
   'Signed in, but your browser blocked saving the session. If you’re using Brave or an ad blocker, disable Shields for this site, or clear site data and reload.';
 const PUBLIC_AUTH_REDIRECTS = new Set([
@@ -106,6 +108,7 @@ export default function SignInPage() {
   const emailValid = EMAIL_RE.test(trimmedEmail);
   const passwordValid = password.length >= 8;
   const canSubmit = emailValid && passwordValid && !submitting && !actionLoading;
+  const eliteLogo = assetUrl('elite-gaming-logo.png');
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -143,98 +146,110 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="auth-screen auth-screen--premium">
-      <div className="auth-top auth-top--premium">
+    <AuthLayout
+      cardModifier="auth-card--signin"
+      backButton={
         <button type="button" className="auth-back" onClick={() => nav('/preseason-registration')} aria-label="Back to preseason registration">
           <ChevronLeft size={18} />
           <span>Preseason</span>
         </button>
+      }
+    >
+      <div className="auth-brandRow">
+        <div className="auth-brandCapsule auth-brandCapsule--eg">
+          <img src={eliteLogo} alt="Elite Gaming" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+          <span>Elite Gaming</span>
+        </div>
+        <span className="auth-brandX">x</span>
+        <div className="auth-brandCapsule">
+          <span>BGL Media</span>
+        </div>
+      </div>
+      <div className="auth-kicker">Coach access</div>
+      <div className="auth-head auth-head--premium">
+        <h1 className="auth-title">Sign In to AFL26</h1>
+        <p className="auth-sub">Season Two launch week. Continue to your coach registration and member hub.</p>
+      </div>
+      <div className="auth-seasonMeta">
+        <Sparkles size={14} />
+        <span>Season Two Live</span>
       </div>
 
-      <div className="auth-card auth-card--premium auth-card--signin">
-        <div className="auth-kicker">Coach access</div>
-        <div className="auth-head auth-head--premium">
-          <div className="auth-title">Sign in</div>
-          <div className="auth-sub">Continue your preseason registration.</div>
+      {successMessage ? (
+        <div className="auth-message auth-message--success" role="status" aria-live="polite">
+          <div className="auth-message__title">Account created</div>
+          <div className="auth-message__body">{successMessage}</div>
         </div>
+      ) : null}
 
-        {successMessage ? (
-          <div className="auth-message auth-message--success" role="status" aria-live="polite">
-            <div className="auth-message__title">Account created</div>
-            <div className="auth-message__body">{successMessage}</div>
+      <form onSubmit={onSubmit} className="auth-form auth-form--premium" noValidate>
+        <label className="auth-field">
+          <span className="auth-label">Email</span>
+          <div className="auth-inputWrap">
+            <Mail size={16} className="auth-icon" />
+            <input
+              className="auth-input"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="coach@email.com"
+              autoComplete="email"
+              inputMode="email"
+              required
+              disabled={submitting || actionLoading}
+            />
+          </div>
+          {email.length > 0 && !emailValid ? <span className="auth-inlineHint auth-inlineHint--error">Enter a valid email format.</span> : null}
+        </label>
+
+        <label className="auth-field">
+          <span className="auth-label">Password</span>
+          <div className="auth-inputWrap">
+            <Lock size={16} className="auth-icon" />
+            <input
+              className="auth-input"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              autoComplete="current-password"
+              required
+              disabled={submitting || actionLoading}
+            />
+            <button
+              type="button"
+              className="auth-eye"
+              onClick={() => setShowPassword((current) => !current)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              disabled={submitting || actionLoading}
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+        </label>
+
+        {error ? (
+          <div className="auth-message auth-message--error" role="alert" aria-live="assertive">
+            <div className="auth-message__title">{error.title}</div>
+            <div className="auth-message__body">{error.detail}</div>
           </div>
         ) : null}
 
-        <form onSubmit={onSubmit} className="auth-form auth-form--premium" noValidate>
-          <label className="auth-field">
-            <span className="auth-label">Email</span>
-            <div className="auth-inputWrap">
-              <Mail size={16} className="auth-icon" />
-              <input
-                className="auth-input"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="coach@email.com"
-                autoComplete="email"
-                inputMode="email"
-                required
-                disabled={submitting || actionLoading}
-              />
-            </div>
-            {email.length > 0 && !emailValid ? <span className="auth-inlineHint auth-inlineHint--error">Enter a valid email format.</span> : null}
-          </label>
+        {booting ? <div className="auth-statusNote">Checking your coach session…</div> : null}
 
-          <label className="auth-field">
-            <span className="auth-label">Password</span>
-            <div className="auth-inputWrap">
-              <Lock size={16} className="auth-icon" />
-              <input
-                className="auth-input"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
-                autoComplete="current-password"
-                required
-                disabled={submitting || actionLoading}
-              />
-              <button
-                type="button"
-                className="auth-eye"
-                onClick={() => setShowPassword((current) => !current)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                disabled={submitting || actionLoading}
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-            {password.length > 0 && !passwordValid ? <span className="auth-inlineHint auth-inlineHint--error">Minimum 8 characters.</span> : null}
-          </label>
+        <button type="submit" className="auth-primary" disabled={!canSubmit}>
+          {submitting || actionLoading ? 'Signing in…' : 'Sign in'}
+        </button>
+      </form>
 
-          {error ? (
-            <div className="auth-message auth-message--error" role="alert" aria-live="assertive">
-              <div className="auth-message__title">{error.title}</div>
-              <div className="auth-message__body">{error.detail}</div>
-            </div>
-          ) : null}
-
-          {booting ? <div className="auth-statusNote">Checking your coach session…</div> : null}
-
-          <button type="submit" className="auth-primary" disabled={!canSubmit}>
-            {submitting || actionLoading ? 'Signing in…' : 'Sign in'}
-          </button>
-        </form>
-
-        <div className="auth-footerLinks">
-          <Link className="auth-footerLink" to="/auth/sign-up">
-            Create account
-          </Link>
-          <Link className="auth-footerLink" to="/auth/forgot-password">
-            Forgot password
-          </Link>
-        </div>
+      <div className="auth-footerLinks">
+        <Link className="auth-footerLink" to="/auth/sign-up">
+          Create account
+        </Link>
+        <Link className="auth-footerLink" to="/auth/forgot-password">
+          Forgot password
+        </Link>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

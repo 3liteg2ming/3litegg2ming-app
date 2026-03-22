@@ -86,11 +86,6 @@ function enrichWinChance(rows: LadderEntry[]): LadderEntry[] {
   });
 }
 
-function oddsFromWinChance(winChance: number) {
-  const p = clamp(winChance / 100, 0.05, 0.95);
-  return clamp(1 / p, 1.08, 9.99);
-}
-
 const LadderRow = memo(function LadderRow({ entry, mode }: { entry: LadderEntry; mode: Mode }) {
   const t = TEAM_ASSETS[entry.teamKey] || {
     name: 'Unassigned',
@@ -106,80 +101,57 @@ const LadderRow = memo(function LadderRow({ entry, mode }: { entry: LadderEntry;
     const team = t.primary || '#F5C400';
     return {
       ['--team' as any]: team,
-      ['--teamA' as any]: rgba(team, 0.42),
-      ['--teamB' as any]: rgba(team, 0.16),
-      ['--teamLine' as any]: rgba(team, 0.34),
+      ['--teamA' as any]: rgba(team, 0.18),
+      ['--teamB' as any]: rgba(team, 0.06),
     } as React.CSSProperties;
   }, [t.primary]);
 
-  const odds = oddsFromWinChance(entry.winChance);
-
   return (
     <motion.div
-      className="egAflRow"
+      className="ladRow"
       style={cssVars}
-      initial={{ opacity: 0, y: 4 }}
+      initial={{ opacity: 0, y: 3 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.14 }}
+      transition={{ duration: 0.12 }}
     >
-      <div className="cPos">{entry.pos}</div>
+      <div className="ladRow__tint" aria-hidden="true" />
 
-      <div className="cClub">
-        <div className="clubTint" aria-hidden="true" />
-        <div className="clubLogo">
-          <SmartImg className="logoImg" src={logo} alt={entry.teamName} />
+      <div className="ladRow__rank">{entry.pos}</div>
+
+      <div className="ladRow__team">
+        <div className="ladRow__logo">
+          <SmartImg className="ladRow__logoImg" src={logo} alt={entry.teamName} />
         </div>
-        <div className="clubName" title={entry.teamName}>
-          {entry.teamName}
-        </div>
+        <div className="ladRow__name" title={entry.teamName}>{entry.teamName}</div>
       </div>
 
-      <div className="cCols" data-mode={mode}>
+      <div className="ladRow__stats">
         {mode === 'SUMMARY' && (
           <>
-            <div className="cell">
-              <div className="k">P</div>
-              <div className="v">{entry.played}</div>
-            </div>
-            <div className="cell">
-              <div className="k">Pts</div>
-              <div className="v vPts">{entry.points}</div>
-            </div>
-            <div className="cell">
-              <div className="k">%</div>
-              <div className="v">{entry.percentage.toFixed(1)}</div>
-            </div>
+            <span className="st"><span className="st__k">P</span><span className="st__v">{entry.played}</span></span>
+            <span className="st"><span className="st__k">PTS</span><span className="st__v st__v--pts">{entry.points}</span></span>
+            <span className="st"><span className="st__k">%</span><span className="st__v">{entry.percentage.toFixed(1)}</span></span>
           </>
         )}
 
         {mode === 'EXTENDED' && (
           <>
-            <div className="cell"><div className="k">W</div><div className="v">{entry.wins}</div></div>
-            <div className="cell"><div className="k">L</div><div className="v">{entry.losses}</div></div>
-            <div className="cell"><div className="k">D</div><div className="v">{entry.draws}</div></div>
-            <div className="cell"><div className="k">PA</div><div className="v">{entry.pa}</div></div>
-            <div className="cell"><div className="k">PF</div><div className="v">{entry.pf}</div></div>
+            <span className="st"><span className="st__k">W</span><span className="st__v">{entry.wins}</span></span>
+            <span className="st"><span className="st__k">L</span><span className="st__v">{entry.losses}</span></span>
+            <span className="st"><span className="st__k">D</span><span className="st__v">{entry.draws}</span></span>
+            <span className="st st--wide"><span className="st__k">PF</span><span className="st__v">{entry.pf}</span></span>
+            <span className="st st--wide"><span className="st__k">PA</span><span className="st__v">{entry.pa}</span></span>
           </>
         )}
 
         {mode === 'FORM' && (
-          <>
-            <div className="formCol">
-              <div className="k">Last 5</div>
-              <div className="dots" aria-label="Last 5 form">
-                {Array.from({ length: 5 }).map((_, i) => {
-                  const f = entry.form[i];
-                  const cls = f === 'W' ? 'w' : f === 'L' ? 'l' : f === 'D' ? 'd' : 'n';
-                  return <span key={i} className={`dot ${cls}`} />;
-                })}
-              </div>
-            </div>
-
-            <div className="oddsCol">
-              <div className="k">Odds</div>
-              <div className="oddsPill">${odds.toFixed(2)}</div>
-            </div>
-          </>
+          <div className="ladRow__formDots" aria-label="Last 5 form">
+            {Array.from({ length: 5 }).map((_, i) => {
+              const f = entry.form[i];
+              const cls = f === 'W' ? 'w' : f === 'L' ? 'l' : f === 'D' ? 'd' : 'n';
+              return <span key={i} className={`ladDot ${cls}`} />;
+            })}
+          </div>
         )}
       </div>
     </motion.div>
@@ -222,13 +194,6 @@ export default function LadderPage() {
     return enrichWinChance(mapped);
   }, [ladderRows]);
 
-  const headerCols = useMemo(() => {
-    if (mode === 'SUMMARY') return ['P', 'Pts', '%'];
-    if (mode === 'EXTENDED') return ['W', 'L', 'D', 'PA', 'PF'];
-    return ['Last 5', 'Odds'];
-  }, [mode]);
-  const tableMinWidth = mode === 'EXTENDED' ? 688 : mode === 'FORM' ? 640 : 540;
-
   return (
     <div className="ladderPage aflLayout">
       <div className="ladderWrap">
@@ -260,43 +225,17 @@ export default function LadderPage() {
           </div>
         </div>
 
-        <div className="aflTable" data-mode={mode}>
-          <div className="aflScroll">
-            <div
-              className="aflInner"
-              style={
-                {
-                  ['--ladder-min-width' as any]: `${tableMinWidth}px`,
-                } as React.CSSProperties
-              }
-            >
-              <div className="aflHead">
-                <div className="hPos">Pos</div>
-                <div className="hClub">Club</div>
-                <div className="hCols" data-mode={mode}>
-                  {headerCols.map((c) => (
-                    <div key={c} className="h">
-                      {c}
-                    </div>
-                  ))}
+        <div className="ladList">
+          {rows.length > 0 ? rows.map((r) => <LadderRow key={r.id} entry={r} mode={mode} />) : (
+            <div className="ladRow ladRow--empty">
+              <div className="ladRow__rank">—</div>
+              <div className="ladRow__team">
+                <div className="ladRow__name">
+                  {showLoading ? 'Loading live ladder…' : isError ? 'Unable to load ladder right now' : 'No teams available for this competition'}
                 </div>
               </div>
-
-              <div className="aflList">
-                {rows.length > 0 ? rows.map((r) => <LadderRow key={r.id} entry={r} mode={mode} />) : (
-                  <div className="egAflRow">
-                    <div className="cPos">—</div>
-                    <div className="cClub cClub--empty">
-                      <div className="clubName clubName--inline">
-                        {showLoading ? 'Loading live ladder…' : isError ? 'Unable to load ladder right now' : 'No teams available for this competition'}
-                      </div>
-                    </div>
-                    <div className="cCols" data-mode={mode} />
-                  </div>
-                )}
-              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="safeBottom" />

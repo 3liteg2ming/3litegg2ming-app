@@ -442,108 +442,202 @@ const StatsHomePage: React.FC = () => {
         </div>
       </div>
 
-      <div className="px-5 mt-5">
+      {/* ── Compare Section ── */}
+      <div className="egCompare__sectionPad">
+        <div className="egCompare__sectionHead">
+          <h2 className="egCompare__sectionTitle">Head to Head</h2>
+          <div className="eg-gradient-line mt-2" />
+        </div>
+
         {mode === 'players' ? (
-          <div className="eg-compare-section eg-glass">
-            <div className="egCompareHeaderRow">
-              <div>
-                <div className="egCompareTitle">Compare Players</div>
-                <p className="egCompareSub">Use the full competition roster to compare two players side by side.</p>
-              </div>
-              <button type="button" className="egCompareMore" onClick={() => setPlayerPickerSlot('left')}>
-                Choose Players <ArrowRight size={13} />
-              </button>
+          <div className="egCompare__hero">
+            {/* Ambient glow behind the card */}
+            <div className="egCompare__heroGlow" style={{
+              background: `radial-gradient(ellipse at 25% 30%, ${comparePlayers[0]?.teamPrimaryColor || '#283443'}44 0%, transparent 55%), radial-gradient(ellipse at 75% 30%, ${comparePlayers[1]?.teamPrimaryColor || '#283443'}44 0%, transparent 55%)`
+            }} />
+
+            {/* Versus banner */}
+            <div className="egCompare__versus">
+              <div className="egCompare__versusLine" />
+              <span className="egCompare__versusText">VS</span>
+              <div className="egCompare__versusLine" />
             </div>
 
-            <div className="egCompareCards">
+            {/* Fighter-style player selectors */}
+            <div className="egCompare__fighters">
               {(['left', 'right'] as const).map((slot, index) => {
                 const player = comparePlayers[index];
+                const tint = player?.teamPrimaryColor || '#283443';
                 return (
                   <button
                     key={slot}
                     type="button"
-                    className="egCompareCard"
+                    className="egCompare__fighter"
                     onClick={() => setPlayerPickerSlot(slot)}
                   >
-                    <div className="egCompareCard__avatar">
-                      {player?.headshotUrl ? (
-                        <img src={player.headshotUrl} alt={player.name} loading="lazy" decoding="async" />
+                    <div className="egCompare__fighterRing" style={{ borderColor: `${tint}aa`, boxShadow: `0 0 20px ${tint}33, inset 0 0 12px ${tint}22` }}>
+                      <div className="egCompare__fighterAvatar">
+                        {player?.headshotUrl ? (
+                          <img src={player.headshotUrl} alt={player.name} loading="lazy" decoding="async" />
+                        ) : (
+                          <div className="egCompare__fighterSilhouette">
+                            <User size={32} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="egCompare__fighterName">
+                      {player ? (
+                        <>
+                          <span className="egCompare__fighterFirst">{player.name.split(' ')[0]}</span>
+                          <span className="egCompare__fighterLast">{player.name.split(' ').slice(1).join(' ')}</span>
+                        </>
                       ) : (
-                        <span className="mini-initials">{getInitials(player?.name || slot)}</span>
+                        <span className="egCompare__fighterPrompt">Tap to select</span>
                       )}
                     </div>
-                    <div className="egCompareCard__meta">
-                      <strong>{player?.name || 'Select player'}</strong>
-                      <span>{player ? `${player.teamName}${player.position ? ` • ${player.position}` : ''}` : 'Tap to choose from the roster'}</span>
-                    </div>
+                    {player && (
+                      <div className="egCompare__fighterTeam">
+                        {player.teamLogo && <img src={player.teamLogo} alt="" className="egCompare__fighterTeamLogo" />}
+                        <span>{player.teamName}</span>
+                      </div>
+                    )}
                   </button>
                 );
               })}
             </div>
 
-            <div className="egCompareStats">
-              {PLAYER_STAT_CONFIGS.map((cfg) => (
-                <div key={cfg.key} className="egCompareStatRow">
-                  <span className="egCompareStatRow__value">{comparePlayers[0]?.stats[cfg.key] ?? 0}</span>
-                  <span className="egCompareStatRow__label">{cfg.label}</span>
-                  <span className="egCompareStatRow__value egCompareStatRow__value--right">{comparePlayers[1]?.stats[cfg.key] ?? 0}</span>
-                </div>
-              ))}
+            {/* Stat battle rows */}
+            <div className="egCompare__battleStats">
+              {PLAYER_STAT_CONFIGS.map((cfg) => {
+                const leftVal = comparePlayers[0]?.stats[cfg.key] ?? 0;
+                const rightVal = comparePlayers[1]?.stats[cfg.key] ?? 0;
+                const maxVal = Math.max(leftVal, rightVal, 1);
+                const leftPct = (leftVal / maxVal) * 100;
+                const rightPct = (rightVal / maxVal) * 100;
+                const leftWins = leftVal > rightVal;
+                const rightWins = rightVal > leftVal;
+                return (
+                  <div key={cfg.key} className="egCompare__battleRow">
+                    <div className="egCompare__battleBarWrap egCompare__battleBarWrap--left">
+                      <span className={`egCompare__battleVal ${leftWins ? 'egCompare__battleVal--winning' : ''}`}>{leftVal}</span>
+                      <div className="egCompare__battleTrack">
+                        <div
+                          className={`egCompare__battleBar egCompare__battleBar--left ${leftWins ? 'egCompare__battleBar--lead' : ''}`}
+                          style={{ width: `${leftPct}%` }}
+                        />
+                      </div>
+                    </div>
+                    <span className="egCompare__battleLabel">{cfg.abbrev || cfg.label}</span>
+                    <div className="egCompare__battleBarWrap egCompare__battleBarWrap--right">
+                      <div className="egCompare__battleTrack">
+                        <div
+                          className={`egCompare__battleBar egCompare__battleBar--right ${rightWins ? 'egCompare__battleBar--lead' : ''}`}
+                          style={{ width: `${rightPct}%` }}
+                        />
+                      </div>
+                      <span className={`egCompare__battleVal ${rightWins ? 'egCompare__battleVal--winning' : ''}`}>{rightVal}</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
-            <div className="egCompareRosterMeta">
+            <div className="egCompare__rosterMeta">
               {playersLoading ? 'Loading roster…' : playersError ? 'Unable to load players right now.' : `${players.length} players available`}
             </div>
           </div>
         ) : (
-          <div className="eg-compare-section eg-glass">
-            <div className="egCompareHeaderRow">
-              <div>
-                <div className="egCompareTitle">Compare Teams</div>
-                <p className="egCompareSub">Compare clubs from the active competition baseline, even before richer team stats arrive.</p>
-              </div>
-              <button type="button" className="egCompareMore" onClick={() => setTeamPickerSlot('left')}>
-                Choose Teams <ArrowRight size={13} />
-              </button>
+          <div className="egCompare__hero egCompare__hero--teams">
+            {/* Ambient glow for teams */}
+            <div className="egCompare__heroGlow" style={{
+              background: `radial-gradient(ellipse at 20% 25%, ${resolveTeamColors(compareTeams[0]?.name || '').primary}55 0%, transparent 50%), radial-gradient(ellipse at 80% 25%, ${resolveTeamColors(compareTeams[1]?.name || '').primary}55 0%, transparent 50%)`
+            }} />
+
+            {/* Versus banner */}
+            <div className="egCompare__versus">
+              <div className="egCompare__versusLine" />
+              <span className="egCompare__versusText">VS</span>
+              <div className="egCompare__versusLine" />
             </div>
 
-            <div className="egCompareCards">
+            {/* Team selectors */}
+            <div className="egCompare__fighters">
               {(['left', 'right'] as const).map((slot, index) => {
                 const team = compareTeams[index];
+                const tint = resolveTeamColors(team?.name || '').primary;
                 return (
                   <button
                     key={slot}
                     type="button"
-                    className="egCompareCard egCompareCard--team"
+                    className="egCompare__fighter egCompare__fighter--team"
                     onClick={() => setTeamPickerSlot(slot)}
                   >
-                    <div className="egCompareCard__avatar egCompareCard__avatar--team">
-                      {team?.logoUrl ? (
-                        <img src={team.logoUrl} alt={team.name} loading="lazy" decoding="async" />
+                    <div className="egCompare__fighterRing egCompare__fighterRing--team" style={{ borderColor: `${tint}aa`, boxShadow: `0 0 24px ${tint}44, inset 0 0 16px ${tint}22` }}>
+                      <div className="egCompare__fighterAvatar egCompare__fighterAvatar--team">
+                        {team?.logoUrl ? (
+                          <img src={team.logoUrl} alt={team.name} loading="lazy" decoding="async" />
+                        ) : (
+                          <div className="egCompare__fighterSilhouette">
+                            <Users size={36} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="egCompare__fighterName">
+                      {team ? (
+                        <span className="egCompare__fighterLast">{team.shortName}</span>
                       ) : (
-                        <span className="mini-initials">{getInitials(team?.shortName || slot)}</span>
+                        <span className="egCompare__fighterPrompt">Tap to select</span>
                       )}
                     </div>
-                    <div className="egCompareCard__meta">
-                      <strong>{team?.name || 'Select team'}</strong>
-                      <span>{team ? `${team.shortName} • ${team.gamesPlayed} matches` : 'Tap to choose from the competition'}</span>
-                    </div>
+                    {team && (
+                      <div className="egCompare__fighterTeam">
+                        <span>{team.gamesPlayed} matches</span>
+                      </div>
+                    )}
                   </button>
                 );
               })}
             </div>
 
-            <div className="egCompareStats">
-              {TEAM_STAT_CONFIGS.map((cfg) => (
-                <div key={cfg.key} className="egCompareStatRow">
-                  <span className="egCompareStatRow__value">{compareTeams[0]?.stats[cfg.key] ?? 0}</span>
-                  <span className="egCompareStatRow__label">{cfg.label}</span>
-                  <span className="egCompareStatRow__value egCompareStatRow__value--right">{compareTeams[1]?.stats[cfg.key] ?? 0}</span>
-                </div>
-              ))}
+            {/* Stat battle rows */}
+            <div className="egCompare__battleStats">
+              {TEAM_STAT_CONFIGS.map((cfg) => {
+                const leftVal = compareTeams[0]?.stats[cfg.key] ?? 0;
+                const rightVal = compareTeams[1]?.stats[cfg.key] ?? 0;
+                const maxVal = Math.max(leftVal, rightVal, 1);
+                const leftPct = (leftVal / maxVal) * 100;
+                const rightPct = (rightVal / maxVal) * 100;
+                const leftWins = leftVal > rightVal;
+                const rightWins = rightVal > leftVal;
+                return (
+                  <div key={cfg.key} className="egCompare__battleRow">
+                    <div className="egCompare__battleBarWrap egCompare__battleBarWrap--left">
+                      <span className={`egCompare__battleVal ${leftWins ? 'egCompare__battleVal--winning' : ''}`}>{leftVal}</span>
+                      <div className="egCompare__battleTrack">
+                        <div
+                          className={`egCompare__battleBar egCompare__battleBar--left ${leftWins ? 'egCompare__battleBar--lead' : ''}`}
+                          style={{ width: `${leftPct}%` }}
+                        />
+                      </div>
+                    </div>
+                    <span className="egCompare__battleLabel">{cfg.abbrev || cfg.label}</span>
+                    <div className="egCompare__battleBarWrap egCompare__battleBarWrap--right">
+                      <div className="egCompare__battleTrack">
+                        <div
+                          className={`egCompare__battleBar egCompare__battleBar--right ${rightWins ? 'egCompare__battleBar--lead' : ''}`}
+                          style={{ width: `${rightPct}%` }}
+                        />
+                      </div>
+                      <span className={`egCompare__battleVal ${rightWins ? 'egCompare__battleVal--winning' : ''}`}>{rightVal}</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
-            <div className="egCompareRosterMeta">
+            <div className="egCompare__rosterMeta">
               {teamsLoading ? 'Loading clubs…' : teamsError ? 'Unable to load teams right now.' : `${teams.length} teams available`}
             </div>
           </div>
@@ -558,11 +652,13 @@ const StatsHomePage: React.FC = () => {
           }} aria-label="Close player picker" />
           <div className="eg-compare-modal__sheet eg-glass">
             <div className="eg-compare-modal__head">
-              <h4>{playerPickerSlot === 'left' ? 'Select left player' : 'Select right player'}</h4>
+              <h4>Choose your {playerPickerSlot === 'left' ? 'first' : 'second'} fighter</h4>
               <button type="button" className="eg-compare-modal__close" onClick={() => {
                 setPlayerPickerSlot(null);
                 setPlayerPickerSearch('');
-              }}>×</button>
+              }}>
+                <X size={16} />
+              </button>
             </div>
             <div className="eg-compare-modal__search">
               <Search size={16} />
@@ -588,18 +684,23 @@ const StatsHomePage: React.FC = () => {
               {filteredPlayers.length > 0 ? (
                 filteredPlayers.map((player) => (
                   <button key={player.id} type="button" className="eg-compare-modal__item" onClick={() => selectComparedPlayer(playerPickerSlot, player.id)}>
-                    <div className="eg-compare-modal__avatar">
+                    <div className="eg-compare-modal__avatar" style={{ borderColor: `${player.teamPrimaryColor}66` }}>
                       {player.headshotUrl ? <img src={player.headshotUrl} alt={player.name} loading="lazy" decoding="async" /> : <span className="mini-initials">{getInitials(player.name)}</span>}
                     </div>
                     <div className="eg-compare-modal__meta">
                       <span>{player.name}</span>
-                      <small>{player.teamName}{player.position ? ` • ${player.position}` : ''}</small>
+                      <small>
+                        {player.teamLogo && <img src={player.teamLogo} alt="" className="eg-compare-modal__teamIcon" />}
+                        {player.teamName}{player.position ? ` · ${player.position}` : ''}
+                      </small>
                     </div>
+                    {player.number !== '—' && <span className="eg-compare-modal__number">#{player.number}</span>}
                   </button>
                 ))
               ) : (
                 <div className="eg-compare-modal__empty">
-                  No players match your search
+                  <User size={28} style={{ opacity: 0.3, marginBottom: 8 }} />
+                  <div>No players match your search</div>
                 </div>
               )}
             </div>
@@ -615,11 +716,13 @@ const StatsHomePage: React.FC = () => {
           }} aria-label="Close team picker" />
           <div className="eg-compare-modal__sheet eg-glass">
             <div className="eg-compare-modal__head">
-              <h4>{teamPickerSlot === 'left' ? 'Select left team' : 'Select right team'}</h4>
+              <h4>Choose your {teamPickerSlot === 'left' ? 'first' : 'second'} club</h4>
               <button type="button" className="eg-compare-modal__close" onClick={() => {
                 setTeamPickerSlot(null);
                 setTeamPickerSearch('');
-              }}>×</button>
+              }}>
+                <X size={16} />
+              </button>
             </div>
             <div className="eg-compare-modal__search">
               <Search size={16} />
@@ -643,20 +746,24 @@ const StatsHomePage: React.FC = () => {
             </div>
             <div className="eg-compare-modal__list">
               {filteredTeams.length > 0 ? (
-                filteredTeams.map((team) => (
-                  <button key={team.id} type="button" className="eg-compare-modal__item" onClick={() => selectComparedTeam(teamPickerSlot, team.id)}>
-                    <div className="eg-compare-modal__avatar">
-                      {team.logoUrl ? <img src={team.logoUrl} alt={team.name} loading="lazy" decoding="async" /> : <span className="mini-initials">{getInitials(team.name)}</span>}
-                    </div>
-                    <div className="eg-compare-modal__meta">
-                      <span>{team.name}</span>
-                      <small>{team.shortName}</small>
-                    </div>
-                  </button>
-                ))
+                filteredTeams.map((team) => {
+                  const tint = resolveTeamColors(team.name).primary;
+                  return (
+                    <button key={team.id} type="button" className="eg-compare-modal__item" onClick={() => selectComparedTeam(teamPickerSlot, team.id)}>
+                      <div className="eg-compare-modal__avatar eg-compare-modal__avatar--team" style={{ borderColor: `${tint}66` }}>
+                        {team.logoUrl ? <img src={team.logoUrl} alt={team.name} loading="lazy" decoding="async" /> : <span className="mini-initials">{getInitials(team.name)}</span>}
+                      </div>
+                      <div className="eg-compare-modal__meta">
+                        <span>{team.name}</span>
+                        <small>{team.shortName}</small>
+                      </div>
+                    </button>
+                  );
+                })
               ) : (
                 <div className="eg-compare-modal__empty">
-                  No teams match your search
+                  <Users size={28} style={{ opacity: 0.3, marginBottom: 8 }} />
+                  <div>No teams match your search</div>
                 </div>
               )}
             </div>

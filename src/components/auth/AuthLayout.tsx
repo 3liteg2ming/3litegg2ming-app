@@ -7,6 +7,8 @@ interface AuthLayoutProps {
   backButton?: React.ReactNode;
   /** Show subtle logo/branding area at top of card */
   showLogo?: boolean;
+  /** Optional class to apply to the card (e.g. auth-card--signup) */
+  cardModifier?: string;
 }
 
 /**
@@ -21,43 +23,36 @@ export function AuthLayout({
   children,
   backButton,
   showLogo = false,
+  cardModifier = '',
 }: AuthLayoutProps) {
   return (
-    <div className="auth-screen">
-      {/* Back button area */}
-      {backButton && (
-        <motion.div 
-          className="auth-top"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          {backButton}
-        </motion.div>
-      )}
-
-      {/* Main card with premium glass effect */}
+    <div className="auth-screen auth-screen--premium">
       <motion.div 
-        className="auth-card"
-        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+        className="auth-layout-container"
+        initial={{ opacity: 0, y: 15, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
+        transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
       >
-        {/* Optional logo/branding section */}
-        {showLogo && (
-          <motion.div 
-            className="auth-logo-section"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.4 }}
-          >
-            <div className="auth-logo">🏆</div>
-            <div className="auth-logo-text">Elite Gaming</div>
-          </motion.div>
+        {/* Back button area */}
+        {backButton && (
+          <div className="auth-top auth-top--premium">
+            {backButton}
+          </div>
         )}
 
-        {/* Content passed in from child page */}
-        {children}
+        {/* Main card with premium glass effect */}
+        <div className={`auth-card auth-card--premium ${cardModifier}`}>
+          {/* Optional logo/branding section */}
+          {showLogo && (
+            <div className="auth-logo-section">
+              <div className="auth-logo">🏆</div>
+              <div className="auth-logo-text">Elite Gaming</div>
+            </div>
+          )}
+
+          {/* Content passed in from child page */}
+          {children}
+        </div>
       </motion.div>
     </div>
   );

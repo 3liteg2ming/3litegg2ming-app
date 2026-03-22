@@ -1,11 +1,12 @@
 import { ChevronLeft, Eye, EyeOff, Gamepad2, Lock, Mail, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { AuthLayout } from '../../components/auth/AuthLayout';
 import { requireSupabaseClient } from '../../lib/supabaseClient';
 import { useAuth } from '../../state/auth/AuthProvider';
 import '../../styles/auth-premium.css';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_RE = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 
 function getPasswordStrength(password: string): 'weak' | 'fair' | 'strong' | null {
   if (!password) return null;
@@ -315,243 +316,236 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="auth-screen auth-screen--premium">
-      <div className="auth-top auth-top--premium">
+    <AuthLayout
+      cardModifier="auth-card--wide auth-card--signup"
+      backButton={
         <button type="button" className="auth-back" onClick={() => nav('/preseason-registration')} aria-label="Back to preseason registration">
           <ChevronLeft size={18} />
           <span>Preseason</span>
         </button>
-      </div>
-
-      <div className="auth-card auth-card--premium auth-card--wide auth-card--signup">
-        {success ? (
-          <div className="auth-success-card auth-success-card--premium">
-            <div className="auth-success-title">Account created</div>
-            <div className="auth-success-text">Taking you to sign in…</div>
+      }
+    >
+      {success ? (
+        <div className="auth-success-card auth-success-card--premium">
+          <h2 className="auth-success-title">Account created</h2>
+          <p className="auth-success-text">Taking you to sign in…</p>
+        </div>
+      ) : (
+        <>
+          <div className="auth-kicker">Coach registration</div>
+          <div className="auth-head auth-head--premium">
+            <h1 className="auth-title">Create your account</h1>
+            <p className="auth-sub">Set up your coach profile now, then sign in to confirm your preseason entry.</p>
           </div>
-        ) : (
-          <>
-            <div className="auth-kicker">Coach registration</div>
-            <div className="auth-head auth-head--premium">
-              <div className="auth-title">Create your account</div>
-              <div className="auth-sub">Set up your coach profile now, then sign in to confirm your preseason entry.</div>
-            </div>
 
-            <div className="auth-subtleRow auth-subtleRow--start">
-              <Link className="auth-subtleLink" to="/preseason-registration">
-                Back to preseason registration
-              </Link>
-            </div>
-
-            <form onSubmit={onSubmit} className="auth-form auth-form--premium auth-form--signup" noValidate>
-              <div className="form-row">
-                <label className="auth-field">
-                  <span className="auth-label">First name</span>
-                  <div className="auth-inputWrap">
-                    <UserRound size={16} className="auth-icon" />
-                    <input
-                      className="auth-input"
-                      type="text"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="First name"
-                      autoComplete="given-name"
-                      required
-                      disabled={submitting || loading}
-                    />
-                  </div>
-                </label>
-
-                <label className="auth-field">
-                  <span className="auth-label">Last name</span>
-                  <div className="auth-inputWrap">
-                    <UserRound size={16} className="auth-icon" />
-                    <input
-                      className="auth-input"
-                      type="text"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      placeholder="Last name"
-                      autoComplete="family-name"
-                      required
-                      disabled={submitting || loading}
-                    />
-                  </div>
-                </label>
-              </div>
-
-              <div className="form-row">
-                <label className="auth-field">
-                  <span className="auth-label">Facebook name</span>
-                  <div className="auth-inputWrap">
-                    <UserRound size={16} className="auth-icon" />
-                    <input
-                      className="auth-input"
-                      type="text"
-                      value={facebookName}
-                      onChange={(e) => setFacebookName(e.target.value)}
-                      placeholder="Facebook name"
-                      autoComplete="name"
-                      required
-                      disabled={submitting || loading}
-                    />
-                  </div>
-                  <span className="auth-inlineHint">Use the name admins will recognise.</span>
-                </label>
-
-                <label className="auth-field">
-                  <span className="auth-label">Birth year</span>
-                  <div className="auth-inputWrap">
-                    <UserRound size={16} className="auth-icon" />
-                    <input
-                      className="auth-input"
-                      type="number"
-                      value={birthYear}
-                      onChange={(e) => setBirthYear(e.target.value)}
-                      placeholder="YYYY"
-                      inputMode="numeric"
-                      required
-                      disabled={submitting || loading}
-                    />
-                  </div>
-                  {birthYear.length > 0 && !birthYearValid ? (
-                    <span className="auth-inlineHint auth-inlineHint--error">Enter a valid 4-digit birth year.</span>
-                  ) : (
-                    <span className="auth-inlineHint">Required for coach eligibility.</span>
-                  )}
-                </label>
-              </div>
-
-              <div className="form-row">
-                <label className="auth-field">
-                  <span className="auth-label">PSN / Xbox gamertag</span>
-                  <div className="auth-inputWrap">
-                    <Gamepad2 size={16} className="auth-icon" />
-                    <input
-                      className="auth-input"
-                      type="text"
-                      value={psn}
-                      onChange={(e) => setPsn(e.target.value)}
-                      placeholder="PSN ID or gamertag"
-                      autoCapitalize="none"
-                      required
-                      disabled={submitting || loading}
-                    />
-                  </div>
-                  <span className="auth-inlineHint">This is the name coaches will use to find you in-game.</span>
-                </label>
-
-                <label className="auth-field">
-                  <span className="auth-label">Email</span>
-                  <div className="auth-inputWrap">
-                    <Mail size={16} className="auth-icon" />
-                    <input
-                      className="auth-input"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="coach@email.com"
-                      autoComplete="email"
-                      required
-                      disabled={submitting || loading}
-                    />
-                  </div>
-                  {email.length > 0 && !emailValid ? (
-                    <span className="auth-inlineHint auth-inlineHint--error">Enter a valid email format.</span>
-                  ) : null}
-                </label>
-              </div>
-
-              <div className="form-row">
-                <label className="auth-field">
-                  <span className="auth-label">Password</span>
-                  <div className="auth-inputWrap">
-                    <Lock size={16} className="auth-icon" />
-                    <input
-                      className="auth-input"
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Create a password"
-                      autoComplete="new-password"
-                      required
-                      disabled={submitting || loading}
-                    />
-                    <button
-                      type="button"
-                      className="auth-eye"
-                      onClick={() => setShowPassword((current) => !current)}
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      disabled={submitting || loading}
-                    >
-                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                  <div className="auth-inlineStack">
-                    {!passwordMinValid && password.length > 0 ? (
-                      <span className="auth-inlineHint auth-inlineHint--error">Minimum 8 characters.</span>
-                    ) : null}
-                    {password.length > 0 && !passwordHasNumber ? (
-                      <span className="auth-inlineHint auth-inlineHint--error">Include at least 1 number.</span>
-                    ) : null}
-                    {password.length > 0 && passwordStrength ? (
-                      <span className={`auth-inlineHint auth-inlineHint--${passwordStrength}`}>
-                        Strength: {passwordStrength}
-                      </span>
-                    ) : null}
-                  </div>
-                </label>
-
-                <label className="auth-field">
-                  <span className="auth-label">Confirm password</span>
-                  <div className="auth-inputWrap">
-                    <Lock size={16} className="auth-icon" />
-                    <input
-                      className="auth-input"
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Confirm password"
-                      autoComplete="new-password"
-                      required
-                      disabled={submitting || loading}
-                    />
-                    <button
-                      type="button"
-                      className="auth-eye"
-                      onClick={() => setShowConfirmPassword((current) => !current)}
-                      aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                      disabled={submitting || loading}
-                    >
-                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                  {confirmPassword.length > 0 && !passwordsMatch ? (
-                    <span className="auth-inlineHint auth-inlineHint--error">Passwords must match.</span>
-                  ) : null}
-                </label>
-              </div>
-
-              {error ? (
-                <div className="auth-message auth-message--error" role="alert" aria-live="assertive">
-                  <div className="auth-message__title">{error.title}</div>
-                  <div className="auth-message__body">{error.detail}</div>
+          <form onSubmit={onSubmit} className="auth-form auth-form--premium auth-form--signup" noValidate>
+            <div className="form-row">
+              <label className="auth-field">
+                <span className="auth-label">First name</span>
+                <div className="auth-inputWrap">
+                  <UserRound size={16} className="auth-icon" />
+                  <input
+                    className="auth-input"
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="First name"
+                    autoComplete="given-name"
+                    required
+                    disabled={submitting || loading}
+                  />
                 </div>
-              ) : null}
+              </label>
 
-              <button type="submit" className="auth-primary" disabled={!canSubmit}>
-                {submitting || loading ? 'Creating account…' : 'Create account'}
-              </button>
-            </form>
-
-            <div className="auth-footerLinks auth-footerLinks--single">
-              <Link className="auth-footerLink" to="/auth/sign-in">
-                Already have an account? Sign in
-              </Link>
+              <label className="auth-field">
+                <span className="auth-label">Last name</span>
+                <div className="auth-inputWrap">
+                  <UserRound size={16} className="auth-icon" />
+                  <input
+                    className="auth-input"
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Last name"
+                    autoComplete="family-name"
+                    required
+                    disabled={submitting || loading}
+                  />
+                </div>
+              </label>
             </div>
-          </>
-        )}
-      </div>
-    </div>
+
+            <div className="form-row">
+              <label className="auth-field">
+                <span className="auth-label">Facebook name</span>
+                <div className="auth-inputWrap">
+                  <UserRound size={16} className="auth-icon" />
+                  <input
+                    className="auth-input"
+                    type="text"
+                    value={facebookName}
+                    onChange={(e) => setFacebookName(e.target.value)}
+                    placeholder="Facebook name"
+                    autoComplete="name"
+                    required
+                    disabled={submitting || loading}
+                  />
+                </div>
+                <span className="auth-inlineHint">Use the name admins will recognise.</span>
+              </label>
+
+              <label className="auth-field">
+                <span className="auth-label">Birth year</span>
+                <div className="auth-inputWrap">
+                  <UserRound size={16} className="auth-icon" />
+                  <input
+                    className="auth-input"
+                    type="number"
+                    value={birthYear}
+                    onChange={(e) => setBirthYear(e.target.value)}
+                    placeholder="YYYY"
+                    inputMode="numeric"
+                    required
+                    disabled={submitting || loading}
+                  />
+                </div>
+                {birthYear.length > 0 && !birthYearValid ? (
+                  <span className="auth-inlineHint auth-inlineHint--error">Enter a valid 4-digit birth year.</span>
+                ) : (
+                  <span className="auth-inlineHint">Required for coach eligibility.</span>
+                )}
+              </label>
+            </div>
+
+            <div className="form-row">
+              <label className="auth-field">
+                <span className="auth-label">PSN / Xbox gamertag</span>
+                <div className="auth-inputWrap">
+                  <Gamepad2 size={16} className="auth-icon" />
+                  <input
+                    className="auth-input"
+                    type="text"
+                    value={psn}
+                    onChange={(e) => setPsn(e.target.value)}
+                    placeholder="PSN ID or gamertag"
+                    autoCapitalize="none"
+                    required
+                    disabled={submitting || loading}
+                  />
+                </div>
+                <span className="auth-inlineHint">This is the name coaches will use to find you in-game.</span>
+              </label>
+
+              <label className="auth-field">
+                <span className="auth-label">Email</span>
+                <div className="auth-inputWrap">
+                  <Mail size={16} className="auth-icon" />
+                  <input
+                    className="auth-input"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="coach@email.com"
+                    autoComplete="email"
+                    required
+                    disabled={submitting || loading}
+                  />
+                </div>
+                {email.length > 0 && !emailValid ? (
+                  <span className="auth-inlineHint auth-inlineHint--error">Enter a valid email format.</span>
+                ) : null}
+              </label>
+            </div>
+
+            <div className="form-row">
+              <label className="auth-field">
+                <span className="auth-label">Password</span>
+                <div className="auth-inputWrap">
+                  <Lock size={16} className="auth-icon" />
+                  <input
+                    className="auth-input"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Create a password"
+                    autoComplete="new-password"
+                    required
+                    disabled={submitting || loading}
+                  />
+                  <button
+                    type="button"
+                    className="auth-eye"
+                    onClick={() => setShowPassword((current) => !current)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    disabled={submitting || loading}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                <div className="auth-inlineStack">
+                  {!passwordMinValid && password.length > 0 ? (
+                    <span className="auth-inlineHint auth-inlineHint--error">Minimum 8 characters.</span>
+                  ) : null}
+                  {password.length > 0 && !passwordHasNumber ? (
+                    <span className="auth-inlineHint auth-inlineHint--error">Include at least 1 number.</span>
+                  ) : null}
+                  {password.length > 0 && passwordStrength ? (
+                    <span className={`auth-inlineHint auth-inlineHint--${passwordStrength}`}>
+                      Strength: {passwordStrength}
+                    </span>
+                  ) : null}
+                </div>
+              </label>
+
+              <label className="auth-field">
+                <span className="auth-label">Confirm password</span>
+                <div className="auth-inputWrap">
+                  <Lock size={16} className="auth-icon" />
+                  <input
+                    className="auth-input"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm password"
+                    autoComplete="new-password"
+                    required
+                    disabled={submitting || loading}
+                  />
+                  <button
+                    type="button"
+                    className="auth-eye"
+                    onClick={() => setShowConfirmPassword((current) => !current)}
+                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                    disabled={submitting || loading}
+                  >
+                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                {confirmPassword.length > 0 && !passwordsMatch ? (
+                  <span className="auth-inlineHint auth-inlineHint--error">Passwords must match.</span>
+                ) : null}
+              </label>
+            </div>
+
+            {error ? (
+              <div className="auth-message auth-message--error" role="alert" aria-live="assertive">
+                <div className="auth-message__title">{error.title}</div>
+                <div className="auth-message__body">{error.detail}</div>
+              </div>
+            ) : null}
+
+            <button type="submit" className="auth-primary" disabled={!canSubmit}>
+              {submitting || loading ? 'Creating account…' : 'Create account'}
+            </button>
+          </form>
+
+          <div className="auth-footerLinks auth-footerLinks--single">
+            <Link className="auth-footerLink" to="/auth/sign-in">
+              Already have an account? Sign in
+            </Link>
+          </div>
+        </>
+      )}
+    </AuthLayout>
   );
 }
