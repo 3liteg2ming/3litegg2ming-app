@@ -528,7 +528,7 @@ const StatsHomePage: React.FC = () => {
                         />
                       </div>
                     </div>
-                    <span className="egCompare__battleLabel">{cfg.abbrev || cfg.label}</span>
+                    <span className="egCompare__battleLabel">{((cfg as PlayerStatConfig & { abbrev?: string }).abbrev ?? cfg.label)}</span>
                     <div className="egCompare__battleBarWrap egCompare__battleBarWrap--right">
                       <div className="egCompare__battleTrack">
                         <div
@@ -622,7 +622,7 @@ const StatsHomePage: React.FC = () => {
                         />
                       </div>
                     </div>
-                    <span className="egCompare__battleLabel">{cfg.abbrev || cfg.label}</span>
+                    <span className="egCompare__battleLabel">{((cfg as TeamStatConfig & { abbrev?: string }).abbrev ?? cfg.label)}</span>
                     <div className="egCompare__battleBarWrap egCompare__battleBarWrap--right">
                       <div className="egCompare__battleTrack">
                         <div
