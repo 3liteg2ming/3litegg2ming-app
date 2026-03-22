@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ChevronDown, Filter } from 'lucide-react';
 
 import FixturePosterCard, { type FixturePosterMatch } from '../components/FixturePosterCard';
@@ -21,6 +21,9 @@ import { deriveFixtureRound, normalizeFixtureStatus, type FixtureRow } from '../
 import { fetchMatchCentre } from '../lib/matchCentreRepo';
 import { fetchCurrentCoaches, type HomeCoach } from '../lib/homeRepo';
 import '../styles/Fixtures.css';
+
+// Launch gate: set to true to reveal fixtures
+export const FIXTURES_PUBLICLY_VISIBLE = false;
 
 type StatusFilter = 'ALL' | 'SCHEDULED' | 'FINAL';
 
@@ -240,12 +243,16 @@ export default function AFL26FixturesPage() {
 
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  const seasonFixturesQuery = useSeasonFixtures(seasonSlug, { limit: 1000 });
+  const seasonFixturesQuery = useSeasonFixtures(seasonSlug, {
+    limit: 1000,
+    enabled: FIXTURES_PUBLICLY_VISIBLE,
+  });
   const coachesQuery = useQuery({
     queryKey: ['home', 'current-coaches'],
     queryFn: fetchCurrentCoaches,
     staleTime: 60_000,
     gcTime: 1_200_000,
+    enabled: FIXTURES_PUBLICLY_VISIBLE,
   });
   const teamOptionsQuery = useTeamOptions();
   const teamOptions = (teamOptionsQuery.data || []) as TeamOption[];
@@ -286,6 +293,7 @@ export default function AFL26FixturesPage() {
   const regularStageGroups = useMemo(() => buildRegularStageGroups(allFixtures), [allFixtures]);
 
   useEffect(() => {
+    if (!FIXTURES_PUBLICLY_VISIBLE) return;
     const first = regularStageGroups[0]?.id || '';
     if (!activeStageId || !regularStageGroups.some((stage) => stage.id === activeStageId)) {
       setActiveStageId(first);
@@ -381,10 +389,8 @@ export default function AFL26FixturesPage() {
   const displayedMatches = useMemo(() => uiMatches.slice(0, visibleCount), [uiMatches, visibleCount]);
   const activeMatchCount = filteredMatches.length;
 
-  const [minLoadingDone, setMinLoadingDone] = useState(true);
-
   const hasSettled = seasonFixturesQuery.isSuccess || seasonFixturesQuery.isError;
-  const isLoading = !hasSettled && allFixtures.length === 0 && !minLoadingDone;
+  const isLoading = !hasSettled && allFixtures.length === 0 && FIXTURES_PUBLICLY_VISIBLE;
   const isError = seasonFixturesQuery.isError;
 
   const statusPills: Array<{ key: StatusFilter; label: string; count: number | string }> = [
@@ -401,7 +407,13 @@ export default function AFL26FixturesPage() {
         <div className={`fxAflStickyNav ${isDockCompact ? 'is-compact' : ''}`}>
           <div className="fxAflTopHead">
             <div className="fxAflHeaderTitle">Fixtures</div>
-            <div className="fxAflCountPill">{isLoading ? 'Loading…' : `${activeMatchCount} matches`}</div>
+            <div className="fxAflCountPill">
+              {FIXTURES_PUBLICLY_VISIBLE
+                ? isLoading
+                  ? 'Loading…'
+                  : `${activeMatchCount} matches`
+                : 'Registration Open'}
+            </div>
           </div>
 
           <div className="fxAflControlRow">
@@ -421,59 +433,74 @@ export default function AFL26FixturesPage() {
               className="fxAflFilterBtn"
               onClick={() => setFilterSheetOpen(true)}
               aria-label="Open fixtures filters"
+              disabled={!FIXTURES_PUBLICLY_VISIBLE}
             >
               <Filter size={15} />
               Filter
             </button>
           </div>
 
+          {FIXTURES_PUBLICLY_VISIBLE ? (
+            <>
+              <div className="fxAflRoundStrip" aria-label="Round selector">
+                {regularStageGroups.map((stage) => (
+                  <button
+                    key={stage.id}
+                    type="button"
+                    disabled={isTeamView}
+                    className={`fxAflRoundChip ${!isTeamView && stage.id === activeStageId ? 'is-active' : ''} ${isTeamView ? 'is-disabled' : ''}`}
+                    onClick={() => {
+                      if (!isTeamView) setActiveStageId(stage.id);
+                    }}
+                    aria-disabled={isTeamView ? 'true' : undefined}
+                  >
+                    {stage.label}
+                  </button>
+                ))}
+              </div>
 
-          <div className="fxAflRoundStrip" aria-label="Round selector">
-            {regularStageGroups.map((stage) => (
-              <button
-                key={stage.id}
-                type="button"
-                disabled={isTeamView}
-                className={`fxAflRoundChip ${!isTeamView && stage.id === activeStageId ? 'is-active' : ''} ${isTeamView ? 'is-disabled' : ''}`}
-                onClick={() => {
-                  if (!isTeamView) setActiveStageId(stage.id);
-                }}
-                aria-disabled={isTeamView ? 'true' : undefined}
-              >
-                {stage.label}
-              </button>
-            ))}
-          </div>
+              <div className="fxAflStatusRow" aria-label="Status filters">
+                {statusPills.map((pill) => (
+                  <button
+                    key={pill.key}
+                    type="button"
+                    className={`fxAflStatusPill ${activeStatus === pill.key ? 'is-active' : ''}`}
+                    onClick={() => setActiveStatus(pill.key)}
+                  >
+                    <span>{pill.label}</span>
+                    <span className="fxAflStatusPill__count">{pill.count}</span>
+                  </button>
+                ))}
+              </div>
 
-          <div className="fxAflStatusRow" aria-label="Status filters">
-            {statusPills.map((pill) => (
-              <button
-                key={pill.key}
-                type="button"
-                className={`fxAflStatusPill ${activeStatus === pill.key ? 'is-active' : ''}`}
-                onClick={() => setActiveStatus(pill.key)}
-              >
-                <span>{pill.label}</span>
-                <span className="fxAflStatusPill__count">{pill.count}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="fxAflMetaLine">
-            {isLoading ? (
-              'Loading fixtures…'
-            ) : isTeamView ? (
-              `Showing ${counts.all} fixtures for ${selectedTeamName || 'selected team'}`
-            ) : (
-              `Scheduled ${counts.scheduled} • Final ${counts.final} • ${displayedMatches.length}/${activeMatchCount}`
-            )}
-          </div>
+              <div className="fxAflMetaLine">
+                {isLoading
+                  ? 'Loading fixtures…'
+                  : isTeamView
+                    ? `Showing ${counts.all} fixtures for ${selectedTeamName || 'selected team'}`
+                    : `Scheduled ${counts.scheduled} • Final ${counts.final} • ${displayedMatches.length}/${activeMatchCount}`}
+              </div>
+            </>
+          ) : null}
         </div>
 
         <div className="fxAflPanel">
-          {isError ? <div className="fxAflNotice">Unable to load fixtures. Please check your connection.</div> : null}
-
-          {isLoading ? (
+          {!FIXTURES_PUBLICLY_VISIBLE ? (
+            <div className="fxAflLaunchGate">
+              <h2 className="fxAflLaunchGate__title">Fixtures unlock this week</h2>
+              <p className="fxAflLaunchGate__body">
+                Coach registrations are now open. Matchups and rounds will appear once the season
+                reveal goes live.
+              </p>
+              <div className="fxAflLaunchGate__actions">
+                <Link to="/auth/sign-up" className="fxAflLaunchGate__btn fxAflLaunchGate__btn--primary">
+                  Create account
+                </Link>
+              </div>
+            </div>
+          ) : isError ? (
+            <div className="fxAflNotice">Unable to load fixtures. Please check your connection.</div>
+          ) : isLoading ? (
             <FixtureSkeletons count={3} />
           ) : allFixtures.length === 0 ? (
             <div className="fxAflEmpty fxAflEmpty--preseason">
@@ -489,7 +516,11 @@ export default function AFL26FixturesPage() {
             </div>
           )}
 
-          {!isLoading && !isError && displayedMatches.length > 0 && displayedMatches.length < uiMatches.length ? (
+          {!isLoading &&
+          !isError &&
+          FIXTURES_PUBLICLY_VISIBLE &&
+          displayedMatches.length > 0 &&
+          displayedMatches.length < uiMatches.length ? (
             <div ref={loadMoreRef} className="fxAflLoadSentinel" aria-hidden="true" />
           ) : null}
         </div>
