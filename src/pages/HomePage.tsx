@@ -8,6 +8,7 @@ import {
   Crown,
   User,
   Users,
+  ShieldCheck,
 } from 'lucide-react';
 
 import { useAuth } from '../state/auth/AuthProvider';
@@ -15,6 +16,7 @@ import { useLadder } from '../hooks/useLadder';
 import { useNextFixtures } from '../hooks/useFixtures';
 import { assetUrl } from '../lib/teamAssets';
 import { resolveTeamLogoUrl } from '../lib/entityResolvers';
+import { FIXTURES_PUBLICLY_VISIBLE } from './AFL26FixturesPage';
 
 import '../styles/home.css';
 
@@ -148,10 +150,10 @@ function HeroMasterCard() {
   const { user }  = useAuth();
   const eliteLogo = assetUrl('elite-gaming-logo.png');
 
-  const primaryHref    = user ? '/members'  : '/auth/sign-in';
-  const secondaryHref  = user ? '/ladder'   : '/fixtures';
-  const primaryLabel   = user ? 'My Club Hub' : 'Coach Sign In';
-  const secondaryLabel = user ? 'View Ladder' : 'View Fixtures';
+  const primaryHref    = user ? '/members' : '/auth/sign-up';
+  const secondaryHref  = user ? '/ladder'  : '/preseason-registration';
+  const primaryLabel   = user ? 'My Club Hub' : 'Create Your Account';
+  const secondaryLabel = user ? 'View Ladder' : 'Preseason Hub';
 
   return (
     <section className="home-hero-wrap">
@@ -169,7 +171,7 @@ function HeroMasterCard() {
           <div className="home-hero-pillRow">
             <span className="home-hero-pill">
               <span className="home-hero-pillDot" />
-              {user ? 'Season Live' : 'Season Launch'}
+              {user ? 'Season Live' : 'Registration Open'}
             </span>
           </div>
 
@@ -206,7 +208,7 @@ function HeroMasterCard() {
             <p className="home-hero-sub">
               {user
                 ? 'Your fixtures, ladder and match centre.'
-                : 'Fixtures, ladder & match centre\u00a0— one home.'}
+                : 'Official hub for coaches and players.'}
             </p>
           </div>
 
@@ -234,63 +236,51 @@ function HeroMasterCard() {
    COACH HUB — 2-column grid, centred cards, no scroll
 ═══════════════════════════════════════════════════════════ */
 function CommunityPreview() {
-  const { user }   = useAuth();
-  const { data: coaches, isLoading } = useHomeCoaches();
-  const visible = useMemo(() => coaches.slice(0, 4), [coaches]);
-
   return (
     <section className="home-hub">
       <div className="home-hub__glow" aria-hidden="true" />
 
       <header className="home-hub__header">
         <div className="home-hub__headerLeft">
-          <p className="home-hub__eyebrow">Member Zone</p>
-          <h2 className="home-hub__title">
-            {user ? 'Coach\u00a0Community' : 'Coaches\u00a0& Clubs'}
-          </h2>
+          <p className="home-hub__eyebrow">MEMBER ZONE</p>
+          <div className="home-hub__titleRow">
+            <h2 className="home-hub__title">Coaches' Hub</h2>
+            <span className="home-hub__status-badge">COMING SOON</span>
+          </div>
         </div>
-        <Link to={user ? '/members' : '/auth/sign-in'} className="home-hub__headerLink">
-          {user ? 'Open Hub' : 'Join Hub'}<ChevronRight size={13} />
-        </Link>
+        <div className="home-hub__headerIcon"><Users size={16} /></div>
       </header>
 
-      {isLoading ? (
-        <div className="home-hub-grid">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="home-hub-skeleton" />
-          ))}
-        </div>
-      ) : visible.length > 0 ? (
-        <>
-          <div className="home-hub-grid">
-            {visible.map((coach) => (
-              <article key={`${coach.user_id}-${coach.team_id}`} className="home-hub-card">
-                <div className="home-hub-card__logo">
-                  {coach.team_logo_url
-                    ? <img src={coach.team_logo_url} alt={coach.team_name || 'Team'} />
-                    : <Users size={18} />}
-                </div>
-                <strong className="home-hub-card__name">
-                  {coach.display_name || coach.psn || 'Coach'}
-                </strong>
-                <span className="home-hub-card__team">
-                  {coach.team_name || 'Team assigned'}
-                </span>
-              </article>
-            ))}
-          </div>
+      <div className="home-hub__body">
+        <p>The central place for registered coaches to connect, manage their team, and access member features.</p>
+      </div>
+    </section>
+  );
+}
 
-          <Link to={user ? '/members' : '/auth/sign-in'} className="home-hub-cta">
-            <span className="home-hub-cta__left">
-              <span className="home-hub-cta__iconWrap"><Users size={15} /></span>
-              <span>{user ? 'Open Member Hub' : 'Sign in to open Member Hub'}</span>
-            </span>
-            <ArrowRight size={14} />
-          </Link>
-        </>
-      ) : (
-        <div className="home-empty">Coach and club profiles will appear as teams lock in.</div>
-      )}
+/* ═══════════════════════════════════════════════════════════
+   LAUNCH PROMO — Replaces featured match pre-launch
+═══════════════════════════════════════════════════════════ */
+function LaunchPromoCard() {
+  return (
+    <section className="home-module home-module--promo">
+      <div className="home-promo-card">
+        <div className="home-promo-card__content">
+          <div className="home-promo-card__icon"><ShieldCheck size={16} /></div>
+          <h3 className="home-promo-card__title">Fixtures Revealed This Week</h3>
+          <p className="home-promo-card__body">
+            Register your account to get ready for the season launch.
+          </p>
+          <div className="home-promo-card__actions">
+            <Link to="/auth/sign-up" className="home-promo-card__btn home-promo-card__btn--primary">
+              Create Account
+            </Link>
+            <Link to="/preseason-registration" className="home-promo-card__btn home-promo-card__btn--secondary">
+              Preseason Hub
+            </Link>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
@@ -627,7 +617,7 @@ export default function HomePage() {
       <main className="home-main">
         <HeroMasterCard />
         <CommunityPreview />
-        <FeaturedMatchCard />
+        {FIXTURES_PUBLICLY_VISIBLE ? <FeaturedMatchCard /> : <LaunchPromoCard />}
         <LeadersPreview />
         <LadderSnapshot />
       </main>
