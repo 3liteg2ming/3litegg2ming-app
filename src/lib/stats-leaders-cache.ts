@@ -162,9 +162,9 @@ const LABELS: Record<StatKey, string> = {
 const CATEGORY_KEYS: StatKey[] = ['goals', 'disposals', 'marks', 'fantasyPoints'];
 const TEAM_CATEGORY_KEYS: StatKey[] = [
   'disposals', 'kicks', 'handballs', 'inside50s', 'rebound50s', 'freesFor',
-  'fiftyMetrePenalties', 'hitOuts', 'contestedPossessions',
+  'fiftyMetrePenalties', 'hitOuts', 'clearances', 'contestedPossessions',
   'uncontestedPossessions', 'goals', 'marks', 'contestedMarks', 'interceptMarks',
-  'spoils', 'goalEfficiency',
+  'tackles', 'spoils', 'goalEfficiency',
 ];
 const LIVE_SUPPORTED_STATS = new Set<StatKey>([
   'goals',
@@ -172,6 +172,8 @@ const LIVE_SUPPORTED_STATS = new Set<StatKey>([
   'kicks',
   'handballs',
   'marks',
+  'tackles',
+  'clearances',
   'fantasyPoints',
   'goalEfficiency',
   'inside50s',

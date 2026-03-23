@@ -14,11 +14,13 @@ export type TeamStatKey =
   | 'freesFor'
   | 'fiftyMetrePenalties'
   | 'hitOuts'
+  | 'clearances'
   | 'contestedPossessions'
   | 'uncontestedPossessions'
   | 'marks'
   | 'contestedMarks'
   | 'interceptMarks'
+  | 'tackles'
   | 'spoils'
   | 'goalEfficiency';
 
@@ -68,12 +70,14 @@ export const TEAM_STAT_CONFIGS: TeamStatConfig[] = [
   { key: 'freesFor', label: 'Frees For', abbreviation: 'FF' },
   { key: 'fiftyMetrePenalties', label: '50m Penalties', abbreviation: '50M' },
   { key: 'hitOuts', label: 'Hit Outs', abbreviation: 'HO' },
+  { key: 'clearances', label: 'Clearances', abbreviation: 'CLR' },
   { key: 'contestedPossessions', label: 'Contested Possessions', abbreviation: 'CP' },
   { key: 'uncontestedPossessions', label: 'Uncontested Possessions', abbreviation: 'UP' },
   { key: 'goals', label: 'Goals', abbreviation: 'G' },
   { key: 'marks', label: 'Marks', abbreviation: 'M' },
   { key: 'contestedMarks', label: 'Contested Marks', abbreviation: 'CM' },
   { key: 'interceptMarks', label: 'Intercept Marks', abbreviation: 'IM' },
+  { key: 'tackles', label: 'Tackles', abbreviation: 'T' },
   { key: 'spoils', label: 'Spoils', abbreviation: 'SP' },
   { key: 'goalEfficiency', label: 'Goal Efficiency', abbreviation: '%' },
 ];
