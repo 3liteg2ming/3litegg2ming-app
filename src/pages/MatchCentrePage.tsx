@@ -10,7 +10,7 @@ import MatchCentreTabs, { type MatchCentreTabKey } from '@/components/match-cent
 import { MelvinBetMatchOutlook } from '@/components/MelvinBet';
 import { useMatchCentre } from '@/hooks/useMatchCentre';
 import { useAuth } from '@/state/auth/AuthProvider';
-import { areFixturesVisible, FIXTURES_UNLOCK_LABEL } from '@/lib/fixtureVisibility';
+import { canViewFixtures, FIXTURES_UNLOCK_LABEL } from '@/lib/fixtureVisibility';
 import type { MatchCentreModel } from '@/lib/matchCentreRepo';
 
 import '@/styles/match-centre-page.css';
@@ -57,7 +57,7 @@ export default function MatchCentrePage() {
   const { fixtureId } = useParams();
   const resolvedFixtureId = fixtureId;
   const { user } = useAuth();
-  const fixturesVisible = areFixturesVisible();
+  const fixturesVisible = canViewFixtures(user?.role);
 
   const [tab, setTab] = useState<MatchCentreTabKey>('summary');
 
@@ -164,18 +164,7 @@ export default function MatchCentrePage() {
             {tab === 'summary' && (
               <section id="mc-panel-summary" role="tabpanel" aria-labelledby="mc-tab-summary" className="mcPage__content mcPage__content--summary">
                 <MatchSummaryTab model={model} loading={loading} />
-                {model?.home && model?.away && (
-                  <div style={{ padding: '0 12px', maxWidth: 768, margin: '0 auto', boxSizing: 'border-box' }}>
-                    <MelvinBetMatchOutlook
-                      fixtureId={model.fixtureId || resolvedFixtureId || 'unknown'}
-                      homeName={model.home.fullName || 'Home'}
-                      awayName={model.away.fullName || 'Away'}
-                      homeScore={model.home.score}
-                      awayScore={model.away.score}
-                      isFinal={String(model.statusLabel || '').toUpperCase() === 'FINAL'}
-                    />
-                  </div>
-                )}
+
               </section>
             )}
 

@@ -1,5 +1,5 @@
 /* =========================
-   Elite Gaming — Ladder (Broadcast Polish)
+   Elite Gaming — Ladder (Premium Broadcast)
    ========================= */
 
 .ladderPage {
@@ -7,6 +7,10 @@
   min-height: 100%;
   padding: 0 0 20px;
   color: rgba(255, 255, 255, 0.92);
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 0%, rgba(245, 196, 0, 0.04), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 100%, rgba(100, 140, 200, 0.03), transparent 50%),
+    linear-gradient(175deg, #0a0f1c 0%, #060a14 40%, #080d18 100%);
 }
 
 .ladderWrap {
@@ -16,81 +20,94 @@
   padding: 6px 12px 0;
 }
 
-/* HERO */
+/* ─── HERO ────────────────────────────────────────────── */
 .ladderHero {
-  border-radius: 14px;
-  padding: 14px 16px;
+  position: relative;
+  border-radius: 16px;
+  padding: 20px 18px 16px;
   background:
-    radial-gradient(ellipse 140% 120% at 50% -10%, rgba(245, 196, 0, 0.04), transparent 65%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.005)),
-    rgba(8, 11, 18, 0.85);
-  border: 1px solid rgba(245, 196, 0, 0.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(10px);
+    radial-gradient(ellipse 130% 100% at 20% -30%, rgba(245, 196, 0, 0.08), transparent 60%),
+    radial-gradient(ellipse 80% 90% at 90% 120%, rgba(245, 196, 0, 0.04), transparent 50%),
+    linear-gradient(170deg, rgba(14, 18, 30, 0.95) 0%, rgba(8, 11, 18, 0.92) 100%);
+  border: 1px solid rgba(245, 196, 0, 0.08);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(245, 196, 0, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+}
+
+/* accent stripe at top of hero */
+.ladderHero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  background: linear-gradient(90deg, rgba(245, 196, 0, 0.9) 0%, rgba(245, 196, 0, 0.3) 50%, transparent 100%);
 }
 
 .ladderHero .heroTop {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
   align-items: flex-start;
 }
 
 .ladderHero .kicker {
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  color: rgba(255, 255, 255, 0.48);
-  font-weight: 800;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: rgba(245, 196, 0, 0.6);
+  font-weight: 700;
   text-transform: uppercase;
 }
 
 .ladderHero .title {
-  font-size: 30px;
+  font-size: 32px;
   line-height: 1;
   font-weight: 900;
-  margin-top: 3px;
-  color: rgba(245, 249, 255, 0.96);
+  margin-top: 4px;
+  color: rgba(245, 249, 255, 0.97);
+  letter-spacing: -0.02em;
 }
 
 .ladderHero .rule {
-  height: 2px;
-  width: 56px;
-  margin-top: 7px;
-  border-radius: 999px;
-  background: rgba(245, 196, 0, 0.88);
-  box-shadow: 0 0 8px rgba(245, 196, 0, 0.14);
+  display: none;
 }
 
 .ladderHero .hint {
-  margin-top: 6px;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.50);
-  font-weight: 600;
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.42);
+  font-weight: 500;
+  font-style: italic;
 }
 
 .ladderHero .seasonPill {
   flex: 0 0 auto;
-  background: linear-gradient(180deg, rgba(245, 196, 0, 0.93), rgba(212, 160, 0, 0.93));
+  background: linear-gradient(180deg, rgba(245, 196, 0, 0.92), rgba(212, 160, 0, 0.92));
   color: rgba(0, 0, 0, 0.88);
   font-weight: 900;
   border-radius: 8px;
-  padding: 6px 11px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.20);
   font-size: 9px;
   letter-spacing: 0.06em;
+  text-transform: lowercase;
 }
 
-/* TABS */
+/* ─── TABS ────────────────────────────────────────────── */
 .aflTabsWrap {
-  margin-top: 4px;
+  margin-top: 10px;
   position: sticky;
   top: 0;
   z-index: 20;
-  padding-top: 0;
-  padding-bottom: 5px;
-  background: linear-gradient(180deg, rgba(1, 2, 5, 0.88) 0%, rgba(1, 2, 5, 0.40) 75%, rgba(1, 2, 5, 0) 100%);
-  backdrop-filter: blur(8px);
+  padding: 6px 0 8px;
+  background: linear-gradient(180deg, rgba(1, 2, 5, 0.92) 0%, rgba(1, 2, 5, 0.50) 80%, rgba(1, 2, 5, 0) 100%);
+  backdrop-filter: blur(10px);
 }
 
 .aflTabs {
@@ -101,68 +118,94 @@
 
 .aflTabs .t {
   appearance: none;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
-  color: rgba(255, 255, 255, 0.64);
-  border-radius: 7px;
-  padding: 6px 10px;
-  font-weight: 800;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.50);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-weight: 700;
   font-size: 12px;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   line-height: 1;
   cursor: pointer;
-  transition: all 0.14s ease;
+  transition: all 0.16s ease;
 }
 
 .aflTabs .t:active {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .aflTabs .t.isOn {
-  background: rgba(245, 196, 0, 0.10);
-  border-color: rgba(245, 196, 0, 0.40);
-  color: rgba(245, 196, 0, 0.94);
-  box-shadow: 0 0 0 1px rgba(245, 196, 0, 0.08) inset;
+  background: rgba(245, 196, 0, 0.12);
+  border-color: rgba(245, 196, 0, 0.35);
+  color: rgba(245, 196, 0, 0.95);
+  box-shadow: 0 0 8px rgba(245, 196, 0, 0.06);
 }
 
-/* LIST */
+/* ─── LIST HEADER ─────────────────────────────────────── */
+.ladList__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 14px 4px;
+  margin-top: 6px;
+}
+
+.ladList__headerLabel {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.ladList__headerLabel--right {
+  color: rgba(168, 255, 4, 0.40);
+}
+
+/* ─── LIST ────────────────────────────────────────────── */
 .ladList {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  margin-top: 4px;
+  gap: 4px;
+  margin-top: 2px;
 }
 
-/* =====================
-   ROW — Broadcast-style ladder row
-   ===================== */
+/* finals line after 8th team */
+.ladList > :nth-child(8) {
+  margin-bottom: 4px;
+  border-bottom: 2px solid rgba(245, 196, 0, 0.18);
+  padding-bottom: 10px;
+}
+
+/* ─── ROW ─────────────────────────────────────────────── */
 .ladRow {
   display: flex;
   align-items: center;
   gap: 0;
-  padding: 7px 10px;
-  border-radius: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
   position: relative;
-  background: rgba(255, 255, 255, 0.018);
+  background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.04);
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  min-height: 52px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  min-height: 54px;
   transition: background-color 120ms ease;
 }
 
 .ladRow:active {
-  background: rgba(255, 255, 255, 0.035);
+  background: rgba(255, 255, 255, 0.04);
 }
 
-/* Team tint — very subtle, 12% feel */
+/* team colour tint */
 .ladRow__tint {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, var(--teamA), transparent 60%);
-  opacity: 0.12;
+  background: linear-gradient(90deg, var(--teamA), transparent 55%);
+  opacity: 0.14;
   pointer-events: none;
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 .ladRow > *:not(.ladRow__tint) {
@@ -170,71 +213,120 @@
   z-index: 1;
 }
 
-/* RANK — broadcast anchor */
+/* ─── RANK ────────────────────────────────────────────── */
 .ladRow__rank {
-  flex: 0 0 30px;
-  font-size: 18px;
+  flex: 0 0 32px;
+  font-size: 16px;
   font-weight: 900;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.60);
   text-align: center;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 
-/* TEAM — logo + name */
+/* highlight top 4 ranks */
+.ladList > :nth-child(-n+4) .ladRow__rank {
+  color: rgba(245, 196, 0, 0.85);
+}
+
+/* ─── TEAM ────────────────────────────────────────────── */
 .ladRow__team {
   flex: 1 1 0;
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 8px 0 2px;
+  gap: 10px;
+  padding: 0 8px 0 4px;
 }
 
 .ladRow__logo {
-  width: 30px;
-  height: 30px;
-  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   display: grid;
   place-items: center;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  flex: 0 0 30px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  flex: 0 0 32px;
   overflow: hidden;
 }
 
 .ladRow__logoImg {
-  width: 21px;
-  height: 21px;
+  width: 22px;
+  height: 22px;
   object-fit: contain;
   display: block;
 }
 
 .ladRow__name {
-  font-size: 12.5px;
-  font-weight: 850;
-  color: rgba(255, 255, 255, 0.90);
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.92);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.1;
 }
 
-/* STATS — inline broadcast style */
+.ladRow__coachName {
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 5px;
+}
+
+/* ─── PREMIERSHIP ODDS ────────────────────────────────── */
+.ladRow__prem {
+  flex: 0 0 auto;
+  margin-left: 8px;
+}
+
+.ladRow__premOdds {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--mb-lime, rgba(168, 255, 4, 0.85));
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  min-width: 38px;
+  text-align: center;
+  padding: 4px 7px;
+  border-radius: 7px;
+  background: rgba(168, 255, 4, 0.07);
+  border: 1px solid rgba(168, 255, 4, 0.12);
+}
+
+
+
+/* ─── STATS ───────────────────────────────────────────── */
 .ladRow__stats {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   padding-right: 2px;
 }
 
-/* Individual stat pair: label + value inline */
 .st {
   display: inline-flex;
   align-items: baseline;
-  gap: 2px;
+  gap: 3px;
   white-space: nowrap;
+}
+
+/* Extended mode — tighter layout */
+.ladRow__ext {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ladRow__ext .st__v {
+  font-size: 12px;
+}
+
+.ladRow__ext .st__k {
+  font-size: 7px;
 }
 
 .st--wide .st__v {
@@ -246,7 +338,7 @@
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.38);
+  color: rgba(255, 255, 255, 0.30);
   text-transform: uppercase;
   line-height: 1;
 }
@@ -254,7 +346,7 @@
 .st__v {
   font-size: 14px;
   font-weight: 900;
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(255, 255, 255, 0.88);
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -263,83 +355,80 @@
   color: rgba(245, 196, 0, 0.94);
 }
 
-/* FORM DOTS */
+/* ─── FORM DOTS ───────────────────────────────────────── */
 .ladRow__formDots {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .ladDot {
-  width: 13px;
-  height: 13px;
+  width: 14px;
+  height: 14px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.08);
-  flex: 0 0 13px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  flex: 0 0 14px;
+  transition: transform 0.12s ease;
 }
 
 .ladDot.w {
-  background: rgba(36, 196, 108, 0.88);
-  border-color: rgba(36, 196, 108, 0.30);
+  background: rgba(36, 196, 108, 0.85);
+  border-color: rgba(36, 196, 108, 0.28);
+  box-shadow: 0 0 6px rgba(36, 196, 108, 0.15);
 }
 
 .ladDot.l {
-  background: rgba(255, 72, 72, 0.88);
-  border-color: rgba(255, 72, 72, 0.25);
+  background: rgba(255, 72, 72, 0.85);
+  border-color: rgba(255, 72, 72, 0.22);
+  box-shadow: 0 0 6px rgba(255, 72, 72, 0.12);
 }
 
 .ladDot.d {
-  background: rgba(245, 196, 0, 0.88);
-  border-color: rgba(245, 196, 0, 0.25);
+  background: rgba(245, 196, 0, 0.85);
+  border-color: rgba(245, 196, 0, 0.22);
+  box-shadow: 0 0 6px rgba(245, 196, 0, 0.12);
 }
 
 .ladDot.n {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
 }
 
-/* Empty / loading */
+/* ─── EMPTY / LOADING ─────────────────────────────────── */
 .ladRow--empty {
   min-height: 46px;
   opacity: 0.6;
 }
 
-/* BOTTOM SPACER */
+/* ─── BOTTOM SPACER ───────────────────────────────────── */
 .safeBottom,
 .ladderSafeBottom {
   height: 110px;
 }
 
-/* =====================
-   MOBILE
-   ===================== */
+/* ─── MOBILE ──────────────────────────────────────────── */
 @media (max-width: 768px) {
   .ladderWrap {
     padding: 6px 10px 0;
   }
 
   .ladderHero {
-    padding: 12px 14px;
-    border-radius: 12px;
+    padding: 16px 14px 14px;
+    border-radius: 14px;
   }
 
   .ladderHero .title {
     font-size: 28px;
-    margin-top: 2px;
+    margin-top: 3px;
   }
 
   .ladderHero .kicker {
-    font-size: 10px;
+    font-size: 9px;
   }
 
   .ladderHero .hint {
-    font-size: 11px;
-    margin-top: 4px;
-  }
-
-  .ladderHero .rule {
-    width: 48px;
-    margin-top: 5px;
+    font-size: 10.5px;
+    margin-top: 6px;
   }
 
   .ladderHero .seasonPill {
@@ -349,23 +438,24 @@
   }
 
   .aflTabs .t {
-    padding: 5px 8px;
+    padding: 6px 11px;
     font-size: 11px;
-    border-radius: 6px;
+    border-radius: 7px;
   }
 
   .ladRow {
-    padding: 6px 8px;
+    padding: 7px 10px;
     min-height: 50px;
+    border-radius: 10px;
   }
 
   .ladRow__rank {
-    flex-basis: 26px;
-    font-size: 16px;
+    flex-basis: 28px;
+    font-size: 15px;
   }
 
   .ladRow__team {
-    gap: 7px;
+    gap: 8px;
     padding: 0 6px 0 2px;
   }
 
@@ -373,6 +463,7 @@
     width: 28px;
     height: 28px;
     flex-basis: 28px;
+    border-radius: 7px;
   }
 
   .ladRow__logoImg {
@@ -381,11 +472,11 @@
   }
 
   .ladRow__name {
-    font-size: 11.5px;
+    font-size: 12px;
   }
 
   .ladRow__stats {
-    gap: 6px;
+    gap: 7px;
   }
 
   .st__v {
@@ -402,15 +493,27 @@
     flex-basis: 12px;
   }
 
+  .ladRow__ext {
+    gap: 4px;
+  }
+
+  .ladRow__ext .st__v {
+    font-size: 11px;
+  }
+
+  .ladRow__ext .st__k {
+    font-size: 6.5px;
+  }
+
   .ladRow__formDots {
-    gap: 5px;
+    gap: 4px;
   }
 }
 
 @media (max-width: 374px) {
   .ladRow__rank {
-    flex-basis: 22px;
-    font-size: 15px;
+    flex-basis: 24px;
+    font-size: 14px;
   }
 
   .ladRow__logo {
@@ -425,7 +528,7 @@
   }
 
   .ladRow__name {
-    font-size: 10.5px;
+    font-size: 11px;
   }
 
   .st__v {
@@ -447,6 +550,6 @@
   }
 
   .ladRow__formDots {
-    gap: 4px;
+    gap: 3px;
   }
 }

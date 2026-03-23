@@ -35,13 +35,8 @@
   white-space: nowrap;
 }
 
-.mb-wordmark__mel {
+.mb-wordmark__melvin {
   color: var(--mb-lime);
-}
-
-.mb-wordmark__vin {
-  color: var(--mb-text);
-  margin-left: 0.5px;
 }
 
 .mb-wordmark__bet {
@@ -274,37 +269,42 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   B) FIXTURES — Odds strip inside poster card
+   B) FIXTURES — Clean odds strip (AFL-style)
    ═══════════════════════════════════════════════════════════ */
-.mb-oddsStrip {
+.mb-strip2 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 7px 12px;
-  background:
-    linear-gradient(90deg, rgba(168, 255, 4, 0.04) 0%, transparent 30%, transparent 70%, rgba(245, 196, 0, 0.04) 100%),
-    rgba(11, 16, 38, 0.65);
+  padding: 8px 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(11, 16, 38, 0.5);
 }
 
-.mb-oddsStrip__side {
+.mb-strip2__odd {
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.6);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  min-width: 44px;
+  text-align: center;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+.mb-strip2__odd.is-fav {
+  color: var(--mb-lime);
+  background: rgba(168, 255, 4, 0.10);
+  border-color: rgba(168, 255, 4, 0.18);
+}
+
+.mb-strip2__mid {
   display: flex;
   align-items: center;
-  gap: 5px;
-}
-
-.mb-oddsStrip__label {
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--mb-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.mb-oddsStrip__center {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+  flex-shrink: 0;
+  padding: 0 14px;
 }
 
 /* ═══════════════════════════════════════════════════════════

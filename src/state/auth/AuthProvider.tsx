@@ -222,6 +222,7 @@ function mergeCoachUser(
     teamId: cleanText(profile?.team_id) || undefined,
     teamName: cleanText(team?.shortName || team?.name) || undefined,
     teamLogoUrl: cleanText(team?.logoUrl) || undefined,
+    role: cleanText(profile?.role) || undefined,
   };
 }
 

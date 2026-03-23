@@ -33,8 +33,7 @@ export function MelvinBetWordmark({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }
   const cls = size === 'sm' ? 'mb-wordmark mb-wordmark--sm' : size === 'lg' ? 'mb-wordmark mb-wordmark--lg' : 'mb-wordmark';
   return (
     <span className={cls} aria-label="Melvin Bet">
-      <span className="mb-wordmark__mel">MEL</span>
-      <span className="mb-wordmark__vin">VIN</span>
+      <span className="mb-wordmark__melvin">MELVIN</span>
       <span className="mb-wordmark__bet">BET</span>
     </span>
   );
@@ -98,33 +97,36 @@ export function MelvinBetHomeCard({ fixtures }: { fixtures: MelvinHomeFixture[] 
 }
 
 /* ── B) Fixture Poster Odds Strip ───────────────────── */
-export function MelvinBetOddsStrip({ matchId, homeName, awayName }: {
+export function MelvinBetOddsStrip({ matchId, homeName, awayName, adminHomeOdds, adminAwayOdds }: {
   matchId: string;
   homeName: string;
   awayName: string;
+  adminHomeOdds?: number;
+  adminAwayOdds?: number;
 }) {
-  const homeChance = useMemo(() => seededRange(`mb-strip-${matchId}`, 28, 72), [matchId]);
-  const awayChance = 100 - homeChance;
-  const homeOdds = oddsFromChance(homeChance);
-  const awayOdds = oddsFromChance(awayChance);
-
-  const favouriteLabel = homeChance > 55 ? 'Fav' : awayChance > 55 ? 'Fav' : '';
+  const { homeOdds, awayOdds, homeFav } = useMemo(() => {
+    if (adminHomeOdds && adminAwayOdds) {
+      return {
+        homeOdds: adminHomeOdds.toFixed(2),
+        awayOdds: adminAwayOdds.toFixed(2),
+        homeFav: adminHomeOdds < adminAwayOdds,
+      };
+    }
+    const hc = seededRange(`mb-strip-${matchId}`, 28, 72);
+    return {
+      homeOdds: oddsFromChance(hc),
+      awayOdds: oddsFromChance(100 - hc),
+      homeFav: hc > 50,
+    };
+  }, [matchId, adminHomeOdds, adminAwayOdds]);
 
   return (
-    <div className="mb-oddsStrip">
-      <div className="mb-oddsStrip__side">
-        <span className="mb-oddsStrip__label">{homeName.split(' ').pop()}</span>
-        <span className="mb-pill mb-pill--lime">{homeOdds}</span>
-        {homeChance > 55 && <span className="mb-pill mb-pill--gold" style={{ fontSize: 8 }}>{favouriteLabel}</span>}
-      </div>
-      <div className="mb-oddsStrip__center">
+    <div className="mb-strip2">
+      <span className={`mb-strip2__odd ${homeFav ? 'is-fav' : ''}`}>{homeOdds}</span>
+      <div className="mb-strip2__mid">
         <MelvinBetWordmark size="sm" />
       </div>
-      <div className="mb-oddsStrip__side">
-        {awayChance > 55 && <span className="mb-pill mb-pill--gold" style={{ fontSize: 8 }}>{favouriteLabel}</span>}
-        <span className="mb-pill mb-pill--lime">{awayOdds}</span>
-        <span className="mb-oddsStrip__label">{awayName.split(' ').pop()}</span>
-      </div>
+      <span className={`mb-strip2__odd ${!homeFav ? 'is-fav' : ''}`}>{awayOdds}</span>
     </div>
   );
 }

@@ -16,5 +16,11 @@ export function areFixturesVisible(): boolean {
   return Date.now() >= UNLOCK_MS;
 }
 
+/** Returns true if the user can see fixtures — super_admin always, others after unlock. */
+export function canViewFixtures(role?: string | null): boolean {
+  if (role && role.toLowerCase() === 'super_admin') return true;
+  return Date.now() >= UNLOCK_MS;
+}
+
 /** Human-readable unlock label for locked-state UI. */
 export const FIXTURES_UNLOCK_LABEL = 'Season Two fixtures unlock at 6:00 PM tonight';

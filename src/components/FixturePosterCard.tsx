@@ -29,6 +29,9 @@ export type FixturePosterMatch = {
   awayScore?: FixtureScore;
   headerTag?: string;
 
+  adminHomeOdds?: number;
+  adminAwayOdds?: number;
+
   onMatchCentreClick?: () => void;
 };
 
@@ -396,6 +399,8 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
         matchId={safeMatch.id || `${homeKey}-${awayKey}`}
         homeName={home.name}
         awayName={away.name}
+        adminHomeOdds={safeMatch.adminHomeOdds}
+        adminAwayOdds={safeMatch.adminAwayOdds}
       />
 
       <button className="fxPosterCard__cta" type="button" onClick={safeMatch.onMatchCentreClick}>

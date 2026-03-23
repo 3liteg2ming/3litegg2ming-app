@@ -28,7 +28,7 @@ import { clearStatLeadersCache } from '../lib/stats-leaders-cache';
 import { resolveTeamLogoUrl } from '@/lib/entityResolvers';
 import { GoalKickerPicker } from '../components/submit/GoalKickerPicker';
 import { fetchAflPlayers, type AflPlayer } from '../data/aflPlayers';
-import { areFixturesVisible, FIXTURES_UNLOCK_LABEL } from '../lib/fixtureVisibility';
+import { canViewFixtures, FIXTURES_UNLOCK_LABEL } from '../lib/fixtureVisibility';
 import '../styles/submitPage.css';
 
 const supabase = requireSupabaseClient();
@@ -376,6 +376,7 @@ export default function SubmitPage() {
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [myTeamId, setMyTeamId] = useState<string | null>(null);
   const [myCoachName, setMyCoachName] = useState<string | null>(null);
+  const [myRole, setMyRole] = useState<string | null>(null);
 
   const [payload, setPayload] = useState<NextFixturePayload>(null);
   const [venue, setVenue] = useState('');
@@ -565,6 +566,7 @@ export default function SubmitPage() {
         if (!alive) return;
         setMyTeamId(profile.team_id);
         setMyCoachName(profile.display_name || profile.psn || 'Coach');
+        setMyRole(profile.role || null);
 
         const activeSeasonId = await resolveSeasonIdForSlug(requestedSeasonSlug);
         if (!alive) return;
@@ -1063,7 +1065,7 @@ export default function SubmitPage() {
     </div>
   );
 
-  if (!areFixturesVisible()) {
+  if (!canViewFixtures(myRole)) {
     return (
       <div className="egSubmitPage">
         <main className="egSubmitPage__main">

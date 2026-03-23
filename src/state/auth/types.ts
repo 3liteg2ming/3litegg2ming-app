@@ -13,6 +13,7 @@ export type CoachUser = {
   teamId?: string;
   teamName?: string;
   teamLogoUrl?: string;
+  role?: string;
 };
 
 export type AuthState = {

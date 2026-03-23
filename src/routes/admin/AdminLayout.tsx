@@ -32,6 +32,7 @@ const links = [
   { to: '/admin/flags', label: 'Feature Flags' },
   { to: '/admin/assets', label: 'Assets Browser' },
   { to: '/admin/audit', label: 'Audit Log' },
+  { to: '/admin/odds', label: 'Melvin Bet Odds' },
 ];
 
 export function useAdminLayoutContext() {

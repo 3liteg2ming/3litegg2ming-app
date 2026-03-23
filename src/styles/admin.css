@@ -571,3 +571,120 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ─── MELVIN BET ODDS ADMIN ──────────────────────────── */
+.eg-admin-odds-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.eg-admin-odds-round {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.eg-admin-odds-round-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.eg-admin-odds-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.eg-admin-odds-teams {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.eg-admin-odds-team {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px;
+}
+
+.eg-admin-odds-vs {
+  color: var(--admin-muted);
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.eg-admin-odds-inputs {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.eg-admin-odds-inputs label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+}
+
+.eg-admin-odds-inputs label span {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+}
+
+.eg-admin-odds-inputs input[type="number"] {
+  width: 68px;
+  padding: 5px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--admin-text);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+}
+
+.eg-admin-odds-inputs input[type="number"]::-webkit-inner-spin-button,
+.eg-admin-odds-inputs input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.eg-admin-odds-inputs input[type="number"]:focus {
+  outline: none;
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 2px rgba(33, 212, 253, 0.15);
+}
+
+@media (max-width: 600px) {
+  .eg-admin-odds-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .eg-admin-odds-inputs {
+    justify-content: center;
+  }
+}

@@ -58,6 +58,7 @@ const AdminContent = lazy(() => import('./routes/admin/pages/AdminContent'));
 const AdminFlags = lazy(() => import('./routes/admin/pages/AdminFlags'));
 const AdminAssets = lazy(() => import('./routes/admin/pages/AdminAssets'));
 const AdminAudit = lazy(() => import('./routes/admin/pages/AdminAudit'));
+const AdminOdds = lazy(() => import('./routes/admin/pages/AdminOdds'));
 
 const GLOBAL_CRASH_EVENT = 'eg:global-crash';
 
@@ -290,6 +291,7 @@ function AppRoutes() {
                   <Route path="flags" element={<AdminFlags />} />
                   <Route path="assets" element={<AdminAssets />} />
                   <Route path="audit" element={<AdminAudit />} />
+                  <Route path="odds" element={<AdminOdds />} />
                   <Route path="console" element={<AdminConsolePage />} />
                   <Route path="preseason-seeding" element={<AdminConsolePage />} />
                 </Route>

@@ -15,7 +15,7 @@ import { useLadder } from '../hooks/useLadder';
 import { useNextFixtures } from '../hooks/useFixtures';
 import { assetUrl } from '../lib/teamAssets';
 import { resolveTeamLogoUrl } from '../lib/entityResolvers';
-import { areFixturesVisible, FIXTURES_UNLOCK_LABEL } from '../lib/fixtureVisibility';
+import { areFixturesVisible, canViewFixtures, FIXTURES_UNLOCK_LABEL } from '../lib/fixtureVisibility';
 import { TEAM_SHORT_NAMES } from '../data/teamColors';
 import { MelvinBetHomeCard, type MelvinHomeFixture } from '../components/MelvinBet';
 
@@ -24,7 +24,7 @@ import '../styles/home.css';
 type StatLeaderCategory = import('../lib/stats-leaders-cache').StatLeaderCategory;
 type HomeCoach = import('../lib/homeRepo').HomeCoach;
 
-const FIXTURES_PUBLICLY_VISIBLE = areFixturesVisible();
+const FIXTURES_TIME_UNLOCKED = areFixturesVisible();
 
 const AFL26_LOGO_URL =
   'https://zohtixrgskbzosgfluni.supabase.co/storage/v1/object/public/Assets/afl26-logo.png';
@@ -692,12 +692,15 @@ function LadderSnapshot() {
 }
 
 export default function HomePage() {
+  const { user } = useAuth();
+  const fixturesVisible = canViewFixtures(user?.role) || FIXTURES_TIME_UNLOCKED;
+
   return (
     <div className="home-page">
       <main className="home-main">
         <HeroMasterCard />
-        {FIXTURES_PUBLICLY_VISIBLE ? <FeaturedMatchCard /> : <LaunchPromoCard />}
-        {FIXTURES_PUBLICLY_VISIBLE && <MelvinBetOutlookSection />}
+        {fixturesVisible ? <FeaturedMatchCard /> : <LaunchPromoCard />}
+
         <LeadersPreview />
         <CoachesSection />
         <LadderSnapshot />

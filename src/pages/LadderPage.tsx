@@ -2,11 +2,12 @@ import React, { memo, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 
 import SmartImg from '../components/SmartImg';
-import { MelvinBetSeasonForecast, type MelvinForecastTeam } from '../components/MelvinBet';
 import { TEAM_ASSETS, assetUrl, type TeamKey } from '../lib/teamAssets';
 import { getDataSeasonSlugForCompetition, getStoredCompetitionKey } from '../lib/competitionRegistry';
 import { resolveTeamKey } from '../lib/entityResolvers';
 import { useLadder } from '../hooks/useLadder';
+import { usePremOdds } from '../hooks/usePremOdds';
+import { useCoaches, type Coach } from '../hooks/useCoaches';
 
 import '../styles/ladder.css';
 
@@ -17,6 +18,7 @@ type LadderEntry = {
   pos: number;
   teamKey: TeamKey;
   teamName: string;
+  coachName?: string;
 
   played: number;
   wins: number;
@@ -33,6 +35,7 @@ type LadderEntry = {
 
   // entertainment-only
   winChance: number; // 5..95
+  premOdds: string;
 };
 
 function clamp(n: number, a: number, b: number) {
@@ -78,12 +81,22 @@ function toTeamKeyFromSlug(slug: string, name: string): TeamKey {
   return (key in TEAM_ASSETS ? (key as TeamKey) : 'adelaide') as TeamKey;
 }
 
-function enrichWinChance(rows: LadderEntry[]): LadderEntry[] {
+function enrichWinChance(rows: LadderEntry[], adminPremOdds: Record<string, number>): LadderEntry[] {
   return rows.map((r) => {
     const seed = hash01(r.id);
     const base = 45 + seed * 40; // 45..85
     const rankBoost = (rows.length - r.pos) * 0.6;
-    return { ...r, winChance: clamp(base + rankBoost, 5, 95) };
+    const winChance = clamp(base + rankBoost, 5, 95);
+    // Use admin-set prem odds if available, otherwise generate from position
+    const adminOdd = adminPremOdds[r.teamKey];
+    let premOdds: string;
+    if (adminOdd && adminOdd > 0) {
+      premOdds = adminOdd.toFixed(2);
+    } else {
+      const premBase = Math.max(1.5, 2 + (r.pos - 1) * 2.8 + seed * 3);
+      premOdds = premBase > 80 ? '81.00' : premBase.toFixed(2);
+    }
+    return { ...r, winChance, premOdds };
   });
 }
 
@@ -123,7 +136,10 @@ const LadderRow = memo(function LadderRow({ entry, mode }: { entry: LadderEntry;
         <div className="ladRow__logo">
           <SmartImg className="ladRow__logoImg" src={logo} alt={entry.teamName} />
         </div>
-        <div className="ladRow__name" title={entry.teamName}>{entry.teamName}</div>
+        <div className="ladRow__name" title={entry.teamName}>
+          {entry.teamName}
+          {entry.coachName && <div className="ladRow__coachName">Coach: {entry.coachName}</div>}
+        </div>
       </div>
 
       <div className="ladRow__stats">
@@ -136,13 +152,13 @@ const LadderRow = memo(function LadderRow({ entry, mode }: { entry: LadderEntry;
         )}
 
         {mode === 'EXTENDED' && (
-          <>
+          <div className="ladRow__ext">
             <span className="st"><span className="st__k">W</span><span className="st__v">{entry.wins}</span></span>
             <span className="st"><span className="st__k">L</span><span className="st__v">{entry.losses}</span></span>
             <span className="st"><span className="st__k">D</span><span className="st__v">{entry.draws}</span></span>
-            <span className="st st--wide"><span className="st__k">PF</span><span className="st__v">{entry.pf}</span></span>
-            <span className="st st--wide"><span className="st__k">PA</span><span className="st__v">{entry.pa}</span></span>
-          </>
+            <span className="st"><span className="st__k">PF</span><span className="st__v">{entry.pf}</span></span>
+            <span className="st"><span className="st__k">PA</span><span className="st__v">{entry.pa}</span></span>
+          </div>
         )}
 
         {mode === 'FORM' && (
@@ -155,6 +171,10 @@ const LadderRow = memo(function LadderRow({ entry, mode }: { entry: LadderEntry;
           </div>
         )}
       </div>
+
+      <div className="ladRow__prem" title="Premiership odds">
+        <span className="ladRow__premOdds">{entry.premOdds}</span>
+      </div>
     </motion.div>
   );
 });
@@ -165,20 +185,33 @@ export default function LadderPage() {
   const competitionKey = getStoredCompetitionKey();
   const seasonSlug = getDataSeasonSlugForCompetition(competitionKey);
   const { data: ladderRows, isLoading, isFetching, isError, isSuccess } = useLadder(seasonSlug);
+  const { data: adminPremOdds } = usePremOdds();
+  const { data: coaches } = useCoaches();
   const hasRows = Array.isArray(ladderRows) && ladderRows.length > 0;
   const showLoading = !isSuccess && !isError && !hasRows && (isLoading || isFetching);
 
   const rows = useMemo(() => {
     if (!Array.isArray(ladderRows) || ladderRows.length === 0) return [] as LadderEntry[];
 
+    const coachesByTeamKey = new Map<string, Coach>();
+    if (coaches) {
+      for (const coach of coaches) {
+        if (coach.team_key) {
+          coachesByTeamKey.set(coach.team_key, coach);
+        }
+      }
+    }
+
     const mapped: LadderEntry[] = ladderRows
       .map((r, idx) => {
         const teamKey = toTeamKeyFromSlug(String(r.team_slug || ''), String(r.team_name || ''));
+        const coach = coachesByTeamKey.get(teamKey);
         return {
           id: String(r.team_id),
           pos: idx + 1,
           teamKey,
-          teamName: String(r.team_name || TEAM_ASSETS[teamKey]?.name || 'Team'),
+          teamName: TEAM_ASSETS[teamKey]?.name || String(r.team_name || 'Team'),
+          coachName: coach?.display_name,
           played: Number(r.played || 0),
           wins: Number(r.wins || 0),
           losses: Number(r.losses || 0),
@@ -189,26 +222,12 @@ export default function LadderPage() {
           percentage: Number(r.percentage || 0),
           form: normalizeForm((r as any).last5_results),
           winChance: 50,
+          premOdds: '10.00',
         };
       });
 
-    return enrichWinChance(mapped);
-  }, [ladderRows]);
-
-  const forecastTeams = useMemo<MelvinForecastTeam[]>(() => {
-    return rows.map((r) => {
-      const t = TEAM_ASSETS[r.teamKey] || { logoFile: '' };
-      return {
-        id: r.id,
-        pos: r.pos,
-        teamName: r.teamName,
-        logoUrl: t.logoFile ? assetUrl(t.logoFile) : undefined,
-        played: r.played,
-        wins: r.wins,
-        percentage: r.percentage,
-      };
-    });
-  }, [rows]);
+    return enrichWinChance(mapped, adminPremOdds || {});
+  }, [ladderRows, adminPremOdds, coaches]);
 
   return (
     <div className="ladderPage aflLayout">
@@ -241,6 +260,12 @@ export default function LadderPage() {
           </div>
         </div>
 
+        {rows.length > 0 && (
+          <div className="ladList__header">
+            <span className="ladList__headerLabel">Team</span>
+            <span className="ladList__headerLabel ladList__headerLabel--right">Prem</span>
+          </div>
+        )}
         <div className="ladList">
           {rows.length > 0 ? rows.map((r) => <LadderRow key={r.id} entry={r} mode={mode} />) : (
             <div className="ladRow ladRow--empty">
@@ -253,8 +278,6 @@ export default function LadderPage() {
             </div>
           )}
         </div>
-
-        {forecastTeams.length > 0 && <MelvinBetSeasonForecast teams={forecastTeams} />}
 
         <div className="safeBottom" />
       </div>
