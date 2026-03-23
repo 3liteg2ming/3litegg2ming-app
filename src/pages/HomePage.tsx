@@ -153,10 +153,10 @@ function HeroMasterCard() {
   const { user } = useAuth();
   const eliteLogo = assetUrl('elite-gaming-logo.png');
 
-  const primaryHref = user ? '/members' : '/auth/sign-up';
-  const secondaryHref = user ? '/ladder' : '/auth/sign-in';
-  const primaryLabel = user ? 'My Club Hub' : 'Create Your Account';
-  const secondaryLabel = user ? 'View Ladder' : 'Sign In';
+  const primaryHref = user ? '/members' : '/auth/sign-in';
+  const secondaryHref = user ? '/ladder' : '/fixtures';
+  const primaryLabel = user ? 'My Club Hub' : 'Sign In';
+  const secondaryLabel = user ? 'View Ladder' : 'View Fixtures';
 
   return (
     <section className="home-hero-wrap">
@@ -172,7 +172,7 @@ function HeroMasterCard() {
           <div className="home-hero-pillRow">
             <span className="home-hero-pill">
               <span className="home-hero-pillDot" />
-              {user ? 'Season Live' : 'Registration Open'}
+              Season Live
             </span>
           </div>
 

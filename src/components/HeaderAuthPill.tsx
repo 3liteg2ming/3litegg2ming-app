@@ -68,10 +68,10 @@ export function HeaderAuthPill() {
       <button
         type="button"
         className="authPill authPill--header authPill--signedOut"
-        onClick={() => nav('/auth/sign-up')}
-        aria-label="Create account"
+        onClick={() => nav('/auth/sign-in')}
+        aria-label="Sign In"
       >
-        Create account
+        Sign In
       </button>
     );
   }
@@ -123,7 +123,7 @@ export function HeaderAuthPill() {
             onClick={() => {
               setOpen(false);
               void signOut().finally(() => {
-                nav('/preseason-registration');
+                nav('/');
               });
             }}
           >
