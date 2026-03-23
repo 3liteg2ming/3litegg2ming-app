@@ -125,3 +125,41 @@
     font-size: 13px;
   }
 }
+
+/* Submit Results button */
+.mcPage__submitWrap {
+  width: 100%;
+  max-width: 768px;
+  margin: 0 auto;
+  padding: 20px 16px 0;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+}
+
+.mcPage__submitBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #f5c400, #ffd54a, #f5c400);
+  color: #0c0e16;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 8px 20px rgba(245, 196, 0, 0.25);
+}
+
+.mcPage__submitBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(245, 196, 0, 0.35);
+}
+
+.mcPage__submitBtn:active {
+  transform: translateY(0);
+}

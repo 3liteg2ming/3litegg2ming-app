@@ -68,6 +68,8 @@ export function GoalKickerPicker({
   const activeScoredGoals = activeSide === 'home' ? homeScoredGoals : awayScoredGoals;
   const activeUnassignedGoals = Math.max(0, activeScoredGoals - activeTaggedGoals);
 
+  const selectedIds = useMemo(() => new Set(activeKickers.map((k) => k.id)), [activeKickers]);
+
   const teamPlayers = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     return allPlayers
@@ -75,9 +77,10 @@ export function GoalKickerPicker({
         if (activeTeamId && player.teamId === activeTeamId) return true;
         return String(player.teamName || '').trim().toLowerCase() === activeTeamName.toLowerCase();
       })
+      .filter((player) => !selectedIds.has(player.id))
       .filter((player) => (!query ? true : player.name.toLowerCase().includes(query)))
-      .slice(0, 20);
-  }, [activeTeamId, activeTeamName, allPlayers, searchQuery]);
+      .slice(0, 30);
+  }, [activeTeamId, activeTeamName, allPlayers, searchQuery, selectedIds]);
 
   const handleAddFromSearch = () => {
     const nextName = searchQuery.trim();
@@ -86,99 +89,88 @@ export function GoalKickerPicker({
     setSearchQuery('');
   };
 
-  function KickerRow({ kicker }: { kicker: GoalKicker }) {
-    return (
-      <div className="kickerRow">
-        <div className="kickerRow__left">
-          <div className="kickerRow__avatar">
-            {kicker.photoUrl ? (
-              <img src={kicker.photoUrl} alt={kicker.name} />
-            ) : (
-              <div className="kickerRow__avatarFallback">
-                <User size={16} />
-              </div>
-            )}
-          </div>
-          <div className="kickerRow__info">
-            <div className="kickerRow__name">{kicker.name}</div>
-            <div className="kickerRow__goals">{kicker.goals} {kicker.goals === 1 ? 'goal' : 'goals'}</div>
-          </div>
-        </div>
-        <div className="kickerRow__controls">
-          <button type="button" className="kickerRow__btn" onClick={() => onDecGoal(activeSide, kicker.id)} title="Decrease goals">
-            <Minus size={15} />
-          </button>
-          <span className="kickerRow__count">{kicker.goals}</span>
-          <button type="button" className="kickerRow__btn" onClick={() => onIncGoal(activeSide, kicker.id)} title="Increase goals">
-            <Plus size={15} />
-          </button>
-          <button type="button" className="kickerRow__remove" onClick={() => onRemoveKicker(activeSide, kicker.id)} title="Remove kicker">
-            <X size={15} />
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="kickerPicker">
+      {/* Compact header with toggle + status */}
       <div className="kickerPicker__header">
-        <div>
-          <h3 className="kickerPicker__title">Goal Kickers</h3>
-          <p className="kickerPicker__subtitle">Search linked players or add a manual name. Use + / - to keep the goal split accurate.</p>
-        </div>
-
-        <div className="kickerPicker__totals">
-          <div className="kickerPicker__totalCard">
-            <span className="kickerPicker__totalLabel">{homeTeamName}</span>
-            <strong className="kickerPicker__totalValue">{homeTaggedGoals}</strong>
-            <span className="kickerPicker__totalSub">{homeKickers.length} selected • {homeScoredGoals} scored</span>
-          </div>
-          <div className="kickerPicker__totalCard">
-            <span className="kickerPicker__totalLabel">{awayTeamName}</span>
-            <strong className="kickerPicker__totalValue">{awayTaggedGoals}</strong>
-            <span className="kickerPicker__totalSub">{awayKickers.length} selected • {awayScoredGoals} scored</span>
-          </div>
-        </div>
+        <h3 className="kickerPicker__title">Goal Kickers</h3>
+        <p className="kickerPicker__subtitle">Tap a player to add, then use +/- to set goals.</p>
       </div>
 
+      {/* Team toggle */}
       <div className="kickerPicker__toggle">
         <button
           type="button"
           className={`kickerPicker__toggleBtn ${activeSide === 'home' ? 'isActive' : ''}`}
-          onClick={() => {
-            setActiveSide('home');
-            setSearchQuery('');
-          }}
+          onClick={() => { setActiveSide('home'); setSearchQuery(''); }}
         >
-          {homeTeamName}
+          <span className="kickerPicker__toggleName">{homeTeamName}</span>
+          <span className="kickerPicker__toggleBadge">
+            {homeTaggedGoals}/{homeScoredGoals}
+          </span>
         </button>
         <button
           type="button"
           className={`kickerPicker__toggleBtn ${activeSide === 'away' ? 'isActive' : ''}`}
-          onClick={() => {
-            setActiveSide('away');
-            setSearchQuery('');
-          }}
+          onClick={() => { setActiveSide('away'); setSearchQuery(''); }}
         >
-          {awayTeamName}
+          <span className="kickerPicker__toggleName">{awayTeamName}</span>
+          <span className="kickerPicker__toggleBadge">
+            {awayTaggedGoals}/{awayScoredGoals}
+          </span>
         </button>
       </div>
 
-      <div className="kickerPicker__activeMeta">
-        <div className="kickerPicker__activeTeam">{activeTeamName}</div>
-        <div className={`kickerPicker__activeHint ${activeUnassignedGoals > 0 ? 'isWarn' : ''}`}>
-          {activeUnassignedGoals > 0
-            ? `${activeUnassignedGoals} unassigned goal${activeUnassignedGoals === 1 ? '' : 's'} remaining`
-            : 'All entered goals are assigned'}
-        </div>
+      {/* Status hint */}
+      <div className={`kickerPicker__activeHint ${activeUnassignedGoals > 0 ? 'isWarn' : 'isDone'}`}>
+        {activeUnassignedGoals > 0
+          ? `${activeUnassignedGoals} unassigned goal${activeUnassignedGoals === 1 ? '' : 's'} remaining`
+          : 'All goals assigned'}
       </div>
 
+      {/* Selected kickers — compact inline cards */}
+      {activeKickers.length > 0 ? (
+        <div className="kickerPicker__selectedRow">
+          {[...activeKickers]
+            .sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name))
+            .map((kicker) => (
+              <div key={kicker.id} className="kickerSelected">
+                <button
+                  type="button"
+                  className="kickerSelected__remove"
+                  onClick={() => onRemoveKicker(activeSide, kicker.id)}
+                  title="Remove"
+                >
+                  <X size={10} />
+                </button>
+                <span className="kickerSelected__goalBadge">{kicker.goals}g</span>
+                <div className="kickerSelected__avatar">
+                  {kicker.photoUrl ? (
+                    <img src={kicker.photoUrl} alt={kicker.name} />
+                  ) : (
+                    <User size={14} />
+                  )}
+                </div>
+                <div className="kickerSelected__name">{kicker.name.split(' ').pop()}</div>
+                <div className="kickerSelected__controls">
+                  <button type="button" onClick={() => onDecGoal(activeSide, kicker.id)} className="kickerSelected__btn">
+                    <Minus size={12} />
+                  </button>
+                  <button type="button" onClick={() => onIncGoal(activeSide, kicker.id)} className="kickerSelected__btn kickerSelected__btn--plus">
+                    <Plus size={12} />
+                  </button>
+                </div>
+              </div>
+            ))}
+        </div>
+      ) : null}
+
+      {/* Search */}
       <div className="kickerPicker__search">
-        <Search size={18} />
+        <Search size={16} />
         <input
           type="text"
-          placeholder={`Search ${activeTeamName} players or add a name`}
+          placeholder={`Search ${activeTeamName} players…`}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={(e) => {
@@ -187,55 +179,46 @@ export function GoalKickerPicker({
         />
         {searchQuery.trim() ? (
           <button type="button" className="kickerPicker__addBtn" onClick={handleAddFromSearch} title="Add kicker">
-            <Plus size={16} /> Add Name
+            <Plus size={14} /> Add
           </button>
         ) : null}
       </div>
 
+      {/* Player chips — horizontal scroll on mobile */}
       {teamPlayers.length > 0 ? (
-        <div className="kickerPicker__chips">
+        <div className="kickerPicker__chipScroll">
           {teamPlayers.map((player) => (
             <button
               key={player.id}
               type="button"
-              className="kickerPicker__chip"
+              className="kickerChip"
               onClick={() => {
                 onAddKicker(activeSide, { id: player.id, name: player.name, photoUrl: player.photoUrl });
                 setSearchQuery('');
               }}
             >
-              {player.photoUrl ? (
-                <img src={player.photoUrl} alt={player.name} className="kickerPicker__chipAvatar" />
-              ) : (
-                <User size={12} />
-              )}
-              {player.name}
+              <div className="kickerChip__avatar">
+                {player.photoUrl ? (
+                  <img src={player.photoUrl} alt={player.name} />
+                ) : (
+                  <User size={14} />
+                )}
+              </div>
+              <span className="kickerChip__name">{player.name}</span>
             </button>
           ))}
         </div>
       ) : null}
 
       {searchQuery.trim() && teamPlayers.length === 0 ? (
-        <div className="kickerPicker__manualHint">No linked player match. Add “{searchQuery.trim()}” manually.</div>
+        <div className="kickerPicker__manualHint">
+          No match found. Press Enter or tap Add to add &ldquo;{searchQuery.trim()}&rdquo; manually.
+        </div>
       ) : null}
 
-      <div className="kickerPicker__selected">
-        {activeKickers.length === 0 ? (
-          <div className="kickerPicker__empty">No goal kickers tagged yet for {activeTeamName}</div>
-        ) : (
-          <div className="kickerPicker__list">
-            {[...activeKickers]
-              .sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name))
-              .map((kicker) => (
-                <KickerRow key={kicker.id} kicker={kicker} />
-              ))}
-          </div>
-        )}
-      </div>
-
-      {activeKickers.length > 0 || activeUnassignedGoals > 0 ? (
+      {/* Summary */}
+      {(activeKickers.length > 0 || activeUnassignedGoals > 0) ? (
         <div className="kickerPicker__summary">
-          <div className="kickerPicker__summaryLabel">Current Split</div>
           <div className="kickerPicker__summaryChips">
             {activeKickers.map((kicker) => (
               <span key={kicker.id} className="kickerPicker__summaryChip">

@@ -72,6 +72,8 @@ export type FixtureRow = {
   is_final: boolean;
   is_scheduled: boolean;
   winner: 'HOME' | 'AWAY' | 'DRAW' | 'NONE';
+  team_stats_json?: unknown;
+  quarter_scores_json?: unknown;
 };
 
 const FINAL_STATUSES = new Set(['FINAL', 'COMPLETED', 'COMPLETE', 'FULL_TIME', 'FULLTIME']);
@@ -304,6 +306,8 @@ function normalizeFixtureRow(raw: RawFixtureRow, teamsById: Map<string, TeamRow>
     is_final: normalizedStatus === 'FINAL',
     is_scheduled: normalizedStatus === 'SCHEDULED',
     winner: computeWinner(normalizedStatus, homeTotal, awayTotal),
+    team_stats_json: (raw as any).team_stats_json ?? undefined,
+    quarter_scores_json: (raw as any).quarter_scores_json ?? undefined,
   };
 }
 

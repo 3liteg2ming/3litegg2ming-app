@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AdminPermissionError,
@@ -10,35 +11,35 @@ import {
   updateFixture,
 } from '@/lib/adminApi';
 import { useAdminLayoutContext } from '../AdminLayout';
-import { formatDateTime, useDebouncedValue, usePagination } from '../useAdminTools';
-import { AdminCard, EmptyState, Pager } from './AdminUi';
+import { formatDateTime, useDebouncedValue } from '../useAdminTools';
+import { AdminCard, EmptyState } from './AdminUi';
 
-const PAGE_SIZE = 20;
+type ViewMode = 'rounds' | 'table';
 
 export default function AdminFixtures() {
   const queryClient = useQueryClient();
   const { globalSearch, pushToast } = useAdminLayoutContext();
 
-  const [page, setPage] = useState(1);
   const [seasonId, setSeasonId] = useState<'all' | string>('all');
   const [teamId, setTeamId] = useState<'all' | string>('all');
   const [status, setStatus] = useState<'all' | string>('all');
   const [roundInput, setRoundInput] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [viewMode, setViewMode] = useState<ViewMode>('rounds');
 
   const search = useDebouncedValue((searchInput || globalSearch).trim(), 300);
-  const round = roundInput ? Number(roundInput) : null;
+  const roundFilter = roundInput ? Number(roundInput) : null;
 
   const fixturesQuery = useQuery({
-    queryKey: ['admin', 'fixtures', page, seasonId, teamId, status, round, search],
+    queryKey: ['admin', 'fixtures', 1, seasonId, teamId, status, roundFilter, search],
     queryFn: () =>
       listFixtures({
-        page,
-        pageSize: PAGE_SIZE,
+        page: 1,
+        pageSize: 500,
         seasonId,
         teamId,
         status,
-        round,
+        round: roundFilter,
         search,
       }),
     placeholderData: keepPreviousData,
@@ -95,11 +96,38 @@ export default function AdminFixtures() {
     },
   });
 
-  const pager = usePagination(fixturesQuery.data?.total ?? 0, PAGE_SIZE);
+  const allFixtures = fixturesQuery.data?.rows || [];
+
+  const roundsGrouped = useMemo(() => {
+    const map = new Map<number, typeof allFixtures>();
+    for (const f of allFixtures) {
+      const r = f.round ?? 0;
+      if (!map.has(r)) map.set(r, []);
+      map.get(r)!.push(f);
+    }
+    return Array.from(map.entries()).sort((a, b) => a[0] - b[0]);
+  }, [allFixtures]);
+
+  function scoreLabel(f: typeof allFixtures[0]) {
+    if (f.home_total != null && f.away_total != null) {
+      return `${f.home_total} - ${f.away_total}`;
+    }
+    return '— vs —';
+  }
+
+  function statusBadge(s: string | null) {
+    if (s === 'FINAL') return { bg: 'rgba(52,211,153,0.18)', color: '#6ee7b7', label: 'FINAL' };
+    if (s === 'LIVE') return { bg: 'rgba(251,191,36,0.18)', color: '#fcd34d', label: 'LIVE' };
+    return { bg: 'rgba(148,163,184,0.12)', color: '#94a3b8', label: 'SCHED' };
+  }
+
+  function hasStats(f: typeof allFixtures[0]) {
+    return f.home_total != null || f.away_total != null;
+  }
 
   return (
     <div className="eg-admin-grid">
-      <AdminCard title="Fixtures & Results Control" subtitle="Admin RPC-backed controls with confirmation on dangerous operations">
+      <AdminCard title="Fixtures & Results Control" subtitle="Click any fixture to edit scores, player stats, and OCR data">
         <div className="eg-admin-toolbar">
           <label className="eg-admin-inline-field">
             <span>Search venue</span>
@@ -140,6 +168,13 @@ export default function AdminFixtures() {
             <span>Round</span>
             <input value={roundInput} onChange={(event) => setRoundInput(event.target.value)} placeholder="e.g. 4" />
           </label>
+          <label className="eg-admin-inline-field narrow">
+            <span>View</span>
+            <select value={viewMode} onChange={(e) => setViewMode(e.target.value as ViewMode)}>
+              <option value="rounds">By Round</option>
+              <option value="table">Table</option>
+            </select>
+          </label>
         </div>
 
         {fixturesQuery.isLoading ? <p className="eg-admin-muted">Loading fixtures…</p> : null}
@@ -149,122 +184,222 @@ export default function AdminFixtures() {
           </p>
         ) : null}
 
-        {!fixturesQuery.isLoading && !(fixturesQuery.data?.rows.length || 0) ? (
+        {!fixturesQuery.isLoading && !allFixtures.length ? (
           <EmptyState title="No fixtures" description="No fixtures matched your filters." />
-        ) : (
-          <>
-            <div className="eg-admin-table-wrap">
-              <table className="eg-admin-table">
-                <thead>
-                  <tr>
-                    <th>Fixture</th>
-                    <th>Status</th>
-                    <th>Start Time</th>
-                    <th>Venue</th>
-                    <th>Score</th>
-                    <th>Danger Zone</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(fixturesQuery.data?.rows || []).map((fixture) => {
-                    const home = fixture.home_team_id ? teamById.get(fixture.home_team_id) || fixture.home_team_id : 'TBD';
-                    const away = fixture.away_team_id ? teamById.get(fixture.away_team_id) || fixture.away_team_id : 'TBD';
+        ) : null}
 
-                    return (
-                      <tr key={fixture.id}>
-                        <td>
+        {viewMode === 'rounds' && roundsGrouped.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {roundsGrouped.map(([round, fixtures]) => {
+              const finalCount = fixtures.filter((f) => f.status === 'FINAL').length;
+              const totalCount = fixtures.length;
+              const allFinal = finalCount === totalCount;
+              return (
+                <div key={round} style={{
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '10px 14px',
+                    background: allFinal ? 'rgba(52,211,153,0.06)' : 'rgba(255,255,255,0.03)',
+                    borderBottom: '1px solid rgba(255,255,255,0.06)',
+                  }}>
+                    <strong style={{ fontSize: '0.92rem' }}>Round {round || '?'}</strong>
+                    <span style={{
+                      fontSize: '0.78rem',
+                      color: allFinal ? '#6ee7b7' : 'var(--admin-muted)',
+                    }}>
+                      {finalCount}/{totalCount} final
+                    </span>
+                  </div>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                    gap: 1,
+                    background: 'rgba(255,255,255,0.04)',
+                  }}>
+                    {fixtures.map((f) => {
+                      const home = f.home_team_id ? teamById.get(f.home_team_id) || 'TBD' : 'TBD';
+                      const away = f.away_team_id ? teamById.get(f.away_team_id) || 'TBD' : 'TBD';
+                      const badge = statusBadge(f.status);
+                      const scored = hasStats(f);
+                      return (
+                        <Link
+                          key={f.id}
+                          to={`/admin/fixtures/${f.id}`}
+                          style={{
+                            display: 'block',
+                            padding: '10px 14px',
+                            background: 'rgba(7,10,18,0.6)',
+                            textDecoration: 'none',
+                            color: 'inherit',
+                            borderLeft: scored
+                              ? '3px solid rgba(52,211,153,0.5)'
+                              : '3px solid rgba(148,163,184,0.2)',
+                            transition: 'background 0.15s',
+                          }}
+                          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(34,203,253,0.06)'; }}
+                          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(7,10,18,0.6)'; }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <strong style={{ fontSize: '0.88rem', color: '#def0ff' }}>
+                              {home} vs {away}
+                            </strong>
+                            <span style={{
+                              fontSize: '0.72rem',
+                              padding: '2px 6px',
+                              borderRadius: 6,
+                              background: badge.bg,
+                              color: badge.color,
+                              fontWeight: 700,
+                            }}>
+                              {badge.label}
+                            </span>
+                          </div>
+                          <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginTop: 4,
+                            fontSize: '0.8rem',
+                            color: 'var(--admin-muted)',
+                          }}>
+                            <span style={{
+                              fontWeight: scored ? 700 : 400,
+                              color: scored ? '#bfe4ff' : 'var(--admin-muted)',
+                              fontVariantNumeric: 'tabular-nums',
+                            }}>
+                              {scoreLabel(f)}
+                            </span>
+                            <span>{f.venue || '—'}</span>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {viewMode === 'table' && allFixtures.length > 0 ? (
+          <div className="eg-admin-table-wrap">
+            <table className="eg-admin-table">
+              <thead>
+                <tr>
+                  <th>Fixture</th>
+                  <th>Status</th>
+                  <th>Start Time</th>
+                  <th>Venue</th>
+                  <th>Score</th>
+                  <th>Danger Zone</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allFixtures.map((fixture) => {
+                  const home = fixture.home_team_id ? teamById.get(fixture.home_team_id) || fixture.home_team_id : 'TBD';
+                  const away = fixture.away_team_id ? teamById.get(fixture.away_team_id) || fixture.away_team_id : 'TBD';
+
+                  return (
+                    <tr key={fixture.id}>
+                      <td>
+                        <Link to={`/admin/fixtures/${fixture.id}`} style={{ color: '#def0ff', textDecoration: 'none' }}>
                           <strong>
                             R{fixture.round ?? '?'}: {home} vs {away}
                           </strong>
-                          <p className="mono">{fixture.id}</p>
-                        </td>
-                        <td>
-                          <select
-                            value={fixture.status || ''}
-                            onChange={(event) =>
-                              fixtureMutation.mutate({
-                                mode: 'status',
-                                fixtureId: fixture.id,
-                                status: event.target.value,
-                              })
+                        </Link>
+                        <p className="mono">{fixture.id}</p>
+                      </td>
+                      <td>
+                        <select
+                          value={fixture.status || ''}
+                          onChange={(event) =>
+                            fixtureMutation.mutate({
+                              mode: 'status',
+                              fixtureId: fixture.id,
+                              status: event.target.value,
+                            })
+                          }
+                        >
+                          <option value="SCHEDULED">Scheduled</option>
+                          <option value="LIVE">Live</option>
+                          <option value="FINAL">Final</option>
+                        </select>
+                      </td>
+                      <td>
+                        <div className="eg-admin-inline-action">
+                          <input
+                            type="datetime-local"
+                            defaultValue={
+                              fixture.start_time
+                                ? new Date(fixture.start_time).toISOString().slice(0, 16)
+                                : ''
                             }
+                            onBlur={(event) => {
+                              if (!event.target.value) return;
+                              fixtureMutation.mutate({
+                                mode: 'startTime',
+                                fixtureId: fixture.id,
+                                startTime: new Date(event.target.value).toISOString(),
+                              });
+                            }}
+                          />
+                        </div>
+                        <p>{formatDateTime(fixture.start_time)}</p>
+                      </td>
+                      <td>
+                        <div className="eg-admin-inline-action">
+                          <input
+                            defaultValue={fixture.venue || ''}
+                            onBlur={(event) => {
+                              const value = event.target.value.trim();
+                              if (!value) return;
+                              fixtureMutation.mutate({
+                                mode: 'venue',
+                                fixtureId: fixture.id,
+                                venue: value,
+                              });
+                            }}
+                          />
+                        </div>
+                      </td>
+                      <td>
+                        {fixture.home_total ?? '—'} - {fixture.away_total ?? '—'}
+                      </td>
+                      <td>
+                        <div className="eg-admin-danger-actions">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!window.confirm(`Swap home/away teams for fixture ${fixture.id}?`)) return;
+                              fixtureMutation.mutate({ mode: 'swap', fixtureId: fixture.id });
+                            }}
                           >
-                            <option value="SCHEDULED">Scheduled</option>
-                            <option value="LIVE">Live</option>
-                            <option value="FINAL">Final</option>
-                          </select>
-                        </td>
-                        <td>
-                          <div className="eg-admin-inline-action">
-                            <input
-                              type="datetime-local"
-                              defaultValue={
-                                fixture.start_time
-                                  ? new Date(fixture.start_time).toISOString().slice(0, 16)
-                                  : ''
-                              }
-                              onBlur={(event) => {
-                                if (!event.target.value) return;
-                                fixtureMutation.mutate({
-                                  mode: 'startTime',
-                                  fixtureId: fixture.id,
-                                  startTime: new Date(event.target.value).toISOString(),
-                                });
-                              }}
-                            />
-                          </div>
-                          <p>{formatDateTime(fixture.start_time)}</p>
-                        </td>
-                        <td>
-                          <div className="eg-admin-inline-action">
-                            <input
-                              defaultValue={fixture.venue || ''}
-                              onBlur={(event) => {
-                                const value = event.target.value.trim();
-                                if (!value) return;
-                                fixtureMutation.mutate({
-                                  mode: 'venue',
-                                  fixtureId: fixture.id,
-                                  venue: value,
-                                });
-                              }}
-                            />
-                          </div>
-                        </td>
-                        <td>
-                          {fixture.home_total ?? '—'} - {fixture.away_total ?? '—'}
-                        </td>
-                        <td>
-                          <div className="eg-admin-danger-actions">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (!window.confirm(`Swap home/away teams for fixture ${fixture.id}?`)) return;
-                                fixtureMutation.mutate({ mode: 'swap', fixtureId: fixture.id });
-                              }}
-                            >
-                              Swap Teams
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (!window.confirm(`Clear scores for fixture ${fixture.id}? This is destructive.`)) return;
-                                fixtureMutation.mutate({ mode: 'clear', fixtureId: fixture.id });
-                              }}
-                            >
-                              Clear Scores
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            <Pager page={page} pages={pager.pages} onPage={setPage} totalLabel={pager.label} />
-          </>
-        )}
+                            Swap Teams
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!window.confirm(`Clear scores for fixture ${fixture.id}? This is destructive.`)) return;
+                              fixtureMutation.mutate({ mode: 'clear', fixtureId: fixture.id });
+                            }}
+                          >
+                            Clear Scores
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
       </AdminCard>
     </div>
   );

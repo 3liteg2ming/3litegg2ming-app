@@ -23,7 +23,10 @@ export type FixtureSubmissionStatKey =
   | 'disposals'
   | 'marks'
   | 'kicks'
-  | 'handballs';
+  | 'handballs'
+  | 'goals'
+  | 'behinds'
+  | 'afl_fantasy';
 
 export type CreateSubmissionOptions = {
   submittedTeamId?: string | null;

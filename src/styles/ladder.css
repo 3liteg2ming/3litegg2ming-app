@@ -19,7 +19,7 @@
 /* HERO */
 .ladderHero {
   border-radius: 14px;
-  padding: 8px 11px;
+  padding: 14px 16px;
   background:
     radial-gradient(ellipse 140% 120% at 50% -10%, rgba(245, 196, 0, 0.04), transparent 65%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.005)),
@@ -37,7 +37,7 @@
 }
 
 .ladderHero .kicker {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   color: rgba(255, 255, 255, 0.48);
   font-weight: 800;
@@ -45,25 +45,25 @@
 }
 
 .ladderHero .title {
-  font-size: 28px;
+  font-size: 30px;
   line-height: 1;
   font-weight: 900;
-  margin-top: 2px;
+  margin-top: 3px;
   color: rgba(245, 249, 255, 0.96);
 }
 
 .ladderHero .rule {
   height: 2px;
   width: 56px;
-  margin-top: 5px;
+  margin-top: 7px;
   border-radius: 999px;
   background: rgba(245, 196, 0, 0.88);
   box-shadow: 0 0 8px rgba(245, 196, 0, 0.14);
 }
 
 .ladderHero .hint {
-  margin-top: 4px;
-  font-size: 11px;
+  margin-top: 6px;
+  font-size: 12px;
   color: rgba(255, 255, 255, 0.50);
   font-weight: 600;
 }
@@ -74,10 +74,10 @@
   color: rgba(0, 0, 0, 0.88);
   font-weight: 900;
   border-radius: 8px;
-  padding: 5px 9px;
+  padding: 6px 11px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.24);
-  font-size: 8px;
+  font-size: 9px;
   letter-spacing: 0.06em;
 }
 
@@ -319,33 +319,33 @@
   }
 
   .ladderHero {
-    padding: 8px 10px;
+    padding: 12px 14px;
     border-radius: 12px;
   }
 
   .ladderHero .title {
-    font-size: 26px;
-    margin-top: 1px;
+    font-size: 28px;
+    margin-top: 2px;
   }
 
   .ladderHero .kicker {
-    font-size: 8px;
+    font-size: 10px;
   }
 
   .ladderHero .hint {
-    font-size: 10px;
-    margin-top: 2px;
+    font-size: 11px;
+    margin-top: 4px;
   }
 
   .ladderHero .rule {
     width: 48px;
-    margin-top: 4px;
+    margin-top: 5px;
   }
 
   .ladderHero .seasonPill {
-    padding: 4px 7px;
-    font-size: 7.5px;
-    border-radius: 6px;
+    padding: 5px 9px;
+    font-size: 8.5px;
+    border-radius: 7px;
   }
 
   .aflTabs .t {

@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet, useLocation, useOutletContext } from 'react-router-dom';
 import { useMemo, useState } from 'react';
+import { getAdminToken } from './AdminGate';
 import '@/styles/admin.css';
 
 type ToastType = 'success' | 'error' | 'info';
@@ -14,6 +15,7 @@ export type AdminLayoutContext = {
   globalSearch: string;
   setGlobalSearch: (value: string) => void;
   pushToast: (message: string, type?: ToastType) => void;
+  adminToken: () => string;
 };
 
 const links = [
@@ -106,6 +108,7 @@ export default function AdminLayout() {
               globalSearch,
               setGlobalSearch,
               pushToast,
+              adminToken: getAdminToken,
             }}
           />
         </div>

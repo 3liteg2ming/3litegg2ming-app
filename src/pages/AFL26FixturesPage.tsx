@@ -20,10 +20,14 @@ import { resolveTeamKey } from '../lib/entityResolvers';
 import { deriveFixtureRound, normalizeFixtureStatus, type FixtureRow } from '../lib/fixturesRepo';
 import { fetchMatchCentre } from '../lib/matchCentreRepo';
 import { fetchCurrentCoaches, type HomeCoach } from '../lib/homeRepo';
+import { areFixturesVisible, FIXTURES_UNLOCK_LABEL } from '../lib/fixtureVisibility';
 import '../styles/Fixtures.css';
 
-// Launch gate: set to true to reveal fixtures
-export const FIXTURES_PUBLICLY_VISIBLE = false;
+// Launch gate: driven by time-based visibility helper
+export const FIXTURES_PUBLICLY_VISIBLE = areFixturesVisible();
+
+// Only show rounds up to this number (hide later rounds until ready)
+const MAX_VISIBLE_ROUND = 1;
 
 type StatusFilter = 'ALL' | 'SCHEDULED' | 'FINAL';
 
@@ -290,7 +294,10 @@ export default function AFL26FixturesPage() {
     setVisibleCount(INITIAL_RENDER_COUNT);
   }, [competitionKey]);
 
-  const regularStageGroups = useMemo(() => buildRegularStageGroups(allFixtures), [allFixtures]);
+  const regularStageGroups = useMemo(
+    () => buildRegularStageGroups(allFixtures).filter((stage) => stage.index <= MAX_VISIBLE_ROUND),
+    [allFixtures],
+  );
 
   useEffect(() => {
     if (!FIXTURES_PUBLICLY_VISIBLE) return;
@@ -487,16 +494,10 @@ export default function AFL26FixturesPage() {
         <div className="fxAflPanel">
           {!FIXTURES_PUBLICLY_VISIBLE ? (
             <div className="fxAflLaunchGate">
-              <h2 className="fxAflLaunchGate__title">Fixtures unlock this week</h2>
+              <h2 className="fxAflLaunchGate__title">{FIXTURES_UNLOCK_LABEL}</h2>
               <p className="fxAflLaunchGate__body">
-                Coach registrations are now open. Matchups and rounds will appear once the season
-                reveal goes live.
+                Matchups and rounds will appear once the season reveal goes live.
               </p>
-              <div className="fxAflLaunchGate__actions">
-                <Link to="/auth/sign-up" className="fxAflLaunchGate__btn fxAflLaunchGate__btn--primary">
-                  Create account
-                </Link>
-              </div>
             </div>
           ) : isError ? (
             <div className="fxAflNotice">Unable to load fixtures. Please check your connection.</div>

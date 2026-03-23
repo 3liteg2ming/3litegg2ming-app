@@ -7,7 +7,6 @@ import {
   Columns3,
   Crown,
   User,
-  Users,
   ShieldCheck,
 } from 'lucide-react';
 
@@ -16,12 +15,16 @@ import { useLadder } from '../hooks/useLadder';
 import { useNextFixtures } from '../hooks/useFixtures';
 import { assetUrl } from '../lib/teamAssets';
 import { resolveTeamLogoUrl } from '../lib/entityResolvers';
-import { FIXTURES_PUBLICLY_VISIBLE } from './AFL26FixturesPage';
+import { areFixturesVisible, FIXTURES_UNLOCK_LABEL } from '../lib/fixtureVisibility';
+import { TEAM_SHORT_NAMES } from '../data/teamColors';
+import { MelvinBetHomeCard, type MelvinHomeFixture } from '../components/MelvinBet';
 
 import '../styles/home.css';
 
 type StatLeaderCategory = import('../lib/stats-leaders-cache').StatLeaderCategory;
 type HomeCoach = import('../lib/homeRepo').HomeCoach;
+
+const FIXTURES_PUBLICLY_VISIBLE = areFixturesVisible();
 
 const AFL26_LOGO_URL =
   'https://zohtixrgskbzosgfluni.supabase.co/storage/v1/object/public/Assets/afl26-logo.png';
@@ -41,10 +44,10 @@ const teamLogoFallbackUrl = (slug?: string, name?: string, explicitLogo?: string
   });
 
 const STAT_THEME: Record<string, string> = {
-  goals:         'goals',
+  goals: 'goals',
   fantasyPoints: 'fantasy',
-  disposals:     'disposals',
-  marks:         'marks',
+  disposals: 'disposals',
+  marks: 'marks',
   teamDisposals: 'disposals',
 };
 
@@ -59,14 +62,10 @@ function teamNamesOverlap(fixtureName: string, coachTeam: string): boolean {
   return matchCount >= Math.min(2, cWords.length);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   DATA HOOKS
-═══════════════════════════════════════════════════════════ */
-
 function useHomepageStats() {
   const [playerData, setPlayerData] = useState<StatLeaderCategory[] | null>(null);
-  const [teamData, setTeamData]     = useState<StatLeaderCategory[] | null>(null);
-  const [isLoading, setIsLoading]   = useState(true);
+  const [teamData, setTeamData] = useState<StatLeaderCategory[] | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
@@ -86,15 +85,20 @@ function useHomepageStats() {
         ]);
         if (!mounted) return;
         setPlayerData(fp || []);
-        setTeamData(ft   || []);
+        setTeamData(ft || []);
       } catch (err) {
         console.warn('Failed to fetch homepage stats:', err);
-        if (mounted) { setPlayerData([]); setTeamData([]); }
+        if (mounted) {
+          setPlayerData([]);
+          setTeamData([]);
+        }
       } finally {
         if (mounted) setIsLoading(false);
       }
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const playerLeaders = useMemo(() => {
@@ -117,14 +121,14 @@ function useHomepageStats() {
 }
 
 function useHomeCoaches() {
-  const [data, setData]           = useState<HomeCoach[]>([]);
+  const [data, setData] = useState<HomeCoach[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const repo   = await import('../lib/homeRepo');
+        const repo = await import('../lib/homeRepo');
         const result = (await (repo as any).fetchCurrentCoaches?.()) || [];
         if (mounted && Array.isArray(result)) setData(result);
       } catch (err) {
@@ -133,7 +137,9 @@ function useHomeCoaches() {
         if (mounted) setIsLoading(false);
       }
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return { data, isLoading };
@@ -143,17 +149,14 @@ const Skeleton = ({ className, style }: { className?: string; style?: React.CSSP
   <div className={`home-skeleton ${className || ''}`} style={style} />
 );
 
-/* ═══════════════════════════════════════════════════════════
-   HERO
-═══════════════════════════════════════════════════════════ */
 function HeroMasterCard() {
-  const { user }  = useAuth();
+  const { user } = useAuth();
   const eliteLogo = assetUrl('elite-gaming-logo.png');
 
-  const primaryHref    = user ? '/members' : '/auth/sign-up';
-  const secondaryHref  = user ? '/ladder'  : '/preseason-registration';
-  const primaryLabel   = user ? 'My Club Hub' : 'Create Your Account';
-  const secondaryLabel = user ? 'View Ladder' : 'Preseason Hub';
+  const primaryHref = user ? '/members' : '/auth/sign-up';
+  const secondaryHref = user ? '/ladder' : '/auth/sign-in';
+  const primaryLabel = user ? 'My Club Hub' : 'Create Your Account';
+  const secondaryLabel = user ? 'View Ladder' : 'Sign In';
 
   return (
     <section className="home-hero-wrap">
@@ -166,8 +169,6 @@ function HeroMasterCard() {
         <div className="home-hero-atmos" aria-hidden="true" />
 
         <div className="home-hero-content">
-
-          {/* ① Status pill */}
           <div className="home-hero-pillRow">
             <span className="home-hero-pill">
               <span className="home-hero-pillDot" />
@@ -175,14 +176,15 @@ function HeroMasterCard() {
             </span>
           </div>
 
-          {/* ② Partnership lockup — one clean bar */}
           <div className="home-hero-lockup">
             <div className="home-hero-lockup__glow" aria-hidden="true" />
             <img
               src={eliteLogo}
               alt="Elite Gaming"
               className="home-hero-lockup__eg"
-              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
             />
             <div className="home-hero-lockup__divider" aria-hidden="true" />
             <img
@@ -191,18 +193,19 @@ function HeroMasterCard() {
               className="home-hero-lockup__bgl"
               onError={(e) => {
                 const t = e.currentTarget;
-                if (t.src !== BGL_LOGO_FALLBACK_URL) { t.src = BGL_LOGO_FALLBACK_URL; return; }
+                if (t.src !== BGL_LOGO_FALLBACK_URL) {
+                  t.src = BGL_LOGO_FALLBACK_URL;
+                  return;
+                }
                 t.style.display = 'none';
               }}
             />
           </div>
 
-          {/* ③ AFL26 */}
           <div className="home-hero-aflWrap">
             <img src={AFL26_LOGO_URL} alt="AFL26" className="home-hero-aflLogo" />
           </div>
 
-          {/* ④ Title + sub */}
           <div className="home-hero-titleGroup">
             <h1 className="home-hero-seasonTitle">Season Two</h1>
             <p className="home-hero-sub">
@@ -212,7 +215,6 @@ function HeroMasterCard() {
             </p>
           </div>
 
-          {/* ⑤ CTAs */}
           <div className="home-hero-actions">
             <Link to={primaryHref} className="home-hero-btn home-hero-btn--primary">
               <span className="home-hero-btn__icon">
@@ -225,81 +227,41 @@ function HeroMasterCard() {
               <span>{secondaryLabel}</span>
             </Link>
           </div>
-
         </div>
       </div>
     </section>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   COACH HUB — 2-column grid, centred cards, no scroll
-═══════════════════════════════════════════════════════════ */
-function CommunityPreview() {
-  return (
-    <section className="home-hub">
-      <div className="home-hub__glow" aria-hidden="true" />
-
-      <header className="home-hub__header">
-        <div className="home-hub__headerLeft">
-          <p className="home-hub__eyebrow">MEMBER ZONE</p>
-          <div className="home-hub__titleRow">
-            <h2 className="home-hub__title">Coaches' Hub</h2>
-            <span className="home-hub__status-badge">COMING SOON</span>
-          </div>
-        </div>
-        <div className="home-hub__headerIcon"><Users size={16} /></div>
-      </header>
-
-      <div className="home-hub__body">
-        <p>The central place for registered coaches to connect, manage their team, and access member features.</p>
-      </div>
-    </section>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════
-   LAUNCH PROMO — Replaces featured match pre-launch
-═══════════════════════════════════════════════════════════ */
 function LaunchPromoCard() {
   return (
     <section className="home-module home-module--promo">
       <div className="home-promo-card">
         <div className="home-promo-card__content">
-          <div className="home-promo-card__icon"><ShieldCheck size={16} /></div>
-          <h3 className="home-promo-card__title">Fixtures Revealed This Week</h3>
-          <p className="home-promo-card__body">
-            Register your account to get ready for the season launch.
-          </p>
-          <div className="home-promo-card__actions">
-            <Link to="/auth/sign-up" className="home-promo-card__btn home-promo-card__btn--primary">
-              Create Account
-            </Link>
-            <Link to="/preseason-registration" className="home-promo-card__btn home-promo-card__btn--secondary">
-              Preseason Hub
-            </Link>
+          <div className="home-promo-card__icon">
+            <ShieldCheck size={16} />
           </div>
+          <h3 className="home-promo-card__title">{FIXTURES_UNLOCK_LABEL}</h3>
+          <p className="home-promo-card__body">
+            Fixtures and matchups will appear here once the season reveal goes live.
+          </p>
         </div>
       </div>
     </section>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   FEATURED MATCH / YOUR NEXT MATCH
-═══════════════════════════════════════════════════════════ */
 function FeaturedMatchCard() {
-  const { user }    = useAuth();
-  const navigate    = useNavigate();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const { data, isLoading } = useNextFixtures('afl26-season-two', user ? 20 : 1);
-  const { data: coaches }   = useHomeCoaches();
+  const { data: coaches } = useHomeCoaches();
 
   const allFixtures: any[] = useMemo(
     () => (Array.isArray(data) ? data : (data as any)?.fixtures ?? []),
     [data],
   );
 
-  /* Signed-in: find my team's next upcoming fixture via team_id then name */
   const fixture = useMemo(() => {
     if (!allFixtures.length) return null;
     if (!user) return allFixtures[0];
@@ -307,12 +269,9 @@ function FeaturedMatchCard() {
     const myCoach = coaches.find((c) => c.user_id === user.id);
     if (!myCoach) return allFixtures[0];
 
-    const upcoming = allFixtures.filter(
-      (f) => f.status !== 'FINAL' && f.status !== 'COMPLETED',
-    );
+    const upcoming = allFixtures.filter((f) => f.status !== 'FINAL' && f.status !== 'COMPLETED');
     const pool = upcoming.length ? upcoming : allFixtures;
 
-    /* 1) exact team_id match — most reliable */
     if (myCoach.team_id) {
       const byId = pool.find(
         (f) => f.home_team_id === myCoach.team_id || f.away_team_id === myCoach.team_id,
@@ -320,7 +279,6 @@ function FeaturedMatchCard() {
       if (byId) return byId;
     }
 
-    /* 2) name-based match */
     const myTeam = myCoach.team_name;
     if (myTeam) {
       const byName = pool.find(
@@ -341,7 +299,9 @@ function FeaturedMatchCard() {
       <section className="home-module home-module--feature">
         <header className="home-module__header">
           <h2>{sectionLabel}</h2>
-          <Link to="/fixtures">All Fixtures<ChevronRight size={13} /></Link>
+          <Link to="/fixtures">
+            All Fixtures<ChevronRight size={13} />
+          </Link>
         </header>
         <Skeleton className="home-featured-skeleton" />
       </section>
@@ -353,7 +313,9 @@ function FeaturedMatchCard() {
       <section className="home-module home-module--feature">
         <header className="home-module__header">
           <h2>{sectionLabel}</h2>
-          <Link to="/fixtures">All Fixtures<ChevronRight size={13} /></Link>
+          <Link to="/fixtures">
+            All Fixtures<ChevronRight size={13} />
+          </Link>
         </header>
         <div className="home-empty">Season fixtures will appear shortly.</div>
       </section>
@@ -361,21 +323,36 @@ function FeaturedMatchCard() {
   }
 
   const homeName =
-    fixture.home_team_name || fixture.home_team_short_name ||
-    fixture.home_team_slug?.replace(/-/g, ' ') || 'TBD';
+    fixture.home_team_name ||
+    fixture.home_team_short_name ||
+    fixture.home_team_slug?.replace(/-/g, ' ') ||
+    'TBD';
   const awayName =
-    fixture.away_team_name || fixture.away_team_short_name ||
-    fixture.away_team_slug?.replace(/-/g, ' ') || 'TBD';
-  const homeLogo = teamLogoFallbackUrl(fixture.home_team_slug, homeName, fixture.home_team_logo_url);
-  const awayLogo = teamLogoFallbackUrl(fixture.away_team_slug, awayName, fixture.away_team_logo_url);
+    fixture.away_team_name ||
+    fixture.away_team_short_name ||
+    fixture.away_team_slug?.replace(/-/g, ' ') ||
+    'TBD';
+  const homeLogo = teamLogoFallbackUrl(
+    fixture.home_team_slug,
+    homeName,
+    fixture.home_team_logo_url,
+  );
+  const awayLogo = teamLogoFallbackUrl(
+    fixture.away_team_slug,
+    awayName,
+    fixture.away_team_logo_url,
+  );
 
   let dateText = 'Time TBA';
   if (fixture.start_time) {
     const d = new Date(fixture.start_time);
-    if (!isNaN(d.getTime())) {
+    if (!Number.isNaN(d.getTime())) {
       dateText = d.toLocaleDateString('en-AU', {
-        weekday: 'short', day: 'numeric', month: 'short',
-        hour: '2-digit', minute: '2-digit',
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
       });
     }
   }
@@ -384,7 +361,9 @@ function FeaturedMatchCard() {
     <section className="home-module home-module--feature">
       <header className="home-module__header">
         <h2>{sectionLabel}</h2>
-        <Link to="/fixtures">All Fixtures<ChevronRight size={13} /></Link>
+        <Link to="/fixtures">
+          All Fixtures<ChevronRight size={13} />
+        </Link>
       </header>
       <button
         type="button"
@@ -400,16 +379,26 @@ function FeaturedMatchCard() {
         <div className="home-feature-card__main">
           <div className="home-feature-card__team">
             <span className="home-feature-card__logo">
-              <img src={homeLogo} alt={homeName}
-                onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+              <img
+                src={homeLogo}
+                alt={homeName}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
             </span>
             <span>{homeName}</span>
           </div>
           <div className="home-feature-card__vs">vs</div>
           <div className="home-feature-card__team">
             <span className="home-feature-card__logo">
-              <img src={awayLogo} alt={awayName}
-                onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+              <img
+                src={awayLogo}
+                alt={awayName}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
             </span>
             <span>{awayName}</span>
           </div>
@@ -423,17 +412,35 @@ function FeaturedMatchCard() {
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   SEASON LEADERS — Player / Team toggle + colour-coded cards
-═══════════════════════════════════════════════════════════ */
+function MelvinBetOutlookSection() {
+  const { data } = useNextFixtures('afl26-season-two', 6);
+
+  const fixtures = useMemo<MelvinHomeFixture[]>(() => {
+    const raw: any[] = Array.isArray(data) ? data : (data as any)?.fixtures ?? [];
+    return raw.slice(0, 4).map((f: any) => ({
+      id: String(f.id || ''),
+      homeName: f.home_team_name || f.home_team_short_name || f.home_team_slug?.replace(/-/g, ' ') || 'TBD',
+      awayName: f.away_team_name || f.away_team_short_name || f.away_team_slug?.replace(/-/g, ' ') || 'TBD',
+      round: Number(f.round) || undefined,
+      venue: f.venue || undefined,
+    }));
+  }, [data]);
+
+  if (!fixtures.length) return null;
+
+  return (
+    <section className="home-module">
+      <MelvinBetHomeCard fixtures={fixtures} />
+    </section>
+  );
+}
+
 function LeadersPreview() {
   const navigate = useNavigate();
   const { playerLeaders, teamLeaders, isLoading } = useHomepageStats();
   const [tab, setTab] = useState<'players' | 'teams'>('players');
 
-  const displayLeaders = tab === 'players'
-    ? playerLeaders.slice(0, 3)
-    : teamLeaders.slice(0, 3);
+  const displayLeaders = tab === 'players' ? playerLeaders.slice(0, 3) : teamLeaders.slice(0, 3);
 
   const showSkeleton = isLoading && playerLeaders.length === 0 && teamLeaders.length === 0;
   const isTeamTab = tab === 'teams';
@@ -443,7 +450,9 @@ function LeadersPreview() {
       <div className="home-leaders-header">
         <header className="home-module__header" style={{ width: '100%' }}>
           <h2>Season Leaders</h2>
-          <Link to="/stats3">Stats Hub<ChevronRight size={13} /></Link>
+          <Link to="/stats3">
+            Stats Hub<ChevronRight size={13} />
+          </Link>
         </header>
         <div className="home-leaders-toggle" role="tablist">
           <button
@@ -486,7 +495,7 @@ function LeadersPreview() {
         <div className="home-leaders-rail" key={tab}>
           {displayLeaders.map((category) => {
             if (!category?.top) return null;
-            const top   = category.top;
+            const top = category.top;
             const theme = STAT_THEME[category.statKey] ?? 'default';
             return (
               <button
@@ -505,9 +514,7 @@ function LeadersPreview() {
                 <div className="home-leader-divider" />
                 <div className="home-leader-row">
                   <div className="home-leader-avatar">
-                    {top.photoUrl
-                      ? <img src={top.photoUrl} alt={top.name} />
-                      : <User size={14} />}
+                    {top.photoUrl ? <img src={top.photoUrl} alt={top.name} /> : <User size={14} />}
                   </div>
                   <div className="home-leader-meta">
                     <p>{top.name}</p>
@@ -530,9 +537,72 @@ function LeadersPreview() {
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   LADDER SNAPSHOT
-═══════════════════════════════════════════════════════════ */
+function CoachesSection() {
+  const { data: coaches, isLoading } = useHomeCoaches();
+
+  if (isLoading) {
+    return (
+      <section className="home-module home-module--coaches">
+        <header className="home-module__header">
+          <h2>Season Coaches</h2>
+        </header>
+        <div className="home-coaches-grid">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="home-coach-skeleton" style={{ height: 64, borderRadius: 14 }} />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (!coaches.length) {
+    return (
+      <section className="home-module home-module--coaches">
+        <header className="home-module__header">
+          <h2>Season Coaches</h2>
+        </header>
+        <div className="home-empty">Coaches will appear once teams are assigned.</div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="home-module home-module--coaches">
+      <header className="home-module__header">
+        <h2>Season Coaches</h2>
+        <Link to="/ladder">
+          Full Ladder<ChevronRight size={13} />
+        </Link>
+      </header>
+      <div className="home-coaches-grid">
+        {coaches.map((coach) => {
+          const logo = teamLogoFallbackUrl(undefined, coach.team_name || undefined, coach.team_logo_url);
+          return (
+            <div key={coach.user_id} className="home-coach-card">
+              <div className="home-coach-card__logo">
+                {logo ? (
+                  <img
+                    src={logo}
+                    alt={coach.team_name || ''}
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                ) : (
+                  <User size={16} />
+                )}
+              </div>
+              <div className="home-coach-card__info">
+                <span className="home-coach-card__name">{(coach.display_name || '').split(' ')[0]}</span>
+                <span className="home-coach-card__team">{(coach.team_name && TEAM_SHORT_NAMES[coach.team_name]) || coach.team_name || 'Unassigned'}</span>
+                {coach.psn && <span className="home-coach-card__psn">{coach.psn}</span>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function LadderSnapshot() {
   const { data, isLoading } = useLadder('afl26-season-two');
   const ladder = useMemo(() => (Array.isArray(data) ? data.slice(0, 8) : []), [data]);
@@ -541,7 +611,9 @@ function LadderSnapshot() {
     <section className="home-module home-module--ladder">
       <header className="home-module__header">
         <h2>Ladder Snapshot</h2>
-        <Link to="/ladder">Full Ladder<ChevronRight size={13} /></Link>
+        <Link to="/ladder">
+          Full Ladder<ChevronRight size={13} />
+        </Link>
       </header>
 
       <div className="home-ladder-card">
@@ -566,9 +638,9 @@ function LadderSnapshot() {
               </thead>
               <tbody>
                 {ladder.map((team: any, index: number) => {
-                  const logo      = teamLogoFallbackUrl(team.team_slug, team.team_name, team.team_logo_url);
-                  const rank      = Number(team.position || index + 1);
-                  const isFirst   = rank === 1;
+                  const logo = teamLogoFallbackUrl(team.team_slug, team.team_name, team.team_logo_url);
+                  const rank = Number(team.position || index + 1);
+                  const isFirst = rank === 1;
                   const isTopFour = rank <= 4;
                   return (
                     <tr
@@ -576,23 +648,34 @@ function LadderSnapshot() {
                       className={[
                         index === 3 ? 'is-top-four-cut' : '',
                         isFirst ? 'is-row-first' : isTopFour ? 'is-row-top-four' : '',
-                      ].filter(Boolean).join(' ')}
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
                     >
                       <td className="home-ladder-td--pos">
-                        <span className={`home-ladder-rank ${isFirst ? 'is-first' : isTopFour ? 'is-top-four' : ''}`}>
+                        <span
+                          className={`home-ladder-rank ${
+                            isFirst ? 'is-first' : isTopFour ? 'is-top-four' : ''
+                          }`}
+                        >
                           {rank}
                         </span>
                       </td>
                       <td className="home-ladder-club">
                         <span className="home-ladder-logoWrap">
-                          <img src={logo} alt={team.team_name || 'Team'}
-                            onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                          <img
+                            src={logo}
+                            alt={team.team_name || 'Team'}
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
                         </span>
                         <span className="home-ladder-name">{team.team_name || 'Team'}</span>
                       </td>
-                      <td className="home-ladder-td--num">{team.played  || 0}</td>
-                      <td className="home-ladder-td--num">{team.wins    || 0}</td>
-                      <td className="home-ladder-td--pts">{team.points  || 0}</td>
+                      <td className="home-ladder-td--num">{team.played || 0}</td>
+                      <td className="home-ladder-td--num">{team.wins || 0}</td>
+                      <td className="home-ladder-td--pts">{team.points || 0}</td>
                       <td className="home-ladder-td--pct">{Number(team.percentage || 0).toFixed(1)}</td>
                     </tr>
                   );
@@ -608,17 +691,15 @@ function LadderSnapshot() {
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   PAGE
-═══════════════════════════════════════════════════════════ */
 export default function HomePage() {
   return (
     <div className="home-page">
       <main className="home-main">
         <HeroMasterCard />
-        <CommunityPreview />
         {FIXTURES_PUBLICLY_VISIBLE ? <FeaturedMatchCard /> : <LaunchPromoCard />}
+        {FIXTURES_PUBLICLY_VISIBLE && <MelvinBetOutlookSection />}
         <LeadersPreview />
+        <CoachesSection />
         <LadderSnapshot />
       </main>
     </div>

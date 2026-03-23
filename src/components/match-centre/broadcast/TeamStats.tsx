@@ -55,6 +55,69 @@ function resolveTeamColor(primary?: string | null, secondary?: string | null, fa
   return fallback;
 }
 
+/** Parse a hex colour to RGB components */
+function hexToRgbComponents(hex: string): [number, number, number] {
+  const clean = hex.replace('#', '');
+  const full = clean.length === 3
+    ? clean.split('').map((c) => `${c}${c}`).join('')
+    : clean;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  return [
+    Number.isFinite(r) ? r : 128,
+    Number.isFinite(g) ? g : 128,
+    Number.isFinite(b) ? b : 128,
+  ];
+}
+
+/** Perceived colour distance (weighted Euclidean in RGB). Returns 0–765. */
+function colorDistance(hexA: string, hexB: string): number {
+  const [r1, g1, b1] = hexToRgbComponents(hexA);
+  const [r2, g2, b2] = hexToRgbComponents(hexB);
+  const dr = r1 - r2;
+  const dg = g1 - g2;
+  const db = b1 - b2;
+  return Math.sqrt(dr * dr * 2 + dg * dg * 4 + db * db * 3);
+}
+
+/** Secondary team colours for clash resolution */
+const TEAM_SECONDARY_COLORS: Record<string, string> = {
+  adelaide: '#f3c346',
+  brisbane: '#2e76bc',
+  carlton: '#6ca8ff',
+  collingwood: '#8f9397',
+  essendon: '#1f1f1f',
+  fremantle: '#9a82d8',
+  geelong: '#5d88c8',
+  goldcoast: '#f2be3f',
+  gws: '#4f5964',
+  hawthorn: '#c8a96f',
+  melbourne: '#e33542',
+  northmelbourne: '#ffffff',
+  portadelaide: '#73b5d9',
+  richmond: '#ffd139',
+  stkilda: '#c22d36',
+  sydney: '#f5f5f5',
+  westcoast: '#f2b31f',
+  westernbulldogs: '#d23c4f',
+};
+
+/** If away colour is too close to home, swap to the away team's secondary colour. */
+function resolveContrastingAwayColor(
+  homeColor: string,
+  awayColor: string,
+  awayKey: string | null,
+): string {
+  const CLASH_THRESHOLD = 80;
+  if (colorDistance(homeColor, awayColor) >= CLASH_THRESHOLD) return awayColor;
+  const key = String(awayKey || '').toLowerCase().replace(/[^a-z]/g, '');
+  const secondary = TEAM_SECONDARY_COLORS[key];
+  if (secondary && colorDistance(homeColor, secondary) > CLASH_THRESHOLD) return secondary;
+  // If no good secondary, lighten or invert
+  return awayColor;
+}
+
 function ScoreHero({
   stat,
   homeName,
@@ -178,7 +241,8 @@ function TeamStatsComponent({ model, loading }: { model: MatchCentreModel | null
   const awayLogo = away?.logoUrl || (awayKey ? assetUrl(TEAM_ASSETS[awayKey].logoFile ?? '') : assetUrl('elite-gaming-logo.png'));
 
   const homeColor = resolveTeamColor(home?.color, home?.colour, '#4a7fe1');
-  const awayColor = resolveTeamColor(away?.color, away?.colour, '#e14a4a');
+  const rawAwayColor = resolveTeamColor(away?.color, away?.colour, '#e14a4a');
+  const awayColor = resolveContrastingAwayColor(homeColor, rawAwayColor, awayKey);
   const shellStyle = {
     ['--mc-team-home-color' as string]: homeColor,
     ['--mc-team-away-color' as string]: awayColor,

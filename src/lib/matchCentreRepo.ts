@@ -936,6 +936,7 @@ const TEAM_STAT_PAYLOAD_CONFIGS: TeamStatPayloadConfig[] = [
   { label: 'Inside 50s', aliases: ['inside50s', 'inside_50s', 'inside50', 'inside_50'] },
   { label: 'Rebound 50s', aliases: ['rebound50s', 'rebound_50s', 'rebound50', 'rebound_50'] },
   { label: 'Frees For', aliases: ['freesFor', 'frees_for', 'freeKicksFor', 'free_kicks_for', 'frees'] },
+  { label: '50m Penalties', aliases: ['fiftyMetrePenalties', 'fifty_metre_penalties', '50mPenalties', '50m_penalties'] },
   { label: 'Hitouts', aliases: ['hitOuts', 'hit_outs', 'hitouts'] },
   { label: 'Clearances', aliases: ['clearances'] },
   { label: 'Contested Possessions', aliases: ['contestedPossessions', 'contested_possessions'] },
@@ -945,6 +946,7 @@ const TEAM_STAT_PAYLOAD_CONFIGS: TeamStatPayloadConfig[] = [
   { label: 'Intercept Marks', aliases: ['interceptMarks', 'intercept_marks'] },
   { label: 'Tackles', aliases: ['tackles'] },
   { label: 'Spoils', aliases: ['spoils'] },
+  { label: 'Frees Against', aliases: ['freesAgainst', 'frees_against', 'freeKicksAgainst', 'free_kicks_against'] },
 ];
 
 const TEAM_STAT_DISPLAY_ORDER = [
@@ -958,6 +960,7 @@ const TEAM_STAT_DISPLAY_ORDER = [
   'Inside 50s',
   'Rebound 50s',
   'Frees For',
+  '50m Penalties',
   'Hitouts',
   'Clearances',
   'Contested Possessions',
@@ -967,6 +970,7 @@ const TEAM_STAT_DISPLAY_ORDER = [
   'Intercept Marks',
   'Tackles',
   'Spoils',
+  'Frees Against',
 ] as const;
 
 function parseJsonArray(value: unknown): any[] {
@@ -2386,12 +2390,18 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
       awayMatch: playerStats.filter((p) => p.team === away.fullName).reduce((acc, p) => acc + safeNum(p.CLR), 0),
     },
   ];
+  // Primary source: team_stats_json stored directly on the fixture row (always readable)
+  const fixtureTeamStats = parseSubmissionTeamStats((fixture as any)?.team_stats_json);
+  // Fallback: read from submissions table (may be blocked by RLS)
   const directSubmissionTeamStats = parseSubmissionTeamStats((primarySubmission as any)?.team_stats);
   const ocrSubmissionTeamStats = parseSubmissionTeamStats((primarySubmission as any)?.ocr_team_stats);
   const submissionTeamStats = directSubmissionTeamStats.length ? directSubmissionTeamStats : ocrSubmissionTeamStats;
   const mergedTeamStats = new Map<string, TeamStatRow>();
 
-  for (const row of [...baseTeamStats, ...submissionTeamStats, ...derivedStatRows]) {
+  // Merge order: base → derived (from player stats) → fixture json → submission json
+  // Later entries win when they have equal or greater data strength.
+  // Submission / fixture data is authoritative over derived player-sum data.
+  for (const row of [...baseTeamStats, ...derivedStatRows, ...fixtureTeamStats, ...submissionTeamStats]) {
     const key = String(row.label || '').toLowerCase();
     if (!key) continue;
     if (!mergedTeamStats.has(key)) {
@@ -2422,6 +2432,7 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
 
   const quarterProgression =
     parseQuarterProgressionFromOcrRaw(String((primarySubmission as any)?.ocr_raw_text || '')) ||
+    parseQuarterProgressionFromOcrRaw(JSON.stringify((fixture as any)?.quarter_scores_json || '')) ||
     (hasStructuredScoreData ? fallbackQuarterProgression(hT, aT) : undefined);
 
   const trust = computeMatchStatus({ fixture, submissions: submissions || [] });

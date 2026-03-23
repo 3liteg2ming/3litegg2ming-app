@@ -25,7 +25,16 @@ export type StatKey =
   | 'clearances'
   | 'hitOuts'
   | 'fantasyPoints'
-  | 'goalEfficiency';
+  | 'goalEfficiency'
+  | 'inside50s'
+  | 'rebound50s'
+  | 'freesFor'
+  | 'fiftyMetrePenalties'
+  | 'contestedPossessions'
+  | 'uncontestedPossessions'
+  | 'contestedMarks'
+  | 'interceptMarks'
+  | 'spoils';
 
 export type LeaderRow = {
   rank: number;
@@ -139,9 +148,24 @@ const LABELS: Record<StatKey, string> = {
   hitOuts: 'Hit Outs',
   fantasyPoints: 'Fantasy Points',
   goalEfficiency: 'Goal Efficiency',
+  inside50s: 'Inside 50s',
+  rebound50s: 'Rebound 50s',
+  freesFor: 'Frees For',
+  fiftyMetrePenalties: '50m Penalties',
+  contestedPossessions: 'Contested Possessions',
+  uncontestedPossessions: 'Uncontested Possessions',
+  contestedMarks: 'Contested Marks',
+  interceptMarks: 'Intercept Marks',
+  spoils: 'Spoils',
 };
 
 const CATEGORY_KEYS: StatKey[] = ['goals', 'disposals', 'marks', 'tackles', 'clearances', 'fantasyPoints'];
+const TEAM_CATEGORY_KEYS: StatKey[] = [
+  'disposals', 'kicks', 'handballs', 'inside50s', 'rebound50s', 'freesFor',
+  'fiftyMetrePenalties', 'hitOuts', 'clearances', 'contestedPossessions',
+  'uncontestedPossessions', 'goals', 'marks', 'contestedMarks', 'interceptMarks',
+  'tackles', 'spoils', 'goalEfficiency',
+];
 const LIVE_SUPPORTED_STATS = new Set<StatKey>([
   'goals',
   'disposals',
@@ -152,6 +176,16 @@ const LIVE_SUPPORTED_STATS = new Set<StatKey>([
   'clearances',
   'fantasyPoints',
   'goalEfficiency',
+  'inside50s',
+  'rebound50s',
+  'freesFor',
+  'fiftyMetrePenalties',
+  'hitOuts',
+  'contestedPossessions',
+  'uncontestedPossessions',
+  'contestedMarks',
+  'interceptMarks',
+  'spoils',
 ]);
 const leadersCache = new Map<string, LeadersCacheEntry>();
 const LEADERS_TTL_MS = 180_000;
@@ -212,6 +246,15 @@ function newStatRecord(): Record<StatKey, number> {
     hitOuts: 0,
     fantasyPoints: 0,
     goalEfficiency: 0,
+    inside50s: 0,
+    rebound50s: 0,
+    freesFor: 0,
+    fiftyMetrePenalties: 0,
+    contestedPossessions: 0,
+    uncontestedPossessions: 0,
+    contestedMarks: 0,
+    interceptMarks: 0,
+    spoils: 0,
   };
 }
 
@@ -361,6 +404,99 @@ async function fetchGoalAggregates(seasonId: string): Promise<GoalAggregateRow[]
   }
 
   return Array.from(totals.values());
+}
+
+/** Map camelCase submit keys to StatKey */
+const TEAM_STAT_KEY_MAP: Record<string, StatKey> = {
+  disposals: 'disposals',
+  kicks: 'kicks',
+  handballs: 'handballs',
+  marks: 'marks',
+  tackles: 'tackles',
+  clearances: 'clearances',
+  hitOuts: 'hitOuts',
+  hit_outs: 'hitOuts',
+  hitouts: 'hitOuts',
+  goals: 'goals',
+  inside50s: 'inside50s',
+  inside_50s: 'inside50s',
+  inside50: 'inside50s',
+  inside_50: 'inside50s',
+  rebound50s: 'rebound50s',
+  rebound_50s: 'rebound50s',
+  rebound50: 'rebound50s',
+  rebound_50: 'rebound50s',
+  freesFor: 'freesFor',
+  frees_for: 'freesFor',
+  freeKicksFor: 'freesFor',
+  free_kicks_for: 'freesFor',
+  frees: 'freesFor',
+  fiftyMetrePenalties: 'fiftyMetrePenalties',
+  fifty_metre_penalties: 'fiftyMetrePenalties',
+  '50mPenalties': 'fiftyMetrePenalties',
+  '50m_penalties': 'fiftyMetrePenalties',
+  contestedPossessions: 'contestedPossessions',
+  contested_possessions: 'contestedPossessions',
+  uncontestedPossessions: 'uncontestedPossessions',
+  uncontested_possessions: 'uncontestedPossessions',
+  contestedMarks: 'contestedMarks',
+  contested_marks: 'contestedMarks',
+  interceptMarks: 'interceptMarks',
+  intercept_marks: 'interceptMarks',
+  spoils: 'spoils',
+};
+
+type FixtureTeamStatsAgg = {
+  teamId: string;
+  totals: Partial<Record<StatKey, number>>;
+  fixtureCount: number;
+  goals: number;
+  behinds: number;
+};
+
+async function fetchFixtureTeamStatsAggregates(seasonId: string): Promise<FixtureTeamStatsAgg[]> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('eg_fixtures')
+    .select('id,home_team_id,away_team_id,team_stats_json,home_goals,home_behinds,away_goals,away_behinds')
+    .eq('season_id', seasonId)
+    .not('team_stats_json', 'is', null);
+
+  if (error || !Array.isArray(data)) return [];
+
+  const teamAgg = new Map<string, FixtureTeamStatsAgg>();
+
+  for (const row of data as any[]) {
+    const statsJson = row.team_stats_json;
+    if (!statsJson || typeof statsJson !== 'object') continue;
+
+    const homeBucket = statsJson.home || statsJson.home_team || null;
+    const awayBucket = statsJson.away || statsJson.away_team || null;
+    const homeTeamId = text(row.home_team_id);
+    const awayTeamId = text(row.away_team_id);
+
+    const applyBucket = (bucket: any, teamId: string, fixtureGoals: number, fixtureBehinds: number) => {
+      if (!bucket || typeof bucket !== 'object' || !teamId) return;
+      const existing = teamAgg.get(teamId) || { teamId, totals: {}, fixtureCount: 0, goals: 0, behinds: 0 };
+      existing.fixtureCount += 1;
+      existing.goals += fixtureGoals;
+      existing.behinds += fixtureBehinds;
+      for (const [key, statKey] of Object.entries(TEAM_STAT_KEY_MAP)) {
+        const val = safeNum(bucket[key]);
+        if (val > 0) {
+          existing.totals[statKey] = (existing.totals[statKey] || 0) + val;
+        }
+      }
+      teamAgg.set(teamId, existing);
+    };
+
+    applyBucket(homeBucket, homeTeamId, safeNum(row.home_goals), safeNum(row.home_behinds));
+    applyBucket(awayBucket, awayTeamId, safeNum(row.away_goals), safeNum(row.away_behinds));
+  }
+
+  return Array.from(teamAgg.values());
 }
 
 async function fetchTeamMeta(teamIds: string[]): Promise<Map<string, TeamMeta>> {
@@ -664,15 +800,23 @@ async function buildPlayers(statKey: StatKey): Promise<PlayerMetricRow[]> {
 async function buildTeams(statKey: StatKey): Promise<TeamMetricRow[]> {
   if (!LIVE_SUPPORTED_STATS.has(statKey)) return [];
 
-  const [baseline, players] = await Promise.all([
+  const season = await resolveActiveSeasonRecord();
+  const [baseline, players, fixtureTeamStats] = await Promise.all([
     fetchActiveCompetitionBaseline().catch(() => ({ teams: [] as BaselineTeam[] })),
     fetchLivePlayerMetrics(),
+    season ? fetchFixtureTeamStatsAggregates(season.id).catch(() => []) : Promise.resolve([]),
   ]);
   const byTeam = new Map<string, TeamMetricRow>();
 
   for (const team of baseline.teams || []) {
     const row = baselineTeamRow(team);
     byTeam.set(row.teamKey, row);
+  }
+
+  // Build team ID → team key lookup from baseline
+  const teamIdToKey = new Map<string, string>();
+  for (const team of baseline.teams || []) {
+    if (team.id) teamIdToKey.set(text(team.id), text(team.teamKey) || text(resolveTeamKey({ slug: team.slug, name: team.name })) || 'unknown');
   }
 
   for (const player of players) {
@@ -699,10 +843,43 @@ async function buildTeams(statKey: StatKey): Promise<TeamMetricRow[]> {
     byTeam.set(player.teamKey, prev);
   }
 
+  // Merge coach-submitted team-level stats from fixtures (authoritative over player-derived zeros)
+  for (const agg of fixtureTeamStats) {
+    const teamKey = teamIdToKey.get(agg.teamId);
+    if (!teamKey) continue;
+    const target = byTeam.get(teamKey);
+    if (!target) continue;
+
+    for (const [sk, val] of Object.entries(agg.totals) as [StatKey, number][]) {
+      // Use fixture team stats when player-derived value is zero or fixture value is higher
+      if (val > 0 && val > target.totals[sk]) {
+        target.totals[sk] = val;
+        target.avgs[sk] = agg.fixtureCount > 0 ? val / agg.fixtureCount : val;
+      }
+    }
+
+    // Merge goals from fixture if higher
+    if (agg.goals > 0 && agg.goals > target.totals.goals) {
+      target.totals.goals = agg.goals;
+      target.avgs.goals = agg.fixtureCount > 0 ? agg.goals / agg.fixtureCount : agg.goals;
+    }
+
+    // Goal efficiency = goals / (goals + behinds) * 100
+    const totalGoals = Math.max(target.totals.goals, agg.goals);
+    const totalBehinds = agg.behinds;
+    if (totalGoals + totalBehinds > 0) {
+      target.totals.goalEfficiency = (totalGoals / (totalGoals + totalBehinds)) * 100;
+      target.avgs.goalEfficiency = target.totals.goalEfficiency;
+    }
+  }
+
   const rows = Array.from(byTeam.values())
     .map((row) => {
-      row.totals.goalEfficiency = row.totals.disposals > 0 ? (row.totals.goals / row.totals.disposals) * 100 : 0;
-      row.avgs.goalEfficiency = row.avgs.disposals > 0 ? (row.avgs.goals / row.avgs.disposals) * 100 : 0;
+      // Only compute goal efficiency if not already set from fixture data
+      if (row.totals.goalEfficiency === 0 && row.totals.goals > 0) {
+        row.totals.goalEfficiency = row.totals.disposals > 0 ? (row.totals.goals / row.totals.disposals) * 100 : 0;
+        row.avgs.goalEfficiency = row.totals.goalEfficiency;
+      }
       return row;
     })
     .sort((a, b) => {
@@ -747,8 +924,9 @@ export async function fetchLeaderCategories(mode: Mode): Promise<StatLeaderCateg
   const cached = leadersCacheGet<StatLeaderCategory[]>(cacheKey);
   if (cached) return cached;
 
+  const keys = mode === 'teams' ? TEAM_CATEGORY_KEYS : CATEGORY_KEYS;
   const value = await Promise.all(
-    CATEGORY_KEYS.map(async (statKey) => {
+    keys.map(async (statKey) => {
       const rows = mode === 'teams' ? await buildTeams(statKey) : await buildPlayers(statKey);
       // Include all eligible players/teams, not just those with meaningful stats
       // This ensures full roster coverage even when stats are zero

@@ -240,9 +240,14 @@ export default function AdminConsolePage() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const userId = await fetchCurrentAuthUserId();
-      if (!active) return;
-      setAuthUserId(text(userId));
+      try {
+        const userId = await fetchCurrentAuthUserId();
+        if (!active) return;
+        setAuthUserId(text(userId));
+      } catch {
+        if (!active) return;
+        setAuthUserId('');
+      }
     })();
     return () => {
       active = false;

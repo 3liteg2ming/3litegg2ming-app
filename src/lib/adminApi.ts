@@ -613,3 +613,201 @@ export async function warmAdminLookups() {
 
   return { teams, seasons, competitions };
 }
+
+export type AdminFixturePlayerStat = {
+  fixture_id: string;
+  player_id: string;
+  team_id: string;
+  player_name?: string | null;
+  disposals: number | null;
+  kicks: number | null;
+  handballs: number | null;
+  marks: number | null;
+  tackles: number | null;
+  clearances: number | null;
+};
+
+export async function fetchFixtureDetail(fixtureId: string): Promise<AdminFixture | null> {
+  const { data, error } = await supabase
+    .from('eg_fixtures')
+    .select('*')
+    .eq('id', fixtureId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data as AdminFixture | null;
+}
+
+export async function listFixturePlayerStats(fixtureId: string): Promise<AdminFixturePlayerStat[]> {
+  const { data, error } = await supabase
+    .from('eg_fixture_player_stats')
+    .select('fixture_id,player_id,team_id,disposals,kicks,handballs,marks,tackles,clearances')
+    .eq('fixture_id', fixtureId);
+
+  if (error) {
+    if (error.message.includes('does not exist')) return [];
+    throw new Error(error.message);
+  }
+
+  const stats = (data || []) as AdminFixturePlayerStat[];
+
+  const playerIds = stats.map((s) => s.player_id).filter(Boolean);
+  if (playerIds.length) {
+    const { data: players } = await supabase
+      .from('eg_players')
+      .select('id,name,display_name')
+      .in('id', playerIds);
+
+    const playerMap = new Map<string, string>();
+    for (const p of (players || []) as Array<{ id: string; name: string | null; display_name: string | null }>) {
+      playerMap.set(p.id, p.display_name || p.name || p.id);
+    }
+
+    for (const stat of stats) {
+      stat.player_name = playerMap.get(stat.player_id) || null;
+    }
+  }
+
+  return stats;
+}
+
+export async function updateFixtureScores(args: {
+  token?: string;
+  fixtureId: string;
+  homeGoals: number | null;
+  homeBehinds: number | null;
+  awayGoals: number | null;
+  awayBehinds: number | null;
+  status?: string | null;
+}) {
+  const homeTotal =
+    args.homeGoals != null && args.homeBehinds != null
+      ? args.homeGoals * 6 + args.homeBehinds
+      : null;
+  const awayTotal =
+    args.awayGoals != null && args.awayBehinds != null
+      ? args.awayGoals * 6 + args.awayBehinds
+      : null;
+
+  // Try token-gated RPC if token is available
+  if (args.token) {
+    const tokenResult = await supabase.rpc('eg_admin_update_fixture_scores', {
+      p_token: args.token,
+      p_fixture_id: args.fixtureId,
+      p_home_goals: args.homeGoals,
+      p_home_behinds: args.homeBehinds,
+      p_home_total: homeTotal,
+      p_away_goals: args.awayGoals,
+      p_away_behinds: args.awayBehinds,
+      p_away_total: awayTotal,
+      p_status: args.status ?? null,
+    });
+    if (!tokenResult.error) return tokenResult.data as AdminFixture;
+  }
+
+  // Fallback: direct update via eg_admin_update_fixture (role-based)
+  // plus a separate score update
+  const { error: statusErr } = await supabase
+    .from('eg_fixtures')
+    .update({
+      home_goals: args.homeGoals,
+      home_behinds: args.homeBehinds,
+      home_total: homeTotal,
+      away_goals: args.awayGoals,
+      away_behinds: args.awayBehinds,
+      away_total: awayTotal,
+      ...(args.status ? { status: args.status } : {}),
+      corrected_at: new Date().toISOString(),
+    })
+    .eq('id', args.fixtureId);
+
+  if (statusErr) unwrapRpcError(statusErr);
+
+  const { data, error } = await supabase
+    .from('eg_fixtures')
+    .select('*')
+    .eq('id', args.fixtureId)
+    .single();
+
+  if (error) unwrapRpcError(error);
+  return data as AdminFixture;
+}
+
+export async function upsertFixturePlayerStats(
+  token: string,
+  fixtureId: string,
+  rows: Array<{
+    player_id: string;
+    team_id: string;
+    disposals?: number | null;
+    kicks?: number | null;
+    handballs?: number | null;
+    marks?: number | null;
+    tackles?: number | null;
+    clearances?: number | null;
+  }>,
+) {
+  // Try token-gated RPC first if token available
+  if (token) {
+    const tokenResult = await supabase.rpc('eg_admin_upsert_player_stats', {
+      p_token: token,
+      p_fixture_id: fixtureId,
+      p_rows: rows,
+    });
+    if (!tokenResult.error) return;
+  }
+
+  // Fallback to existing auth-based RPC
+  const { error } = await supabase.rpc('eg_upsert_fixture_player_stats', {
+    p_fixture_id: fixtureId,
+    p_rows: rows,
+  });
+
+  if (error) unwrapRpcError(error);
+}
+
+export async function fetchFixtureOcrData(fixtureId: string): Promise<AdminOcrQueueItem[]> {
+  const { data, error } = await supabase
+    .from('eg_ocr_queue')
+    .select('*')
+    .eq('fixture_id', fixtureId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    if (error.message.includes('does not exist')) return [];
+    throw new Error(error.message);
+  }
+
+  return ((data || []) as AdminOcrQueueItem[]).map((row) => ({
+    ...row,
+    source_images: Array.isArray(row.source_images) ? row.source_images : [],
+    result: normalizeJsonObject(row.result),
+  }));
+}
+
+export async function fetchFixtureSubmissionData(fixtureId: string) {
+  const { data, error } = await supabase
+    .from('submissions')
+    .select('*')
+    .eq('fixture_id', fixtureId)
+    .order('submitted_at', { ascending: false });
+
+  if (error) {
+    if (error.message.includes('does not exist')) return [];
+    throw new Error(error.message);
+  }
+
+  return (data || []) as Array<Record<string, unknown>>;
+}
+
+export async function listPlayersForTeam(teamId: string) {
+  const { data, error } = await supabase
+    .from('eg_players')
+    .select('id,name,display_name,team_id')
+    .eq('team_id', teamId)
+    .order('name', { ascending: true })
+    .limit(100);
+
+  if (error) throw new Error(error.message);
+  return (data || []) as Array<{ id: string; name: string | null; display_name: string | null; team_id: string }>;
+}

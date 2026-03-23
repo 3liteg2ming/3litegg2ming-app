@@ -43,6 +43,22 @@ const PreseasonPage = lazy(() => import('./pages/PreseasonPage'));
 const PreseasonRegistrationPage = lazy(() => import('./pages/PreseasonRegistrationPage'));
 const AdminConsolePage = lazy(() => import('./pages/AdminConsolePage'));
 
+const AdminGate = lazy(() => import('./routes/admin/AdminGate'));
+const AdminLayout = lazy(() => import('./routes/admin/AdminLayout'));
+const AdminDashboard = lazy(() => import('./routes/admin/pages/AdminDashboard'));
+const AdminSeasons = lazy(() => import('./routes/admin/pages/AdminSeasons'));
+const AdminTeams = lazy(() => import('./routes/admin/pages/AdminTeams'));
+const AdminPlayers = lazy(() => import('./routes/admin/pages/AdminPlayers'));
+const AdminFixtures = lazy(() => import('./routes/admin/pages/AdminFixtures'));
+const AdminFixtureDetail = lazy(() => import('./routes/admin/pages/AdminFixtureDetail'));
+const AdminRebuild = lazy(() => import('./routes/admin/pages/AdminRebuild'));
+const AdminCoaches = lazy(() => import('./routes/admin/pages/AdminCoaches'));
+const AdminSubmissions = lazy(() => import('./routes/admin/pages/AdminSubmissions'));
+const AdminContent = lazy(() => import('./routes/admin/pages/AdminContent'));
+const AdminFlags = lazy(() => import('./routes/admin/pages/AdminFlags'));
+const AdminAssets = lazy(() => import('./routes/admin/pages/AdminAssets'));
+const AdminAudit = lazy(() => import('./routes/admin/pages/AdminAudit'));
+
 const GLOBAL_CRASH_EVENT = 'eg:global-crash';
 
 type CrashDetail = {
@@ -260,7 +276,23 @@ function AppRoutes() {
                 <Route path="/profile" element={<Navigate to="/members" replace />} />
 
                 <Route path="/pro-team" element={<ComingSoonPage />} />
-                <Route path="/admin" element={<AdminConsolePage />} />
+                <Route path="/admin" element={<AdminGate><AdminLayout /></AdminGate>}>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="seasons" element={<AdminSeasons />} />
+                  <Route path="teams" element={<AdminTeams />} />
+                  <Route path="players" element={<AdminPlayers />} />
+                  <Route path="fixtures" element={<AdminFixtures />} />
+                  <Route path="fixtures/:fixtureId" element={<AdminFixtureDetail />} />
+                  <Route path="rebuild" element={<AdminRebuild />} />
+                  <Route path="coaches" element={<AdminCoaches />} />
+                  <Route path="submissions" element={<AdminSubmissions />} />
+                  <Route path="content" element={<AdminContent />} />
+                  <Route path="flags" element={<AdminFlags />} />
+                  <Route path="assets" element={<AdminAssets />} />
+                  <Route path="audit" element={<AdminAudit />} />
+                  <Route path="console" element={<AdminConsolePage />} />
+                  <Route path="preseason-seeding" element={<AdminConsolePage />} />
+                </Route>
 
                 <Route path="/match-centre" element={<MatchCentrePage />} />
                 <Route path="/match-centre/:fixtureId" element={<MatchCentrePage />} />

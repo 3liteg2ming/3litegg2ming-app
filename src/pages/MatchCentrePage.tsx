@@ -1,12 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Upload } from 'lucide-react';
 
 import HeroHeader from '@/components/match-centre/broadcast/HeroHeader';
 import MatchSummaryTab from '@/components/match-centre/broadcast/MatchSummaryTab';
 import TeamStats from '@/components/match-centre/broadcast/TeamStats';
 import PlayerStatsTable from '@/components/match-centre/broadcast/PlayerStatsTable';
 import MatchCentreTabs, { type MatchCentreTabKey } from '@/components/match-centre/broadcast/MatchCentreTabs';
+import { MelvinBetMatchOutlook } from '@/components/MelvinBet';
 import { useMatchCentre } from '@/hooks/useMatchCentre';
+import { useAuth } from '@/state/auth/AuthProvider';
+import { areFixturesVisible, FIXTURES_UNLOCK_LABEL } from '@/lib/fixtureVisibility';
 import type { MatchCentreModel } from '@/lib/matchCentreRepo';
 
 import '@/styles/match-centre-page.css';
@@ -52,18 +56,34 @@ export default function MatchCentrePage() {
   const location = useLocation();
   const { fixtureId } = useParams();
   const resolvedFixtureId = fixtureId;
+  const { user } = useAuth();
+  const fixturesVisible = areFixturesVisible();
 
   const [tab, setTab] = useState<MatchCentreTabKey>('summary');
 
   const topRef = useRef<HTMLDivElement>(null);
   const didMount = useRef(false);
-  const matchCentreQuery = useMatchCentre(resolvedFixtureId);
+  const matchCentreQuery = useMatchCentre(fixturesVisible ? resolvedFixtureId : undefined);
   const previewState = (location.state as { matchCentrePreview?: Partial<MatchCentreModel> } | null)?.matchCentrePreview;
   const heroPreviewModel = previewState ? buildPreviewModel(previewState, resolvedFixtureId) : null;
   const model = matchCentreQuery.data ?? null;
   const heroModel = model ?? heroPreviewModel;
   const err = matchCentreQuery.error instanceof Error ? matchCentreQuery.error.message : null;
   const loading = matchCentreQuery.isLoading && !matchCentreQuery.data;
+
+  // Determine if the signed-in coach is eligible to submit results for this fixture.
+  // Eligible = signed in, has a team, fixture is SCHEDULED (not FINAL), and coach's team is the home team.
+  const showSubmitButton = (() => {
+    if (!fixturesVisible || !user || !model) return false;
+    const status = String(model.statusLabel || '').toUpperCase();
+    if (status === 'FINAL' || status === 'COMPLETED' || status === 'COMPLETE') return false;
+    // Coach must have a team assigned
+    const coachTeamId = user.teamId;
+    if (!coachTeamId) return false;
+    // Only the home team coach can submit
+    const homeId = String(model.home?.id || '');
+    return homeId === coachTeamId;
+  })();
 
   useEffect(() => {
     const scrollEl = document.querySelector('.eg-content-scroll') as HTMLElement | null;
@@ -99,6 +119,27 @@ export default function MatchCentrePage() {
     });
   }
 
+  // Block access to match centre when fixtures are locked
+  if (!fixturesVisible) {
+    return (
+      <div className="mcPage">
+        <div className="mcPage__inner">
+          <div className="mcPage__error">
+            <div className="mcPage__errorBox">
+              <div className="mcPage__errorTitle">{FIXTURES_UNLOCK_LABEL}</div>
+              <div className="mcPage__errorMsg">
+                Match centre will be available once the season reveal goes live.
+              </div>
+              <button type="button" onClick={() => navigate('/')} className="mcPage__errorBtn">
+                Back to Home
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mcPage">
       <div className="mcPage__inner">
@@ -123,6 +164,18 @@ export default function MatchCentrePage() {
             {tab === 'summary' && (
               <section id="mc-panel-summary" role="tabpanel" aria-labelledby="mc-tab-summary" className="mcPage__content mcPage__content--summary">
                 <MatchSummaryTab model={model} loading={loading} />
+                {model?.home && model?.away && (
+                  <div style={{ padding: '0 12px', maxWidth: 768, margin: '0 auto', boxSizing: 'border-box' }}>
+                    <MelvinBetMatchOutlook
+                      fixtureId={model.fixtureId || resolvedFixtureId || 'unknown'}
+                      homeName={model.home.fullName || 'Home'}
+                      awayName={model.away.fullName || 'Away'}
+                      homeScore={model.home.score}
+                      awayScore={model.away.score}
+                      isFinal={String(model.statusLabel || '').toUpperCase() === 'FINAL'}
+                    />
+                  </div>
+                )}
               </section>
             )}
 
@@ -136,6 +189,19 @@ export default function MatchCentrePage() {
               <section id="mc-panel-players" role="tabpanel" aria-labelledby="mc-tab-players" className="mcPage__content">
                 <PlayerStatsTable model={model} />
               </section>
+            )}
+
+            {showSubmitButton && (
+              <div className="mcPage__submitWrap">
+                <button
+                  type="button"
+                  className="mcPage__submitBtn"
+                  onClick={() => navigate('/submit')}
+                >
+                  <Upload size={15} />
+                  <span>Submit Results</span>
+                </button>
+              </div>
             )}
 
             <div className="mcPage__footer" />

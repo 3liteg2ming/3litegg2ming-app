@@ -1,4 +1,4 @@
-import { ChevronLeft, Gamepad2, KeyRound, Mail, Shield, Trophy } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flame, Gamepad2, KeyRound, Lock, Mail, Shield, Snowflake, Target, Trophy, Zap } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -9,6 +9,7 @@ import { afl26LocalRounds } from '../data/afl26LocalRounds';
 import { getAfl26RoundsFromSupabase, type AflMatch, type AflRound } from '../data/afl26Supabase';
 import { fetchCoachBadges, groupCoachBadgesByCategory, type CoachBadgeModel } from '../lib/badges';
 import { getStoredCompetitionKey, getUiCompetition } from '../lib/competitionRegistry';
+import { areFixturesVisible } from '../lib/fixtureVisibility';
 import { resolveGamerTag } from '../lib/gamerTag';
 import { requireSupabaseClient } from '../lib/supabaseClient';
 import { TEAM_ASSETS, assetUrl, getTeamAssets, type TeamKey } from '../lib/teamAssets';
@@ -17,6 +18,7 @@ import { useAuth } from '../state/auth/AuthProvider';
 import '../styles/members-hub.css';
 
 const supabase = requireSupabaseClient();
+const TOTAL_ROUNDS = 11;
 
 type TeamRecord = {
   rank: number | null;
@@ -409,6 +411,71 @@ async function upsertProfileForUser(userId: string, payload: ProfileRow) {
   }
 }
 
+/* ── Animated count-up hook ─────────────────────────────── */
+function useCountUp(target: number, duration = 800): number {
+  const [current, setCurrent] = useState(0);
+  const rafRef = useRef<number>();
+
+  useEffect(() => {
+    if (!target || !Number.isFinite(target)) {
+      setCurrent(target);
+      return;
+    }
+    const start = performance.now();
+    const from = 0;
+    const step = (now: number) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      setCurrent(Math.round(from + (target - from) * eased));
+      if (progress < 1) rafRef.current = requestAnimationFrame(step);
+    };
+    rafRef.current = requestAnimationFrame(step);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [target, duration]);
+
+  return current;
+}
+
+function AnimatedStat({ value, prefix = '', suffix = '' }: { value: number | null; prefix?: string; suffix?: string }) {
+  const num = useCountUp(value ?? 0, 900);
+  if (value === null || !Number.isFinite(value)) return <>{statValue(null)}</>;
+  return <>{prefix}{num}{suffix}</>;
+}
+
+/* ── Momentum badge ─────────────────────────────────────── */
+function getMomentum(record: TeamRecord): { label: string; icon: typeof Flame; tone: string } {
+  const played = record.played ?? 0;
+  const winPct = record.winPct ?? 0;
+  const streak = record.streak ?? '';
+
+  if (played === 0) return { label: 'Season Awaits', icon: Zap, tone: 'neutral' };
+  if (streak.startsWith('W') && parseInt(streak.slice(1)) >= 3) return { label: 'Hot Streak', icon: Flame, tone: 'hot' };
+  if (winPct >= 60) return { label: 'Rolling', icon: Flame, tone: 'hot' };
+  if (winPct >= 40) return { label: 'Building', icon: Zap, tone: 'building' };
+  if (streak.startsWith('L') && parseInt(streak.slice(1)) >= 3) return { label: 'Slow Start', icon: Snowflake, tone: 'cold' };
+  return { label: 'Building', icon: Zap, tone: 'building' };
+}
+
+/* ── Season targets ─────────────────────────────────────── */
+function getSeasonTargets(record: TeamRecord) {
+  const played = record.played ?? 0;
+  const wins = record.wins ?? 0;
+  const rank = record.rank ?? 18;
+  const pointsFor = record.pointsFor ?? 0;
+
+  return [
+    { label: 'Win first match', done: wins >= 1 },
+    { label: 'Reach top 8', done: rank <= 8 },
+    { label: 'Score 100+ points', done: pointsFor >= 100 },
+    { label: 'Play 5 matches', done: played >= 5 },
+    { label: 'Win 3 matches', done: wins >= 3 },
+  ];
+}
+
+
 export default function MembersPage() {
   const nav = useNavigate();
   const { user, signOut } = useAuth();
@@ -431,6 +498,7 @@ export default function MembersPage() {
   const [psnDraft, setPsnDraft] = useState('');
   const [savingPsn, setSavingPsn] = useState(false);
   const [psnStatus, setPsnStatus] = useState<string | null>(null);
+  const [psnSaveSuccess, setPsnSaveSuccess] = useState(false);
   const profileRequestIdRef = useRef(0);
 
   const team = useMemo(() => {
@@ -719,14 +787,21 @@ export default function MembersPage() {
   const seasonChip = currentCompetition.key === 'preseason' ? 'Preseason 2026' : currentCompetition.label;
 
   const quickStats = [
-    { label: 'Current Rank', value: record.rank ? `#${record.rank}` : '—' },
+    { label: 'Current Rank', value: record.rank ? `#${record.rank}` : '—', primary: true },
     {
       label: 'W-L',
       value: record.wins === null || record.losses === null ? '—' : `${record.wins}-${record.losses}${record.draws ? `-${record.draws}` : ''}`,
+      primary: true,
     },
-    { label: 'Win %', value: clampPct(record.winPct) === null ? '—' : `${clampPct(record.winPct)!.toFixed(1)}%` },
-    { label: 'Streak', value: statValue(record.streak) },
+    { label: 'Win %', value: clampPct(record.winPct) === null ? '—' : `${clampPct(record.winPct)!.toFixed(1)}%`, primary: false },
+    { label: 'Streak', value: statValue(record.streak), primary: false },
   ];
+
+  const momentum = getMomentum(record);
+  const seasonTargets = getSeasonTargets(record);
+  const completedTargets = seasonTargets.filter((t) => t.done).length;
+  const roundsPlayed = record.played ?? 0;
+  const progressPct = Math.min((roundsPlayed / TOTAL_ROUNDS) * 100, 100);
 
   async function handleSavePsn() {
     if (!user?.id) return;
@@ -738,6 +813,7 @@ export default function MembersPage() {
 
     setSavingPsn(true);
     setPsnStatus(null);
+    setPsnSaveSuccess(false);
 
     try {
       await upsertProfileForUser(user.id, {
@@ -769,10 +845,12 @@ export default function MembersPage() {
           }) as AuthMetaUser,
         }).value || '',
       );
-      setPsnStatus('PSN or Xbox gamertag saved.');
+      setPsnStatus('Saved successfully.');
+      setPsnSaveSuccess(true);
+      setTimeout(() => setPsnSaveSuccess(false), 2000);
     } catch (err: any) {
       console.error('[Members] PSN save failed', err);
-      setPsnStatus('Could not save PSN or Xbox gamertag right now.');
+      setPsnStatus('Could not save right now.');
     } finally {
       setSavingPsn(false);
     }
@@ -788,18 +866,20 @@ export default function MembersPage() {
       </div>
 
       <div className="auth-card auth-card--wide member-card">
+        {/* ── Hero Header ──────────────────────────────── */}
         <section className="coachHubHero" style={{ background: heroGradient }}>
+          <div className="coachHubHero__shimmer" />
           <div className="coachHubHero__left">
             <div className="coachHubHero__logoWrap">
               <SmartImg className="coachHubHero__logo" src={teamLogo} alt={team?.name || 'Team'} fallbackText={team?.shortName || 'EG'} />
             </div>
             <div className="coachHubHero__meta">
-              <div className="coachHubHero__kicker">Coach Hub</div>
+              <div className="coachHubHero__kicker">Season Two Coach</div>
               <h1 className="coachHubHero__name">{displayName}</h1>
               <p className="coachHubHero__team">{team?.name || 'Unassigned Team'}</p>
               <div className="coachHubHero__sub">
-                <span>{resolvedPsn || 'PSN or Xbox gamertag not set'}</span>
-                <span>•</span>
+                <span>{resolvedPsn || 'PSN not set'}</span>
+                <span className="coachHubHero__dot">·</span>
                 <span>{resolvedEmail || '—'}</span>
               </div>
             </div>
@@ -811,9 +891,10 @@ export default function MembersPage() {
           </div>
         </section>
 
+        {/* ── Quick Stats ──────────────────────────────── */}
         <section className="coachQuickStats" aria-label="Quick stats">
           {quickStats.map((item) => (
-            <article className="coachQuickStats__item" key={item.label}>
+            <article className={`coachQuickStats__item ${item.primary ? 'coachQuickStats__item--primary' : ''}`} key={item.label}>
               <span className="coachQuickStats__label">{item.label}</span>
               <strong className="coachQuickStats__value">{item.value}</strong>
             </article>
@@ -826,6 +907,25 @@ export default function MembersPage() {
           </section>
         ) : null}
 
+        {/* ── Momentum Badge ──────────────────────────── */}
+        <section className={`chMomentum chMomentum--${momentum.tone}`}>
+          <momentum.icon size={16} className="chMomentum__icon" />
+          <span className="chMomentum__label">{momentum.label}</span>
+          <span className="chMomentum__sub">Coach Momentum</span>
+        </section>
+
+        {/* ── Season Progress ─────────────────────────── */}
+        <section className="chProgress">
+          <div className="chProgress__head">
+            <span className="chProgress__title">Season Progress</span>
+            <span className="chProgress__count">Round {roundsPlayed} of {TOTAL_ROUNDS}</span>
+          </div>
+          <div className="chProgress__track">
+            <div className="chProgress__fill" style={{ width: `${progressPct}%` }} />
+          </div>
+        </section>
+
+        {/* ── Performance Dashboard ──────────────────── */}
         <section className="member-panel member-panel--tight">
           <div className="member-panelTitle">
             <Trophy size={16} style={{ opacity: 0.75 }} /> Performance Dashboard
@@ -833,24 +933,64 @@ export default function MembersPage() {
           <div className="profileMiniGrid">
             <article className="profileMiniCard">
               <div className="profileMiniCard__label">Matches</div>
-              <div className="profileMiniCard__value">{statValue(record.played)}</div>
+              <div className="profileMiniCard__value"><AnimatedStat value={record.played} /></div>
             </article>
             <article className="profileMiniCard">
               <div className="profileMiniCard__label">Goals</div>
-              <div className="profileMiniCard__value">{statValue(record.goals)}</div>
+              <div className="profileMiniCard__value"><AnimatedStat value={record.goals} /></div>
             </article>
             <article className="profileMiniCard">
               <div className="profileMiniCard__label">Points For</div>
-              <div className="profileMiniCard__value">{statValue(record.pointsFor)}</div>
+              <div className="profileMiniCard__value"><AnimatedStat value={record.pointsFor} /></div>
             </article>
             <article className="profileMiniCard">
               <div className="profileMiniCard__label">Peak Rank</div>
-              <div className="profileMiniCard__value">{record.peakRank ? `#${record.peakRank}` : '—'}</div>
+              <div className="profileMiniCard__value">{record.peakRank ? <AnimatedStat value={record.peakRank} prefix="#" /> : '—'}</div>
             </article>
           </div>
           {loadingStats ? <div className="profileDashHint">Refreshing latest stats…</div> : null}
         </section>
 
+        {/* ── Upcoming Match ─────────────────────────── */}
+        {areFixturesVisible() ? (
+          <section className="chNextMatch" role="button" tabIndex={0} onClick={() => nav('/fixtures')} onKeyDown={(e) => e.key === 'Enter' && nav('/fixtures')}>
+            <div className="chNextMatch__left">
+              <span className="chNextMatch__label">Next Match</span>
+              <span className="chNextMatch__cta">View Fixtures <ChevronRight size={13} /></span>
+            </div>
+            <div className="chNextMatch__badge">
+              <SmartImg className="chNextMatch__logo" src={teamLogo} alt="" fallbackText="" />
+            </div>
+          </section>
+        ) : (
+          <section className="chNextMatch chNextMatch--locked">
+            <div className="chNextMatch__left">
+              <span className="chNextMatch__label">Next Match</span>
+              <span className="chNextMatch__lockText">Fixtures unlock at 6:00 PM tonight</span>
+            </div>
+            <Lock size={18} className="chNextMatch__lockIcon" />
+          </section>
+        )}
+
+        {/* ── Season Targets ─────────────────────────── */}
+        <section className="member-panel member-panel--tight">
+          <div className="member-panelTitle">
+            <Target size={16} style={{ opacity: 0.75 }} /> Season Targets
+            <span className="chTargets__count">{completedTargets}/{seasonTargets.length}</span>
+          </div>
+          <div className="chTargets">
+            {seasonTargets.map((target) => (
+              <div key={target.label} className={`chTargets__item ${target.done ? 'chTargets__item--done' : ''}`}>
+                <div className={`chTargets__check ${target.done ? 'chTargets__check--done' : ''}`}>
+                  {target.done ? <Zap size={10} /> : <Lock size={9} />}
+                </div>
+                <span className="chTargets__label">{target.label}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Badges ─────────────────────────────────── */}
         <section className="member-panel member-panel--tight">
           <div className="member-panelTitle">
             <Shield size={16} style={{ opacity: 0.75 }} /> Badges
@@ -871,6 +1011,7 @@ export default function MembersPage() {
           )}
         </section>
 
+        {/* ── Account ────────────────────────────────── */}
         <section className="member-panel member-panel--tight">
           <div className="member-panelTitle">
             <Mail size={16} style={{ opacity: 0.75 }} /> Account
@@ -897,43 +1038,26 @@ export default function MembersPage() {
               <KeyRound size={16} className="member-ico" style={{ marginTop: 8 }} />
               <div className="member-miniRow__grow" style={{ width: '100%' }}>
                 <div className="member-miniLabel">Manage account</div>
-                <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
+                <div className="chAccountForm">
                   <input
                     type="text"
+                    className="chAccountForm__input"
                     value={psnDraft}
                     onChange={(e) => setPsnDraft(e.target.value)}
                     placeholder="PSN ID or gamertag"
                     autoCapitalize="none"
                     disabled={savingPsn}
-                    style={{
-                      width: '100%',
-                      borderRadius: 10,
-                      border: '1px solid rgba(255,255,255,0.18)',
-                      background: 'rgba(4, 9, 22, 0.72)',
-                      color: '#e8ecf8',
-                      padding: '10px 12px',
-                      fontSize: 16,
-                    }}
                   />
                   <button
                     type="button"
                     onClick={handleSavePsn}
                     disabled={profileLoading || savingPsn || !cleanProfileText(psnDraft)}
-                    className="coachSoonChip"
-                    style={{
-                      justifySelf: 'start',
-                      border: '1px solid rgba(245, 196, 0, 0.38)',
-                      background: 'rgba(245, 196, 0, 0.14)',
-                      color: '#f5c400',
-                      cursor: savingPsn ? 'not-allowed' : 'pointer',
-                    }}
+                    className={`chAccountForm__save ${psnSaveSuccess ? 'chAccountForm__save--success' : ''}`}
                   >
-                    {savingPsn ? 'Saving…' : 'Save Tag'}
+                    {savingPsn ? 'Saving…' : psnSaveSuccess ? 'Saved ✓' : 'Save Tag'}
                   </button>
-                  {psnStatus ? (
-                    <div className="member-miniValue" style={{ fontSize: 12, opacity: 0.85 }}>
-                      {psnStatus}
-                    </div>
+                  {psnStatus && !psnSaveSuccess ? (
+                    <div className="chAccountForm__status">{psnStatus}</div>
                   ) : null}
                 </div>
               </div>
@@ -941,6 +1065,7 @@ export default function MembersPage() {
           </div>
         </section>
 
+        {/* ── Actions ────────────────────────────────── */}
         <section className="coachActions">
           {!registration.loading && !registration.registered ? (
             <button type="button" className="auth-primary coachActions__primary" onClick={() => nav('/preseason-registration')}>
@@ -948,7 +1073,7 @@ export default function MembersPage() {
             </button>
           ) : null}
 
-          <button type="button" className="member-signout coachActions__secondary" onClick={() => signOut()} aria-label="Sign out">
+          <button type="button" className="member-signout coachActions__signout" onClick={() => signOut()} aria-label="Sign out">
             Sign out
           </button>
 
@@ -956,7 +1081,7 @@ export default function MembersPage() {
             <div className="coachActions__hint">Checking preseason registration…</div>
           ) : registration.registered ? (
             <div className="coachActions__hint">
-              Registered for preseason • {registration.coachPsn || 'PSN or gamertag TBC'} • {registration.prefTeamNames || `${registration.prefCount}/4 preferences set`}
+              Registered for preseason · {registration.coachPsn || 'PSN TBC'} · {registration.prefTeamNames || `${registration.prefCount}/4 preferences set`}
             </div>
           ) : (
             <div className="coachActions__hint">Not registered yet</div>

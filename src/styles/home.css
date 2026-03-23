@@ -490,6 +490,202 @@
     rgba(9,13,21,0.93);
 }
 
+/* ─── Coaches Section ─── */
+.home-module--coaches {
+  background:
+    radial-gradient(500px 160px at 80% 0%, rgba(63, 126, 240, 0.06), transparent 55%),
+    rgba(6, 10, 18, 0.95);
+  overflow: hidden;
+}
+
+.home-module--coaches .home-module__header {
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.home-module--coaches .home-module__header h2 {
+  font-size: 0.88rem;
+  letter-spacing: 0.14em;
+}
+
+.home-module--coaches .home-module__header a {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.home-coaches-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 2px 0 2px;
+}
+
+.home-coach-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  min-width: 0;
+  width: 100%;
+  padding: 12px 8px 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
+  transition: border-color 0.2s ease, background 0.2s ease;
+  box-sizing: border-box;
+}
+
+.home-coach-card:hover {
+  border-color: rgba(245, 196, 0, 0.18);
+  background: linear-gradient(180deg, rgba(245, 196, 0, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
+}
+
+.home-coach-card__logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.home-coach-card__logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 3px;
+}
+
+.home-coach-card__info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 0;
+  width: 100%;
+}
+
+.home-coach-card__name {
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.92);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.home-coach-card__team {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-coach-card__psn {
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(63, 126, 240, 0.7);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-coach-skeleton {
+  border-radius: 14px;
+}
+
+.home-module--coaches .home-module__header a svg {
+  width: 14px;
+  height: 14px;
+}
+
+@media (min-width: 980px) {
+  .home-coach-card {
+    padding: 14px 10px 12px;
+    border-radius: 18px;
+  }
+
+  .home-coach-card__logo {
+    width: 44px;
+    height: 44px;
+  }
+
+  .home-coach-card__name {
+    font-size: 13px;
+  }
+
+  .home-coach-card__team {
+    font-size: 11px;
+  }
+
+  .home-coach-card__psn {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 540px) {
+  .home-module--coaches {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .home-module--coaches .home-module__header {
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .home-module--coaches .home-module__header a {
+    font-size: 0.72rem;
+    letter-spacing: 0.11em;
+    margin-left: 0;
+  }
+
+  .home-coaches-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 0;
+  }
+
+  .home-coach-card {
+    padding: 10px 6px 8px;
+    gap: 5px;
+  }
+
+  .home-coach-card__logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+  }
+
+  .home-coach-card__name {
+    font-size: 11px;
+  }
+
+  .home-coach-card__team {
+    font-size: 9px;
+  }
+
+  .home-coach-card__psn {
+    font-size: 8px;
+  }
+}
+
 .home-module--ladder {
   background:
     radial-gradient(500px 160px at -2% 50%, rgba(245,196,0,0.046), transparent 55%),
@@ -1044,7 +1240,7 @@
   .home-main { padding-left: 16px; padding-right: 16px; }
 }
 
-@media (min-width: 720px) {
+@media (min-width: 980px) {
   .home-main              { padding-left: 20px; padding-right: 20px; }
   .home-module__header h2 { font-size: 0.74rem; }
   .home-hero-lockup__eg   { height: 130px; margin-top: 10px; }
@@ -1074,6 +1270,12 @@
   text-align: center;
 }
 
+.home-promo-card__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .home-promo-card__icon {
   width: 36px;
   height: 36px;
@@ -1098,7 +1300,7 @@
   font-size: 0.8rem;
   color: rgba(253, 236, 166, 0.7);
   max-width: 320px;
-  margin: 0 auto 18px;
+  margin: 0 auto 0;
   line-height: 1.45;
 }
 

@@ -104,7 +104,10 @@ export default function BottomNav({ hidden = false }: { hidden?: boolean }) {
                     <Icon className="egNavDock__icon--active" />
                   </div>}
                   {!isActive && <Icon className="egNavDock__icon" />}
-                  {isActive && <span className="egNavDock__pillText">{label}</span>}
+                  {isActive
+                    ? <span className="egNavDock__pillText">{label}</span>
+                    : <span className="egNavDock__btnLabel">{label}</span>
+                  }
                 </>
               )}
             </NavLink>

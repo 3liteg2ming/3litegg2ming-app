@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import SmartImg from './SmartImg';
+import { MelvinBetOddsStrip } from './MelvinBet';
 import { assetUrl, TEAM_ASSETS, type TeamKey } from '../lib/teamAssets';
 import '../styles/fixture-broadcast-shared.css';
 import '../styles/fixture-poster-card.css';
@@ -124,6 +125,11 @@ function displayPsn(primary?: string | null, fallback?: string | null) {
   return normalized || 'PSN TBC';
 }
 
+function teamPlatformLabel(teamKey: string): string {
+  const k = teamKey.toLowerCase().replace(/[\s_-]/g, '');
+  return k === 'westernbulldogs' ? 'Xbox' : 'PSN';
+}
+
 function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
   const safeMatch = m || ({
     status: 'SCHEDULED',
@@ -195,6 +201,8 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
   const awayCoach = displayCoach(safeMatch.awayCoachName);
   const homePsn = displayPsn(safeMatch.homePsn, safeMatch.homeCoachPsn);
   const awayPsn = displayPsn(safeMatch.awayPsn, safeMatch.awayCoachPsn);
+  const homePlatform = teamPlatformLabel(homeKey);
+  const awayPlatform = teamPlatformLabel(awayKey);
 
   return (
     <section
@@ -352,7 +360,7 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
             </span>
           </div>
           <div className="fxPosterCard__metaRow">
-            <span className="fxPosterCard__metaKey">PSN</span>
+            <span className="fxPosterCard__metaKey">{homePlatform}</span>
             <span
               className={`fxPosterCard__metaValue fxPosterCard__metaValue--sub ${homePsn === 'PSN TBC' ? 'is-tbc' : ''}`}
               title={homePsn}
@@ -373,7 +381,7 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
             </span>
           </div>
           <div className="fxPosterCard__metaRow">
-            <span className="fxPosterCard__metaKey">PSN</span>
+            <span className="fxPosterCard__metaKey">{awayPlatform}</span>
             <span
               className={`fxPosterCard__metaValue fxPosterCard__metaValue--sub ${awayPsn === 'PSN TBC' ? 'is-tbc' : ''}`}
               title={awayPsn}
@@ -383,6 +391,12 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
           </div>
         </div>
       </div>
+
+      <MelvinBetOddsStrip
+        matchId={safeMatch.id || `${homeKey}-${awayKey}`}
+        homeName={home.name}
+        awayName={away.name}
+      />
 
       <button className="fxPosterCard__cta" type="button" onClick={safeMatch.onMatchCentreClick}>
         MATCH CENTRE

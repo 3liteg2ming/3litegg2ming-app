@@ -71,6 +71,49 @@ const TINT_OVERRIDES: Record<string, string> = {
   sydney: '#C71F2D',
 };
 
+/** Secondary team colours for colour clash resolution */
+const TEAM_SECONDARY_COLORS: Record<string, string> = {
+  adelaide: '#f3c346',
+  brisbane: '#2e76bc',
+  carlton: '#6ca8ff',
+  collingwood: '#8f9397',
+  essendon: '#1f1f1f',
+  fremantle: '#9a82d8',
+  geelong: '#5d88c8',
+  goldcoast: '#f2be3f',
+  gws: '#4f5964',
+  hawthorn: '#c8a96f',
+  melbourne: '#e33542',
+  northmelbourne: '#ffffff',
+  portadelaide: '#73b5d9',
+  richmond: '#ffd139',
+  stkilda: '#c22d36',
+  sydney: '#f5f5f5',
+  westcoast: '#f2b31f',
+  westernbulldogs: '#d23c4f',
+};
+
+function colorDistanceHex(a: string, b: string): number {
+  const parse = (hex: string): [number, number, number] => {
+    const c = hex.replace('#', '');
+    const f = c.length === 3 ? c.split('').map((ch) => `${ch}${ch}`).join('') : c;
+    return [parseInt(f.slice(0, 2), 16) || 128, parseInt(f.slice(2, 4), 16) || 128, parseInt(f.slice(4, 6), 16) || 128];
+  };
+  const [r1, g1, b1] = parse(a);
+  const [r2, g2, b2] = parse(b);
+  const dr = r1 - r2, dg = g1 - g2, db = b1 - b2;
+  return Math.sqrt(dr * dr * 2 + dg * dg * 4 + db * db * 3);
+}
+
+function resolveContrastingAwayTint(homeTint: string, awayTint: string, awayKey?: TeamKey | null): string {
+  const CLASH_THRESHOLD = 80;
+  if (colorDistanceHex(homeTint, awayTint) >= CLASH_THRESHOLD) return awayTint;
+  const key = String(awayKey || '').toLowerCase().replace(/[^a-z]/g, '');
+  const secondary = TEAM_SECONDARY_COLORS[key];
+  if (secondary && colorDistanceHex(homeTint, secondary) > CLASH_THRESHOLD) return secondary;
+  return awayTint;
+}
+
 function pickTeamTint(teamKey?: TeamKey | null, teamName?: string | null, explicitColour?: string | null) {
   const direct = resolveHex(explicitColour);
   if (direct) return direct;
@@ -141,7 +184,8 @@ export default function HeroHeader({ onBack, model, loading }: Props) {
   });
 
   const homeTint = pickTeamTint(homeKey, home?.fullName, home?.color || home?.colour);
-  const awayTint = pickTeamTint(awayKey, away?.fullName, away?.color || away?.colour);
+  const rawAwayTint = pickTeamTint(awayKey, away?.fullName, away?.color || away?.colour);
+  const awayTint = resolveContrastingAwayTint(homeTint, rawAwayTint, awayKey);
 
   const homeRgb = hexToRgb(homeTint);
   const awayRgb = hexToRgb(awayTint);

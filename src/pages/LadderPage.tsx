@@ -2,6 +2,7 @@ import React, { memo, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 
 import SmartImg from '../components/SmartImg';
+import { MelvinBetSeasonForecast, type MelvinForecastTeam } from '../components/MelvinBet';
 import { TEAM_ASSETS, assetUrl, type TeamKey } from '../lib/teamAssets';
 import { getDataSeasonSlugForCompetition, getStoredCompetitionKey } from '../lib/competitionRegistry';
 import { resolveTeamKey } from '../lib/entityResolvers';
@@ -194,6 +195,21 @@ export default function LadderPage() {
     return enrichWinChance(mapped);
   }, [ladderRows]);
 
+  const forecastTeams = useMemo<MelvinForecastTeam[]>(() => {
+    return rows.map((r) => {
+      const t = TEAM_ASSETS[r.teamKey] || { logoFile: '' };
+      return {
+        id: r.id,
+        pos: r.pos,
+        teamName: r.teamName,
+        logoUrl: t.logoFile ? assetUrl(t.logoFile) : undefined,
+        played: r.played,
+        wins: r.wins,
+        percentage: r.percentage,
+      };
+    });
+  }, [rows]);
+
   return (
     <div className="ladderPage aflLayout">
       <div className="ladderWrap">
@@ -237,6 +253,8 @@ export default function LadderPage() {
             </div>
           )}
         </div>
+
+        {forecastTeams.length > 0 && <MelvinBetSeasonForecast teams={forecastTeams} />}
 
         <div className="safeBottom" />
       </div>
