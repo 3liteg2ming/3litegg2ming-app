@@ -938,13 +938,11 @@ const TEAM_STAT_PAYLOAD_CONFIGS: TeamStatPayloadConfig[] = [
   { label: 'Frees For', aliases: ['freesFor', 'frees_for', 'freeKicksFor', 'free_kicks_for', 'frees'] },
   { label: '50m Penalties', aliases: ['fiftyMetrePenalties', 'fifty_metre_penalties', '50mPenalties', '50m_penalties'] },
   { label: 'Hitouts', aliases: ['hitOuts', 'hit_outs', 'hitouts'] },
-  { label: 'Clearances', aliases: ['clearances'] },
   { label: 'Contested Possessions', aliases: ['contestedPossessions', 'contested_possessions'] },
   { label: 'Uncontested Possessions', aliases: ['uncontestedPossessions', 'uncontested_possessions'] },
   { label: 'Marks', aliases: ['marks'] },
   { label: 'Contested Marks', aliases: ['contestedMarks', 'contested_marks'] },
   { label: 'Intercept Marks', aliases: ['interceptMarks', 'intercept_marks'] },
-  { label: 'Tackles', aliases: ['tackles'] },
   { label: 'Spoils', aliases: ['spoils'] },
   { label: 'Frees Against', aliases: ['freesAgainst', 'frees_against', 'freeKicksAgainst', 'free_kicks_against'] },
 ];
@@ -962,13 +960,11 @@ const TEAM_STAT_DISPLAY_ORDER = [
   'Frees For',
   '50m Penalties',
   'Hitouts',
-  'Clearances',
   'Contested Possessions',
   'Uncontested Possessions',
   'Marks',
   'Contested Marks',
   'Intercept Marks',
-  'Tackles',
   'Spoils',
   'Frees Against',
 ] as const;
@@ -2321,15 +2317,11 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
 
   const hasGoalsLeader = playerStats.some((row) => safeNum(row.G) > 0);
   const hasDisposalsLeader = playerStats.some((row) => safeNum(row.D) > 0);
-  const hasTacklesLeader = playerStats.some((row) => safeNum(row.T) > 0);
-  const hasClearancesLeader = playerStats.some((row) => safeNum(row.CLR) > 0);
   const hasMarksLeader = playerStats.some((row) => safeNum(row.M) > 0);
 
   const leaders: MatchLeaderCard[] = [
     hasGoalsLeader ? { stat: 'GOALS', home: pickLeader(home.fullName, 'G'), away: pickLeader(away.fullName, 'G') } : null,
     hasDisposalsLeader ? { stat: 'DISPOSALS', home: pickLeader(home.fullName, 'D'), away: pickLeader(away.fullName, 'D') } : null,
-    hasTacklesLeader ? { stat: 'TACKLES', home: pickLeader(home.fullName, 'T'), away: pickLeader(away.fullName, 'T') } : null,
-    hasClearancesLeader ? { stat: 'CLEARANCES', home: pickLeader(home.fullName, 'CLR'), away: pickLeader(away.fullName, 'CLR') } : null,
     hasMarksLeader ? { stat: 'MARKS', home: pickLeader(home.fullName, 'M'), away: pickLeader(away.fullName, 'M') } : null,
   ].filter(Boolean) as MatchLeaderCard[];
 
@@ -2378,16 +2370,6 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
       label: 'Marks',
       homeMatch: playerStats.filter((p) => p.team === home.fullName).reduce((acc, p) => acc + safeNum(p.M), 0),
       awayMatch: playerStats.filter((p) => p.team === away.fullName).reduce((acc, p) => acc + safeNum(p.M), 0),
-    },
-    {
-      label: 'Tackles',
-      homeMatch: playerStats.filter((p) => p.team === home.fullName).reduce((acc, p) => acc + safeNum(p.T), 0),
-      awayMatch: playerStats.filter((p) => p.team === away.fullName).reduce((acc, p) => acc + safeNum(p.T), 0),
-    },
-    {
-      label: 'Clearances',
-      homeMatch: playerStats.filter((p) => p.team === home.fullName).reduce((acc, p) => acc + safeNum(p.CLR), 0),
-      awayMatch: playerStats.filter((p) => p.team === away.fullName).reduce((acc, p) => acc + safeNum(p.CLR), 0),
     },
   ];
   // Primary source: team_stats_json stored directly on the fixture row (always readable)

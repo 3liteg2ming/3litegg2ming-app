@@ -14,7 +14,7 @@ function toneClass(home: number, away: number) {
 }
 
 function buildCards(model: MatchCentreModel | null): StatCard[] {
-  const preferred = ['Clearances', 'Inside 50s', 'Tackles', 'Marks', 'Disposals', 'Hitouts'];
+  const preferred = ['Inside 50s', 'Marks', 'Disposals', 'Hitouts', 'Spoils', 'Rebound 50s'];
   const source = model?.teamStats || [];
 
   const picked = preferred

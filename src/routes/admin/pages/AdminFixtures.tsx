@@ -26,6 +26,7 @@ export default function AdminFixtures() {
   const [roundInput, setRoundInput] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('rounds');
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const search = useDebouncedValue((searchInput || globalSearch).trim(), 300);
   const roundFilter = roundInput ? Number(roundInput) : null;
@@ -108,11 +109,13 @@ export default function AdminFixtures() {
     return Array.from(map.entries()).sort((a, b) => a[0] - b[0]);
   }, [allFixtures]);
 
+  const hasActiveFilters = seasonId !== 'all' || teamId !== 'all' || status !== 'all' || roundInput !== '' || searchInput !== '';
+
   function scoreLabel(f: typeof allFixtures[0]) {
     if (f.home_total != null && f.away_total != null) {
       return `${f.home_total} - ${f.away_total}`;
     }
-    return '— vs —';
+    return null;
   }
 
   function statusBadge(s: string | null) {
@@ -127,57 +130,98 @@ export default function AdminFixtures() {
 
   return (
     <div className="eg-admin-grid">
-      <AdminCard title="Fixtures & Results Control" subtitle="Click any fixture to edit scores, player stats, and OCR data">
-        <div className="eg-admin-toolbar">
-          <label className="eg-admin-inline-field">
-            <span>Search venue</span>
-            <input value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder="MCG" />
-          </label>
-          <label className="eg-admin-inline-field">
-            <span>Season</span>
-            <select value={seasonId} onChange={(event) => setSeasonId(event.target.value)}>
-              <option value="all">All seasons</option>
-              {(seasonsQuery.data || []).map((season) => (
-                <option value={season.id} key={season.id}>
-                  {season.name || season.slug || season.id}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="eg-admin-inline-field">
-            <span>Team</span>
-            <select value={teamId} onChange={(event) => setTeamId(event.target.value)}>
-              <option value="all">All teams</option>
-              {(teamsQuery.data || []).map((team) => (
-                <option value={team.id} key={team.id}>
-                  {team.short_name || team.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="eg-admin-inline-field">
-            <span>Status</span>
-            <select value={status} onChange={(event) => setStatus(event.target.value)}>
-              <option value="all">Any</option>
-              <option value="SCHEDULED">Scheduled</option>
-              <option value="LIVE">Live</option>
-              <option value="FINAL">Final</option>
-            </select>
-          </label>
-          <label className="eg-admin-inline-field narrow">
-            <span>Round</span>
-            <input value={roundInput} onChange={(event) => setRoundInput(event.target.value)} placeholder="e.g. 4" />
-          </label>
-          <label className="eg-admin-inline-field narrow">
-            <span>View</span>
-            <select value={viewMode} onChange={(e) => setViewMode(e.target.value as ViewMode)}>
-              <option value="rounds">By Round</option>
-              <option value="table">Table</option>
-            </select>
-          </label>
+      <AdminCard title="Fixtures & Results" subtitle="Tap any fixture to edit scores, stats, and data">
+        {/* ─── FILTER TOGGLE + VIEW MODE ──────────────── */}
+        <div className="eg-fx-controls">
+          <button
+            type="button"
+            className="eg-fx-filter-toggle"
+            onClick={() => setFiltersOpen((p) => !p)}
+          >
+            {filtersOpen ? 'Hide Filters' : 'Filters'}
+            {hasActiveFilters ? (
+              <span className="eg-fx-filter-dot" />
+            ) : null}
+          </button>
+          <div className="eg-fx-view-toggle">
+            <button
+              type="button"
+              className={`eg-fx-view-btn${viewMode === 'rounds' ? ' is-active' : ''}`}
+              onClick={() => setViewMode('rounds')}
+            >
+              Rounds
+            </button>
+            <button
+              type="button"
+              className={`eg-fx-view-btn${viewMode === 'table' ? ' is-active' : ''}`}
+              onClick={() => setViewMode('table')}
+            >
+              Table
+            </button>
+          </div>
+          {hasActiveFilters ? (
+            <button
+              type="button"
+              className="eg-fx-clear-btn"
+              onClick={() => {
+                setSeasonId('all');
+                setTeamId('all');
+                setStatus('all');
+                setRoundInput('');
+                setSearchInput('');
+              }}
+            >
+              Clear
+            </button>
+          ) : null}
         </div>
 
-        {fixturesQuery.isLoading ? <p className="eg-admin-muted">Loading fixtures…</p> : null}
+        {/* ─── COLLAPSIBLE FILTERS ────────────────────── */}
+        {filtersOpen ? (
+          <div className="eg-fx-filters">
+            <label className="eg-admin-inline-field">
+              <span>Venue search</span>
+              <input value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder="MCG" />
+            </label>
+            <label className="eg-admin-inline-field">
+              <span>Season</span>
+              <select value={seasonId} onChange={(event) => setSeasonId(event.target.value)}>
+                <option value="all">All seasons</option>
+                {(seasonsQuery.data || []).map((season) => (
+                  <option value={season.id} key={season.id}>
+                    {season.name || season.slug || season.id}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="eg-admin-inline-field">
+              <span>Team</span>
+              <select value={teamId} onChange={(event) => setTeamId(event.target.value)}>
+                <option value="all">All teams</option>
+                {(teamsQuery.data || []).map((team) => (
+                  <option value={team.id} key={team.id}>
+                    {team.short_name || team.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="eg-admin-inline-field">
+              <span>Status</span>
+              <select value={status} onChange={(event) => setStatus(event.target.value)}>
+                <option value="all">Any</option>
+                <option value="SCHEDULED">Scheduled</option>
+                <option value="LIVE">Live</option>
+                <option value="FINAL">Final</option>
+              </select>
+            </label>
+            <label className="eg-admin-inline-field narrow">
+              <span>Round</span>
+              <input value={roundInput} onChange={(event) => setRoundInput(event.target.value)} placeholder="e.g. 4" />
+            </label>
+          </div>
+        ) : null}
+
+        {fixturesQuery.isLoading ? <p className="eg-admin-muted">Loading fixtures...</p> : null}
         {fixturesQuery.error ? (
           <p className="eg-admin-error">
             {fixturesQuery.error instanceof Error ? fixturesQuery.error.message : 'Failed to load fixtures'}
@@ -188,94 +232,57 @@ export default function AdminFixtures() {
           <EmptyState title="No fixtures" description="No fixtures matched your filters." />
         ) : null}
 
+        {/* ─── ROUNDS VIEW ────────────────────────────── */}
         {viewMode === 'rounds' && roundsGrouped.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <div className="eg-fx-rounds">
             {roundsGrouped.map(([round, fixtures]) => {
               const finalCount = fixtures.filter((f) => f.status === 'FINAL').length;
               const totalCount = fixtures.length;
               const allFinal = finalCount === totalCount;
               return (
-                <div key={round} style={{
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: 12,
-                  overflow: 'hidden',
-                }}>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '10px 14px',
-                    background: allFinal ? 'rgba(52,211,153,0.06)' : 'rgba(255,255,255,0.03)',
-                    borderBottom: '1px solid rgba(255,255,255,0.06)',
-                  }}>
-                    <strong style={{ fontSize: '0.92rem' }}>Round {round || '?'}</strong>
-                    <span style={{
-                      fontSize: '0.78rem',
-                      color: allFinal ? '#6ee7b7' : 'var(--admin-muted)',
-                    }}>
+                <div key={round} className="eg-fx-round">
+                  <div className={`eg-fx-round-header${allFinal ? ' eg-fx-round-header--done' : ''}`}>
+                    <strong>Round {round || '?'}</strong>
+                    <span className={allFinal ? 'eg-fx-round-complete' : ''}>
                       {finalCount}/{totalCount} final
                     </span>
                   </div>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                    gap: 1,
-                    background: 'rgba(255,255,255,0.04)',
-                  }}>
+                  <div className="eg-fx-round-fixtures">
                     {fixtures.map((f) => {
                       const home = f.home_team_id ? teamById.get(f.home_team_id) || 'TBD' : 'TBD';
                       const away = f.away_team_id ? teamById.get(f.away_team_id) || 'TBD' : 'TBD';
                       const badge = statusBadge(f.status);
                       const scored = hasStats(f);
+                      const score = scoreLabel(f);
                       return (
                         <Link
                           key={f.id}
                           to={`/admin/fixtures/${f.id}`}
-                          style={{
-                            display: 'block',
-                            padding: '10px 14px',
-                            background: 'rgba(7,10,18,0.6)',
-                            textDecoration: 'none',
-                            color: 'inherit',
-                            borderLeft: scored
-                              ? '3px solid rgba(52,211,153,0.5)'
-                              : '3px solid rgba(148,163,184,0.2)',
-                            transition: 'background 0.15s',
-                          }}
-                          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(34,203,253,0.06)'; }}
-                          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(7,10,18,0.6)'; }}
+                          className={`eg-fx-card${scored ? ' eg-fx-card--scored' : ''}`}
                         >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <strong style={{ fontSize: '0.88rem', color: '#def0ff' }}>
-                              {home} vs {away}
-                            </strong>
-                            <span style={{
-                              fontSize: '0.72rem',
-                              padding: '2px 6px',
-                              borderRadius: 6,
-                              background: badge.bg,
-                              color: badge.color,
-                              fontWeight: 700,
-                            }}>
+                          <div className="eg-fx-card-top">
+                            <div className="eg-fx-card-teams">
+                              <span className="eg-fx-card-team">{home}</span>
+                              <span className="eg-fx-card-vs">v</span>
+                              <span className="eg-fx-card-team">{away}</span>
+                            </div>
+                            <span
+                              className="eg-admin-status-chip"
+                              style={{
+                                background: badge.bg,
+                                color: badge.color,
+                              }}
+                            >
                               {badge.label}
                             </span>
                           </div>
-                          <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            marginTop: 4,
-                            fontSize: '0.8rem',
-                            color: 'var(--admin-muted)',
-                          }}>
-                            <span style={{
-                              fontWeight: scored ? 700 : 400,
-                              color: scored ? '#bfe4ff' : 'var(--admin-muted)',
-                              fontVariantNumeric: 'tabular-nums',
-                            }}>
-                              {scoreLabel(f)}
-                            </span>
-                            <span>{f.venue || '—'}</span>
+                          <div className="eg-fx-card-bottom">
+                            {score ? (
+                              <span className="eg-fx-card-score">{score}</span>
+                            ) : (
+                              <span className="eg-fx-card-noscore">No score</span>
+                            )}
+                            <span className="eg-fx-card-venue">{f.venue || '—'}</span>
                           </div>
                         </Link>
                       );
@@ -287,6 +294,7 @@ export default function AdminFixtures() {
           </div>
         ) : null}
 
+        {/* ─── TABLE VIEW ─────────────────────────────── */}
         {viewMode === 'table' && allFixtures.length > 0 ? (
           <div className="eg-admin-table-wrap">
             <table className="eg-admin-table">

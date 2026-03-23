@@ -55,8 +55,8 @@ const StatLeadersPage: React.FC = () => {
     const statKey = stat as LeadersStatKey;
 
     const supported =
-      ['goals', 'disposals', 'kicks', 'handballs', 'marks', 'tackles', 'hitOuts', 'fantasyPoints'].includes(statKey) ||
-      (mode === 'teams' && ['goals', 'disposals', 'marks', 'tackles'].includes(statKey));
+      ['goals', 'disposals', 'kicks', 'handballs', 'marks', 'hitOuts', 'fantasyPoints'].includes(statKey) ||
+      (mode === 'teams' && ['goals', 'disposals', 'marks'].includes(statKey));
 
     if (!supported) {
       setRemoteLeaders(null);

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -10,9 +10,11 @@ import {
   listFixturePlayerStats,
   listPlayersForTeam,
   listTeams,
+  lookupPlayersByAflId,
   updateFixture,
   updateFixtureScores,
   upsertFixturePlayerStats,
+  deleteFixturePlayerStats,
   setOcrQueueStatus,
   type AdminFixturePlayerStat,
 } from '@/lib/adminApi';
@@ -31,11 +33,42 @@ type ScoreDraft = {
 
 type PlayerStatDraft = AdminFixturePlayerStat & { dirty?: boolean; _unmatched?: boolean };
 
+type MatchConfidence = 'exact' | 'partial' | 'none';
+
+type BulkPreviewRow = {
+  playerName: string;
+  teamSlug: string;
+  matched: boolean;
+  matchConfidence: MatchConfidence;
+  matchReason: string;
+  playerId: string | null;
+  teamId: string | null;
+  teamLabel: string;
+  kicks: number;
+  handballs: number;
+  disposals: number;
+  marks: number;
+  tackles: number;
+  fantasyPoints: number;
+  // playerRef tracking
+  refPlayerId?: string | null;   // playerRef.playerId from JSON
+  refAflPlayerId?: number | null; // playerRef.aflPlayerId from JSON
+  refPlayerName?: string | null;  // playerRef.playerName from JSON
+  matchSource?: 'playerId' | 'aflPlayerId' | 'playerName'; // which ref field resolved this
+  // For manual resolution
+  manualPlayerId?: string;
+  availablePlayers?: Array<{ id: string; label: string }>;
+};
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function toNum(v: string): number | null {
   const n = Number(v);
   return v.trim() === '' || !Number.isFinite(n) ? null : n;
+}
+
+function normalizeForMatch(s: string): string {
+  return s.toLowerCase().replace(/[^a-z]/g, '');
 }
 
 export default function AdminFixtureDetail() {
@@ -44,27 +77,18 @@ export default function AdminFixtureDetail() {
   const queryClient = useQueryClient();
   const { pushToast, adminToken } = useAdminLayoutContext();
 
-  const [activeSection, setActiveSection] = useState<'scores' | 'players' | 'ocr' | 'submissions'>('submissions');
+  const [activeSection, setActiveSection] = useState<'scores' | 'players' | 'ocr' | 'submissions'>('players');
   const [scoreDraft, setScoreDraft] = useState<ScoreDraft | null>(null);
   const [playerDrafts, setPlayerDrafts] = useState<Map<string, PlayerStatDraft>>(new Map());
-  const [ocrPasteJson, setOcrPasteJson] = useState('');
   const [addPlayerTeamId, setAddPlayerTeamId] = useState('');
   const [addPlayerId, setAddPlayerId] = useState('');
   const [bulkJsonInput, setBulkJsonInput] = useState('');
-  const [bulkPreview, setBulkPreview] = useState<Array<{
-    playerName: string;
-    teamSlug: string;
-    matched: boolean;
-    playerId: string | null;
-    teamId: string | null;
-    teamLabel: string;
-    kicks: number;
-    handballs: number;
-    disposals: number;
-    marks: number;
-    fantasyPoints: number;
-  }> | null>(null);
+  const [bulkPreview, setBulkPreview] = useState<BulkPreviewRow[] | null>(null);
   const [bulkError, setBulkError] = useState<string | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
+  const [ocrHelperOpen, setOcrHelperOpen] = useState(false);
+  const [isDownloadingPhotos, setIsDownloadingPhotos] = useState(false);
 
   const fixtureQuery = useQuery({
     queryKey: ['admin', 'fixture-detail', fixtureId],
@@ -72,7 +96,6 @@ export default function AdminFixtureDetail() {
     enabled: Boolean(fixtureId),
   });
 
-  // Load all fixtures to enable prev/next navigation within the same round
   const allFixturesQuery = useQuery({
     queryKey: ['admin', 'fixtures', 1, 'all', 'all', 'all', null, ''],
     queryFn: () => listFixtures({ page: 1, pageSize: 500 }),
@@ -110,6 +133,24 @@ export default function AdminFixtureDetail() {
     staleTime: 5 * 60_000,
   });
 
+  // OCR helper roster queries — fetch both teams' players when helper is opened
+  const homeTeamId = fixtureQuery.data?.home_team_id || '';
+  const awayTeamId = fixtureQuery.data?.away_team_id || '';
+
+  const homeRosterQuery = useQuery({
+    queryKey: ['admin', 'players-for-team', homeTeamId],
+    queryFn: () => listPlayersForTeam(homeTeamId),
+    enabled: Boolean(homeTeamId) && ocrHelperOpen,
+    staleTime: 5 * 60_000,
+  });
+
+  const awayRosterQuery = useQuery({
+    queryKey: ['admin', 'players-for-team', awayTeamId],
+    queryFn: () => listPlayersForTeam(awayTeamId),
+    enabled: Boolean(awayTeamId) && ocrHelperOpen,
+    staleTime: 5 * 60_000,
+  });
+
   const teamById = useMemo(() => {
     const map = new Map<string, string>();
     for (const team of teamsQuery.data || []) {
@@ -118,9 +159,97 @@ export default function AdminFixtureDetail() {
     return map;
   }, [teamsQuery.data]);
 
+  const teamSlugMap = useMemo(() => {
+    const map = new Map<string, { id: string; label: string }>();
+    for (const t of teamsQuery.data || []) {
+      const slug = String(t.slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
+      const key = String(t.team_key || t.slug || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const name = String(t.short_name || t.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const entry = { id: t.id, label: t.short_name || t.name };
+      if (slug) map.set(slug, entry);
+      if (key) map.set(key, entry);
+      if (name) map.set(name, entry);
+    }
+    return map;
+  }, [teamsQuery.data]);
+
+  const teamIdToSlug = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const t of teamsQuery.data || []) {
+      if (t.slug) map.set(t.id, t.slug);
+      else if (t.team_key) map.set(t.id, t.team_key);
+    }
+    return map;
+  }, [teamsQuery.data]);
+
   const fixture = fixtureQuery.data;
   const homeName = fixture?.home_team_id ? teamById.get(fixture.home_team_id) || 'Home' : 'TBD';
   const awayName = fixture?.away_team_id ? teamById.get(fixture.away_team_id) || 'Away' : 'TBD';
+  const homeSlug = fixture?.home_team_id ? teamIdToSlug.get(fixture.home_team_id) || '' : '';
+  const awaySlug = fixture?.away_team_id ? teamIdToSlug.get(fixture.away_team_id) || '' : '';
+
+  // OCR helper template — full fixture context with both rosters
+  const ocrTemplateJson = useMemo(() => {
+    if (!fixture || !homeRosterQuery.data || !awayRosterQuery.data) return null;
+
+    function buildPlayerStats(
+      players: Array<{ id: string; name: string | null; display_name: string | null; afl_player_id: number | null }>,
+      slug: string,
+    ) {
+      return players.map((p) => ({
+        teamSlug: slug,
+        playerRef: {
+          playerId: p.id,
+          ...(p.afl_player_id ? { aflPlayerId: p.afl_player_id } : {}),
+          playerName: p.display_name || p.name || '',
+        },
+        kicks: 0,
+        handballs: 0,
+        disposals: 0,
+        marks: 0,
+        tackles: 0,
+        fantasyPoints: 0,
+      }));
+    }
+
+    return JSON.stringify(
+      {
+        fixtureId,
+        homeTeamSlug: homeSlug,
+        awayTeamSlug: awaySlug,
+        playerStats: [
+          ...buildPlayerStats(homeRosterQuery.data, homeSlug),
+          ...buildPlayerStats(awayRosterQuery.data, awaySlug),
+        ],
+      },
+      null,
+      2,
+    );
+  }, [fixture, fixtureId, homeSlug, awaySlug, homeRosterQuery.data, awayRosterQuery.data]);
+
+  const ocrBlankTemplate = useMemo(() => {
+    return JSON.stringify(
+      {
+        fixtureId: 'FIXTURE_ID',
+        homeTeamSlug: 'home-team-slug',
+        awayTeamSlug: 'away-team-slug',
+        playerStats: [
+          {
+            teamSlug: 'team-slug',
+            playerRef: { playerId: 'UUID', aflPlayerId: 0, playerName: 'Player Name' },
+            kicks: 0,
+            handballs: 0,
+            disposals: 0,
+            marks: 0,
+            tackles: 0,
+            fantasyPoints: 0,
+          },
+        ],
+      },
+      null,
+      2,
+    );
+  }, []);
 
   const initScoreDraft = useCallback(() => {
     if (!fixture) return;
@@ -141,6 +270,13 @@ export default function AdminFixtureDetail() {
     }
     setPlayerDrafts(map);
   }, [playerStatsQuery.data]);
+
+  // Auto-load player drafts when switching to players tab
+  useEffect(() => {
+    if (activeSection === 'players' && playerDrafts.size === 0 && playerStatsQuery.data?.length) {
+      initPlayerDrafts();
+    }
+  }, [activeSection, playerDrafts.size, playerStatsQuery.data, initPlayerDrafts]);
 
   const scoreMutation = useMutation({
     mutationFn: async () => {
@@ -191,7 +327,6 @@ export default function AdminFixtureDetail() {
       const token = adminToken();
       const dirtyRows = Array.from(playerDrafts.values()).filter((d) => d.dirty);
       if (!dirtyRows.length) throw new Error('No changes to save');
-      // Only send rows with real UUID player_ids — never send temp/unmatched IDs to the database
       const validRows = dirtyRows.filter((d) => UUID_RE.test(d.player_id));
       const skipped = dirtyRows.length - validRows.length;
       if (!validRows.length) throw new Error(`No valid player IDs to save (${skipped} unmatched rows skipped). Resolve unmatched players first.`);
@@ -210,6 +345,7 @@ export default function AdminFixtureDetail() {
           marks: d.marks,
           tackles: d.tackles,
           clearances: d.clearances,
+          fantasy_points: d.fantasy_points,
         })),
       );
     },
@@ -235,6 +371,26 @@ export default function AdminFixtureDetail() {
     },
     onError: (error) => {
       pushToast(error instanceof Error ? error.message : 'Failed to update OCR item', 'error');
+    },
+  });
+
+  const deleteStatsMutation = useMutation({
+    mutationFn: async () => {
+      if (!fixtureId) throw new Error('No fixture');
+      const token = adminToken();
+      return deleteFixturePlayerStats(token, fixtureId);
+    },
+    onSuccess: (deleted) => {
+      pushToast(`Deleted ${deleted} player stat row(s).`, 'success');
+      setPlayerDrafts(new Map());
+      queryClient.invalidateQueries({ queryKey: ['admin', 'fixture-player-stats', fixtureId] });
+    },
+    onError: (error) => {
+      if (error instanceof AdminPermissionError) {
+        pushToast('Admin privileges required.', 'error');
+      } else {
+        pushToast(error instanceof Error ? error.message : 'Failed to delete player stats', 'error');
+      }
     },
   });
 
@@ -264,6 +420,7 @@ export default function AdminFixtureDetail() {
         marks: null,
         tackles: null,
         clearances: null,
+        fantasy_points: null,
         dirty: true,
       });
       return next;
@@ -271,218 +428,463 @@ export default function AdminFixtureDetail() {
     setAddPlayerId('');
   }
 
-  function applyOcrJson() {
-    if (!ocrPasteJson.trim()) return;
-    try {
-      const parsed = JSON.parse(ocrPasteJson.trim());
-      const rows: Array<Record<string, unknown>> = Array.isArray(parsed) ? parsed : parsed.players || parsed.stats || [parsed];
-
-      setPlayerDrafts((prev) => {
-        const next = new Map(prev);
-        for (const row of rows) {
-          const playerId = String(row.player_id || '').trim();
-          const teamId = String(row.team_id || fixture?.home_team_id || '').trim();
-          if (!playerId) continue;
-          const existing = next.get(playerId);
-          next.set(playerId, {
-            fixture_id: fixtureId || '',
-            player_id: playerId,
-            team_id: teamId,
-            player_name: String(row.player_name || row.name || existing?.player_name || playerId),
-            disposals: row.disposals != null ? Number(row.disposals) : existing?.disposals ?? null,
-            kicks: row.kicks != null ? Number(row.kicks) : existing?.kicks ?? null,
-            handballs: row.handballs != null ? Number(row.handballs) : existing?.handballs ?? null,
-            marks: row.marks != null ? Number(row.marks) : existing?.marks ?? null,
-            tackles: row.tackles != null ? Number(row.tackles) : existing?.tackles ?? null,
-            clearances: row.clearances != null ? Number(row.clearances) : existing?.clearances ?? null,
-            dirty: true,
-          });
-        }
-        return next;
-      });
-
-      pushToast(`Applied ${rows.length} player stat row(s) from JSON.`, 'success');
-      setOcrPasteJson('');
-    } catch {
-      pushToast('Invalid JSON. Expected an array of player stat objects.', 'error');
-    }
-  }
-
-  function previewBulkJson() {
+  // ─── BULK JSON PREVIEW — supports playerRef contract ───────────────────────
+  // Matching priority: playerRef.playerId (UUID) → playerRef.aflPlayerId → playerRef.playerName → flat playerName
+  async function previewBulkJson() {
     setBulkError(null);
     setBulkPreview(null);
     if (!bulkJsonInput.trim()) { setBulkError('Paste JSON first.'); return; }
+
+    setIsPreviewLoading(true);
     try {
       const parsed = JSON.parse(bulkJsonInput.trim());
+
+      // Validate fixtureId if present in top-level JSON
+      if (parsed.fixtureId && parsed.fixtureId !== fixtureId) {
+        setBulkError(`JSON fixtureId "${parsed.fixtureId}" does not match current fixture "${fixtureId}".`);
+        setIsPreviewLoading(false);
+        return;
+      }
+
       const rows: Array<Record<string, unknown>> = Array.isArray(parsed)
         ? parsed
         : Array.isArray(parsed.playerStats)
           ? parsed.playerStats
           : Array.isArray(parsed.players)
             ? parsed.players
-            : [parsed];
+            : Array.isArray(parsed.stats)
+              ? parsed.stats
+              : [parsed];
 
-      if (!rows.length) { setBulkError('No player stat rows found in JSON.'); return; }
+      if (!rows.length) { setBulkError('No player stat rows found in JSON.'); setIsPreviewLoading(false); return; }
 
-      const allTeams = teamsQuery.data || [];
-      const teamSlugMap = new Map<string, { id: string; label: string }>();
-      for (const t of allTeams) {
-        const slug = String(t.slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
-        const key = String(t.team_key || t.slug || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-        const name = String(t.short_name || t.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-        const entry = { id: t.id, label: t.short_name || t.name };
-        if (slug) teamSlugMap.set(slug, entry);
-        if (key) teamSlugMap.set(key, entry);
-        if (name) teamSlugMap.set(name, entry);
+      // Extract playerRef or fall back to flat fields
+      type ParsedRow = {
+        playerName: string;
+        rawSlug: string;
+        refPlayerId: string | null;
+        refAflPlayerId: number | null;
+        refPlayerName: string | null;
+        kicks: number; handballs: number; disposals: number; marks: number; tackles: number; fantasyPoints: number;
+      };
+
+      const parsedRows: ParsedRow[] = [];
+      let skippedCount = 0;
+      for (const row of rows) {
+        const ref = (row.playerRef || row.player_ref || null) as Record<string, unknown> | null;
+        const refPlayerId = ref ? String(ref.playerId || ref.player_id || '').trim() || null : null;
+        const refAflPlayerId = ref ? (Number(ref.aflPlayerId || ref.afl_player_id || 0) || null) : null;
+        const refPlayerName = ref ? String(ref.playerName || ref.player_name || '').trim() || null : null;
+        // Fall back to flat fields for backward compat
+        const playerName = refPlayerName || String(row.playerName || row.player_name || row.name || '').trim();
+        const rawSlug = String(row.teamSlug || row.team_slug || row.team || '').trim();
+
+        if (!playerName && !refPlayerId && !refAflPlayerId) { skippedCount++; continue; }
+
+        parsedRows.push({
+          playerName: playerName || '(unknown)',
+          rawSlug,
+          refPlayerId: refPlayerId && UUID_RE.test(refPlayerId) ? refPlayerId : null,
+          refAflPlayerId,
+          refPlayerName,
+          kicks: Number(row.kicks ?? 0),
+          handballs: Number(row.handballs ?? 0),
+          disposals: Number(row.disposals ?? 0),
+          marks: Number(row.marks ?? 0),
+          tackles: Number(row.tackles ?? 0),
+          fantasyPoints: Number(row.fantasyPoints || row.fantasy_points || 0),
+        });
       }
 
-      const preview = rows.map((row) => {
-        const playerName = String(row.playerName || row.player_name || row.name || '').trim();
-        const rawSlug = String(row.teamSlug || row.team_slug || row.team || '').trim();
-        const normalizedSlug = rawSlug.toLowerCase().replace(/[^a-z0-9-]/g, '');
-        const compactSlug = rawSlug.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (!parsedRows.length) {
+        setBulkError('No valid rows found. Each row needs a playerRef or playerName.');
+        setIsPreviewLoading(false);
+        return;
+      }
+      if (skippedCount > 0) {
+        pushToast(`Skipped ${skippedCount} row(s) with no player identifier.`, 'info');
+      }
 
+      // Phase 1: Match teams via slug
+      const fixtureTeamIds = new Set([fixture?.home_team_id, fixture?.away_team_id].filter(Boolean));
+      const teamMatchedRows = parsedRows.map((row) => {
+        const normalizedSlug = row.rawSlug.toLowerCase().replace(/[^a-z0-9-]/g, '');
+        const compactSlug = row.rawSlug.toLowerCase().replace(/[^a-z0-9]/g, '');
         const teamMatch = teamSlugMap.get(normalizedSlug) || teamSlugMap.get(compactSlug) || null;
+        return { ...row, teamMatch };
+      });
 
-        // Try to find player in addPlayerListQuery or by searching existing drafts
-        let playerId: string | null = null;
-        if (teamMatch) {
-          // Search existing player stats drafts
-          const normalizedName = playerName.toLowerCase().replace(/[^a-z]/g, '');
-          for (const [pid, draft] of playerDrafts) {
-            if (draft.team_id === teamMatch.id) {
-              const draftName = (draft.player_name || '').toLowerCase().replace(/[^a-z]/g, '');
-              if (draftName === normalizedName) { playerId = pid; break; }
+      // Phase 2: Fetch players for matched teams + batch lookup aflPlayerIds
+      const matchedTeamIds = Array.from(new Set(
+        teamMatchedRows.filter((r) => r.teamMatch).map((r) => r.teamMatch!.id)
+      ));
+
+      const playersByTeam = new Map<string, Array<{ id: string; name: string | null; display_name: string | null; team_id: string; afl_player_id: number | null }>>();
+      for (const tid of matchedTeamIds) {
+        try {
+          const players = await listPlayersForTeam(tid);
+          playersByTeam.set(tid, players);
+        } catch { /* continue */ }
+      }
+
+      // Batch lookup AFL player IDs for rows that have them
+      const aflIdsToLookup = teamMatchedRows.map((r) => r.refAflPlayerId).filter((id): id is number => id != null && id > 0);
+      const aflIdMap = aflIdsToLookup.length > 0 ? await lookupPlayersByAflId(aflIdsToLookup) : new Map<number, { id: string; name: string | null; display_name: string | null; team_id: string | null; afl_player_id: number }>();
+
+      // Phase 3: Match players using priority: playerId → aflPlayerId → playerName
+      const preview: BulkPreviewRow[] = teamMatchedRows.map((row) => {
+        const teamPlayers = row.teamMatch ? (playersByTeam.get(row.teamMatch.id) || []) : [];
+        const availablePlayers = teamPlayers.map((p) => ({
+          id: p.id,
+          label: p.display_name || p.name || p.id,
+        }));
+        const baseRow = {
+          playerName: row.playerName,
+          teamSlug: row.rawSlug,
+          teamId: row.teamMatch?.id || null,
+          teamLabel: row.teamMatch?.label || row.rawSlug || '(empty)',
+          kicks: row.kicks,
+          handballs: row.handballs,
+          disposals: row.disposals,
+          marks: row.marks,
+          tackles: row.tackles,
+          fantasyPoints: row.fantasyPoints,
+          refPlayerId: row.refPlayerId,
+          refAflPlayerId: row.refAflPlayerId,
+          refPlayerName: row.refPlayerName,
+          availablePlayers,
+        };
+
+        // No team match — can't resolve
+        if (!row.teamMatch) {
+          return {
+            ...baseRow,
+            matched: false,
+            matchConfidence: 'none' as MatchConfidence,
+            matchReason: `No team found for "${row.rawSlug}"`,
+            playerId: null,
+            matchSource: undefined,
+          };
+        }
+
+        // Priority 1: playerRef.playerId (UUID direct lookup)
+        if (row.refPlayerId) {
+          const directMatch = teamPlayers.find((p) => p.id === row.refPlayerId);
+          if (directMatch) {
+            // Check if playerName disagrees
+            let reason = `Direct ID match: ${directMatch.display_name || directMatch.name}`;
+            if (row.refPlayerName) {
+              const refNorm = normalizeForMatch(row.refPlayerName);
+              const dbNorm = normalizeForMatch(directMatch.display_name || directMatch.name || '');
+              if (refNorm !== dbNorm) {
+                reason += ` (warning: name "${row.refPlayerName}" differs from "${directMatch.display_name || directMatch.name}")`;
+              }
             }
+            return {
+              ...baseRow,
+              matched: true,
+              matchConfidence: 'exact' as MatchConfidence,
+              matchReason: reason,
+              playerId: directMatch.id,
+              matchSource: 'playerId' as const,
+            };
+          }
+          // playerId provided but not found on this team — still try lower priorities but warn
+        }
+
+        // Priority 2: playerRef.aflPlayerId
+        if (row.refAflPlayerId) {
+          const aflMatch = aflIdMap.get(row.refAflPlayerId);
+          if (aflMatch) {
+            // Verify the AFL-matched player is on the correct team
+            const onTeam = aflMatch.team_id === row.teamMatch.id;
+            let reason = `AFL ID ${row.refAflPlayerId} → ${aflMatch.display_name || aflMatch.name}`;
+            if (!onTeam) {
+              reason += ` (warning: player team_id doesn't match ${row.teamMatch.label})`;
+            }
+            if (row.refPlayerName) {
+              const refNorm = normalizeForMatch(row.refPlayerName);
+              const dbNorm = normalizeForMatch(aflMatch.display_name || aflMatch.name || '');
+              if (refNorm !== dbNorm) {
+                reason += ` (name "${row.refPlayerName}" differs from "${aflMatch.display_name || aflMatch.name}")`;
+              }
+            }
+            return {
+              ...baseRow,
+              matched: true,
+              matchConfidence: onTeam ? 'exact' as MatchConfidence : 'partial' as MatchConfidence,
+              matchReason: reason,
+              playerId: aflMatch.id,
+              teamId: aflMatch.team_id || row.teamMatch.id,
+              matchSource: 'aflPlayerId' as const,
+            };
           }
         }
 
+        // Priority 3: playerName matching (exact → last name → first name)
+        const normalizedName = normalizeForMatch(row.playerName);
+
+        // Exact name match
+        const exactMatch = teamPlayers.find((p) => {
+          const pName = normalizeForMatch(p.display_name || p.name || '');
+          return pName === normalizedName;
+        });
+        if (exactMatch) {
+          return {
+            ...baseRow,
+            matched: true,
+            matchConfidence: 'exact' as MatchConfidence,
+            matchReason: `Exact name match: ${exactMatch.display_name || exactMatch.name}`,
+            playerId: exactMatch.id,
+            matchSource: 'playerName' as const,
+          };
+        }
+
+        // Partial match (last name)
+        const nameParts = row.playerName.toLowerCase().split(/\s+/);
+        const lastName = nameParts[nameParts.length - 1]?.replace(/[^a-z]/g, '');
+        if (lastName && lastName.length > 2) {
+          const candidates = teamPlayers.filter((p) => {
+            const pName = (p.display_name || p.name || '').toLowerCase();
+            return pName.endsWith(lastName) || pName.includes(lastName);
+          });
+          if (candidates.length === 1) {
+            return {
+              ...baseRow,
+              matched: true,
+              matchConfidence: 'partial' as MatchConfidence,
+              matchReason: `Partial match (last name): ${candidates[0].display_name || candidates[0].name}`,
+              playerId: candidates[0].id,
+              matchSource: 'playerName' as const,
+            };
+          }
+        }
+
+        // Partial match (first name)
+        const firstName = nameParts[0]?.replace(/[^a-z]/g, '');
+        if (firstName && firstName.length > 2) {
+          const candidates = teamPlayers.filter((p) => {
+            const pName = (p.display_name || p.name || '').toLowerCase();
+            return pName.startsWith(firstName);
+          });
+          if (candidates.length === 1) {
+            return {
+              ...baseRow,
+              matched: true,
+              matchConfidence: 'partial' as MatchConfidence,
+              matchReason: `Partial match (first name): ${candidates[0].display_name || candidates[0].name}`,
+              playerId: candidates[0].id,
+              matchSource: 'playerName' as const,
+            };
+          }
+        }
+
+        // No match
         return {
-          playerName,
-          teamSlug: rawSlug,
-          matched: Boolean(teamMatch),
-          playerId,
-          teamId: teamMatch?.id || null,
-          teamLabel: teamMatch?.label || rawSlug,
-          kicks: Number(row.kicks || 0),
-          handballs: Number(row.handballs || 0),
-          disposals: Number(row.disposals || 0),
-          marks: Number(row.marks || 0),
-          fantasyPoints: Number(row.fantasyPoints || row.fantasy_points || 0),
+          ...baseRow,
+          matched: false,
+          matchConfidence: 'none' as MatchConfidence,
+          matchReason: row.refPlayerId
+            ? `playerId "${row.refPlayerId}" not found on ${row.teamMatch.label}; name fallback also failed`
+            : `No player "${row.playerName}" found on ${row.teamMatch.label} (${teamPlayers.length} players checked)`,
+          playerId: null,
+          matchSource: undefined,
         };
       });
+
+      // Phase 4: Safety checks
+      const nonFixtureTeams = preview.filter((r) => r.teamId && !fixtureTeamIds.has(r.teamId));
+      if (nonFixtureTeams.length > 0) {
+        const teamNames = [...new Set(nonFixtureTeams.map((r) => r.teamLabel))];
+        pushToast(`Warning: ${nonFixtureTeams.length} row(s) matched to teams not in this fixture: ${teamNames.join(', ')}`, 'info');
+      }
+
+      const seenPlayerIds = new Map<string, number>();
+      for (const row of preview) {
+        if (row.playerId) {
+          seenPlayerIds.set(row.playerId, (seenPlayerIds.get(row.playerId) || 0) + 1);
+        }
+      }
+      const duplicates = [...seenPlayerIds.entries()].filter(([, count]) => count > 1);
+      if (duplicates.length > 0) {
+        pushToast(`Warning: ${duplicates.length} player(s) appear multiple times. Last occurrence will be used.`, 'info');
+      }
+
+      // Warn about playerId/playerName disagreements
+      const nameDisagreements = preview.filter((r) => r.matchReason.includes('differs from'));
+      if (nameDisagreements.length > 0) {
+        pushToast(`Note: ${nameDisagreements.length} row(s) have playerRef name that differs from database — matched by ID (ID wins).`, 'info');
+      }
 
       setBulkPreview(preview);
     } catch {
       setBulkError('Invalid JSON. Check format and try again.');
+    } finally {
+      setIsPreviewLoading(false);
     }
+  }
+
+  function updatePreviewManualPlayer(index: number, playerId: string) {
+    if (!bulkPreview) return;
+    setBulkPreview((prev) => {
+      if (!prev) return prev;
+      const next = [...prev];
+      const row = { ...next[index] };
+      row.manualPlayerId = playerId;
+      if (playerId) {
+        const player = row.availablePlayers?.find((p) => p.id === playerId);
+        row.matched = true;
+        row.matchConfidence = 'exact';
+        row.matchReason = `Manually selected: ${player?.label || playerId}`;
+        row.playerId = playerId;
+      } else {
+        row.matched = false;
+        row.matchConfidence = 'none';
+        row.matchReason = `No player "${row.playerName}" found on ${row.teamLabel}`;
+        row.playerId = null;
+      }
+      next[index] = row;
+      return next;
+    });
   }
 
   async function applyBulkImport() {
     if (!bulkPreview || !fixtureId) return;
-    const matched = bulkPreview.filter((r) => r.matched && r.teamId);
-    if (!matched.length) { pushToast('No matched rows to import.', 'error'); return; }
+    setIsApplying(true);
 
-    // Fetch players for matched teams to resolve player IDs
-    const teamIds = Array.from(new Set(matched.map((r) => r.teamId!)));
-    const playersByTeam = new Map<string, Array<{ id: string; name: string | null; display_name: string | null; team_id: string }>>();
+    try {
+      const matched = bulkPreview.filter((r) => r.matched && r.teamId && r.playerId);
+      const unmatched = bulkPreview.filter((r) => !r.matched || !r.playerId);
 
-    for (const tid of teamIds) {
-      try {
-        const players = await listPlayersForTeam(tid);
-        playersByTeam.set(tid, players);
-      } catch { /* continue */ }
-    }
+      if (!matched.length) {
+        pushToast('No matched rows to import. Resolve unmatched players first.', 'error');
+        return;
+      }
 
-    let importCount = 0;
-    let skippedCount = 0;
-
-    setPlayerDrafts((prev) => {
-      const next = new Map(prev);
-      for (const row of matched) {
-        const teamPlayers = playersByTeam.get(row.teamId!) || [];
-        const normalizedName = row.playerName.toLowerCase().replace(/[^a-z]/g, '');
-
-        // Find matching player
-        let resolvedPlayerId = row.playerId;
-        let resolvedPlayerName = row.playerName;
-
-        if (!resolvedPlayerId) {
-          const found = teamPlayers.find((p) => {
-            const pName = (p.display_name || p.name || '').toLowerCase().replace(/[^a-z]/g, '');
-            return pName === normalizedName;
-          });
-          if (found) {
-            resolvedPlayerId = found.id;
-            resolvedPlayerName = found.display_name || found.name || row.playerName;
-          }
-        }
-
-        if (!resolvedPlayerId) {
-          // Try partial match (last name match)
-          const nameParts = row.playerName.toLowerCase().split(/\s+/);
-          const lastName = nameParts[nameParts.length - 1]?.replace(/[^a-z]/g, '');
-          if (lastName && lastName.length > 2) {
-            const found = teamPlayers.find((p) => {
-              const pName = (p.display_name || p.name || '').toLowerCase();
-              return pName.endsWith(lastName) || pName.includes(lastName);
-            });
-            if (found) {
-              resolvedPlayerId = found.id;
-              resolvedPlayerName = found.display_name || found.name || row.playerName;
-            }
-          }
-        }
-
-        if (!resolvedPlayerId) {
-          // Use a UI-only temp key — NEVER sent to the database
-          resolvedPlayerId = `_unmatched:${row.teamId}:${normalizedName}:${Date.now()}`;
-          skippedCount++;
-
-          next.set(resolvedPlayerId, {
+      setPlayerDrafts((prev) => {
+        const next = new Map(prev);
+        for (const row of matched) {
+          next.set(row.playerId!, {
             fixture_id: fixtureId,
-            player_id: resolvedPlayerId,
+            player_id: row.playerId!,
             team_id: row.teamId!,
-            player_name: resolvedPlayerName,
-            disposals: row.disposals || null,
-            kicks: row.kicks || null,
-            handballs: row.handballs || null,
-            marks: row.marks || null,
-            tackles: null,
+            player_name: row.playerName,
+            disposals: row.disposals ?? null,
+            kicks: row.kicks ?? null,
+            handballs: row.handballs ?? null,
+            marks: row.marks ?? null,
+            tackles: row.tackles ?? null,
             clearances: null,
+            fantasy_points: row.fantasyPoints ?? null,
+            dirty: true,
+          });
+        }
+
+        // Add unmatched rows with temp IDs for visibility
+        for (const row of unmatched) {
+          if (!row.teamId) continue;
+          const tempId = `_unmatched:${row.teamId}:${normalizeForMatch(row.playerName)}:${Date.now()}:${Math.random()}`;
+          next.set(tempId, {
+            fixture_id: fixtureId,
+            player_id: tempId,
+            team_id: row.teamId,
+            player_name: row.playerName,
+            disposals: row.disposals ?? null,
+            kicks: row.kicks ?? null,
+            handballs: row.handballs ?? null,
+            marks: row.marks ?? null,
+            tackles: row.tackles ?? null,
+            clearances: null,
+            fantasy_points: row.fantasyPoints ?? null,
             dirty: true,
             _unmatched: true,
           });
-        } else {
-          importCount++;
-
-          next.set(resolvedPlayerId, {
-            fixture_id: fixtureId,
-            player_id: resolvedPlayerId,
-            team_id: row.teamId!,
-            player_name: resolvedPlayerName,
-            disposals: row.disposals || null,
-            kicks: row.kicks || null,
-            handballs: row.handballs || null,
-            marks: row.marks || null,
-            tackles: null,
-            clearances: null,
-            dirty: true,
-          });
         }
-      }
-      return next;
-    });
 
-    const msg = skippedCount > 0
-      ? `Imported ${importCount} players. ${skippedCount} unmatched (shown but will NOT be saved — resolve manually or add via Add Player).`
-      : `Imported ${importCount} player stat rows.`;
-    pushToast(msg, skippedCount > 0 ? 'info' : 'success');
-    setBulkPreview(null);
-    setBulkJsonInput('');
+        return next;
+      });
+
+      const msg = unmatched.length > 0
+        ? `Imported ${matched.length} matched players. ${unmatched.length} unmatched (shown in red, won't save until resolved).`
+        : `Imported ${matched.length} player stat rows successfully.`;
+      pushToast(msg, unmatched.length > 0 ? 'info' : 'success');
+      setBulkPreview(null);
+      setBulkJsonInput('');
+    } finally {
+      setIsApplying(false);
+    }
   }
 
-  // Compute prev/next siblings in the same round — must be above early returns to keep hook order stable
+  // Resolve an unmatched player row to a real player
+  function resolveUnmatchedPlayer(tempPlayerId: string, realPlayerId: string, realPlayerName: string) {
+    if (!fixtureId) return;
+    setPlayerDrafts((prev) => {
+      const next = new Map(prev);
+      const old = next.get(tempPlayerId);
+      if (!old) return prev;
+      next.delete(tempPlayerId);
+      next.set(realPlayerId, {
+        ...old,
+        player_id: realPlayerId,
+        player_name: realPlayerName,
+        _unmatched: false,
+        dirty: true,
+      });
+      return next;
+    });
+    pushToast(`Resolved: ${realPlayerName}`, 'success');
+  }
+
+  // Extract all unique screenshot URLs from submissions
+  function getSubmissionPhotoUrls(): string[] {
+    const subs = submissionsQuery.data || [];
+    const allUrls: string[] = [];
+    for (const sub of subs) {
+      let rawUrls = sub.screenshot_urls;
+      if (typeof rawUrls === 'string') { try { rawUrls = JSON.parse(rawUrls); } catch { rawUrls = []; } }
+      const urls = Array.isArray(rawUrls) ? rawUrls : [];
+      let rawScreenshots = sub.screenshots;
+      if (typeof rawScreenshots === 'string') { try { rawScreenshots = JSON.parse(rawScreenshots); } catch { rawScreenshots = []; } }
+      const screenshots = Array.isArray(rawScreenshots) ? rawScreenshots : [];
+      for (const u of urls) { if (typeof u === 'string' && u) allUrls.push(u); }
+      for (const s of screenshots) {
+        const url = (s as Record<string, unknown>)?.publicUrl || (s as Record<string, unknown>)?.url;
+        if (typeof url === 'string' && url) allUrls.push(url);
+      }
+    }
+    return [...new Set(allUrls)];
+  }
+
+  async function downloadAllPhotos() {
+    const urls = getSubmissionPhotoUrls();
+    if (!urls.length) { pushToast('No photos to download.', 'info'); return; }
+    setIsDownloadingPhotos(true);
+    let downloaded = 0;
+    try {
+      for (let i = 0; i < urls.length; i++) {
+        try {
+          const res = await fetch(urls[i]);
+          if (!res.ok) continue;
+          const blob = await res.blob();
+          const ext = urls[i].match(/\.(png|jpg|jpeg|webp|gif)(\?|$)/i)?.[1] || 'jpg';
+          const filename = `fixture-${(fixtureId || 'unknown').slice(0, 8)}-photo-${i + 1}.${ext}`;
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(a.href);
+          downloaded++;
+        } catch { /* skip failed downloads */ }
+      }
+      pushToast(`Downloaded ${downloaded} of ${urls.length} photo(s).`, downloaded === urls.length ? 'success' : 'info');
+    } finally {
+      setIsDownloadingPhotos(false);
+    }
+  }
+
+  // Compute prev/next siblings in the same round
   const siblings = useMemo(() => {
     if (!fixture) return { prev: null, next: null, position: 0, total: 0 };
     const all = allFixturesQuery.data?.rows || [];
@@ -513,6 +915,16 @@ export default function AdminFixtureDetail() {
     });
   }, [playerDrafts, fixture?.home_team_id]);
 
+  const unmatchedDrafts = useMemo(
+    () => sortedPlayerDrafts.filter((d) => d._unmatched || d.player_id.startsWith('_unmatched:')),
+    [sortedPlayerDrafts],
+  );
+
+  const matchedDrafts = useMemo(
+    () => sortedPlayerDrafts.filter((d) => !d._unmatched && !d.player_id.startsWith('_unmatched:')),
+    [sortedPlayerDrafts],
+  );
+
   const dirtyPlayerCount = useMemo(
     () => Array.from(playerDrafts.values()).filter((d) => d.dirty && UUID_RE.test(d.player_id)).length,
     [playerDrafts],
@@ -523,7 +935,7 @@ export default function AdminFixtureDetail() {
   }
 
   if (fixtureQuery.isLoading) {
-    return <p className="eg-admin-muted">Loading fixture…</p>;
+    return <p className="eg-admin-muted">Loading fixture...</p>;
   }
 
   if (fixtureQuery.error) {
@@ -555,92 +967,479 @@ export default function AdminFixtureDetail() {
   function goToFixture(id: string) {
     setScoreDraft(null);
     setPlayerDrafts(new Map());
-    setOcrPasteJson('');
     setAddPlayerTeamId('');
     setAddPlayerId('');
+    setBulkJsonInput('');
+    setBulkPreview(null);
+    setBulkError(null);
     navigate(`/admin/fixtures/${id}`);
   }
 
+  const statusBadge = (() => {
+    const s = fixture.status;
+    if (s === 'FINAL') return { bg: 'rgba(52,211,153,0.18)', color: '#6ee7b7', label: 'FINAL' };
+    if (s === 'LIVE') return { bg: 'rgba(251,191,36,0.18)', color: '#fcd34d', label: 'LIVE' };
+    return { bg: 'rgba(148,163,184,0.12)', color: '#94a3b8', label: s || 'SCHED' };
+  })();
+
   const sections = [
-    { key: 'scores' as const, label: 'Scores' },
-    { key: 'players' as const, label: `Player Stats (${playerStatsQuery.data?.length ?? 0})` },
-    { key: 'ocr' as const, label: `OCR Data (${ocrQuery.data?.length ?? 0})` },
-    { key: 'submissions' as const, label: `Submissions (${submissionsQuery.data?.length ?? 0})` },
+    { key: 'players' as const, label: `Player Stats`, count: playerStatsQuery.data?.length ?? 0 },
+    { key: 'scores' as const, label: 'Scores', count: null },
+    { key: 'submissions' as const, label: `Submissions`, count: submissionsQuery.data?.length ?? 0 },
+    { key: 'ocr' as const, label: `OCR`, count: ocrQuery.data?.length ?? 0 },
   ];
 
   return (
     <div className="eg-admin-stack">
-      <div className="eg-admin-page-header">
-        <div className="eg-admin-page-header-main">
-          <Link to="/admin/fixtures" style={{ color: '#bfe4ff', fontSize: '0.84rem' }}>
-            ← Fixtures
-          </Link>
-          <h3>
-            R{fixture.round ?? '?'}: {homeName} vs {awayName}
-          </h3>
-          <span style={{ fontSize: '0.8rem', color: 'var(--admin-muted)' }}>
-            {fixture.status} · {formatDateTime(fixture.start_time)}
-          </span>
+      {/* ─── FIXTURE HEADER ─────────────────────────── */}
+      <div className="eg-fd-header">
+        <Link to="/admin/fixtures" className="eg-fd-back">
+          Back to Fixtures
+        </Link>
+        <div className="eg-fd-identity">
+          <div className="eg-fd-matchup">
+            <span className="eg-fd-team">{homeName}</span>
+            <span className="eg-fd-vs">vs</span>
+            <span className="eg-fd-team">{awayName}</span>
+          </div>
+          <div className="eg-fd-meta">
+            <span
+              className="eg-admin-status-chip"
+              style={{ background: statusBadge.bg, color: statusBadge.color }}
+            >
+              {statusBadge.label}
+            </span>
+            <span>Round {fixture.round ?? '?'}</span>
+            <span>{fixture.venue || 'No venue'}</span>
+            <span>{formatDateTime(fixture.start_time)}</span>
+          </div>
+          {(fixture.home_total != null || fixture.away_total != null) ? (
+            <div className="eg-fd-score-display">
+              <span>{fixture.home_total ?? '?'}</span>
+              <span className="eg-fd-score-sep">-</span>
+              <span>{fixture.away_total ?? '?'}</span>
+            </div>
+          ) : null}
         </div>
       </div>
 
+      {/* ─── PREV/NEXT NAV ──────────────────────────── */}
       {siblings.total > 1 ? (
         <div className="eg-admin-sibling-nav">
           <button
             type="button"
             disabled={!siblings.prev}
             onClick={() => siblings.prev && goToFixture(siblings.prev.id)}
-            style={{
-              background: 'none',
-              border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 8,
-              color: siblings.prev ? '#bfe4ff' : 'rgba(255,255,255,0.2)',
-              padding: '4px 10px',
-              cursor: siblings.prev ? 'pointer' : 'default',
-              fontSize: '0.82rem',
-            }}
+            className="eg-fd-nav-btn"
           >
-            ← Prev{siblings.prev ? `: ${teamById.get(siblings.prev.home_team_id || '') || 'TBD'} v ${teamById.get(siblings.prev.away_team_id || '') || 'TBD'}` : ''}
+            {siblings.prev ? `${teamById.get(siblings.prev.home_team_id || '') || '?'} v ${teamById.get(siblings.prev.away_team_id || '') || '?'}` : 'Prev'}
           </button>
-          <span style={{ color: 'var(--admin-muted)' }}>
-            Match {siblings.position} of {siblings.total} in Round {fixture.round ?? '?'}
+          <span style={{ color: 'var(--admin-muted)', fontSize: '0.78rem' }}>
+            {siblings.position}/{siblings.total}
           </span>
           <button
             type="button"
             disabled={!siblings.next}
             onClick={() => siblings.next && goToFixture(siblings.next.id)}
-            style={{
-              background: 'none',
-              border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 8,
-              color: siblings.next ? '#bfe4ff' : 'rgba(255,255,255,0.2)',
-              padding: '4px 10px',
-              cursor: siblings.next ? 'pointer' : 'default',
-              fontSize: '0.82rem',
-            }}
+            className="eg-fd-nav-btn"
           >
-            Next{siblings.next ? `: ${teamById.get(siblings.next.home_team_id || '') || 'TBD'} v ${teamById.get(siblings.next.away_team_id || '') || 'TBD'}` : ''} →
+            {siblings.next ? `${teamById.get(siblings.next.home_team_id || '') || '?'} v ${teamById.get(siblings.next.away_team_id || '') || '?'}` : 'Next'}
           </button>
         </div>
       ) : null}
 
-      <div className="eg-admin-section-tabs">
+      {/* ─── SECTION TABS ───────────────────────────── */}
+      <div className="eg-fd-tabs">
         {sections.map((s) => (
           <button
             key={s.key}
             type="button"
-            className={`eg-admin-section-tab${activeSection === s.key ? ' is-active' : ''}`}
+            className={`eg-fd-tab${activeSection === s.key ? ' is-active' : ''}`}
             onClick={() => {
               setActiveSection(s.key);
               if (s.key === 'scores' && !scoreDraft) initScoreDraft();
-              if (s.key === 'players' && playerDrafts.size === 0) initPlayerDrafts();
             }}
           >
-            {s.label}
+            <span className="eg-fd-tab-label">{s.label}</span>
+            {s.count != null ? (
+              <span className="eg-fd-tab-count">{s.count}</span>
+            ) : null}
           </button>
         ))}
       </div>
 
+      {/* ═══════ PLAYER STATS SECTION ═══════ */}
+      {activeSection === 'players' ? (
+        <>
+          {/* ─── OCR HELPER TEMPLATE ─────────────────── */}
+          <div className="eg-fd-ocr-helper">
+            <button
+              type="button"
+              className="eg-fd-ocr-helper-toggle"
+              onClick={() => setOcrHelperOpen((p) => !p)}
+            >
+              <span className="eg-fd-ocr-helper-toggle-icon">{ocrHelperOpen ? '\u25BC' : '\u25B6'}</span>
+              <span>OCR Helper Template</span>
+              {ocrHelperOpen && ocrTemplateJson ? (
+                <span className="eg-fd-ocr-helper-badge">
+                  {(homeRosterQuery.data?.length ?? 0) + (awayRosterQuery.data?.length ?? 0)} players
+                </span>
+              ) : null}
+            </button>
+
+            {ocrHelperOpen ? (
+              <div className="eg-fd-ocr-helper-body">
+                <div className="eg-fd-ocr-helper-steps">
+                  <p><strong>1.</strong> Copy the roster template below</p>
+                  <p><strong>2.</strong> Paste into ChatGPT with your screenshots</p>
+                  <p><strong>3.</strong> ChatGPT fills in the stat values only</p>
+                  <p><strong>4.</strong> Paste the completed JSON into the import box below</p>
+                  <p className="eg-fd-ocr-helper-warn">Player IDs and team slugs must not be changed by ChatGPT.</p>
+                </div>
+
+                <div className="eg-fd-ocr-helper-actions">
+                  <button
+                    type="button"
+                    className="eg-fd-btn eg-fd-btn-primary"
+                    disabled={!ocrTemplateJson}
+                    onClick={() => {
+                      if (!ocrTemplateJson) return;
+                      navigator.clipboard.writeText(ocrTemplateJson).then(
+                        () => pushToast('Roster template copied to clipboard.', 'success'),
+                        () => pushToast('Failed to copy. Try selecting the text manually.', 'error'),
+                      );
+                    }}
+                  >
+                    Copy Roster Template
+                  </button>
+                  <button
+                    type="button"
+                    className="eg-fd-btn"
+                    onClick={() => {
+                      navigator.clipboard.writeText(ocrBlankTemplate).then(
+                        () => pushToast('Blank template copied to clipboard.', 'success'),
+                        () => pushToast('Failed to copy.', 'error'),
+                      );
+                    }}
+                  >
+                    Copy Blank Template
+                  </button>
+                  {ocrTemplateJson ? (
+                    <button
+                      type="button"
+                      className="eg-fd-btn"
+                      onClick={() => {
+                        setBulkJsonInput(ocrTemplateJson);
+                        setBulkPreview(null);
+                        setBulkError(null);
+                        pushToast('Template loaded into import box.', 'info');
+                      }}
+                    >
+                      Load into Import
+                    </button>
+                  ) : null}
+                </div>
+
+                {(homeRosterQuery.isLoading || awayRosterQuery.isLoading) ? (
+                  <p className="eg-admin-muted" style={{ fontSize: '0.8rem', padding: '8px 0' }}>Loading rosters...</p>
+                ) : null}
+
+                {ocrTemplateJson ? (
+                  <details className="eg-fd-ocr-helper-preview">
+                    <summary>Preview template ({homeName} + {awayName})</summary>
+                    <pre className="eg-fd-ocr-helper-json">{ocrTemplateJson}</pre>
+                  </details>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+
+          {/* ─── IMPORT JSON BLOCK (PROMINENT) ────────── */}
+          <div className="eg-fd-import-block">
+            <div className="eg-fd-import-header">
+              <div>
+                <h4 className="eg-fd-import-title">Import Player Stats</h4>
+                <p className="eg-fd-import-desc">
+                  Paste JSON with <code>playerStats</code> array. Each row: <code>teamSlug</code>, <code>playerRef</code> (playerId, aflPlayerId, playerName), stats.
+                  Matching priority: playerId &rarr; aflPlayerId &rarr; playerName.
+                </p>
+              </div>
+            </div>
+
+            <textarea
+              className="eg-fd-json-input"
+              value={bulkJsonInput}
+              onChange={(e) => { setBulkJsonInput(e.target.value); setBulkPreview(null); setBulkError(null); }}
+              placeholder={'{\n  "fixtureId": "CURRENT_FIXTURE_ID",\n  "playerStats": [\n    {\n      "teamSlug": "sydney-swans",\n      "playerRef": { "playerId": "uuid...", "aflPlayerId": 12345, "playerName": "Isaac Heeney" },\n      "kicks": 14, "handballs": 10, "disposals": 24, "marks": 6, "fantasyPoints": 126\n    }\n  ]\n}'}
+              rows={5}
+            />
+
+            {bulkError ? (
+              <p className="eg-admin-error" style={{ marginTop: 6, fontSize: '0.82rem' }}>{bulkError}</p>
+            ) : null}
+
+            <div className="eg-fd-import-actions">
+              <button
+                type="button"
+                className="eg-fd-btn eg-fd-btn-primary"
+                onClick={previewBulkJson}
+                disabled={!bulkJsonInput.trim() || isPreviewLoading}
+              >
+                {isPreviewLoading ? 'Matching Players...' : 'Preview & Match'}
+              </button>
+              {bulkPreview ? (
+                <button
+                  type="button"
+                  className="eg-fd-btn"
+                  onClick={() => { setBulkPreview(null); setBulkJsonInput(''); setBulkError(null); }}
+                >
+                  Clear
+                </button>
+              ) : null}
+            </div>
+
+            {/* ─── PREVIEW RESULTS ──────────────────────── */}
+            {bulkPreview ? (
+              <div className="eg-fd-preview">
+                <div className="eg-fd-preview-summary">
+                  <div className="eg-fd-preview-stat eg-fd-preview-stat--good">
+                    <span className="eg-fd-preview-stat-num">{bulkPreview.filter((r) => r.matched && r.matchConfidence === 'exact').length}</span>
+                    <span>exact</span>
+                  </div>
+                  <div className="eg-fd-preview-stat eg-fd-preview-stat--warn">
+                    <span className="eg-fd-preview-stat-num">{bulkPreview.filter((r) => r.matched && r.matchConfidence === 'partial').length}</span>
+                    <span>partial</span>
+                  </div>
+                  <div className="eg-fd-preview-stat eg-fd-preview-stat--bad">
+                    <span className="eg-fd-preview-stat-num">{bulkPreview.filter((r) => !r.matched).length}</span>
+                    <span>failed</span>
+                  </div>
+                  <div className="eg-fd-preview-stat">
+                    <span className="eg-fd-preview-stat-num">{bulkPreview.length}</span>
+                    <span>total</span>
+                  </div>
+                </div>
+
+                {/* Import button at TOP of preview so it's always visible on mobile */}
+                {bulkPreview.some((r) => r.matched) ? (
+                  <button
+                    type="button"
+                    className="eg-fd-btn eg-fd-btn-save"
+                    onClick={() => void applyBulkImport()}
+                    disabled={isApplying}
+                    style={{ width: '100%' }}
+                  >
+                    {isApplying
+                      ? 'Importing...'
+                      : `Import ${bulkPreview.filter((r) => r.matched).length} Matched Players`}
+                  </button>
+                ) : null}
+
+                <div className="eg-fd-preview-rows">
+                  {bulkPreview.map((row, i) => (
+                    <div
+                      key={`${row.playerName}-${i}`}
+                      className={`eg-fd-preview-row ${row.matched ? (row.matchConfidence === 'partial' ? 'eg-fd-preview-row--partial' : 'eg-fd-preview-row--matched') : 'eg-fd-preview-row--unmatched'}`}
+                    >
+                      <div className="eg-fd-preview-row-main">
+                        <div className="eg-fd-preview-player">
+                          <strong>{row.playerName}</strong>
+                          <span className="eg-fd-preview-team">{row.teamLabel}</span>
+                        </div>
+                        <div className="eg-fd-preview-stats-mini">
+                          <span title="Disposals">D:{row.disposals}</span>
+                          <span title="Kicks">K:{row.kicks}</span>
+                          <span title="Handballs">H:{row.handballs}</span>
+                          <span title="Marks">M:{row.marks}</span>
+                          {row.fantasyPoints ? <span title="Fantasy Points">FP:{row.fantasyPoints}</span> : null}
+                        </div>
+                      </div>
+                      <div className="eg-fd-preview-match-info">
+                        <span
+                          className="eg-admin-status-chip"
+                          style={{
+                            background: row.matched
+                              ? row.matchConfidence === 'partial' ? 'rgba(251,191,36,0.15)' : 'rgba(34,197,94,0.15)'
+                              : 'rgba(239,68,68,0.15)',
+                            color: row.matched
+                              ? row.matchConfidence === 'partial' ? '#fcd34d' : '#4ade80'
+                              : '#f87171',
+                            fontSize: '0.7rem',
+                          }}
+                        >
+                          {row.matched
+                            ? (row.matchConfidence === 'partial' ? 'Partial' : 'Exact')
+                              + (row.matchSource ? ` (${row.matchSource})` : '')
+                            : 'No match'}
+                        </span>
+                        <span className="eg-fd-preview-reason">{row.matchReason}</span>
+                      </div>
+                      {/* Manual resolution for unmatched rows with a team */}
+                      {!row.matched && row.teamId && row.availablePlayers?.length ? (
+                        <div className="eg-fd-resolve">
+                          <select
+                            value={row.manualPlayerId || ''}
+                            onChange={(e) => updatePreviewManualPlayer(i, e.target.value)}
+                            className="eg-fd-resolve-select"
+                          >
+                            <option value="">Select player manually...</option>
+                            {row.availablePlayers.map((p) => (
+                              <option key={p.id} value={p.id}>{p.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+
+              </div>
+            ) : null}
+          </div>
+
+          {/* ─── PLAYER STATS TABLE ─────────────────────── */}
+          <AdminCard
+            title="Player Stats"
+            subtitle={playerDrafts.size > 0 ? `${matchedDrafts.length} matched${unmatchedDrafts.length > 0 ? `, ${unmatchedDrafts.length} unmatched` : ''}` : 'No stats loaded'}
+            actions={
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="eg-fd-btn eg-fd-btn-save"
+                  disabled={playerStatsMutation.isPending || dirtyPlayerCount === 0}
+                  onClick={() => playerStatsMutation.mutate()}
+                >
+                  {playerStatsMutation.isPending ? 'Saving...' : `Save ${dirtyPlayerCount} Change(s)`}
+                </button>
+                <button
+                  type="button"
+                  className="eg-fd-btn eg-fd-btn-danger"
+                  disabled={deleteStatsMutation.isPending || (playerStatsQuery.data?.length ?? 0) === 0}
+                  onClick={() => {
+                    const count = playerStatsQuery.data?.length ?? 0;
+                    if (count === 0) return;
+                    if (!window.confirm(`Delete ALL ${count} player stat rows for this fixture? This cannot be undone.`)) return;
+                    deleteStatsMutation.mutate();
+                  }}
+                >
+                  {deleteStatsMutation.isPending ? 'Deleting...' : 'Delete All'}
+                </button>
+              </div>
+            }
+          >
+            {playerStatsQuery.isLoading ? (
+              <p className="eg-admin-muted" style={{ padding: 12, textAlign: 'center' }}>Loading player stats...</p>
+            ) : playerDrafts.size === 0 ? (
+              <EmptyState title="No player stats yet" description="Paste JSON above to bulk import, or add players one-by-one below." />
+            ) : null}
+
+            {/* Unmatched rows — resolve section */}
+            {unmatchedDrafts.length > 0 ? (
+              <div className="eg-fd-unmatched-section">
+                <p className="eg-fd-unmatched-title">
+                  {unmatchedDrafts.length} Unmatched Player(s) — resolve to save
+                </p>
+                {unmatchedDrafts.map((stat) => (
+                  <UnmatchedPlayerResolver
+                    key={stat.player_id}
+                    stat={stat}
+                    fixtureHomeTeamId={fixture.home_team_id}
+                    fixtureAwayTeamId={fixture.away_team_id}
+                    homeName={homeName}
+                    awayName={awayName}
+                    onResolve={resolveUnmatchedPlayer}
+                    onRemove={(tempId) => {
+                      setPlayerDrafts((prev) => {
+                        const next = new Map(prev);
+                        next.delete(tempId);
+                        return next;
+                      });
+                    }}
+                  />
+                ))}
+              </div>
+            ) : null}
+
+            {/* Matched rows table */}
+            {matchedDrafts.length > 0 ? (
+              <div className="eg-fd-stats-cards">
+                {matchedDrafts.map((stat) => (
+                  <div
+                    key={stat.player_id}
+                    className={`eg-fd-stat-card${stat.dirty ? ' eg-fd-stat-card--dirty' : ''}`}
+                  >
+                    <div className="eg-fd-stat-card-header">
+                      <strong>{stat.player_name || stat.player_id.slice(0, 8)}</strong>
+                      <span className="eg-fd-stat-team-label">{teamById.get(stat.team_id) || stat.team_id.slice(0, 8)}</span>
+                    </div>
+                    <div className="eg-fd-stat-fields">
+                      <label>
+                        <span>D</span>
+                        <input type="number" min={0} value={stat.disposals ?? ''} onChange={(e) => updatePlayerDraft(stat.player_id, 'disposals', e.target.value)} />
+                      </label>
+                      <label>
+                        <span>K</span>
+                        <input type="number" min={0} value={stat.kicks ?? ''} onChange={(e) => updatePlayerDraft(stat.player_id, 'kicks', e.target.value)} />
+                      </label>
+                      <label>
+                        <span>H</span>
+                        <input type="number" min={0} value={stat.handballs ?? ''} onChange={(e) => updatePlayerDraft(stat.player_id, 'handballs', e.target.value)} />
+                      </label>
+                      <label>
+                        <span>M</span>
+                        <input type="number" min={0} value={stat.marks ?? ''} onChange={(e) => updatePlayerDraft(stat.player_id, 'marks', e.target.value)} />
+                      </label>
+                      <label>
+                        <span>T</span>
+                        <input type="number" min={0} value={stat.tackles ?? ''} onChange={(e) => updatePlayerDraft(stat.player_id, 'tackles', e.target.value)} />
+                      </label>
+                      <label>
+                        <span>CLR</span>
+                        <input type="number" min={0} value={stat.clearances ?? ''} onChange={(e) => updatePlayerDraft(stat.player_id, 'clearances', e.target.value)} />
+                      </label>
+                      <label>
+                        <span>FP</span>
+                        <input type="number" min={0} value={stat.fantasy_points ?? ''} onChange={(e) => updatePlayerDraft(stat.player_id, 'fantasy_points', e.target.value)} />
+                      </label>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {/* Add single player */}
+            <div className="eg-admin-section-block">
+              <p style={{ margin: '0 0 6px', fontSize: '0.82rem', fontWeight: 700 }}>Add Player Manually</p>
+              <div className="eg-admin-toolbar">
+                <label className="eg-admin-inline-field">
+                  <span>Team</span>
+                  <select value={addPlayerTeamId} onChange={(e) => { setAddPlayerTeamId(e.target.value); setAddPlayerId(''); }}>
+                    <option value="">Select team</option>
+                    {fixture.home_team_id ? <option value={fixture.home_team_id}>{homeName}</option> : null}
+                    {fixture.away_team_id ? <option value={fixture.away_team_id}>{awayName}</option> : null}
+                  </select>
+                </label>
+                <label className="eg-admin-inline-field">
+                  <span>Player</span>
+                  <select value={addPlayerId} onChange={(e) => setAddPlayerId(e.target.value)} disabled={!addPlayerTeamId}>
+                    <option value="">Select player</option>
+                    {(addPlayerListQuery.data || [])
+                      .filter((p) => !playerDrafts.has(p.id))
+                      .map((p) => (
+                        <option key={p.id} value={p.id}>{p.display_name || p.name || p.id}</option>
+                      ))}
+                  </select>
+                </label>
+                <button type="button" className="eg-fd-btn" onClick={addPlayerRow} disabled={!addPlayerId}>
+                  Add
+                </button>
+              </div>
+            </div>
+          </AdminCard>
+        </>
+      ) : null}
+
+      {/* ═══════ SCORES SECTION ═══════ */}
       {activeSection === 'scores' ? (
         <AdminCard
           title="Fixture Scores"
@@ -648,17 +1447,14 @@ export default function AdminFixtureDetail() {
           actions={
             <button
               type="button"
-              className="eg-admin-btn"
+              className="eg-fd-btn eg-fd-btn-save"
               disabled={scoreMutation.isPending || !scoreDraft}
               onClick={() => {
-                if (!scoreDraft) {
-                  initScoreDraft();
-                  return;
-                }
+                if (!scoreDraft) { initScoreDraft(); return; }
                 scoreMutation.mutate();
               }}
             >
-              {scoreMutation.isPending ? 'Saving…' : scoreDraft ? 'Save Scores' : 'Edit Scores'}
+              {scoreMutation.isPending ? 'Saving...' : scoreDraft ? 'Save Scores' : 'Edit Scores'}
             </button>
           }
         >
@@ -669,8 +1465,7 @@ export default function AdminFixtureDetail() {
                 <label className="eg-admin-stack-field">
                   <span>Goals</span>
                   <input
-                    type="number"
-                    min={0}
+                    type="number" min={0}
                     value={scoreDraft?.homeGoals ?? String(fixture.home_goals ?? '')}
                     onChange={(e) => {
                       if (!scoreDraft) initScoreDraft();
@@ -681,8 +1476,7 @@ export default function AdminFixtureDetail() {
                 <label className="eg-admin-stack-field">
                   <span>Behinds</span>
                   <input
-                    type="number"
-                    min={0}
+                    type="number" min={0}
                     value={scoreDraft?.homeBehinds ?? String(fixture.home_behinds ?? '')}
                     onChange={(e) => {
                       if (!scoreDraft) initScoreDraft();
@@ -702,8 +1496,7 @@ export default function AdminFixtureDetail() {
                 <label className="eg-admin-stack-field">
                   <span>Goals</span>
                   <input
-                    type="number"
-                    min={0}
+                    type="number" min={0}
                     value={scoreDraft?.awayGoals ?? String(fixture.away_goals ?? '')}
                     onChange={(e) => {
                       if (!scoreDraft) initScoreDraft();
@@ -714,8 +1507,7 @@ export default function AdminFixtureDetail() {
                 <label className="eg-admin-stack-field">
                   <span>Behinds</span>
                   <input
-                    type="number"
-                    min={0}
+                    type="number" min={0}
                     value={scoreDraft?.awayBehinds ?? String(fixture.away_behinds ?? '')}
                     onChange={(e) => {
                       if (!scoreDraft) initScoreDraft();
@@ -764,256 +1556,10 @@ export default function AdminFixtureDetail() {
         </AdminCard>
       ) : null}
 
-      {activeSection === 'players' ? (
-        <AdminCard
-          title="Player Stats"
-          subtitle="Edit individual player stats for this fixture"
-          actions={
-            <button
-              type="button"
-              className="eg-admin-btn"
-              disabled={playerStatsMutation.isPending || dirtyPlayerCount === 0}
-              onClick={() => playerStatsMutation.mutate()}
-            >
-              {playerStatsMutation.isPending ? 'Saving…' : `Save ${dirtyPlayerCount} change(s)`}
-            </button>
-          }
-        >
-          {playerDrafts.size === 0 && !playerStatsQuery.isLoading ? (
-            <div>
-              <EmptyState title="No player stats" description="No player stats exist for this fixture yet. Add players or paste OCR data." />
-              <button type="button" className="eg-admin-btn" style={{ marginTop: 8 }} onClick={initPlayerDrafts}>
-                Load Existing Stats
-              </button>
-            </div>
-          ) : null}
-
-          {playerDrafts.size > 0 ? (
-            <div className="eg-admin-table-wrap">
-              <table className="eg-admin-table">
-                <thead>
-                  <tr>
-                    <th>Player</th>
-                    <th>Team</th>
-                    <th>D</th>
-                    <th>K</th>
-                    <th>H</th>
-                    <th>M</th>
-                    <th>T</th>
-                    <th>CLR</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedPlayerDrafts.map((stat) => {
-                    const isUnmatched = stat._unmatched || stat.player_id.startsWith('_unmatched:') || stat.player_id.startsWith('bulk:');
-                    return (
-                    <tr key={stat.player_id} style={isUnmatched ? { background: 'rgba(239,68,68,0.08)', borderLeft: '3px solid rgba(239,68,68,0.5)' } : stat.dirty ? { background: 'rgba(34,203,253,0.06)' } : undefined}>
-                      <td data-label="Player">
-                        <strong>{stat.player_name || stat.player_id.slice(0, 8)}</strong>
-                        {isUnmatched ? (
-                          <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#f87171', margin: '2px 0 0' }}>UNMATCHED — will not save</p>
-                        ) : (
-                          <p className="mono">{stat.player_id.slice(0, 12)}</p>
-                        )}
-                      </td>
-                      <td data-label="Team">{teamById.get(stat.team_id) || stat.team_id.slice(0, 8)}</td>
-                      <td data-label="D">
-                        <input
-                          type="number" min={0}
-                          value={stat.disposals ?? ''}
-                          onChange={(e) => updatePlayerDraft(stat.player_id, 'disposals', e.target.value)}
-                        />
-                      </td>
-                      <td data-label="K">
-                        <input
-                          type="number" min={0}
-                          value={stat.kicks ?? ''}
-                          onChange={(e) => updatePlayerDraft(stat.player_id, 'kicks', e.target.value)}
-                        />
-                      </td>
-                      <td data-label="H">
-                        <input
-                          type="number" min={0}
-                          value={stat.handballs ?? ''}
-                          onChange={(e) => updatePlayerDraft(stat.player_id, 'handballs', e.target.value)}
-                        />
-                      </td>
-                      <td data-label="M">
-                        <input
-                          type="number" min={0}
-                          value={stat.marks ?? ''}
-                          onChange={(e) => updatePlayerDraft(stat.player_id, 'marks', e.target.value)}
-                        />
-                      </td>
-                      <td data-label="T">
-                        <input
-                          type="number" min={0}
-                          value={stat.tackles ?? ''}
-                          onChange={(e) => updatePlayerDraft(stat.player_id, 'tackles', e.target.value)}
-                        />
-                      </td>
-                      <td data-label="CLR">
-                        <input
-                          type="number" min={0}
-                          value={stat.clearances ?? ''}
-                          onChange={(e) => updatePlayerDraft(stat.player_id, 'clearances', e.target.value)}
-                        />
-                      </td>
-                    </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : null}
-
-          <div className="eg-admin-section-block">
-            <p style={{ margin: '0 0 6px', fontSize: '0.82rem', fontWeight: 700 }}>Add Player</p>
-            <div className="eg-admin-toolbar">
-              <label className="eg-admin-inline-field">
-                <span>Team</span>
-                <select value={addPlayerTeamId} onChange={(e) => { setAddPlayerTeamId(e.target.value); setAddPlayerId(''); }}>
-                  <option value="">Select team</option>
-                  {fixture.home_team_id ? <option value={fixture.home_team_id}>{homeName}</option> : null}
-                  {fixture.away_team_id ? <option value={fixture.away_team_id}>{awayName}</option> : null}
-                </select>
-              </label>
-              <label className="eg-admin-inline-field">
-                <span>Player</span>
-                <select value={addPlayerId} onChange={(e) => setAddPlayerId(e.target.value)} disabled={!addPlayerTeamId}>
-                  <option value="">Select player</option>
-                  {(addPlayerListQuery.data || [])
-                    .filter((p) => !playerDrafts.has(p.id))
-                    .map((p) => (
-                      <option key={p.id} value={p.id}>{p.display_name || p.name || p.id}</option>
-                    ))}
-                </select>
-              </label>
-              <button type="button" className="eg-admin-btn" onClick={addPlayerRow} disabled={!addPlayerId}>
-                Add
-              </button>
-            </div>
-          </div>
-
-          <div className="eg-admin-section-block">
-            <p style={{ margin: '0 0 6px', fontSize: '0.82rem', fontWeight: 700 }}>Paste OCR / JSON Stats (by player_id)</p>
-            <label className="eg-admin-stack-field">
-              <span>JSON array of player stat objects</span>
-              <textarea
-                value={ocrPasteJson}
-                onChange={(e) => setOcrPasteJson(e.target.value)}
-                placeholder={'[\n  { "player_id": "...", "team_id": "...", "disposals": 12, "kicks": 8, ... }\n]'}
-                rows={4}
-              />
-            </label>
-            <button type="button" className="eg-admin-btn" onClick={applyOcrJson} disabled={!ocrPasteJson.trim()} style={{ marginTop: 6 }}>
-              Apply JSON to Table
-            </button>
-          </div>
-
-          <div className="eg-admin-highlight-block">
-            <p style={{ margin: '0 0 4px', fontSize: '0.88rem', fontWeight: 800, color: '#7dd3fc' }}>
-              Paste Player Stats JSON
-            </p>
-            <p style={{ margin: '0 0 10px', fontSize: '0.78rem', color: 'var(--admin-muted)' }}>
-              Paste a full JSON blob with <code>playerStats</code> array. Each row needs: <code>teamSlug</code>, <code>playerName</code>, <code>kicks</code>, <code>handballs</code>, <code>disposals</code>, <code>marks</code>, <code>fantasyPoints</code>.
-              Players are matched by name + team. Fixture: <strong>R{fixture.round} {homeName} vs {awayName}</strong>
-            </p>
-            <label className="eg-admin-stack-field">
-              <span>JSON payload</span>
-              <textarea
-                value={bulkJsonInput}
-                onChange={(e) => { setBulkJsonInput(e.target.value); setBulkPreview(null); setBulkError(null); }}
-                placeholder={'{\n  "playerStats": [\n    { "teamSlug": "sydney-swans", "playerName": "Isaac Heeney", "kicks": 14, "handballs": 10, "disposals": 24, "marks": 6, "fantasyPoints": 126 }\n  ]\n}'}
-                rows={6}
-                style={{ fontFamily: 'monospace', fontSize: '0.78rem' }}
-              />
-            </label>
-            {bulkError ? (
-              <p className="eg-admin-error" style={{ marginTop: 6 }}>{bulkError}</p>
-            ) : null}
-            <div className="eg-admin-action-row" style={{ marginTop: 8 }}>
-              <button
-                type="button"
-                className="eg-admin-btn"
-                onClick={previewBulkJson}
-                disabled={!bulkJsonInput.trim()}
-              >
-                Preview Import
-              </button>
-              {bulkPreview && bulkPreview.some((r) => r.matched) ? (
-                <button
-                  type="button"
-                  className="eg-admin-btn"
-                  style={{ background: 'rgba(34,197,94,0.2)', borderColor: 'rgba(34,197,94,0.4)' }}
-                  onClick={() => void applyBulkImport()}
-                >
-                  Apply Import ({bulkPreview.filter((r) => r.matched).length} rows)
-                </button>
-              ) : null}
-            </div>
-
-            {bulkPreview ? (
-              <div style={{ marginTop: 10 }}>
-                <p className="eg-admin-preview-summary">
-                  Preview: {bulkPreview.filter((r) => r.matched).length} matched, {bulkPreview.filter((r) => !r.matched).length} unmatched of {bulkPreview.length} total
-                </p>
-                <div className="eg-admin-table-wrap" style={{ maxHeight: 320, overflow: 'auto' }}>
-                  <table className="eg-admin-table" style={{ fontSize: '0.78rem' }}>
-                    <thead>
-                      <tr>
-                        <th>Player</th>
-                        <th>Team</th>
-                        <th>D</th>
-                        <th>K</th>
-                        <th>H</th>
-                        <th>M</th>
-                        <th>FP</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {bulkPreview.map((row, i) => (
-                        <tr
-                          key={`${row.playerName}-${i}`}
-                          style={{
-                            background: row.matched
-                              ? 'rgba(34,197,94,0.06)'
-                              : 'rgba(239,68,68,0.08)',
-                          }}
-                        >
-                          <td data-label="Player"><strong>{row.playerName}</strong></td>
-                          <td data-label="Team">{row.teamLabel}</td>
-                          <td data-label="D">{row.disposals}</td>
-                          <td data-label="K">{row.kicks}</td>
-                          <td data-label="H">{row.handballs}</td>
-                          <td data-label="M">{row.marks}</td>
-                          <td data-label="FP">{row.fantasyPoints}</td>
-                          <td data-label="Status">
-                            <span
-                              className="eg-admin-status-chip"
-                              style={{
-                                background: row.matched ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
-                                color: row.matched ? '#4ade80' : '#f87171',
-                              }}
-                            >
-                              {row.matched ? 'Matched' : 'No team'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </AdminCard>
-      ) : null}
-
+      {/* ═══════ OCR SECTION ═══════ */}
       {activeSection === 'ocr' ? (
         <AdminCard title="OCR Queue" subtitle="OCR processing data linked to this fixture">
-          {ocrQuery.isLoading ? <p className="eg-admin-muted">Loading OCR data…</p> : null}
+          {ocrQuery.isLoading ? <p className="eg-admin-muted">Loading OCR data...</p> : null}
           {ocrQuery.error ? (
             <p className="eg-admin-error">
               {ocrQuery.error instanceof Error ? ocrQuery.error.message : 'Failed to load OCR data'}
@@ -1068,9 +1614,23 @@ export default function AdminFixtureDetail() {
         </AdminCard>
       ) : null}
 
+      {/* ═══════ SUBMISSIONS SECTION ═══════ */}
       {activeSection === 'submissions' ? (
-        <AdminCard title="Fixture Submissions" subtitle="Coach submissions for this fixture">
-          {submissionsQuery.isLoading ? <p className="eg-admin-muted">Loading submissions…</p> : null}
+        <AdminCard
+          title="Fixture Submissions"
+          subtitle="Coach submissions for this fixture"
+          actions={
+            <button
+              type="button"
+              className="eg-fd-btn eg-fd-btn-primary"
+              disabled={isDownloadingPhotos || !submissionsQuery.data?.length}
+              onClick={() => void downloadAllPhotos()}
+            >
+              {isDownloadingPhotos ? 'Downloading...' : `Download All Photos (${getSubmissionPhotoUrls().length})`}
+            </button>
+          }
+        >
+          {submissionsQuery.isLoading ? <p className="eg-admin-muted">Loading submissions...</p> : null}
           {submissionsQuery.error ? (
             <p className="eg-admin-error">
               {submissionsQuery.error instanceof Error ? submissionsQuery.error.message : 'Failed to load submissions'}
@@ -1133,20 +1693,16 @@ export default function AdminFixtureDetail() {
                       </details>
                     ) : null}
                     {(() => {
-                      // Parse screenshot_urls - may be array, JSON string, or null
                       let rawUrls = sub.screenshot_urls;
                       if (typeof rawUrls === 'string') {
                         try { rawUrls = JSON.parse(rawUrls); } catch { rawUrls = []; }
                       }
                       const urls = Array.isArray(rawUrls) ? rawUrls : [];
-
-                      // Parse screenshots - may be array, JSON string, or null
                       let rawScreenshots = sub.screenshots;
                       if (typeof rawScreenshots === 'string') {
                         try { rawScreenshots = JSON.parse(rawScreenshots); } catch { rawScreenshots = []; }
                       }
                       const screenshots = Array.isArray(rawScreenshots) ? rawScreenshots : [];
-
                       const allUrls: string[] = [
                         ...urls.filter((u: unknown) => typeof u === 'string' && u),
                         ...screenshots
@@ -1157,12 +1713,7 @@ export default function AdminFixtureDetail() {
                       if (!unique.length) return null;
                       return (
                         <div className="eg-admin-highlight-block" style={{ marginTop: 8 }}>
-                          <p style={{
-                            margin: '0 0 8px',
-                            fontSize: '0.84rem',
-                            fontWeight: 700,
-                            color: '#bfe4ff',
-                          }}>
+                          <p style={{ margin: '0 0 8px', fontSize: '0.84rem', fontWeight: 700, color: '#bfe4ff' }}>
                             Screenshots ({unique.length})
                           </p>
                           <div className="eg-admin-media-grid">
@@ -1194,6 +1745,81 @@ export default function AdminFixtureDetail() {
           )}
         </AdminCard>
       ) : null}
+    </div>
+  );
+}
+
+// ─── UNMATCHED PLAYER RESOLVER COMPONENT ──────────────
+function UnmatchedPlayerResolver(props: {
+  stat: PlayerStatDraft;
+  fixtureHomeTeamId: string | null;
+  fixtureAwayTeamId: string | null;
+  homeName: string;
+  awayName: string;
+  onResolve: (tempId: string, realPlayerId: string, realPlayerName: string) => void;
+  onRemove: (tempId: string) => void;
+}) {
+  const { stat, fixtureHomeTeamId, fixtureAwayTeamId, homeName, awayName, onResolve, onRemove } = props;
+  const [resolveTeamId, setResolveTeamId] = useState(stat.team_id || '');
+  const [resolvePlayerId, setResolvePlayerId] = useState('');
+
+  const playersQuery = useQuery({
+    queryKey: ['admin', 'players-for-team', resolveTeamId],
+    queryFn: () => listPlayersForTeam(resolveTeamId),
+    enabled: Boolean(resolveTeamId),
+    staleTime: 5 * 60_000,
+  });
+
+  return (
+    <div className="eg-fd-unmatched-row">
+      <div className="eg-fd-unmatched-info">
+        <strong>{stat.player_name}</strong>
+        <span className="eg-fd-unmatched-stats">
+          D:{stat.disposals ?? 0} K:{stat.kicks ?? 0} H:{stat.handballs ?? 0} M:{stat.marks ?? 0}
+        </span>
+      </div>
+      <div className="eg-fd-unmatched-controls">
+        <select
+          value={resolveTeamId}
+          onChange={(e) => { setResolveTeamId(e.target.value); setResolvePlayerId(''); }}
+          className="eg-fd-resolve-select"
+        >
+          <option value="">Team...</option>
+          {fixtureHomeTeamId ? <option value={fixtureHomeTeamId}>{homeName}</option> : null}
+          {fixtureAwayTeamId ? <option value={fixtureAwayTeamId}>{awayName}</option> : null}
+        </select>
+        <select
+          value={resolvePlayerId}
+          onChange={(e) => setResolvePlayerId(e.target.value)}
+          disabled={!resolveTeamId || playersQuery.isLoading}
+          className="eg-fd-resolve-select"
+        >
+          <option value="">{playersQuery.isLoading ? 'Loading...' : 'Player...'}</option>
+          {(playersQuery.data || []).map((p) => (
+            <option key={p.id} value={p.id}>{p.display_name || p.name || p.id}</option>
+          ))}
+        </select>
+        <button
+          type="button"
+          className="eg-fd-btn eg-fd-btn-sm"
+          disabled={!resolvePlayerId}
+          onClick={() => {
+            const player = playersQuery.data?.find((p) => p.id === resolvePlayerId);
+            if (player) {
+              onResolve(stat.player_id, player.id, player.display_name || player.name || player.id);
+            }
+          }}
+        >
+          Resolve
+        </button>
+        <button
+          type="button"
+          className="eg-fd-btn eg-fd-btn-sm eg-fd-btn-danger"
+          onClick={() => onRemove(stat.player_id)}
+        >
+          Remove
+        </button>
+      </div>
     </div>
   );
 }

@@ -625,6 +625,7 @@ export type AdminFixturePlayerStat = {
   marks: number | null;
   tackles: number | null;
   clearances: number | null;
+  fantasy_points: number | null;
 };
 
 export async function fetchFixtureDetail(fixtureId: string): Promise<AdminFixture | null> {
@@ -641,7 +642,7 @@ export async function fetchFixtureDetail(fixtureId: string): Promise<AdminFixtur
 export async function listFixturePlayerStats(fixtureId: string): Promise<AdminFixturePlayerStat[]> {
   const { data, error } = await supabase
     .from('eg_fixture_player_stats')
-    .select('fixture_id,player_id,team_id,disposals,kicks,handballs,marks,tackles,clearances')
+    .select('fixture_id,player_id,team_id,disposals,kicks,handballs,marks,tackles,clearances,fantasy_points')
     .eq('fixture_id', fixtureId);
 
   if (error) {
@@ -745,6 +746,7 @@ export async function upsertFixturePlayerStats(
     marks?: number | null;
     tackles?: number | null;
     clearances?: number | null;
+    fantasy_points?: number | null;
   }>,
 ) {
   // Try token-gated RPC first if token available
@@ -755,6 +757,12 @@ export async function upsertFixturePlayerStats(
       p_rows: rows,
     });
     if (!tokenResult.error) return;
+    // Only fall through if the function doesn't exist (migration not yet applied);
+    // otherwise surface the real error so admins aren't silently routed to the
+    // auth-based fallback which requires a fixture submission to exist.
+    if (!tokenResult.error.message?.includes('does not exist')) {
+      unwrapRpcError(tokenResult.error);
+    }
   }
 
   // Fallback to existing auth-based RPC
@@ -764,6 +772,28 @@ export async function upsertFixturePlayerStats(
   });
 
   if (error) unwrapRpcError(error);
+}
+
+export async function deleteFixturePlayerStats(token: string, fixtureId: string): Promise<number> {
+  // Try token-gated RPC first
+  if (token) {
+    const tokenResult = await supabase.rpc('eg_admin_delete_fixture_player_stats', {
+      p_token: token,
+      p_fixture_id: fixtureId,
+    });
+    if (!tokenResult.error) return (tokenResult.data as number) ?? 0;
+    // Only fall through if function doesn't exist; otherwise surface the real error
+    if (!tokenResult.error.message?.includes('does not exist')) {
+      unwrapRpcError(tokenResult.error);
+    }
+  }
+
+  // Fallback to auth-based RPC (checks profiles.is_admin via auth.uid())
+  const { data, error } = await supabase.rpc('eg_delete_fixture_player_stats', {
+    p_fixture_id: fixtureId,
+  });
+  if (error) unwrapRpcError(error);
+  return (data as number) ?? 0;
 }
 
 export async function fetchFixtureOcrData(fixtureId: string): Promise<AdminOcrQueueItem[]> {
@@ -803,11 +833,27 @@ export async function fetchFixtureSubmissionData(fixtureId: string) {
 export async function listPlayersForTeam(teamId: string) {
   const { data, error } = await supabase
     .from('eg_players')
-    .select('id,name,display_name,team_id')
+    .select('id,name,display_name,team_id,afl_player_id')
     .eq('team_id', teamId)
     .order('name', { ascending: true })
     .limit(100);
 
   if (error) throw new Error(error.message);
-  return (data || []) as Array<{ id: string; name: string | null; display_name: string | null; team_id: string }>;
+  return (data || []) as Array<{ id: string; name: string | null; display_name: string | null; team_id: string; afl_player_id: number | null }>;
+}
+
+/** Look up players by their AFL numeric IDs. Returns a map of aflPlayerId → player row. */
+export async function lookupPlayersByAflId(aflPlayerIds: number[]) {
+  if (!aflPlayerIds.length) return new Map<number, { id: string; name: string | null; display_name: string | null; team_id: string | null; afl_player_id: number }>();
+  const { data, error } = await supabase
+    .from('eg_players')
+    .select('id,name,display_name,team_id,afl_player_id')
+    .in('afl_player_id', aflPlayerIds);
+
+  if (error) throw new Error(error.message);
+  const map = new Map<number, { id: string; name: string | null; display_name: string | null; team_id: string | null; afl_player_id: number }>();
+  for (const row of (data || []) as Array<{ id: string; name: string | null; display_name: string | null; team_id: string | null; afl_player_id: number }>) {
+    if (row.afl_player_id != null) map.set(row.afl_player_id, row);
+  }
+  return map;
 }

@@ -153,13 +153,10 @@ async function buildStatsPlayersFromDb(): Promise<StatsPlayerRow[]> {
           goals: Number(player.goals || 0),
           disposals: Number(player.disposals || 0),
           marks: Number(player.marks || 0),
-          tackles: Number(player.tackles || 0),
-          clearances: Number(player.clearances || 0),
           fantasyPoints:
             Number(player.fantasyPoints || 0) ||
             Number(player.disposals || 0) +
               Number(player.marks || 0) * 3 +
-              Number(player.tackles || 0) * 4 +
               Number(player.goals || 0) * 6,
         },
       });

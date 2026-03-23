@@ -14,8 +14,8 @@ const TEAM_STAT_GROUPS = [
     title: 'Field Position',
     labels: ['Inside 50s', 'Rebound 50s', 'Marks', 'Contested Marks', 'Intercept Marks'],
   },
-  { title: 'Stoppages', labels: ['Hitouts', 'Clearances'] },
-  { title: 'Defence / Pressure', labels: ['Tackles', 'Spoils', 'Frees For'] },
+  { title: 'Stoppages', labels: ['Hitouts'] },
+  { title: 'Defence / Pressure', labels: ['Spoils', 'Frees For'] },
 ] as const;
 
 function slugToTeamKey(slug: string): TeamKey | null {

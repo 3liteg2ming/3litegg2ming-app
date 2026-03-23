@@ -40,8 +40,6 @@ type StatTiles = {
   kicks: number | null;
   handballs: number | null;
   marks: number | null;
-  tackles: number | null;
-  clearances: number | null;
 };
 
 const TILE_CONFIG: Array<{ key: keyof StatTiles; label: string }> = [
@@ -49,8 +47,6 @@ const TILE_CONFIG: Array<{ key: keyof StatTiles; label: string }> = [
   { key: 'kicks', label: 'Kicks' },
   { key: 'handballs', label: 'Handballs' },
   { key: 'marks', label: 'Marks' },
-  { key: 'tackles', label: 'Tackles' },
-  { key: 'clearances', label: 'Clearances' },
 ];
 
 function mergeName(player: PlayerRow | null): string {
@@ -105,8 +101,6 @@ type StatRow = {
   kicks?: number | null;
   handballs?: number | null;
   marks?: number | null;
-  tackles?: number | null;
-  clearances?: number | null;
   matches?: number | null;
 };
 
@@ -117,8 +111,6 @@ function latestToTiles(row: StatRow | null): StatTiles {
       kicks: null,
       handballs: null,
       marks: null,
-      tackles: null,
-      clearances: null,
     };
   }
   return {
@@ -126,8 +118,6 @@ function latestToTiles(row: StatRow | null): StatTiles {
     kicks: row.kicks ?? null,
     handballs: row.handballs ?? null,
     marks: row.marks ?? null,
-    tackles: row.tackles ?? null,
-    clearances: row.clearances ?? null,
   };
 }
 
@@ -143,8 +133,6 @@ function averageToTiles(row: StatRow | null): StatTiles {
       kicks: null,
       handballs: null,
       marks: null,
-      tackles: null,
-      clearances: null,
     };
   }
   return {
@@ -152,8 +140,6 @@ function averageToTiles(row: StatRow | null): StatTiles {
     kicks: row.kicks ?? null,
     handballs: row.handballs ?? null,
     marks: row.marks ?? null,
-    tackles: row.tackles ?? null,
-    clearances: row.clearances ?? null,
   };
 }
 
@@ -423,14 +409,6 @@ export default function PlayerProfilePage() {
             <div className="ppMoreRow">
               <span>Marks</span>
               <strong>{safeNumber(tabTiles.marks, tab === 'latest' ? 0 : 1)}</strong>
-            </div>
-            <div className="ppMoreRow">
-              <span>Tackles</span>
-              <strong>{safeNumber(tabTiles.tackles, tab === 'latest' ? 0 : 1)}</strong>
-            </div>
-            <div className="ppMoreRow">
-              <span>Clearances</span>
-              <strong>{safeNumber(tabTiles.clearances, tab === 'latest' ? 0 : 1)}</strong>
             </div>
           </div>
         </section>

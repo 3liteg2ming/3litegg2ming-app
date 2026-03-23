@@ -20,7 +20,7 @@ type LeaderRow = {
   away: LeaderSide;
 };
 
-const DEFAULT_LEADER_STATS = ['GOALS', 'DISPOSALS', 'TACKLES'];
+const DEFAULT_LEADER_STATS = ['GOALS', 'DISPOSALS', 'MARKS'];
 const INVALID_IMAGE_VALUE = /^(null|undefined|n\/a|na|none|false)$/i;
 
 function resolveHex(value?: string | null) {
