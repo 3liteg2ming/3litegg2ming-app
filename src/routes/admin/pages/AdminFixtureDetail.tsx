@@ -385,7 +385,7 @@ export default function AdminFixtureDetail() {
 
     // Fetch players for matched teams to resolve player IDs
     const teamIds = Array.from(new Set(matched.map((r) => r.teamId!)));
-    const playersByTeam = new Map<string, Array<{ id: string; name: string; display_name: string | null }>>();
+    const playersByTeam = new Map<string, Array<{ id: string; name: string | null; display_name: string | null; team_id: string }>>();
 
     for (const tid of teamIds) {
       try {
