@@ -1,10 +1,8 @@
 import { type ReactNode } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { fetchCoachProfile } from '@/lib/profileRepo';
 import { useAuth } from '@/state/auth/AuthProvider';
-import { requireSupabaseClient } from '@/lib/supabaseClient';
-
-const supabase = requireSupabaseClient();
 
 export function getAdminToken(): string {
   return '';
@@ -33,13 +31,7 @@ export default function AdminGate({ children }: { children: ReactNode }) {
     gcTime: 30 * 60_000,
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from('eg_profiles')
-        .select('role, is_banned')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (error) throw new Error(error.message);
-      return data as { role: string | null; is_banned: boolean | null } | null;
+      return fetchCoachProfile(user.id);
     },
   });
 
@@ -87,11 +79,11 @@ export default function AdminGate({ children }: { children: ReactNode }) {
     );
   }
 
-  if (profile.role !== 'super_admin') {
+  if (!profile.is_admin) {
     return (
       <GateScreen
         title="No access"
-        subtitle="Only super admins can access the Admin Console."
+        subtitle="An admin role is required to access the Admin Console."
         cta={<Link to="/">Go Home</Link>}
       />
     );

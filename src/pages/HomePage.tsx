@@ -15,7 +15,7 @@ import { useLadder } from '../hooks/useLadder';
 import { useNextFixtures } from '../hooks/useFixtures';
 import { assetUrl } from '../lib/teamAssets';
 import { resolveTeamLogoUrl } from '../lib/entityResolvers';
-import { areFixturesVisible, canViewFixtures, FIXTURES_UNLOCK_LABEL } from '../lib/fixtureVisibility';
+import { FIXTURES_UNLOCK_LABEL, useFixtureVisibility } from '../lib/fixtureVisibility';
 import { TEAM_SHORT_NAMES } from '../data/teamColors';
 import { MelvinBetHomeCard, type MelvinHomeFixture } from '../components/MelvinBet';
 
@@ -23,8 +23,6 @@ import '../styles/home.css';
 
 type StatLeaderCategory = import('../lib/stats-leaders-cache').StatLeaderCategory;
 type HomeCoach = import('../lib/homeRepo').HomeCoach;
-
-const FIXTURES_TIME_UNLOCKED = areFixturesVisible();
 
 const AFL26_LOGO_URL =
   'https://zohtixrgskbzosgfluni.supabase.co/storage/v1/object/public/Assets/afl26-logo.png';
@@ -693,7 +691,7 @@ function LadderSnapshot() {
 
 export default function HomePage() {
   const { user } = useAuth();
-  const fixturesVisible = canViewFixtures(user?.role) || FIXTURES_TIME_UNLOCKED;
+  const fixturesVisible = useFixtureVisibility(user?.role);
 
   return (
     <div className="home-page">

@@ -155,7 +155,7 @@ export default function AdminConsolePage() {
   const [lastRpcError, setLastRpcError] = useState('');
   const [authUserId, setAuthUserId] = useState('');
 
-  const [competitionKey, setCompetitionKey] = useState<CompetitionKey>('preseason');
+  const [competitionKey, setCompetitionKey] = useState<CompetitionKey>('afl26');
   const [seasonMap, setSeasonMap] = useState<SeasonMap>({ preseason: null, afl26: null });
   const [teamCount, setTeamCount] = useState(10);
 
@@ -861,9 +861,6 @@ export default function AdminConsolePage() {
           </div>
         </div>
       ) : null}
-
-      <div className="egAdminMobileLock">Admin is desktop-only. Open this page on a larger screen.</div>
-
       <div className="egAdminShell" aria-hidden={!hasToken}>
         <aside className="egAdminSidebar">
           <div className="egAdminBrand">Elite Gaming Admin</div>

@@ -24,6 +24,8 @@ export default function AdminCoaches() {
   const [teamId, setTeamId] = useState<'all' | string>('all');
   const [banned, setBanned] = useState<'all' | 'active' | 'banned'>('all');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkRole, setBulkRole] = useState<EgRole>('user');
+  const [bulkTeamId, setBulkTeamId] = useState('');
 
   const search = useDebouncedValue((searchInput || globalSearch).trim(), 300);
 
@@ -202,7 +204,7 @@ export default function AdminCoaches() {
       <div className="eg-admin-toolbar">
         <label className="eg-admin-inline-field">
           <span>Bulk role</span>
-          <select id="bulk-role-default">
+          <select value={bulkRole} onChange={(event) => setBulkRole(event.target.value as EgRole)}>
             <option value="user">User</option>
             <option value="coach">Coach</option>
             <option value="admin">Admin</option>
@@ -211,7 +213,7 @@ export default function AdminCoaches() {
         </label>
         <label className="eg-admin-inline-field">
           <span>Bulk team</span>
-          <select id="bulk-team-default">
+          <select value={bulkTeamId} onChange={(event) => setBulkTeamId(event.target.value)}>
             <option value="">No team</option>
             {(teamsQuery.data || []).map((team) => (
               <option value={team.id} key={team.id}>
@@ -223,9 +225,7 @@ export default function AdminCoaches() {
         <button
           type="button"
           onClick={() => {
-            const roleValue = (document.getElementById('bulk-role-default') as HTMLSelectElement | null)?.value as EgRole;
-            const teamValue = (document.getElementById('bulk-team-default') as HTMLSelectElement | null)?.value || null;
-            applyBulkRoleTeam(roleValue, teamValue);
+            applyBulkRoleTeam(bulkRole, bulkTeamId || null);
           }}
           disabled={!selectedIds.length || mutateProfile.isPending}
         >
@@ -238,6 +238,8 @@ export default function AdminCoaches() {
           Bulk Unban
         </button>
       </div>
+
+      <p className="eg-admin-muted">{selectedIds.length} user(s) selected for bulk actions.</p>
 
       {profilesQuery.isLoading ? <p className="eg-admin-muted">Loading profiles…</p> : null}
       {profilesQuery.error ? (
@@ -280,7 +282,7 @@ export default function AdminCoaches() {
               <tbody>
                 {(profilesQuery.data?.rows || []).map((profile) => (
                   <tr key={profile.user_id}>
-                    <td>
+                    <td data-label="Select">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(profile.user_id)}
@@ -293,10 +295,10 @@ export default function AdminCoaches() {
                         }}
                       />
                     </td>
-                    <td>{profile.display_name || '—'}</td>
-                    <td>{profile.email || '—'}</td>
-                    <td>{profile.psn || '—'}</td>
-                    <td>
+                    <td data-label="Name">{profile.display_name || '—'}</td>
+                    <td data-label="Email">{profile.email || '—'}</td>
+                    <td data-label="PSN">{profile.psn || '—'}</td>
+                    <td data-label="Role">
                       <select
                         value={profile.role}
                         onChange={(event) =>
@@ -315,7 +317,7 @@ export default function AdminCoaches() {
                         <option value="super_admin">Super admin</option>
                       </select>
                     </td>
-                    <td>
+                    <td data-label="Team">
                       <select
                         value={profile.team_id || ''}
                         onChange={(event) =>
@@ -336,8 +338,8 @@ export default function AdminCoaches() {
                         ))}
                       </select>
                     </td>
-                    <td>{profile.is_banned ? 'Yes' : 'No'}</td>
-                    <td>
+                    <td data-label="Banned">{profile.is_banned ? 'Yes' : 'No'}</td>
+                    <td data-label="Actions">
                       <button
                         type="button"
                         onClick={() => {

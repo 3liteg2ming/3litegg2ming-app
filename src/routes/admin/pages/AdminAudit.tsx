@@ -133,15 +133,18 @@ export default function AdminAudit() {
               <tbody>
                 {(auditQuery.data?.rows || []).map((row) => (
                   <tr key={row.id}>
-                    <td>{formatDateTime(row.created_at)}</td>
-                    <td className="mono">{row.actor_user_id || '—'}</td>
-                    <td>{row.action}</td>
-                    <td>
+                    <td data-label="Time">{formatDateTime(row.created_at)}</td>
+                    <td data-label="Actor" className="mono">{row.actor_user_id || '—'}</td>
+                    <td data-label="Action">{row.action}</td>
+                    <td data-label="Entity">
                       {(row.entity_table || '—') + (row.entity_id ? `:${row.entity_id}` : '')}
                     </td>
-                    <td>{row.summary || '—'}</td>
-                    <td>
-                      <pre className="eg-admin-json compact">{JSON.stringify(row.metadata || {}, null, 2)}</pre>
+                    <td data-label="Summary">{row.summary || '—'}</td>
+                    <td data-label="Metadata">
+                      <details>
+                        <summary>View JSON</summary>
+                        <pre className="eg-admin-json compact">{JSON.stringify(row.metadata || {}, null, 2)}</pre>
+                      </details>
                     </td>
                   </tr>
                 ))}

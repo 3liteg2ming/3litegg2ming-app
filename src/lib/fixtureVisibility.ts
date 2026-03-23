@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 /**
  * Season Two fixture visibility gate.
  *
@@ -20,6 +22,29 @@ export function areFixturesVisible(): boolean {
 export function canViewFixtures(role?: string | null): boolean {
   if (role && role.toLowerCase() === 'super_admin') return true;
   return Date.now() >= UNLOCK_MS;
+}
+
+/**
+ * Reactive wrapper so pages unlock automatically without requiring a full reload.
+ */
+export function useFixtureVisibility(role?: string | null): boolean {
+  const [visible, setVisible] = useState(() => canViewFixtures(role));
+
+  useEffect(() => {
+    const nextVisible = canViewFixtures(role);
+    setVisible(nextVisible);
+
+    if (nextVisible || typeof window === 'undefined') return;
+
+    const timeoutMs = Math.max(250, UNLOCK_MS - Date.now() + 250);
+    const timeoutId = window.setTimeout(() => {
+      setVisible(canViewFixtures(role));
+    }, timeoutMs);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [role]);
+
+  return visible;
 }
 
 /** Human-readable unlock label for locked-state UI. */

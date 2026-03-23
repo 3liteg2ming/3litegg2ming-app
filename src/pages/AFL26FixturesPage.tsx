@@ -20,16 +20,10 @@ import { resolveTeamKey } from '../lib/entityResolvers';
 import { deriveFixtureRound, normalizeFixtureStatus, type FixtureRow } from '../lib/fixturesRepo';
 import { fetchMatchCentre } from '../lib/matchCentreRepo';
 import { fetchCurrentCoaches, type HomeCoach } from '../lib/homeRepo';
-import { areFixturesVisible, canViewFixtures, FIXTURES_UNLOCK_LABEL } from '../lib/fixtureVisibility';
+import { FIXTURES_UNLOCK_LABEL, useFixtureVisibility } from '../lib/fixtureVisibility';
 import { useMelvinOdds } from '../hooks/useMelvinOdds';
 import { useAuth } from '../state/auth/AuthProvider';
 import '../styles/Fixtures.css';
-
-// Time-based public visibility (no role context at module level)
-const FIXTURES_TIME_UNLOCKED = areFixturesVisible();
-
-// Only show rounds up to this number (hide later rounds until ready)
-const MAX_VISIBLE_ROUND = 1;
 
 type StatusFilter = 'ALL' | 'SCHEDULED' | 'FINAL';
 
@@ -268,7 +262,7 @@ export default function AFL26FixturesPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const FIXTURES_PUBLICLY_VISIBLE = canViewFixtures(user?.role) || FIXTURES_TIME_UNLOCKED;
+  const fixturesPubliclyVisible = useFixtureVisibility(user?.role);
   const { data: oddsMap } = useMelvinOdds();
 
   let competitionKey = getStoredCompetitionKey();
@@ -295,14 +289,14 @@ export default function AFL26FixturesPage() {
 
   const seasonFixturesQuery = useSeasonFixtures(seasonSlug, {
     limit: 1000,
-    enabled: FIXTURES_PUBLICLY_VISIBLE,
+    enabled: fixturesPubliclyVisible,
   });
   const coachesQuery = useQuery({
     queryKey: ['home', 'current-coaches'],
     queryFn: fetchCurrentCoaches,
     staleTime: 60_000,
     gcTime: 1_200_000,
-    enabled: FIXTURES_PUBLICLY_VISIBLE,
+    enabled: fixturesPubliclyVisible,
   });
   const teamOptionsQuery = useTeamOptions();
   const teamOptions = (teamOptionsQuery.data || []) as TeamOption[];
@@ -340,18 +334,15 @@ export default function AFL26FixturesPage() {
     setVisibleCount(INITIAL_RENDER_COUNT);
   }, [competitionKey]);
 
-  const regularStageGroups = useMemo(
-    () => buildRegularStageGroups(allFixtures).filter((stage) => stage.index <= MAX_VISIBLE_ROUND),
-    [allFixtures],
-  );
+  const regularStageGroups = useMemo(() => buildRegularStageGroups(allFixtures), [allFixtures]);
 
   useEffect(() => {
-    if (!FIXTURES_PUBLICLY_VISIBLE) return;
+    if (!fixturesPubliclyVisible) return;
     const first = regularStageGroups[0]?.id || '';
     if (!activeStageId || !regularStageGroups.some((stage) => stage.id === activeStageId)) {
       setActiveStageId(first);
     }
-  }, [activeStageId, regularStageGroups]);
+  }, [activeStageId, fixturesPubliclyVisible, regularStageGroups]);
 
   const isTeamView = selectedTeamId !== 'ALL';
 
@@ -443,7 +434,7 @@ export default function AFL26FixturesPage() {
   const activeMatchCount = filteredMatches.length;
 
   const hasSettled = seasonFixturesQuery.isSuccess || seasonFixturesQuery.isError;
-  const isLoading = !hasSettled && allFixtures.length === 0 && FIXTURES_PUBLICLY_VISIBLE;
+  const isLoading = !hasSettled && allFixtures.length === 0 && fixturesPubliclyVisible;
   const isError = seasonFixturesQuery.isError;
 
   const statusPills: Array<{ key: StatusFilter; label: string; count: number | string }> = [
@@ -464,7 +455,7 @@ export default function AFL26FixturesPage() {
               <span className="fxHero__kicker">AFL 26 &bull; Season Two</span>
             </div>
             <div className="fxHero__countPill">
-              {FIXTURES_PUBLICLY_VISIBLE
+              {fixturesPubliclyVisible
                 ? isLoading
                   ? 'Loading\u2026'
                   : `${activeMatchCount} matches`
@@ -482,7 +473,7 @@ export default function AFL26FixturesPage() {
           </button>
         </section>
 
-        {FIXTURES_PUBLICLY_VISIBLE ? (
+        {fixturesPubliclyVisible ? (
           <div className={`fxRoundBar ${isDockCompact ? 'is-compact' : ''}`} aria-label="Round selector">
             <div className="fxRoundBar__inner">
               {regularStageGroups.map((stage) => (
@@ -510,7 +501,7 @@ export default function AFL26FixturesPage() {
         ) : null}
 
         <div className="fxAflPanel">
-          {!FIXTURES_PUBLICLY_VISIBLE ? (
+          {!fixturesPubliclyVisible ? (
             <div className="fxAflLaunchGate">
               <h2 className="fxAflLaunchGate__title">{FIXTURES_UNLOCK_LABEL}</h2>
               <p className="fxAflLaunchGate__body">
@@ -537,7 +528,7 @@ export default function AFL26FixturesPage() {
 
           {!isLoading &&
           !isError &&
-          FIXTURES_PUBLICLY_VISIBLE &&
+          fixturesPubliclyVisible &&
           displayedMatches.length > 0 &&
           displayedMatches.length < uiMatches.length ? (
             <div ref={loadMoreRef} className="fxAflLoadSentinel" aria-hidden="true" />

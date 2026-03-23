@@ -1381,6 +1381,59 @@ label {
   margin-bottom: 8px;
 }
 
+.mdcUploadGuide {
+  margin-bottom: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(245, 196, 0, 0.2);
+  background: linear-gradient(165deg, rgba(245, 196, 0, 0.08), rgba(8, 12, 20, 0.64));
+  padding: 12px;
+}
+
+.mdcUploadGuide__eyebrow {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 225, 145, 0.96);
+}
+
+.mdcUploadGuide__list {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.mdcUploadGuide__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255,255,255,0.9);
+}
+
+.mdcUploadGuide__item svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.mdcUploadGuide__item.is-photo svg {
+  color: rgba(255, 214, 102, 0.94);
+}
+
+.mdcUploadGuide__item.is-detail svg {
+  color: rgba(116, 236, 169, 0.88);
+}
+
+.mdcUploadGuide__note {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(255,255,255,0.7);
+}
+
 .mdcBulkUpload {
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.12);

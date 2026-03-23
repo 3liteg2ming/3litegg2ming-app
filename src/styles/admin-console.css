@@ -571,18 +571,64 @@
 
 @media (max-width: 959px) {
   .egAdminShell {
-    display: none;
+    grid-template-columns: 1fr;
+    min-height: calc(100dvh - var(--bottom-nav-h) - 50px);
   }
 
-  .egAdminMobileLock {
-    display: grid;
-    place-items: center;
-    min-height: calc(100vh - var(--bottom-nav-h) - 50px);
-    text-align: center;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: rgba(10, 14, 26, 0.8);
-    color: var(--eg-text-dim);
-    padding: 18px;
+  .egAdminSidebar {
+    position: static;
+  }
+
+  .egAdminSidebar nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .egAdminTopbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .egAdminToolbar__actions {
+    width: 100%;
+    margin-left: 0;
+    flex-wrap: wrap;
+  }
+
+  .searchField {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .egAdminGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .egAdminStat.wide {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .egAdminRoot {
+    padding: 14px 0 120px;
+  }
+
+  .egAdminGate__form {
+    flex-direction: column;
+  }
+
+  .egAdminSidebar nav {
+    grid-template-columns: 1fr;
+  }
+
+  .egAdminToolbar label,
+  .inline-field,
+  .egAdminBtn {
+    width: 100%;
+  }
+
+  .scoreGrid {
+    grid-template-columns: 1fr;
   }
 }

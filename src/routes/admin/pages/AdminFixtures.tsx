@@ -307,7 +307,7 @@ export default function AdminFixtures() {
 
                   return (
                     <tr key={fixture.id}>
-                      <td>
+                      <td data-label="Fixture">
                         <Link to={`/admin/fixtures/${fixture.id}`} style={{ color: '#def0ff', textDecoration: 'none' }}>
                           <strong>
                             R{fixture.round ?? '?'}: {home} vs {away}
@@ -315,7 +315,7 @@ export default function AdminFixtures() {
                         </Link>
                         <p className="mono">{fixture.id}</p>
                       </td>
-                      <td>
+                      <td data-label="Status">
                         <select
                           value={fixture.status || ''}
                           onChange={(event) =>
@@ -331,7 +331,7 @@ export default function AdminFixtures() {
                           <option value="FINAL">Final</option>
                         </select>
                       </td>
-                      <td>
+                      <td data-label="Start Time">
                         <div className="eg-admin-inline-action">
                           <input
                             type="datetime-local"
@@ -352,7 +352,7 @@ export default function AdminFixtures() {
                         </div>
                         <p>{formatDateTime(fixture.start_time)}</p>
                       </td>
-                      <td>
+                      <td data-label="Venue">
                         <div className="eg-admin-inline-action">
                           <input
                             defaultValue={fixture.venue || ''}
@@ -368,10 +368,10 @@ export default function AdminFixtures() {
                           />
                         </div>
                       </td>
-                      <td>
+                      <td data-label="Score">
                         {fixture.home_total ?? '—'} - {fixture.away_total ?? '—'}
                       </td>
-                      <td>
+                      <td data-label="Danger Zone">
                         <div className="eg-admin-danger-actions">
                           <button
                             type="button"

@@ -11,6 +11,7 @@ export default function AdminAssets() {
   const [prefix, setPrefix] = useState('');
   const [submittedBucket, setSubmittedBucket] = useState('uploads');
   const [submittedPrefix, setSubmittedPrefix] = useState('');
+  const [expandedObject, setExpandedObject] = useState('');
 
   const objectsQuery = useQuery({
     queryKey: ['admin', 'assets', submittedBucket, submittedPrefix],
@@ -62,16 +63,24 @@ export default function AdminAssets() {
             <tbody>
               {(objectsQuery.data || []).map((obj) => (
                 <tr key={obj.name + obj.updated_at}>
-                  <td>{obj.name}</td>
-                  <td>{formatDateTime(obj.updated_at)}</td>
-                  <td>{formatDateTime(obj.created_at)}</td>
-                  <td>
+                  <td data-label="Name">{obj.name}</td>
+                  <td data-label="Updated">{formatDateTime(obj.updated_at)}</td>
+                  <td data-label="Created">{formatDateTime(obj.created_at)}</td>
+                  <td data-label="Metadata">
                     <button
                       type="button"
-                      onClick={() => pushToast(JSON.stringify(obj.metadata || {}, null, 2), 'info')}
+                      onClick={() => {
+                        setExpandedObject((prev) => (prev === obj.name ? '' : obj.name));
+                        if (!obj.metadata || !Object.keys(obj.metadata).length) {
+                          pushToast('No metadata stored for this object.', 'info');
+                        }
+                      }}
                     >
-                      View Metadata
+                      {expandedObject === obj.name ? 'Hide Metadata' : 'View Metadata'}
                     </button>
+                    {expandedObject === obj.name && obj.metadata ? (
+                      <pre className="eg-admin-json compact">{JSON.stringify(obj.metadata, null, 2)}</pre>
+                    ) : null}
                   </td>
                 </tr>
               ))}

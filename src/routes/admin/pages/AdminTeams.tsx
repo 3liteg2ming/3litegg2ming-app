@@ -69,11 +69,11 @@ export default function AdminTeams() {
               <tbody>
                 {currentRows.map((team) => (
                   <tr key={team.id}>
-                    <td>{team.name}</td>
-                    <td>{team.short_name || '—'}</td>
-                    <td>{team.slug || '—'}</td>
-                    <td>{team.team_key || '—'}</td>
-                    <td className="mono">{team.id}</td>
+                    <td data-label="Name">{team.name}</td>
+                    <td data-label="Short">{team.short_name || '—'}</td>
+                    <td data-label="Slug">{team.slug || '—'}</td>
+                    <td data-label="Key">{team.team_key || '—'}</td>
+                    <td data-label="ID" className="mono">{team.id}</td>
                   </tr>
                 ))}
               </tbody>

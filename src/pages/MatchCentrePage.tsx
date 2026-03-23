@@ -10,7 +10,7 @@ import MatchCentreTabs, { type MatchCentreTabKey } from '@/components/match-cent
 import { MelvinBetMatchOutlook } from '@/components/MelvinBet';
 import { useMatchCentre } from '@/hooks/useMatchCentre';
 import { useAuth } from '@/state/auth/AuthProvider';
-import { canViewFixtures, FIXTURES_UNLOCK_LABEL } from '@/lib/fixtureVisibility';
+import { FIXTURES_UNLOCK_LABEL, useFixtureVisibility } from '@/lib/fixtureVisibility';
 import type { MatchCentreModel } from '@/lib/matchCentreRepo';
 
 import '@/styles/match-centre-page.css';
@@ -57,7 +57,7 @@ export default function MatchCentrePage() {
   const { fixtureId } = useParams();
   const resolvedFixtureId = fixtureId;
   const { user } = useAuth();
-  const fixturesVisible = canViewFixtures(user?.role);
+  const fixturesVisible = useFixtureVisibility(user?.role);
 
   const [tab, setTab] = useState<MatchCentreTabKey>('summary');
 

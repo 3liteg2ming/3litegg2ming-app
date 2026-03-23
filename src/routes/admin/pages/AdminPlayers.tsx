@@ -169,11 +169,11 @@ export default function AdminPlayers() {
                 <tbody>
                   {(playersQuery.data?.rows || []).map((player) => (
                     <tr key={player.id}>
-                      <td>{player.full_name || player.name || 'Unnamed'}</td>
-                      <td>{player.display_name || '—'}</td>
-                      <td>{(player.team_id && teamById.get(player.team_id)) || '—'}</td>
-                      <td>{player.goals ?? 0}</td>
-                      <td className="mono">{player.id}</td>
+                      <td data-label="Name">{player.full_name || player.name || 'Unnamed'}</td>
+                      <td data-label="Display">{player.display_name || '—'}</td>
+                      <td data-label="Team">{(player.team_id && teamById.get(player.team_id)) || '—'}</td>
+                      <td data-label="Goals">{player.goals ?? 0}</td>
+                      <td data-label="ID" className="mono">{player.id}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -194,7 +194,7 @@ export default function AdminPlayers() {
         subtitle="Assign players with NULL team_id to the correct team"
       >
         <div className="eg-admin-toolbar">
-          <label className="eg-admin-inline-field" style={{ minWidth: 260 }}>
+          <label className="eg-admin-inline-field">
             <span>Search unassigned players</span>
             <input
               value={missingSearch}
@@ -234,10 +234,10 @@ export default function AdminPlayers() {
                   const isSaving = assignTeamMutation.isPending && assignTeamMutation.variables?.playerId === player.id;
                   return (
                     <tr key={player.id}>
-                      <td>{pickPlayerName(player)}</td>
-                      <td>{player.number ?? '—'}</td>
-                      <td>{player.team_name || 'NULL'}</td>
-                      <td>
+                      <td data-label="Player">{pickPlayerName(player)}</td>
+                      <td data-label="#">{player.number ?? '—'}</td>
+                      <td data-label="Current">{player.team_name || 'NULL'}</td>
+                      <td data-label="Assign Team">
                         <select
                           value={selected}
                           onChange={(event) => {
@@ -253,7 +253,7 @@ export default function AdminPlayers() {
                           ))}
                         </select>
                       </td>
-                      <td>
+                      <td data-label="Action">
                         <button
                           type="button"
                           className="eg-admin-btn"

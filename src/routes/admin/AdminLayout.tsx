@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, useLocation, useOutletContext } from 'react-router-dom';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getAdminToken } from './AdminGate';
 import '@/styles/admin.css';
 
@@ -43,6 +43,7 @@ export default function AdminLayout() {
   const location = useLocation();
   const [globalSearch, setGlobalSearch] = useState('');
   const [toasts, setToasts] = useState<AdminToast[]>([]);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const title = useMemo(() => {
     const match = links.find((l) => (l.end ? location.pathname === l.to : location.pathname.startsWith(l.to)));
@@ -57,9 +58,13 @@ export default function AdminLayout() {
     }, 3200);
   };
 
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname]);
+
   return (
     <div className="eg-admin-shell">
-      <aside className="eg-admin-sidebar">
+      <aside className={`eg-admin-sidebar${mobileNavOpen ? ' is-open' : ''}`}>
         <div className="eg-admin-sidebar-brand">
           <div className="eg-admin-dot" />
           <div>
@@ -68,7 +73,7 @@ export default function AdminLayout() {
           </div>
         </div>
 
-        <nav className="eg-admin-sidebar-nav" aria-label="Admin sections">
+        <nav id="eg-admin-sections" className="eg-admin-sidebar-nav" aria-label="Admin sections">
           {links.map((link) => (
             <NavLink
               key={link.to}
@@ -88,9 +93,24 @@ export default function AdminLayout() {
 
       <section className="eg-admin-main">
         <header className="eg-admin-topbar">
-          <div>
-            <h2>{title}</h2>
-            <p>Secure, audited admin operations</p>
+          <div className="eg-admin-topbar-main">
+            <div className="eg-admin-topbar-copy">
+              <span className="eg-admin-topbar-kicker">Launch Control Centre</span>
+              <div>
+                <h2>{title}</h2>
+                <p>Secure, audited admin operations</p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="eg-admin-mobile-nav-toggle"
+              onClick={() => setMobileNavOpen((prev) => !prev)}
+              aria-expanded={mobileNavOpen}
+              aria-controls="eg-admin-sections"
+            >
+              {mobileNavOpen ? 'Close Sections' : 'Open Sections'}
+            </button>
           </div>
 
           <label className="eg-admin-search-wrap">
@@ -114,6 +134,13 @@ export default function AdminLayout() {
           />
         </div>
       </section>
+
+      <button
+        type="button"
+        className={`eg-admin-sidebar-backdrop${mobileNavOpen ? ' is-visible' : ''}`}
+        aria-label="Close admin navigation"
+        onClick={() => setMobileNavOpen(false)}
+      />
 
       <div className="eg-admin-toasts" aria-live="polite" aria-atomic="true">
         {toasts.map((toast) => (

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { fetchTeamsByIds } from '@/lib/teamsRepo';
 import { requireSupabaseClient } from '@/lib/supabaseClient';
 
 const supabase = requireSupabaseClient();
@@ -10,28 +11,70 @@ export type Coach = {
   team_key?: string;
 };
 
+type CoachProfileRow = {
+  user_id?: string | null;
+  display_name?: string | null;
+  psn?: string | null;
+  team_id?: string | null;
+};
+
+function text(value: unknown): string {
+  return String(value || '').trim();
+}
+
+async function fetchCoachProfiles(table: 'eg_profiles' | 'profiles'): Promise<CoachProfileRow[]> {
+  const attempts = ['user_id, display_name, psn, team_id', 'user_id, display_name, team_id'] as const;
+  let lastError: Error | null = null;
+
+  for (const selectCols of attempts) {
+    const { data, error } = await supabase.from(table).select(selectCols).not('team_id', 'is', null);
+    if (!error) {
+      return Array.isArray(data) ? (data as CoachProfileRow[]) : [];
+    }
+
+    lastError = new Error(error.message);
+  }
+
+  if (table === 'eg_profiles') {
+    console.warn(`[useCoaches] ${table} lookup failed, falling back`, lastError);
+    return [];
+  }
+
+  throw lastError || new Error(`Failed to load ${table}`);
+}
+
 async function fetchCoaches(): Promise<Coach[]> {
-  const { data: profiles, error: profilesError } = await supabase.from('profiles').select('user_id, display_name, team_id').not('team_id', 'is', null);
-  if (profilesError) {
-    throw new Error(profilesError.message);
+  const primaryProfiles = await fetchCoachProfiles('eg_profiles');
+  const profiles = primaryProfiles.length > 0 ? primaryProfiles : await fetchCoachProfiles('profiles');
+  if (!profiles.length) return [];
+
+  const teamIds = Array.from(new Set(profiles.map((profile) => text(profile.team_id)).filter(Boolean)));
+  let teamsById = new Map<string, { teamKey?: string | null }>();
+
+  try {
+    const teams = await fetchTeamsByIds(teamIds);
+    teamsById = new Map(Array.from(teams.entries()).map(([teamId, team]) => [teamId, { teamKey: team.teamKey }]));
+  } catch (teamsError) {
+    // Keep coach rows usable even if the team lookup is temporarily unavailable.
+    console.error('[useCoaches] Failed to fetch teams for coaches', teamsError);
   }
 
-  const { data: teams, error: teamsError } = await supabase.from('teams').select('id, team_key');
-  if (teamsError) {
-    // Gracefully handle teams error, profiles will be returned without team_key
-    console.error("Failed to fetch teams for coaches", teamsError);
-    return profiles as Coach[];
+  const coaches: Coach[] = [];
+
+  for (const profile of profiles) {
+    const userId = text(profile.user_id);
+    const teamId = text(profile.team_id);
+    if (!userId || !teamId) continue;
+
+    coaches.push({
+      user_id: userId,
+      display_name: text(profile.display_name) || text(profile.psn) || 'Coach',
+      team_id: teamId,
+      team_key: teamsById.get(teamId)?.teamKey || undefined,
+    });
   }
 
-  const teamsById = new Map<string, { team_key?: string }>();
-  for (const team of teams) {
-    teamsById.set(team.id, team);
-  }
-
-  return profiles.map(p => ({
-    ...p,
-    team_key: teamsById.get(p.team_id!)?.team_key,
-  }));
+  return coaches;
 }
 
 export function useCoaches() {

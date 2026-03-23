@@ -570,28 +570,22 @@ export default function AdminFixtureDetail() {
 
   return (
     <div className="eg-admin-stack">
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-        <Link to="/admin/fixtures" style={{ color: '#bfe4ff', fontSize: '0.84rem' }}>
-          ← Fixtures
-        </Link>
-        <h3 style={{ margin: 0, flex: 1 }}>
-          R{fixture.round ?? '?'}: {homeName} vs {awayName}
-        </h3>
-        <span style={{ fontSize: '0.8rem', color: 'var(--admin-muted)' }}>
-          {fixture.status} · {formatDateTime(fixture.start_time)}
-        </span>
+      <div className="eg-admin-page-header">
+        <div className="eg-admin-page-header-main">
+          <Link to="/admin/fixtures" style={{ color: '#bfe4ff', fontSize: '0.84rem' }}>
+            ← Fixtures
+          </Link>
+          <h3>
+            R{fixture.round ?? '?'}: {homeName} vs {awayName}
+          </h3>
+          <span style={{ fontSize: '0.8rem', color: 'var(--admin-muted)' }}>
+            {fixture.status} · {formatDateTime(fixture.start_time)}
+          </span>
+        </div>
       </div>
 
       {siblings.total > 1 ? (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '6px 12px',
-          background: 'rgba(255,255,255,0.03)',
-          borderRadius: 10,
-          fontSize: '0.82rem',
-        }}>
+        <div className="eg-admin-sibling-nav">
           <button
             type="button"
             disabled={!siblings.prev}
@@ -630,19 +624,16 @@ export default function AdminFixtureDetail() {
         </div>
       ) : null}
 
-      <div className="eg-admin-toolbar">
+      <div className="eg-admin-section-tabs">
         {sections.map((s) => (
           <button
             key={s.key}
             type="button"
+            className={`eg-admin-section-tab${activeSection === s.key ? ' is-active' : ''}`}
             onClick={() => {
               setActiveSection(s.key);
               if (s.key === 'scores' && !scoreDraft) initScoreDraft();
               if (s.key === 'players' && playerDrafts.size === 0) initPlayerDrafts();
-            }}
-            style={{
-              fontWeight: activeSection === s.key ? 700 : 400,
-              borderColor: activeSection === s.key ? 'rgba(34,203,253,0.6)' : undefined,
             }}
           >
             {s.label}
@@ -651,14 +642,19 @@ export default function AdminFixtureDetail() {
       </div>
 
       {activeSection === 'scores' ? (
-        <AdminCard title="Fixture Scores" subtitle="Edit team scores and status"
+        <AdminCard
+          title="Fixture Scores"
+          subtitle="Edit team scores and status"
           actions={
             <button
               type="button"
               className="eg-admin-btn"
               disabled={scoreMutation.isPending || !scoreDraft}
               onClick={() => {
-                if (!scoreDraft) { initScoreDraft(); return; }
+                if (!scoreDraft) {
+                  initScoreDraft();
+                  return;
+                }
                 scoreMutation.mutate();
               }}
             >
@@ -666,10 +662,10 @@ export default function AdminFixtureDetail() {
             </button>
           }
         >
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            <fieldset style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: 10 }}>
-              <legend style={{ fontSize: '0.84rem', fontWeight: 700 }}>{homeName} (Home)</legend>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div className="eg-admin-score-grid">
+            <fieldset className="eg-admin-score-card">
+              <legend>{homeName} (Home)</legend>
+              <div className="eg-admin-score-fields">
                 <label className="eg-admin-stack-field">
                   <span>Goals</span>
                   <input
@@ -700,9 +696,9 @@ export default function AdminFixtureDetail() {
               </p>
             </fieldset>
 
-            <fieldset style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: 10 }}>
-              <legend style={{ fontSize: '0.84rem', fontWeight: 700 }}>{awayName} (Away)</legend>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <fieldset className="eg-admin-score-card">
+              <legend>{awayName} (Away)</legend>
+              <div className="eg-admin-score-fields">
                 <label className="eg-admin-stack-field">
                   <span>Goals</span>
                   <input
@@ -759,7 +755,7 @@ export default function AdminFixtureDetail() {
             </label>
           </div>
 
-          <div style={{ fontSize: '0.78rem', color: 'var(--admin-muted)', marginTop: 4 }}>
+          <div className="eg-admin-page-header-meta">
             <p style={{ margin: 0 }}>Fixture ID: <code className="mono">{fixture.id}</code></p>
             <p style={{ margin: '2px 0 0' }}>Venue: {fixture.venue || '—'} · Start: {formatDateTime(fixture.start_time)}</p>
             {fixture.corrected_at ? <p style={{ margin: '2px 0 0' }}>Corrected: {formatDateTime(fixture.corrected_at)}</p> : null}
@@ -812,7 +808,7 @@ export default function AdminFixtureDetail() {
                     const isUnmatched = stat._unmatched || stat.player_id.startsWith('_unmatched:') || stat.player_id.startsWith('bulk:');
                     return (
                     <tr key={stat.player_id} style={isUnmatched ? { background: 'rgba(239,68,68,0.08)', borderLeft: '3px solid rgba(239,68,68,0.5)' } : stat.dirty ? { background: 'rgba(34,203,253,0.06)' } : undefined}>
-                      <td>
+                      <td data-label="Player">
                         <strong>{stat.player_name || stat.player_id.slice(0, 8)}</strong>
                         {isUnmatched ? (
                           <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#f87171', margin: '2px 0 0' }}>UNMATCHED — will not save</p>
@@ -820,45 +816,45 @@ export default function AdminFixtureDetail() {
                           <p className="mono">{stat.player_id.slice(0, 12)}</p>
                         )}
                       </td>
-                      <td>{teamById.get(stat.team_id) || stat.team_id.slice(0, 8)}</td>
-                      <td>
+                      <td data-label="Team">{teamById.get(stat.team_id) || stat.team_id.slice(0, 8)}</td>
+                      <td data-label="D">
                         <input
-                          type="number" min={0} style={{ width: 52 }}
+                          type="number" min={0}
                           value={stat.disposals ?? ''}
                           onChange={(e) => updatePlayerDraft(stat.player_id, 'disposals', e.target.value)}
                         />
                       </td>
-                      <td>
+                      <td data-label="K">
                         <input
-                          type="number" min={0} style={{ width: 52 }}
+                          type="number" min={0}
                           value={stat.kicks ?? ''}
                           onChange={(e) => updatePlayerDraft(stat.player_id, 'kicks', e.target.value)}
                         />
                       </td>
-                      <td>
+                      <td data-label="H">
                         <input
-                          type="number" min={0} style={{ width: 52 }}
+                          type="number" min={0}
                           value={stat.handballs ?? ''}
                           onChange={(e) => updatePlayerDraft(stat.player_id, 'handballs', e.target.value)}
                         />
                       </td>
-                      <td>
+                      <td data-label="M">
                         <input
-                          type="number" min={0} style={{ width: 52 }}
+                          type="number" min={0}
                           value={stat.marks ?? ''}
                           onChange={(e) => updatePlayerDraft(stat.player_id, 'marks', e.target.value)}
                         />
                       </td>
-                      <td>
+                      <td data-label="T">
                         <input
-                          type="number" min={0} style={{ width: 52 }}
+                          type="number" min={0}
                           value={stat.tackles ?? ''}
                           onChange={(e) => updatePlayerDraft(stat.player_id, 'tackles', e.target.value)}
                         />
                       </td>
-                      <td>
+                      <td data-label="CLR">
                         <input
-                          type="number" min={0} style={{ width: 52 }}
+                          type="number" min={0}
                           value={stat.clearances ?? ''}
                           onChange={(e) => updatePlayerDraft(stat.player_id, 'clearances', e.target.value)}
                         />
@@ -871,7 +867,7 @@ export default function AdminFixtureDetail() {
             </div>
           ) : null}
 
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10, marginTop: 6 }}>
+          <div className="eg-admin-section-block">
             <p style={{ margin: '0 0 6px', fontSize: '0.82rem', fontWeight: 700 }}>Add Player</p>
             <div className="eg-admin-toolbar">
               <label className="eg-admin-inline-field">
@@ -899,7 +895,7 @@ export default function AdminFixtureDetail() {
             </div>
           </div>
 
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10, marginTop: 6 }}>
+          <div className="eg-admin-section-block">
             <p style={{ margin: '0 0 6px', fontSize: '0.82rem', fontWeight: 700 }}>Paste OCR / JSON Stats (by player_id)</p>
             <label className="eg-admin-stack-field">
               <span>JSON array of player stat objects</span>
@@ -915,14 +911,7 @@ export default function AdminFixtureDetail() {
             </button>
           </div>
 
-          <div style={{
-            borderTop: '2px solid rgba(34,203,253,0.2)',
-            paddingTop: 14,
-            marginTop: 12,
-            background: 'rgba(34,203,253,0.02)',
-            borderRadius: 10,
-            padding: 14,
-          }}>
+          <div className="eg-admin-highlight-block">
             <p style={{ margin: '0 0 4px', fontSize: '0.88rem', fontWeight: 800, color: '#7dd3fc' }}>
               Paste Player Stats JSON
             </p>
@@ -943,7 +932,7 @@ export default function AdminFixtureDetail() {
             {bulkError ? (
               <p className="eg-admin-error" style={{ marginTop: 6 }}>{bulkError}</p>
             ) : null}
-            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <div className="eg-admin-action-row" style={{ marginTop: 8 }}>
               <button
                 type="button"
                 className="eg-admin-btn"
@@ -966,7 +955,7 @@ export default function AdminFixtureDetail() {
 
             {bulkPreview ? (
               <div style={{ marginTop: 10 }}>
-                <p style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 6 }}>
+                <p className="eg-admin-preview-summary">
                   Preview: {bulkPreview.filter((r) => r.matched).length} matched, {bulkPreview.filter((r) => !r.matched).length} unmatched of {bulkPreview.length} total
                 </p>
                 <div className="eg-admin-table-wrap" style={{ maxHeight: 320, overflow: 'auto' }}>
@@ -993,22 +982,21 @@ export default function AdminFixtureDetail() {
                               : 'rgba(239,68,68,0.08)',
                           }}
                         >
-                          <td><strong>{row.playerName}</strong></td>
-                          <td>{row.teamLabel}</td>
-                          <td>{row.disposals}</td>
-                          <td>{row.kicks}</td>
-                          <td>{row.handballs}</td>
-                          <td>{row.marks}</td>
-                          <td>{row.fantasyPoints}</td>
-                          <td>
-                            <span style={{
-                              fontSize: '0.72rem',
-                              fontWeight: 700,
-                              padding: '2px 6px',
-                              borderRadius: 6,
-                              background: row.matched ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
-                              color: row.matched ? '#4ade80' : '#f87171',
-                            }}>
+                          <td data-label="Player"><strong>{row.playerName}</strong></td>
+                          <td data-label="Team">{row.teamLabel}</td>
+                          <td data-label="D">{row.disposals}</td>
+                          <td data-label="K">{row.kicks}</td>
+                          <td data-label="H">{row.handballs}</td>
+                          <td data-label="M">{row.marks}</td>
+                          <td data-label="FP">{row.fantasyPoints}</td>
+                          <td data-label="Status">
+                            <span
+                              className="eg-admin-status-chip"
+                              style={{
+                                background: row.matched ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+                                color: row.matched ? '#4ade80' : '#f87171',
+                              }}
+                            >
                               {row.matched ? 'Matched' : 'No team'}
                             </span>
                           </td>
@@ -1168,13 +1156,7 @@ export default function AdminFixtureDetail() {
                       const unique = [...new Set(allUrls)];
                       if (!unique.length) return null;
                       return (
-                        <div style={{
-                          marginTop: 8,
-                          padding: '10px 12px',
-                          borderRadius: 10,
-                          border: '1px solid rgba(34,203,253,0.25)',
-                          background: 'rgba(34,203,253,0.04)',
-                        }}>
+                        <div className="eg-admin-highlight-block" style={{ marginTop: 8 }}>
                           <p style={{
                             margin: '0 0 8px',
                             fontSize: '0.84rem',
@@ -1183,7 +1165,7 @@ export default function AdminFixtureDetail() {
                           }}>
                             Screenshots ({unique.length})
                           </p>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
+                          <div className="eg-admin-media-grid">
                             {unique.map((url, i) => {
                               const screenshotMeta = screenshots[i] as any;
                               const imageType = screenshotMeta?.imageType || '';
@@ -1195,27 +1177,9 @@ export default function AdminFixtureDetail() {
                                     ? 'Match Summary'
                                     : `Screenshot ${i + 1}`;
                               return (
-                                <a key={i} href={url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                                  <img
-                                    src={url}
-                                    alt={label}
-                                    style={{
-                                      width: '100%',
-                                      maxHeight: 200,
-                                      borderRadius: 8,
-                                      border: '1px solid rgba(255,255,255,0.12)',
-                                      objectFit: 'cover',
-                                      display: 'block',
-                                    }}
-                                  />
-                                  <p style={{
-                                    margin: '4px 0 0',
-                                    fontSize: '0.76rem',
-                                    color: 'var(--admin-muted)',
-                                    textAlign: 'center',
-                                  }}>
-                                    {label}
-                                  </p>
+                                <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="eg-admin-media-card">
+                                  <img src={url} alt={label} />
+                                  <p>{label}</p>
                                 </a>
                               );
                             })}

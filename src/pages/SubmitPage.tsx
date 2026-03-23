@@ -28,7 +28,7 @@ import { clearStatLeadersCache } from '../lib/stats-leaders-cache';
 import { resolveTeamLogoUrl } from '@/lib/entityResolvers';
 import { GoalKickerPicker } from '../components/submit/GoalKickerPicker';
 import { fetchAflPlayers, type AflPlayer } from '../data/aflPlayers';
-import { canViewFixtures, FIXTURES_UNLOCK_LABEL } from '../lib/fixtureVisibility';
+import { FIXTURES_UNLOCK_LABEL, useFixtureVisibility } from '../lib/fixtureVisibility';
 import '../styles/submitPage.css';
 
 const supabase = requireSupabaseClient();
@@ -405,12 +405,15 @@ export default function SubmitPage() {
   const [conflict, setConflict] = useState<SubmitConflict | null>(null);
   const [draftSavedAt, setDraftSavedAt] = useState<number | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
+  const fixturesVisible = useFixtureVisibility(myRole);
 
   const fixture = payload?.fixture || null;
   const homeTeam = payload?.homeTeam || null;
   const awayTeam = payload?.awayTeam || null;
   const homeDisplayName = useMemo(() => deriveShortName(homeTeam?.name || '', homeTeam?.shortName), [homeTeam?.name, homeTeam?.shortName]);
   const awayDisplayName = useMemo(() => deriveShortName(awayTeam?.name || '', awayTeam?.shortName), [awayTeam?.name, awayTeam?.shortName]);
+  const homeStatsGuideLabel = homeTeam?.name || homeDisplayName || 'home team';
+  const awayStatsGuideLabel = awayTeam?.name || awayDisplayName || 'opposition';
   const homeGoalsN = safeNum(homeGoals);
   const homeBehindsN = safeNum(homeBehinds);
   const awayGoalsN = safeNum(awayGoals);
@@ -1065,7 +1068,7 @@ export default function SubmitPage() {
     </div>
   );
 
-  if (!canViewFixtures(myRole)) {
+  if (!fixturesVisible) {
     return (
       <div className="egSubmitPage">
         <main className="egSubmitPage__main">
@@ -1417,12 +1420,34 @@ export default function SubmitPage() {
 
                       <div className="mdcScreenshotGroup">
                         <div className="mdcScreenshotGroup__title">Player Stats Pack</div>
-                        <p className="mdcCard__hint">Upload all player stats for all players in one pack. Include behinds, disposals, kicks, handballs, marks, and fantasy points. Coaches do not need to sort them by category.</p>
+                        <p className="mdcCard__hint">Upload the player stats screenshots required for OCR. All player stats are required, and goal kickers stay separate in Step 5.</p>
+                        <div className="mdcUploadGuide" role="note" aria-label="Required player stats photos for OCR">
+                          <div className="mdcUploadGuide__eyebrow">Required photos for OCR</div>
+                          <div className="mdcUploadGuide__list">
+                            <div className="mdcUploadGuide__item is-photo">
+                              <Camera size={15} />
+                              <span>Full {homeStatsGuideLabel} player stats screen</span>
+                            </div>
+                            <div className="mdcUploadGuide__item is-photo">
+                              <Camera size={15} />
+                              <span>Full {awayStatsGuideLabel} player stats screen</span>
+                            </div>
+                            <div className="mdcUploadGuide__item is-detail">
+                              <CheckCircle2 size={15} />
+                              <span>Make sure all players are visible</span>
+                            </div>
+                            <div className="mdcUploadGuide__item is-detail">
+                              <CheckCircle2 size={15} />
+                              <span>Stats must include disposals, kicks, handballs, marks, behinds, and fantasy points</span>
+                            </div>
+                          </div>
+                          <div className="mdcUploadGuide__note">Upload everything together in this step. Goal kickers are already handled separately above.</div>
+                        </div>
                         <div className={`mdcBulkUpload ${playerScreenshotsValid ? 'is-valid' : ''}`}>
                           <div className="mdcBulkUpload__top">
                             <div>
-                              <div className="mdcBulkUpload__title">Player Stats Screenshots</div>
-                              <div className="mdcBulkUpload__sub">{playerScreenshotCount} uploaded • include all player stats for all players</div>
+                              <div className="mdcBulkUpload__title">Upload Player Stats Screenshots</div>
+                              <div className="mdcBulkUpload__sub">{playerScreenshotCount} uploaded • both teams • all players • all required stats</div>
                             </div>
                             <button type="button" className="mdcBtn mdcBulkUpload__button" onClick={triggerPlayerUpload}>
                               <Upload size={16} /> Add screenshots
