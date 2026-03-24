@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 
 import { fetchSeasonFixturesBySeasonId } from '../lib/fixturesRepo';
+import { isRoundVisible } from '../lib/visibleRounds';
 import '../styles/admin-console.css';
 
 type AdminTab = 'overview' | 'fixtures' | 'users' | 'registrations' | 'diagnostics';
@@ -392,7 +393,8 @@ export default function AdminConsolePage() {
     const values = fixtures
       .map((f) => (competitionKey === 'preseason' ? f.week_index : f.round))
       .filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
-    return Array.from(new Set(values)).sort((a, b) => a - b);
+    const unique = Array.from(new Set(values)).sort((a, b) => a - b);
+    return unique.filter((r) => isRoundVisible(r));
   }, [competitionKey, fixtures]);
 
   const filteredFixtures = useMemo(() => {

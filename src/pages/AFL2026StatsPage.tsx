@@ -929,7 +929,7 @@ const LeaderCard: React.FC<LeaderCardProps> = ({
         <div className="eg-leader-stat-chip">{cfg.label}</div>
 
         <div className="eg-leader-value">
-          <span className="big-num">{leaderValue}</span>
+          <span className="big-num">{leaderValue}{cfg.key === 'goalEfficiency' ? '%' : ''}</span>
           {scope === 'average' && <span className="per-game">per game</span>}
         </div>
 
@@ -1026,7 +1026,7 @@ const LeaderCard: React.FC<LeaderCardProps> = ({
                 <span className="eg-runner-name">{name}</span>
                 {runnerTeam && <span className="eg-runner-team">{runnerTeam}</span>}
               </div>
-              <span className="eg-runner-val">{val}</span>
+              <span className="eg-runner-val">{val}{cfg.key === 'goalEfficiency' ? '%' : ''}</span>
             </div>
           );
         })}

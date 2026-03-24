@@ -111,6 +111,14 @@ const LadderRow = memo(function LadderRow({ entry, mode }: { entry: LadderEntry;
   };
   const logo = assetUrl(t.logoFile ?? '');
 
+  // Display name mapping for certain teams
+  const getDisplayName = (teamKey: TeamKey, fullName: string): string => {
+    if (teamKey === 'northmelbourne') return 'North';
+    if (teamKey === 'westernbulldogs') return 'Bulldogs';
+    return fullName;
+  };
+  const displayName = getDisplayName(entry.teamKey, entry.teamName);
+
   const cssVars = useMemo(() => {
     const team = t.primary || '#F5C400';
     return {
@@ -137,7 +145,7 @@ const LadderRow = memo(function LadderRow({ entry, mode }: { entry: LadderEntry;
           <SmartImg className="ladRow__logoImg" src={logo} alt={entry.teamName} />
         </div>
         <div className="ladRow__name" title={entry.teamName}>
-          {entry.teamName}
+          {displayName}
           {entry.coachName && <div className="ladRow__coachName">Coach: {entry.coachName}</div>}
         </div>
       </div>

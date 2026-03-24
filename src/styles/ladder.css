@@ -231,7 +231,7 @@
 
 /* ─── TEAM ────────────────────────────────────────────── */
 .ladRow__team {
-  flex: 1 1 0;
+  flex: 0 1 140px;
   min-width: 0;
   display: flex;
   align-items: center;
@@ -277,8 +277,8 @@
 
 /* ─── PREMIERSHIP ODDS ────────────────────────────────── */
 .ladRow__prem {
-  flex: 0 0 auto;
-  margin-left: 8px;
+  flex: 0 0 48px;
+  margin-left: auto;
 }
 
 .ladRow__premOdds {
@@ -300,25 +300,29 @@
 
 /* ─── STATS ───────────────────────────────────────────── */
 .ladRow__stats {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   display: flex;
   align-items: center;
+  justify-content: space-around;
   gap: 10px;
-  padding-right: 2px;
+  padding: 0 8px;
+  min-width: 0;
+  max-width: 220px;
 }
 
 .st {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
   white-space: nowrap;
+  flex: 1 1 0;
 }
 
 /* Extended mode — tighter layout */
 .ladRow__ext {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  display: contents;
 }
 
 .ladRow__ext .st__v {
@@ -359,7 +363,10 @@
 .ladRow__formDots {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
+  flex: 1 1 0;
+  min-width: 84px;
 }
 
 .ladDot {
@@ -457,6 +464,7 @@
   .ladRow__team {
     gap: 8px;
     padding: 0 6px 0 2px;
+    flex: 0 1 130px;
   }
 
   .ladRow__logo {
@@ -476,7 +484,8 @@
   }
 
   .ladRow__stats {
-    gap: 7px;
+    gap: 8px;
+    max-width: 200px;
   }
 
   .st__v {
@@ -493,10 +502,6 @@
     flex-basis: 12px;
   }
 
-  .ladRow__ext {
-    gap: 4px;
-  }
-
   .ladRow__ext .st__v {
     font-size: 11px;
   }
@@ -507,6 +512,7 @@
 
   .ladRow__formDots {
     gap: 4px;
+    min-width: 72px;
   }
 }
 
@@ -514,6 +520,10 @@
   .ladRow__rank {
     flex-basis: 24px;
     font-size: 14px;
+  }
+
+  .ladRow__team {
+    flex: 0 1 120px;
   }
 
   .ladRow__logo {
@@ -540,7 +550,7 @@
   }
 
   .ladRow__stats {
-    gap: 5px;
+    gap: 6px;
   }
 
   .ladDot {
@@ -551,5 +561,6 @@
 
   .ladRow__formDots {
     gap: 3px;
+    min-width: 60px;
   }
 }

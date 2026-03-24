@@ -10,6 +10,7 @@ import {
   swapFixtureTeams,
   updateFixture,
 } from '@/lib/adminApi';
+import { isRoundVisible } from '@/lib/visibleRounds';
 import { useAdminLayoutContext } from '../AdminLayout';
 import { formatDateTime, useDebouncedValue } from '../useAdminTools';
 import { AdminCard, EmptyState } from './AdminUi';
@@ -106,7 +107,8 @@ export default function AdminFixtures() {
       if (!map.has(r)) map.set(r, []);
       map.get(r)!.push(f);
     }
-    return Array.from(map.entries()).sort((a, b) => a[0] - b[0]);
+    const entries = Array.from(map.entries()).sort((a, b) => a[0] - b[0]);
+    return entries.filter(([round]) => isRoundVisible(round));
   }, [allFixtures]);
 
   const hasActiveFilters = seasonId !== 'all' || teamId !== 'all' || status !== 'all' || roundInput !== '' || searchInput !== '';

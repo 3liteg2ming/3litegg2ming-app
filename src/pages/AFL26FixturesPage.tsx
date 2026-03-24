@@ -21,6 +21,7 @@ import { deriveFixtureRound, normalizeFixtureStatus, type FixtureRow } from '../
 import { fetchMatchCentre } from '../lib/matchCentreRepo';
 import { fetchCurrentCoaches, type HomeCoach } from '../lib/homeRepo';
 import { FIXTURES_UNLOCK_LABEL, useFixtureVisibility } from '../lib/fixtureVisibility';
+import { isRoundVisible } from '../lib/visibleRounds';
 import { useMelvinOdds } from '../hooks/useMelvinOdds';
 import { useAuth } from '../state/auth/AuthProvider';
 import '../styles/Fixtures.css';
@@ -334,7 +335,10 @@ export default function AFL26FixturesPage() {
     setVisibleCount(INITIAL_RENDER_COUNT);
   }, [competitionKey]);
 
-  const regularStageGroups = useMemo(() => buildRegularStageGroups(allFixtures), [allFixtures]);
+  const regularStageGroups = useMemo(() => {
+    const allGroups = buildRegularStageGroups(allFixtures);
+    return allGroups.filter((stage) => isRoundVisible(stage.index));
+  }, [allFixtures]);
 
   useEffect(() => {
     if (!fixturesPubliclyVisible) return;

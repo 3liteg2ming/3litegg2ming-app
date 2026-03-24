@@ -264,6 +264,10 @@ function hasMeaningfulValue(row: { totals: Record<StatKey, number>; avgs: Record
   return row.totals[statKey] > 0 || row.avgs[statKey] > 0;
 }
 
+function roundToNearestHalf(value: number): number {
+  return Math.round(value * 2) / 2;
+}
+
 function baselinePlayerRow(player: AflPlayer): PlayerMetricRow {
   const teamName = text(player.teamName) || 'Unassigned';
   const teamKey = text(player.teamKey) || text(resolveTeamKey({ name: teamName })) || 'unknown';
@@ -727,7 +731,7 @@ async function fetchLivePlayerMetrics(): Promise<PlayerMetricRow[]> {
         ) || 1,
       );
 
-      row.totals.goalEfficiency = row.totals.disposals > 0 ? (row.totals.goals / row.totals.disposals) * 100 : 0;
+      row.totals.goalEfficiency = row.totals.disposals > 0 ? roundToNearestHalf((row.totals.goals / row.totals.disposals) * 100) : 0;
       row.avgs.goals = row.totals.goals / matches;
       row.avgs.disposals = row.totals.disposals / matches;
       row.avgs.kicks = row.totals.kicks / matches;
@@ -864,7 +868,7 @@ async function buildTeams(statKey: StatKey): Promise<TeamMetricRow[]> {
     const totalGoals = Math.max(target.totals.goals, agg.goals);
     const totalBehinds = agg.behinds;
     if (totalGoals + totalBehinds > 0) {
-      target.totals.goalEfficiency = (totalGoals / (totalGoals + totalBehinds)) * 100;
+      target.totals.goalEfficiency = roundToNearestHalf((totalGoals / (totalGoals + totalBehinds)) * 100);
       target.avgs.goalEfficiency = target.totals.goalEfficiency;
     }
   }
@@ -873,7 +877,7 @@ async function buildTeams(statKey: StatKey): Promise<TeamMetricRow[]> {
     .map((row) => {
       // Only compute goal efficiency if not already set from fixture data
       if (row.totals.goalEfficiency === 0 && row.totals.goals > 0) {
-        row.totals.goalEfficiency = row.totals.disposals > 0 ? (row.totals.goals / row.totals.disposals) * 100 : 0;
+        row.totals.goalEfficiency = row.totals.disposals > 0 ? roundToNearestHalf((row.totals.goals / row.totals.disposals) * 100) : 0;
         row.avgs.goalEfficiency = row.totals.goalEfficiency;
       }
       return row;

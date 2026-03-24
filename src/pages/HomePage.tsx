@@ -515,8 +515,8 @@ function LeadersPreview() {
                     {top.photoUrl ? <img src={top.photoUrl} alt={top.name} /> : <User size={14} />}
                   </div>
                   <div className="home-leader-meta">
-                    <p>{top.name}</p>
-                    <span>{top.teamName || 'Season Leader'}</span>
+                    <p>{isTeamTab ? (TEAM_SHORT_NAMES[top.name] || top.name) : top.name.split(' ')[0]}</p>
+                    <span>{isTeamTab ? 'Team Leader' : (top.teamName || 'Season Leader')}</span>
                   </div>
                   <span className="home-leader-badge">#1</span>
                 </div>

@@ -279,7 +279,7 @@ const StatLeadersPage: React.FC = () => {
                 <div className="eg-list-name">{name}</div>
                 {teamName && <div className="eg-list-team">{teamName}</div>}
               </div>
-              <span className="eg-list-value">{val}</span>
+              <span className="eg-list-value">{val}{stat === 'goalEfficiency' ? '%' : ''}</span>
             </div>
           );
         })}
