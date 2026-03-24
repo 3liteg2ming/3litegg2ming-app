@@ -2,10 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
-  CalendarDays,
   ChevronRight,
-  Columns3,
-  Crown,
   User,
   ShieldCheck,
 } from 'lucide-react';
@@ -22,6 +19,7 @@ import { MelvinBetHomeCard, type MelvinHomeFixture } from '../components/MelvinB
 import '../styles/home.css';
 
 type StatLeaderCategory = import('../lib/stats-leaders-cache').StatLeaderCategory;
+type HomeNewsItem = import('../lib/homeRepo').HomeNewsItem;
 type HomeCoach = import('../lib/homeRepo').HomeCoach;
 
 const AFL26_LOGO_URL =
@@ -118,6 +116,29 @@ function useHomepageStats() {
   return { playerLeaders, teamLeaders, isLoading };
 }
 
+function useHomepageNews() {
+  const [items, setItems] = useState<HomeNewsItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const repo = await import('../lib/homeRepo');
+        const result = await repo.fetchHomepageNews(2);
+        if (mounted) setItems(result);
+      } catch (err) {
+        console.warn('Failed to fetch homepage news:', err);
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  return { items, isLoading };
+}
+
 function useHomeCoaches() {
   const [data, setData] = useState<HomeCoach[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -151,11 +172,6 @@ function HeroMasterCard() {
   const { user } = useAuth();
   const eliteLogo = assetUrl('elite-gaming-logo.png');
 
-  const primaryHref = user ? '/members' : '/auth/sign-in';
-  const secondaryHref = user ? '/ladder' : '/fixtures';
-  const primaryLabel = user ? 'My Club Hub' : 'Sign In';
-  const secondaryLabel = user ? 'View Ladder' : 'View Fixtures';
-
   return (
     <section className="home-hero-wrap">
       <div className="home-hero-card">
@@ -167,12 +183,10 @@ function HeroMasterCard() {
         <div className="home-hero-atmos" aria-hidden="true" />
 
         <div className="home-hero-content">
-          <div className="home-hero-pillRow">
-            <span className="home-hero-pill">
-              <span className="home-hero-pillDot" />
-              Season Live
-            </span>
-          </div>
+          <span className="home-hero-pill">
+            <span className="home-hero-pillDot" />
+            Season Live
+          </span>
 
           <div className="home-hero-lockup">
             <div className="home-hero-lockup__glow" aria-hidden="true" />
@@ -212,20 +226,54 @@ function HeroMasterCard() {
                 : 'Official hub for coaches and players.'}
             </p>
           </div>
-
-          <div className="home-hero-actions">
-            <Link to={primaryHref} className="home-hero-btn home-hero-btn--primary">
-              <span className="home-hero-btn__icon">
-                {user ? <Crown size={14} /> : <User size={14} />}
-              </span>
-              <span>{primaryLabel}</span>
-            </Link>
-            <Link to={secondaryHref} className="home-hero-btn home-hero-btn--secondary">
-              {user ? <Columns3 size={13} /> : <CalendarDays size={13} />}
-              <span>{secondaryLabel}</span>
-            </Link>
-          </div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+function EgNewsSection() {
+  const { items, isLoading } = useHomepageNews();
+
+  if (isLoading) return null;
+  if (!items.length) return null;
+
+  return (
+    <section className="home-module home-module--news">
+      <header className="home-module__header">
+        <h2>EG News</h2>
+        <span className="home-news-badge">Latest</span>
+      </header>
+      <div className="home-news-grid">
+        {items.map((item) => (
+          <article key={item.id} className="home-news-card">
+            <div className="home-news-card__img">
+              <img
+                src={item.image_url}
+                alt={item.title}
+                loading="lazy"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              />
+            </div>
+            <div className="home-news-card__body">
+              {item.category && (
+                <span className="home-news-card__cat">{item.category}</span>
+              )}
+              <h3 className="home-news-card__title">{item.title}</h3>
+              {item.caption && (
+                <p className="home-news-card__caption">{item.caption}</p>
+              )}
+              {item.published_at && (
+                <span className="home-news-card__date">
+                  {new Date(item.published_at).toLocaleDateString('en-AU', {
+                    day: 'numeric',
+                    month: 'short',
+                  })}
+                </span>
+              )}
+            </div>
+          </article>
+        ))}
       </div>
     </section>
   );
@@ -535,72 +583,6 @@ function LeadersPreview() {
   );
 }
 
-function CoachesSection() {
-  const { data: coaches, isLoading } = useHomeCoaches();
-
-  if (isLoading) {
-    return (
-      <section className="home-module home-module--coaches">
-        <header className="home-module__header">
-          <h2>Season Coaches</h2>
-        </header>
-        <div className="home-coaches-grid">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="home-coach-skeleton" style={{ height: 64, borderRadius: 14 }} />
-          ))}
-        </div>
-      </section>
-    );
-  }
-
-  if (!coaches.length) {
-    return (
-      <section className="home-module home-module--coaches">
-        <header className="home-module__header">
-          <h2>Season Coaches</h2>
-        </header>
-        <div className="home-empty">Coaches will appear once teams are assigned.</div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="home-module home-module--coaches">
-      <header className="home-module__header">
-        <h2>Season Coaches</h2>
-        <Link to="/ladder">
-          Full Ladder<ChevronRight size={13} />
-        </Link>
-      </header>
-      <div className="home-coaches-grid">
-        {coaches.map((coach) => {
-          const logo = teamLogoFallbackUrl(undefined, coach.team_name || undefined, coach.team_logo_url);
-          return (
-            <div key={coach.user_id} className="home-coach-card">
-              <div className="home-coach-card__logo">
-                {logo ? (
-                  <img
-                    src={logo}
-                    alt={coach.team_name || ''}
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                  />
-                ) : (
-                  <User size={16} />
-                )}
-              </div>
-              <div className="home-coach-card__info">
-                <span className="home-coach-card__name">{(coach.display_name || '').split(' ')[0]}</span>
-                <span className="home-coach-card__team">{(coach.team_name && TEAM_SHORT_NAMES[coach.team_name]) || coach.team_name || 'Unassigned'}</span>
-                {coach.psn && <span className="home-coach-card__psn">{coach.psn}</span>}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
 function LadderSnapshot() {
   const { data, isLoading } = useLadder('afl26-season-two');
   const ladder = useMemo(() => (Array.isArray(data) ? data.slice(0, 8) : []), [data]);
@@ -697,11 +679,10 @@ export default function HomePage() {
     <div className="home-page">
       <main className="home-main">
         <HeroMasterCard />
+        <EgNewsSection />
         {fixturesVisible ? <FeaturedMatchCard /> : <LaunchPromoCard />}
-
-        <LeadersPreview />
-        <CoachesSection />
         <LadderSnapshot />
+        <LeadersPreview />
       </main>
     </div>
   );

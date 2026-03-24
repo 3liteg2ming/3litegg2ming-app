@@ -14,6 +14,12 @@ import { getStoredCompetitionKey } from '@/lib/competitionRegistry';
 import { fetchActiveCompetitionBaseline } from '@/lib/seasonParticipantsRepo';
 import { assetUrl, getTeamAssets } from '@/lib/teamAssets';
 import type { StatLeaderCategory } from '@/lib/stats-leaders-cache';
+import {
+  loadComparePlayers,
+  loadCompareTeams,
+  type ComparePlayerRow,
+  type CompareTeamRow,
+} from '@/lib/compareData';
 import '@/styles/stats-home.css';
 
 /* ── helpers ── */
@@ -30,7 +36,7 @@ type StatsPlayerRow = {
   name: string;
   teamName: string;
   teamLogo?: string;
-  teamPrimaryColor: string;
+  teamColour: string;
   teamSecondaryColor: string;
   position: string;
   number: string;
@@ -148,7 +154,7 @@ async function buildStatsPlayersFromDb(): Promise<StatsPlayerRow[]> {
       name: String(player.name || '').trim() || 'Player',
       teamName,
       teamLogo: resolveLogoUrl(matchedTeam?.logoUrl || asset.logo || '') || undefined,
-      teamPrimaryColor: asset.primary,
+      teamColour: asset.primary,
       teamSecondaryColor: asset.dark,
       position: String(player.position || '').trim(),
       number: parsePlayerNumber(player.number),
@@ -206,10 +212,35 @@ const StatsHomePage: React.FC = () => {
   const [teamPickerSlot, setTeamPickerSlot] = useState<CompareSlot | null>(null);
   const [playerPickerSearch, setPlayerPickerSearch] = useState<string>('');
   const [teamPickerSearch, setTeamPickerSearch] = useState<string>('');
+  const [cmpPlayers, setCmpPlayers] = useState<ComparePlayerRow[]>([]);
+  const [cmpPlayersLoading, setCmpPlayersLoading] = useState<boolean>(true);
+  const [cmpTeams, setCmpTeams] = useState<CompareTeamRow[]>([]);
+  const [cmpTeamsLoading, setCmpTeamsLoading] = useState<boolean>(true);
   const navigate = useNavigate();
   const competitionLabel = getStoredCompetitionKey() === 'preseason' ? 'Knockout Preseason' : 'AFL 26 Season Two';
 
   const statConfigs = mode === 'players' ? PLAYER_STAT_CONFIGS : TEAM_STAT_CONFIGS;
+
+  /* Load season-backed compare data from shared loaders */
+  useEffect(() => {
+    let cancelled = false;
+    setCmpPlayersLoading(true);
+    loadComparePlayers()
+      .then((rows) => { if (!cancelled) setCmpPlayers(rows); })
+      .catch(() => { if (!cancelled) setCmpPlayers([]); })
+      .finally(() => { if (!cancelled) setCmpPlayersLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setCmpTeamsLoading(true);
+    loadCompareTeams()
+      .then((rows) => { if (!cancelled) setCmpTeams(rows); })
+      .catch(() => { if (!cancelled) setCmpTeams([]); })
+      .finally(() => { if (!cancelled) setCmpTeamsLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -289,13 +320,13 @@ const StatsHomePage: React.FC = () => {
   }, [mode]);
 
   const comparePlayers = useMemo(
-    () => playerCompareIds.map((id) => players.find((row) => row.id === id) || null) as [StatsPlayerRow | null, StatsPlayerRow | null],
-    [playerCompareIds, players],
+    () => playerCompareIds.map((id) => cmpPlayers.find((row) => row.id === id) || null) as [ComparePlayerRow | null, ComparePlayerRow | null],
+    [playerCompareIds, cmpPlayers],
   );
 
   const compareTeams = useMemo(
-    () => teamCompareIds.map((id) => teams.find((row) => row.id === id) || null) as [StatsTeamRow | null, StatsTeamRow | null],
-    [teamCompareIds, teams],
+    () => teamCompareIds.map((id) => cmpTeams.find((row) => row.key === id) || null) as [CompareTeamRow | null, CompareTeamRow | null],
+    [teamCompareIds, cmpTeams],
   );
 
   const playerCompareReady = Boolean(comparePlayers[0] && comparePlayers[1]);
@@ -305,8 +336,8 @@ const StatsHomePage: React.FC = () => {
 
   const filteredPlayers = useMemo(() => {
     const source = !playerPickerSearch.trim()
-      ? players
-      : players.filter((p) => {
+      ? cmpPlayers
+      : cmpPlayers.filter((p) => {
           const search = playerPickerSearch.toLowerCase();
           return (
             p.name.toLowerCase().includes(search) ||
@@ -321,23 +352,23 @@ const StatsHomePage: React.FC = () => {
       if (aSelected !== bSelected) return aSelected ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
-  }, [players, playerPickerSearch, playerCompareIds]);
+  }, [cmpPlayers, playerPickerSearch, playerCompareIds]);
 
   const filteredTeams = useMemo(() => {
     const source = !teamPickerSearch.trim()
-      ? teams
-      : teams.filter((t) => {
+      ? cmpTeams
+      : cmpTeams.filter((t) => {
           const search = teamPickerSearch.toLowerCase();
           return t.name.toLowerCase().includes(search) || t.shortName.toLowerCase().includes(search);
         });
 
     return source.slice().sort((a, b) => {
-      const aSelected = teamCompareIds.includes(a.id);
-      const bSelected = teamCompareIds.includes(b.id);
+      const aSelected = teamCompareIds.includes(a.key);
+      const bSelected = teamCompareIds.includes(b.key);
       if (aSelected !== bSelected) return aSelected ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
-  }, [teams, teamPickerSearch, teamCompareIds]);
+  }, [cmpTeams, teamPickerSearch, teamCompareIds]);
 
   const closePlayerPicker = () => {
     setPlayerPickerSlot(null);
@@ -532,7 +563,7 @@ const StatsHomePage: React.FC = () => {
           <button
             type="button"
             className="egCompare__h2hLink"
-            onClick={() => navigate('/stats3/compare')}
+            onClick={() => navigate(`/stats3/compare?mode=${mode}`)}
           >
             Match Records →
           </button>
@@ -543,7 +574,7 @@ const StatsHomePage: React.FC = () => {
           <div className="egCompare__hero">
             {/* Ambient glow behind the card */}
             <div className="egCompare__heroGlow" style={{
-              background: `radial-gradient(ellipse at 25% 30%, ${comparePlayers[0]?.teamPrimaryColor || '#283443'}44 0%, transparent 55%), radial-gradient(ellipse at 75% 30%, ${comparePlayers[1]?.teamPrimaryColor || '#283443'}44 0%, transparent 55%)`
+              background: `radial-gradient(ellipse at 25% 30%, ${comparePlayers[0]?.teamColour || '#283443'}44 0%, transparent 55%), radial-gradient(ellipse at 75% 30%, ${comparePlayers[1]?.teamColour || '#283443'}44 0%, transparent 55%)`
             }} />
 
             {/* Versus banner */}
@@ -557,7 +588,7 @@ const StatsHomePage: React.FC = () => {
             <div className="egCompare__fighters">
               {(['left', 'right'] as const).map((slot, index) => {
                 const player = comparePlayers[index];
-                const tint = player?.teamPrimaryColor || '#283443';
+                const tint = player?.teamColour || '#283443';
                 return (
                   <button
                     key={slot}
@@ -634,14 +665,14 @@ const StatsHomePage: React.FC = () => {
             </div>
 
             <div className="egCompare__rosterMeta">
-              {playersLoading ? 'Loading roster…' : playersError ? 'Unable to load players right now.' : `${players.length} players available`}
+              {cmpPlayersLoading ? 'Loading roster…' : `${cmpPlayers.length} players available`}
             </div>
           </div>
         ) : (
           <div className="egCompare__hero egCompare__hero--teams">
             {/* Ambient glow for teams */}
             <div className="egCompare__heroGlow" style={{
-              background: `radial-gradient(ellipse at 20% 25%, ${resolveTeamColors(compareTeams[0]?.name || '').primary}55 0%, transparent 50%), radial-gradient(ellipse at 80% 25%, ${resolveTeamColors(compareTeams[1]?.name || '').primary}55 0%, transparent 50%)`
+              background: `radial-gradient(ellipse at 20% 25%, ${compareTeams[0]?.colour || '#283443'}55 0%, transparent 50%), radial-gradient(ellipse at 80% 25%, ${compareTeams[1]?.colour || '#283443'}55 0%, transparent 50%)`
             }} />
 
             {/* Versus banner */}
@@ -655,7 +686,7 @@ const StatsHomePage: React.FC = () => {
             <div className="egCompare__fighters">
               {(['left', 'right'] as const).map((slot, index) => {
                 const team = compareTeams[index];
-                const tint = resolveTeamColors(team?.name || '').primary;
+                const tint = team?.colour || '#283443';
                 return (
                   <button
                     key={slot}
@@ -683,7 +714,7 @@ const StatsHomePage: React.FC = () => {
                     </div>
                     {team && (
                       <div className="egCompare__fighterTeam">
-                        <span>{team.gamesPlayed} matches</span>
+                        <span>{team.matchesPlayed} matches</span>
                       </div>
                     )}
                   </button>
@@ -728,7 +759,7 @@ const StatsHomePage: React.FC = () => {
             </div>
 
             <div className="egCompare__rosterMeta">
-              {teamsLoading ? 'Loading clubs…' : teamsError ? 'Unable to load teams right now.' : `${teams.length} teams available`}
+              {cmpTeamsLoading ? 'Loading clubs…' : `${cmpTeams.length} teams available`}
             </div>
           </div>
         )}
@@ -787,7 +818,7 @@ const StatsHomePage: React.FC = () => {
               {filteredPlayers.length > 0 ? (
                 filteredPlayers.map((player) => (
                   <button key={player.id} type="button" className="eg-compare-modal__item" onClick={() => selectComparedPlayer(playerPickerSlot, player.id)}>
-                    <div className="eg-compare-modal__avatar" style={{ borderColor: `${player.teamPrimaryColor}66` }}>
+                    <div className="eg-compare-modal__avatar" style={{ borderColor: `${player.teamColour}66` }}>
                       {player.headshotUrl ? (
                         <img src={player.headshotUrl} alt={player.name} loading="lazy" decoding="async" />
                       ) : (
@@ -815,10 +846,10 @@ const StatsHomePage: React.FC = () => {
                   <User size={32} />
                   <div>
                     <div style={{ fontWeight: 700, marginBottom: 4 }}>
-                      {players.length === 0 ? 'No players available' : 'No players found'}
+                      {cmpPlayers.length === 0 ? 'No players available' : 'No players found'}
                     </div>
                     <div style={{ fontSize: 12, opacity: 0.7 }}>
-                      {players.length === 0 ? 'Unable to load players' : 'Try a different search'}
+                      {cmpPlayers.length === 0 ? 'Unable to load players' : 'Try a different search'}
                     </div>
                   </div>
                 </div>
@@ -880,9 +911,9 @@ const StatsHomePage: React.FC = () => {
             <div className="eg-compare-modal__list">
               {filteredTeams.length > 0 ? (
                 filteredTeams.map((team) => {
-                  const tint = resolveTeamColors(team.name).primary;
+                  const tint = team.colour || '#283443';
                   return (
-                    <button key={team.id} type="button" className="eg-compare-modal__item" onClick={() => selectComparedTeam(teamPickerSlot, team.id)}>
+                    <button key={team.key} type="button" className="eg-compare-modal__item" onClick={() => selectComparedTeam(teamPickerSlot, team.key)}>
                       <div className="eg-compare-modal__avatar eg-compare-modal__avatar--team" style={{ borderColor: `${tint}66` }}>
                         {team.logoUrl ? (
                           <img src={team.logoUrl} alt={team.name} loading="lazy" decoding="async" />
@@ -902,10 +933,10 @@ const StatsHomePage: React.FC = () => {
                   <Users size={32} />
                   <div>
                     <div style={{ fontWeight: 700, marginBottom: 4 }}>
-                      {teams.length === 0 ? 'No teams available' : 'No teams found'}
+                      {cmpTeams.length === 0 ? 'No teams available' : 'No teams found'}
                     </div>
                     <div style={{ fontSize: 12, opacity: 0.7 }}>
-                      {teams.length === 0 ? 'Unable to load teams' : 'Try a different search'}
+                      {cmpTeams.length === 0 ? 'Unable to load teams' : 'Try a different search'}
                     </div>
                   </div>
                 </div>

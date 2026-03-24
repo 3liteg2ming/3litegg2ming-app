@@ -1,331 +1,320 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { User, Users, Search, X } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Plus, Search, User, Users, X } from 'lucide-react';
 
-import SmartImg from '../components/SmartImg';
-import { TEAM_ASSETS, assetUrl, getTeamAssets, type TeamKey } from '../lib/teamAssets';
-import { getDataSeasonSlugForCompetition, getStoredCompetitionKey } from '../lib/competitionRegistry';
-import { useAllFixtures } from '../hooks/useFixtures';
-import { computeH2HStats, type H2HResult } from '../lib/h2hStats';
-import { fetchAflPlayers, type AflPlayer } from '../data/aflPlayers';
-import { fetchActiveCompetitionBaseline } from '../lib/seasonParticipantsRepo';
+import { getStoredCompetitionKey } from '../lib/competitionRegistry';
 import { PLAYER_STAT_CONFIGS, TEAM_STAT_CONFIGS } from '../types/stats2';
-import type { FixtureRow } from '../lib/fixturesRepo';
-import type { StatLeaderCategory } from '../lib/stats-leaders-cache';
+import {
+  loadComparePlayers,
+  loadCompareTeams,
+  safeNum,
+  initials,
+  hexToRgba,
+  matchesLabel,
+  type ComparePlayerRow,
+  type CompareTeamRow,
+} from '../lib/compareData';
+import type { TeamKey } from '../lib/teamAssets';
 
 import '../styles/h2h.css';
 
-/* ── Helpers ─────────────────────────────────────────────── */
-
-const ALL_TEAMS = (Object.keys(TEAM_ASSETS) as TeamKey[]).sort((a, b) =>
-  TEAM_ASSETS[a].name.localeCompare(TEAM_ASSETS[b].name),
-);
-
-function hexToRgba(hex: string, a: number) {
-  const h = String(hex || '').replace('#', '').trim();
-  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
-  const r = parseInt(full.slice(0, 2), 16) || 0;
-  const g = parseInt(full.slice(2, 4), 16) || 0;
-  const b = parseInt(full.slice(4, 6), 16) || 0;
-  return `rgba(${r},${g},${b},${a})`;
-}
-
-const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.04 } } };
-const fadeUp = { hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.18 } } };
-
 type CompareMode = 'players' | 'teams';
+type PickerSlot = 'left' | 'right';
 
-/* ── Player data types ───────────────────────────────────── */
-type PlayerRow = {
-  id: string;
-  name: string;
-  teamName: string;
-  teamKey: string;
-  teamLogo: string;
-  teamColour: string;
-  position: string;
-  number: string;
-  headshotUrl: string;
-  stats: Record<string, number>;
-};
+/* ── Shared sub-components ── */
 
-/* ── Team data types ─────────────────────────────────────── */
-type TeamRow = {
-  id: string;
-  name: string;
-  shortName: string;
-  teamKey: string;
-  logoUrl: string;
-  colour: string;
-  stats: Record<string, number>;
-};
-
-/* ── Data loader ─────────────────────────────────────────── */
-function normalizeTeamKey(value: string): string {
-  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '').trim();
-}
-
-async function loadPlayers(): Promise<PlayerRow[]> {
-  const [baseline, aflPlayers] = await Promise.all([
-    fetchActiveCompetitionBaseline(),
-    fetchAflPlayers().catch((err) => {
-      console.error('[HeadToHeadPage] Error fetching AFL players:', err);
-      return [];
-    }),
-  ]);
-
-  if (!aflPlayers || aflPlayers.length === 0) {
-    console.warn('[HeadToHeadPage] No AFL players loaded');
-    return [];
-  }
-
-  const playersByTeam = new Map<string, AflPlayer[]>();
-  for (const p of aflPlayers) {
-    const tk = normalizeTeamKey(p.teamKey || p.teamName || '');
-    if (!playersByTeam.has(tk)) playersByTeam.set(tk, []);
-    playersByTeam.get(tk)!.push(p);
-  }
-
-  const result: PlayerRow[] = [];
-  const seen = new Set<string>();
-
-  for (const team of baseline.teams) {
-    const players = playersByTeam.get(normalizeTeamKey(team.teamKey)) || [];
-    const ta = getTeamAssets(team.name);
-
-    for (const p of players) {
-      if (seen.has(p.id)) continue;
-      seen.add(p.id);
-      result.push({
-        id: p.id,
-        name: String(p.name || '').trim() || 'Player',
-        teamName: String(p.teamName || team.name),
-        teamKey: team.teamKey,
-        teamLogo: ta.logo,
-        teamColour: ta.primary,
-        position: String(p.position || ''),
-        number: Number(p.number) > 0 ? String(Math.trunc(Number(p.number))) : '',
-        headshotUrl: String(p.headshotUrl || ''),
-        stats: {
-          goals: Number(p.goals || 0),
-          disposals: Number(p.disposals || 0),
-          kicks: Number(p.kicks || 0),
-          handballs: Number(p.handballs || 0),
-          marks: Number(p.marks || 0),
-          fantasyPoints: Number(p.fantasyPoints || 0) || (Number(p.disposals || 0) + Number(p.marks || 0) * 3 + Number(p.goals || 0) * 6),
-        },
-      });
-    }
-  }
-
-  const sorted = result.sort((a, b) => a.name.localeCompare(b.name));
-  console.log('[HeadToHeadPage] Loaded players:', sorted.length);
-  return sorted;
-}
-
-async function loadTeams(): Promise<TeamRow[]> {
-  const baseline = await fetchActiveCompetitionBaseline();
-  return baseline.teams.map((t) => {
-    const ta = getTeamAssets(t.name);
-    return {
-      id: t.id,
-      name: t.name,
-      shortName: t.shortName || t.name,
-      teamKey: t.teamKey,
-      logoUrl: ta.logo,
-      colour: ta.primary,
-      stats: {},
-    };
-  }).sort((a, b) => a.name.localeCompare(b.name));
-}
-
-/* ═══════════════════════════════════════════════════════════
-   Player Picker Modal
-   ═══════════════════════════════════════════════════════════ */
-function PlayerPickerModal({
-  players,
+function CompareSlotCard({
   title,
-  onSelect,
-  onClose,
+  subtitle,
+  image,
+  colour,
+  placeholder,
+  icon,
+  onClick,
 }: {
-  players: PlayerRow[];
   title: string;
-  onSelect: (p: PlayerRow) => void;
-  onClose: () => void;
+  subtitle: string;
+  image?: string | null;
+  colour: string;
+  placeholder: string;
+  icon: React.ReactNode;
+  onClick: () => void;
 }) {
-  const [search, setSearch] = useState('');
-  const filtered = useMemo(() => {
-    if (!search.trim()) return players;
-    const s = search.toLowerCase();
-    return players.filter(
-      (p) => p.name.toLowerCase().includes(s) || p.teamName.toLowerCase().includes(s) || p.position.toLowerCase().includes(s),
-    );
-  }, [players, search]);
-
-  const handleSelect = (p: PlayerRow) => {
-    onSelect(p);
-  };
-
   return (
-    <div className="h2h-modal-overlay">
-      <button type="button" className="h2h-modal-backdrop" onClick={onClose} aria-label="Close" />
-      <div className="h2h-modal-sheet">
-        {/* Header */}
-        <div className="h2h-modal-header">
-          <div className="h2h-modal-header-text">
-            <div className="h2h-modal-label">{title}</div>
-            <div className="h2h-modal-hint">{players.length} players</div>
-          </div>
-          <button type="button" className="h2h-modal-close-btn" onClick={onClose} aria-label="Close">
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Search field */}
-        <div className="h2h-modal-search-wrap">
-          <div className="h2h-modal-search-box">
-            <Search size={16} />
-            <input
-              type="text"
-              className="h2h-modal-search-input"
-              placeholder="Search name, team, position…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              autoFocus
-            />
-            {search && (
-              <button
-                type="button"
-                className="h2h-modal-search-clear"
-                onClick={() => setSearch('')}
-                aria-label="Clear search"
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
-          {search && (
-            <div className="h2h-modal-result-count">
-              {filtered.length} result{filtered.length !== 1 ? 's' : ''}
-            </div>
-          )}
-        </div>
-
-        {/* Player list */}
-        <div className="h2h-modal-list-wrap">
-          {filtered.length > 0 ? (
-            <div className="h2h-modal-list">
-              {filtered.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  className="h2h-modal-row"
-                  onClick={() => handleSelect(p)}
-                >
-                  <div className="h2h-modal-row-avatar">
-                    {p.headshotUrl ? (
-                      <img src={p.headshotUrl} alt={p.name} loading="lazy" />
-                    ) : (
-                      <div className="h2h-modal-avatar-fallback">
-                        <User size={16} />
-                      </div>
-                    )}
-                  </div>
-                  <div className="h2h-modal-row-info">
-                    <div className="h2h-modal-row-name">{p.name}</div>
-                    <div className="h2h-modal-row-meta">
-                      {p.teamLogo && <img src={p.teamLogo} alt="" className="h2h-modal-team-icon" />}
-                      <span>{p.teamName}</span>
-                      {p.position && <span className="h2h-modal-separator">•</span>}
-                      {p.position && <span>{p.position}</span>}
-                    </div>
-                  </div>
-                  {p.number && <div className="h2h-modal-row-number">#{p.number}</div>}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="h2h-modal-empty">
-              <div className="h2h-modal-empty-icon">🔍</div>
-              <div className="h2h-modal-empty-title">
-                {players.length === 0 ? 'No players available' : 'No matches found'}
-              </div>
-              <div className="h2h-modal-empty-text">
-                {players.length === 0
-                  ? 'Unable to load player data'
-                  : `Try searching for a different name, team, or position`}
-              </div>
-            </div>
-          )}
-        </div>
+    <button type="button" className="egCompareSlot" onClick={onClick}>
+      <div
+        className="egCompareSlot__avatar"
+        style={{
+          borderColor: hexToRgba(colour, 0.35),
+          boxShadow: `0 0 0 1px ${hexToRgba(colour, 0.16)}, 0 12px 28px ${hexToRgba(colour, 0.18)}`,
+        }}
+      >
+        {image ? <img src={image} alt={title} loading="lazy" /> : <div className="egCompareSlot__fallback">{icon}</div>}
       </div>
-    </div>
+      <div className="egCompareSlot__title">{title || placeholder}</div>
+      <div className="egCompareSlot__subtitle">{subtitle || 'Tap to select'}</div>
+    </button>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   Battle Bar Row
-   ═══════════════════════════════════════════════════════════ */
-function BattleRow({ label, leftVal, rightVal, leftColour, rightColour }: {
+function BattleRow({
+  label,
+  leftValue,
+  rightValue,
+  leftColour,
+  rightColour,
+}: {
   label: string;
-  leftVal: number;
-  rightVal: number;
+  leftValue: number;
+  rightValue: number;
   leftColour: string;
   rightColour: string;
 }) {
-  const maxVal = Math.max(leftVal, rightVal, 1);
-  const leftPct = (leftVal / maxVal) * 100;
-  const rightPct = (rightVal / maxVal) * 100;
-  const leftWins = leftVal > rightVal;
-  const rightWins = rightVal > leftVal;
-  const tie = leftVal === rightVal;
+  const maxValue = Math.max(leftValue, rightValue, 1);
+  const leftPct = (leftValue / maxValue) * 100;
+  const rightPct = (rightValue / maxValue) * 100;
+  const leftWins = leftValue > rightValue;
+  const rightWins = rightValue > leftValue;
 
   return (
-    <div className="cmpBattle__row">
-      <div className="cmpBattle__barWrap cmpBattle__barWrap--left">
-        <span className={`cmpBattle__val ${leftWins ? 'cmpBattle__val--win' : tie ? 'cmpBattle__val--tie' : ''}`}>{leftVal}</span>
-        <div className="cmpBattle__track">
+    <div className="egCompareBattleRow">
+      <div className="egCompareBattleRow__side egCompareBattleRow__side--left">
+        <span className={`egCompareBattleRow__value ${leftWins ? 'isLeader' : ''}`}>{leftValue}</span>
+        <div className="egCompareBattleRow__track">
           <div
-            className={`cmpBattle__bar cmpBattle__bar--left ${leftWins ? 'cmpBattle__bar--lead' : ''}`}
-            style={{ width: `${leftPct}%`, '--barColour': leftColour } as React.CSSProperties}
+            className={`egCompareBattleRow__fill ${leftWins ? 'isLeader' : ''}`}
+            style={{ width: `${leftPct}%`, background: `linear-gradient(90deg, ${hexToRgba(leftColour, 0.35)}, ${leftColour})` }}
           />
         </div>
       </div>
-      <span className="cmpBattle__label">{label}</span>
-      <div className="cmpBattle__barWrap cmpBattle__barWrap--right">
-        <div className="cmpBattle__track">
+      <div className="egCompareBattleRow__label">{label}</div>
+      <div className="egCompareBattleRow__side egCompareBattleRow__side--right">
+        <div className="egCompareBattleRow__track egCompareBattleRow__track--right">
           <div
-            className={`cmpBattle__bar cmpBattle__bar--right ${rightWins ? 'cmpBattle__bar--lead' : ''}`}
-            style={{ width: `${rightPct}%`, '--barColour': rightColour } as React.CSSProperties}
+            className={`egCompareBattleRow__fill ${rightWins ? 'isLeader' : ''}`}
+            style={{ width: `${rightPct}%`, background: `linear-gradient(90deg, ${rightColour}, ${hexToRgba(rightColour, 0.35)})` }}
           />
         </div>
-        <span className={`cmpBattle__val ${rightWins ? 'cmpBattle__val--win' : tie ? 'cmpBattle__val--tie' : ''}`}>{rightVal}</span>
+        <span className={`egCompareBattleRow__value ${rightWins ? 'isLeader' : ''}`}>{rightValue}</span>
       </div>
     </div>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   Player Compare Display
-   ═══════════════════════════════════════════════════════════ */
-function PlayerCompare({ players }: { players: PlayerRow[] }) {
-  const [left, setLeft] = useState<PlayerRow | null>(null);
-  const [right, setRight] = useState<PlayerRow | null>(null);
-  const [pickerSlot, setPickerSlot] = useState<'left' | 'right' | null>(null);
+function PlayerPickerSheet({
+  isOpen,
+  players,
+  leftPlayer,
+  rightPlayer,
+  slot,
+  onClose,
+  onClear,
+  onSelect,
+}: {
+  isOpen: boolean;
+  players: ComparePlayerRow[];
+  leftPlayer: ComparePlayerRow | null;
+  rightPlayer: ComparePlayerRow | null;
+  slot: PickerSlot | null;
+  onClose: () => void;
+  onClear: () => void;
+  onSelect: (slot: PickerSlot, player: ComparePlayerRow) => void;
+}) {
+  const [search, setSearch] = useState('');
+  const [teamFilter, setTeamFilter] = useState<string>('All');
 
   useEffect(() => {
-    if (players.length >= 2 && !left && !right) {
-      setLeft(players[0]);
-      setRight(players[1]);
+    if (!isOpen) {
+      setSearch('');
+      setTeamFilter('All');
     }
-  }, [players, left, right]);
+  }, [isOpen]);
 
-  const handleSelect = useCallback((p: PlayerRow) => {
-    if (pickerSlot === 'left') setLeft(p);
-    else setRight(p);
+  const teamOptions = useMemo(
+    () => ['All', ...Array.from(new Set(players.map((player) => player.teamName))).sort((a, b) => a.localeCompare(b))],
+    [players],
+  );
+
+  const filteredPlayers = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return players.filter((player) => {
+      const matchesSearch =
+        !q ||
+        player.name.toLowerCase().includes(q) ||
+        player.teamName.toLowerCase().includes(q) ||
+        player.position.toLowerCase().includes(q);
+      const matchesTeam = teamFilter === 'All' || player.teamName === teamFilter;
+      return matchesSearch && matchesTeam;
+    });
+  }, [players, search, teamFilter]);
+
+  if (!isOpen || !slot) return null;
+
+  return (
+    <div className="egPickerModal">
+      <button type="button" className="egPickerModal__backdrop" onClick={onClose} aria-label="Close picker" />
+      <div className="egPickerModal__sheet">
+        <div className="egPickerModal__topBar">
+          <button type="button" className="egPickerModal__clear" onClick={onClear}>Clear</button>
+          <div className="egPickerModal__title">Select Players</div>
+          <button type="button" className="egPickerModal__close" onClick={onClose} aria-label="Close">
+            <X size={22} />
+          </button>
+        </div>
+
+        <div className="egPickerModal__slots">
+          <CompareSlotCard title={leftPlayer?.name || 'Player 1'} subtitle={leftPlayer?.teamName || 'Tap to select'} image={leftPlayer?.headshotUrl} colour={leftPlayer?.teamColour || '#7b8499'} placeholder="Player 1" icon={<User size={38} />} onClick={() => undefined} />
+          <div className="egPickerModal__vs">V</div>
+          <CompareSlotCard title={rightPlayer?.name || 'Player 2'} subtitle={rightPlayer?.teamName || 'Tap to select'} image={rightPlayer?.headshotUrl} colour={rightPlayer?.teamColour || '#7b8499'} placeholder="Player 2" icon={<User size={38} />} onClick={() => undefined} />
+        </div>
+
+        <div className="egPickerModal__search">
+          <Search size={18} />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search Players" autoFocus />
+          {search ? <button type="button" className="egPickerModal__searchClear" onClick={() => setSearch('')}><X size={14} /></button> : null}
+        </div>
+
+        <div className="egPickerModal__filters">
+          {teamOptions.slice(0, 8).map((team) => (
+            <button key={team} type="button" className={`egPickerModal__chip ${teamFilter === team ? 'isActive' : ''}`} onClick={() => setTeamFilter(team)}>
+              {team === 'All' ? 'All Teams' : team}
+            </button>
+          ))}
+        </div>
+
+        <div className="egPickerModal__countRow">
+          <div className="egPickerModal__countLabel">Add multiple players</div>
+          <div className="egPickerModal__countValue">{(leftPlayer ? 1 : 0) + (rightPlayer ? 1 : 0)} of 2</div>
+        </div>
+
+        <div className="egPickerModal__list">
+          {filteredPlayers.length ? filteredPlayers.map((player) => {
+            const isSelected = leftPlayer?.id === player.id || rightPlayer?.id === player.id;
+            return (
+              <button key={player.id} type="button" className={`egPickerRow ${isSelected ? 'isSelected' : ''}`} onClick={() => onSelect(slot, player)}>
+                <div className="egPickerRow__avatar" style={{ borderColor: hexToRgba(player.teamColour, 0.28) }}>
+                  {player.headshotUrl ? <img src={player.headshotUrl} alt={player.name} loading="lazy" /> : <div className="egPickerRow__avatarFallback">{initials(player.name)}</div>}
+                </div>
+                <div className="egPickerRow__meta">
+                  <div className="egPickerRow__name">{player.name}</div>
+                  <div className="egPickerRow__sub">{player.number ? `${player.number} ` : ''}{player.teamName}</div>
+                </div>
+                <div className="egPickerRow__action">{isSelected ? '✓' : <Plus size={18} />}</div>
+              </button>
+            );
+          }) : (
+            <div className="egPickerModal__empty">
+              <User size={26} />
+              <div className="egPickerModal__emptyTitle">No players found</div>
+              <div className="egPickerModal__emptyText">Try a different player name, club, or position.</div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TeamPickerSheet({
+  isOpen,
+  teams,
+  leftTeam,
+  rightTeam,
+  slot,
+  onClose,
+  onClear,
+  onSelect,
+}: {
+  isOpen: boolean;
+  teams: CompareTeamRow[];
+  leftTeam: CompareTeamRow | null;
+  rightTeam: CompareTeamRow | null;
+  slot: PickerSlot | null;
+  onClose: () => void;
+  onClear: () => void;
+  onSelect: (slot: PickerSlot, team: CompareTeamRow) => void;
+}) {
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) setSearch('');
+  }, [isOpen]);
+
+  const filteredTeams = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return teams.filter((team) => !q || team.name.toLowerCase().includes(q) || team.shortName.toLowerCase().includes(q));
+  }, [teams, search]);
+
+  if (!isOpen || !slot) return null;
+
+  return (
+    <div className="egPickerModal">
+      <button type="button" className="egPickerModal__backdrop" onClick={onClose} aria-label="Close picker" />
+      <div className="egPickerModal__sheet">
+        <div className="egPickerModal__topBar">
+          <button type="button" className="egPickerModal__clear" onClick={onClear}>Clear</button>
+          <div className="egPickerModal__title">Select Teams</div>
+          <button type="button" className="egPickerModal__close" onClick={onClose} aria-label="Close">
+            <X size={22} />
+          </button>
+        </div>
+
+        <div className="egPickerModal__slots">
+          <CompareSlotCard title={leftTeam?.name || 'Team 1'} subtitle={leftTeam ? matchesLabel(leftTeam.matchesPlayed) : 'Tap to select'} image={leftTeam?.logoUrl} colour={leftTeam?.colour || '#7b8499'} placeholder="Team 1" icon={<Users size={38} />} onClick={() => undefined} />
+          <div className="egPickerModal__vs">V</div>
+          <CompareSlotCard title={rightTeam?.name || 'Team 2'} subtitle={rightTeam ? matchesLabel(rightTeam.matchesPlayed) : 'Tap to select'} image={rightTeam?.logoUrl} colour={rightTeam?.colour || '#7b8499'} placeholder="Team 2" icon={<Users size={38} />} onClick={() => undefined} />
+        </div>
+
+        <div className="egPickerModal__search">
+          <Search size={18} />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search Teams" autoFocus />
+          {search ? <button type="button" className="egPickerModal__searchClear" onClick={() => setSearch('')}><X size={14} /></button> : null}
+        </div>
+
+        <div className="egPickerModal__countRow">
+          <div className="egPickerModal__countLabel">Add multiple teams</div>
+          <div className="egPickerModal__countValue">{(leftTeam ? 1 : 0) + (rightTeam ? 1 : 0)} of 2</div>
+        </div>
+
+        <div className="egPickerModal__list">
+          {filteredTeams.map((team) => {
+            const isSelected = leftTeam?.key === team.key || rightTeam?.key === team.key;
+            return (
+              <button key={team.key} type="button" className={`egPickerRow egPickerRow--team ${isSelected ? 'isSelected' : ''}`} onClick={() => onSelect(slot, team)}>
+                <div className="egPickerRow__avatar egPickerRow__avatar--team" style={{ borderColor: hexToRgba(team.colour, 0.28) }}>
+                  <img src={team.logoUrl} alt={team.name} loading="lazy" />
+                </div>
+                <div className="egPickerRow__meta">
+                  <div className="egPickerRow__name">{team.name}</div>
+                  <div className="egPickerRow__sub">{matchesLabel(team.matchesPlayed)}</div>
+                </div>
+                <div className="egPickerRow__action">{isSelected ? '✓' : <Plus size={18} />}</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PlayerCompare({ players }: { players: ComparePlayerRow[] }) {
+  const [pickerSlot, setPickerSlot] = useState<PickerSlot | null>(null);
+  const [leftPlayer, setLeftPlayer] = useState<ComparePlayerRow | null>(null);
+  const [rightPlayer, setRightPlayer] = useState<ComparePlayerRow | null>(null);
+
+  const handlePlayerSelect = useCallback((slot: PickerSlot, player: ComparePlayerRow) => {
+    if (slot === 'left') {
+      setLeftPlayer(player);
+      if (rightPlayer?.id === player.id) setRightPlayer(null);
+      setPickerSlot('right');
+      return;
+    }
+    setRightPlayer(player);
+    if (leftPlayer?.id === player.id) setLeftPlayer(null);
     setPickerSlot(null);
-  }, [pickerSlot]);
+  }, [leftPlayer?.id, rightPlayer?.id]);
 
   return (
     <>
@@ -336,449 +325,134 @@ function PlayerCompare({ players }: { players: PlayerRow[] }) {
       </div>
 
       <div className="cmpFighters">
-        {[{ slot: 'left' as const, player: left }, { slot: 'right' as const, player: right }].map(({ slot, player }) => {
-          const tint = player?.teamColour || '#283443';
-          return (
-            <button key={slot} type="button" className="cmpFighter" onClick={() => setPickerSlot(slot)}>
-              <div className="cmpFighter__ring" style={{ borderColor: `${tint}aa`, boxShadow: `0 0 20px ${tint}33` }}>
-                <div className="cmpFighter__avatar">
-                  {player?.headshotUrl ? (
-                    <img src={player.headshotUrl} alt={player.name} loading="lazy" />
-                  ) : (
-                    <div className="cmpFighter__silhouette"><User size={32} /></div>
-                  )}
-                </div>
-              </div>
-              <div className="cmpFighter__name">
-                {player ? (
-                  <>
-                    <span className="cmpFighter__first">{player.name.split(' ')[0]}</span>
-                    <span className="cmpFighter__last">{player.name.split(' ').slice(1).join(' ')}</span>
-                  </>
-                ) : (
-                  <span className="cmpFighter__prompt">Tap to select</span>
-                )}
-              </div>
-              {player && (
-                <div className="cmpFighter__team">
-                  {player.teamLogo && <img src={player.teamLogo} alt="" className="cmpFighter__teamLogo" />}
-                  <span>{player.teamName}</span>
-                </div>
-              )}
-            </button>
-          );
-        })}
+        <CompareSlotCard title={leftPlayer?.name || 'Player 1'} subtitle={leftPlayer?.teamName || 'Tap to select'} image={leftPlayer?.headshotUrl} colour={leftPlayer?.teamColour || '#7b8499'} placeholder="Player 1" icon={<User size={36} />} onClick={() => setPickerSlot('left')} />
+        <CompareSlotCard title={rightPlayer?.name || 'Player 2'} subtitle={rightPlayer?.teamName || 'Tap to select'} image={rightPlayer?.headshotUrl} colour={rightPlayer?.teamColour || '#7b8499'} placeholder="Player 2" icon={<User size={36} />} onClick={() => setPickerSlot('right')} />
       </div>
 
-      {left && right && (
-        <motion.div className="cmpBattle" variants={stagger} initial="hidden" animate="show" key={`${left.id}-${right.id}`}>
-          {PLAYER_STAT_CONFIGS.map((cfg) => (
-            <motion.div key={cfg.key} variants={fadeUp}>
-              <BattleRow
-                label={cfg.abbreviation}
-                leftVal={left.stats[cfg.key] ?? 0}
-                rightVal={right.stats[cfg.key] ?? 0}
-                leftColour={left.teamColour}
-                rightColour={right.teamColour}
-              />
+      {leftPlayer && rightPlayer ? (
+        <motion.div className="egCompareBattle" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }} initial="hidden" animate="show" key={`${leftPlayer.id}-${rightPlayer.id}`}>
+          {PLAYER_STAT_CONFIGS.map((config) => (
+            <motion.div key={config.key} variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.18 } } }}>
+              <BattleRow label={config.label.toUpperCase()} leftValue={leftPlayer.stats[config.key] ?? 0} rightValue={rightPlayer.stats[config.key] ?? 0} leftColour={leftPlayer.teamColour} rightColour={rightPlayer.teamColour} />
             </motion.div>
           ))}
         </motion.div>
+      ) : (
+        <div className="cmpEmpty"><div className="cmpEmpty__text">Choose two players to unlock the live season stat battle.</div></div>
       )}
 
-      {!left && !right && (
-        <div className="cmpEmpty">
-          <div className="cmpEmpty__text">Tap the portraits to select two players to compare</div>
-        </div>
-      )}
-
-      {pickerSlot && (
-        <PlayerPickerModal
-          players={players}
-          title={`Choose ${pickerSlot === 'left' ? 'first' : 'second'} player`}
-          onSelect={handleSelect}
-          onClose={() => setPickerSlot(null)}
-        />
-      )}
+      <PlayerPickerSheet isOpen={Boolean(pickerSlot)} players={players} leftPlayer={leftPlayer} rightPlayer={rightPlayer} slot={pickerSlot} onClose={() => setPickerSlot(null)} onClear={() => { setLeftPlayer(null); setRightPlayer(null); }} onSelect={handlePlayerSelect} />
     </>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   Team Picker Modal
-   ═══════════════════════════════════════════════════════════ */
-function TeamPickerModal({
-  teams,
-  selectedTeam,
-  slot,
-  onSelect,
-  onClose,
-}: {
-  teams: TeamRow[];
-  selectedTeam: TeamKey | null;
-  slot: 'a' | 'b';
-  onSelect: (key: TeamKey) => void;
-  onClose: () => void;
-}) {
-  const [search, setSearch] = useState('');
-  const slotLabel = slot === 'a' ? 'first' : 'second';
-  const filtered = useMemo(() => {
-    if (!search.trim()) return teams;
-    const s = search.toLowerCase();
-    return teams.filter((t) => t.name.toLowerCase().includes(s) || t.shortName.toLowerCase().includes(s));
-  }, [teams, search]);
-
-  return (
-    <div className="h2h-modal-overlay">
-      <button type="button" className="h2h-modal-backdrop" onClick={onClose} aria-label="Close" />
-      <div className="h2h-modal-sheet">
-        {/* Header */}
-        <div className="h2h-modal-header">
-          <div className="h2h-modal-header-text">
-            <div className="h2h-modal-label">Choose {slotLabel} team</div>
-            <div className="h2h-modal-hint">{teams.length} teams</div>
-          </div>
-          <button type="button" className="h2h-modal-close-btn" onClick={onClose} aria-label="Close">
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Search field */}
-        <div className="h2h-modal-search-wrap">
-          <div className="h2h-modal-search-box">
-            <Search size={16} />
-            <input
-              type="text"
-              className="h2h-modal-search-input"
-              placeholder="Search team name…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              autoFocus
-            />
-            {search && (
-              <button
-                type="button"
-                className="h2h-modal-search-clear"
-                onClick={() => setSearch('')}
-                aria-label="Clear search"
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
-          {search && (
-            <div className="h2h-modal-result-count">
-              {filtered.length} result{filtered.length !== 1 ? 's' : ''}
-            </div>
-          )}
-        </div>
-
-        {/* Team list */}
-        <div className="h2h-modal-list-wrap">
-          {filtered.length > 0 ? (
-            <div className="h2h-modal-list">
-              {filtered.map((t) => {
-                const isSelected = selectedTeam === t.teamKey;
-                return (
-                  <button
-                    key={t.teamKey}
-                    type="button"
-                    className={`h2h-modal-row ${isSelected ? 'h2h-modal-row--selected' : ''}`}
-                    onClick={() => onSelect(t.teamKey as TeamKey)}
-                  >
-                    <div className="h2h-modal-row-logo">
-                      <SmartImg src={t.logoUrl} alt={t.name} />
-                    </div>
-                    <div className="h2h-modal-row-info">
-                      <div className="h2h-modal-row-name">{t.name}</div>
-                      <div className="h2h-modal-row-short">{t.shortName}</div>
-                    </div>
-                    {isSelected && <div className="h2h-modal-checkmark">✓</div>}
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="h2h-modal-empty">
-              <div className="h2h-modal-empty-icon">🔍</div>
-              <div className="h2h-modal-empty-title">No teams found</div>
-              <div className="h2h-modal-empty-text">Try a different search term</div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════
-   Team Compare Display (H2H + Stats)
-   ═══════════════════════════════════════════════════════════ */
-function TeamCompare({ fixtures }: { fixtures: FixtureRow[] }) {
+function TeamCompare({ teams }: { teams: CompareTeamRow[] }) {
   const [params, setParams] = useSearchParams();
-  const [pickerSlot, setPickerSlot] = useState<'a' | 'b' | null>(null);
-  const teamA = (params.get('a') as TeamKey | null) ?? null;
-  const teamB = (params.get('b') as TeamKey | null) ?? null;
-  const validA = teamA && teamA in TEAM_ASSETS ? teamA : null;
-  const validB = teamB && teamB in TEAM_ASSETS && teamB !== validA ? teamB : null;
+  const [pickerSlot, setPickerSlot] = useState<PickerSlot | null>(null);
 
-  const setTeamA = useCallback((key: TeamKey | null) => {
-    setParams((prev) => { const n = new URLSearchParams(prev); if (key) n.set('a', key); else n.delete('a'); return n; }, { replace: true });
+  const teamAKey = (params.get('a') as TeamKey | null) ?? null;
+  const teamBKey = (params.get('b') as TeamKey | null) ?? null;
+  const teamA = teamAKey ? teams.find((team) => team.key === teamAKey) || null : null;
+  const teamB = teamBKey ? teams.find((team) => team.key === teamBKey) || null : null;
+
+  const setTeamParam = useCallback((slot: PickerSlot, team: CompareTeamRow | null) => {
+    setParams((prev) => {
+      const next = new URLSearchParams(prev);
+      const key = slot === 'left' ? 'a' : 'b';
+      if (team) next.set(key, team.key);
+      else next.delete(key);
+      return next;
+    }, { replace: true });
   }, [setParams]);
 
-  const setTeamB = useCallback((key: TeamKey | null) => {
-    setParams((prev) => { const n = new URLSearchParams(prev); if (key) n.set('b', key); else n.delete('b'); return n; }, { replace: true });
-  }, [setParams]);
-
-  const handleTeamSelect = useCallback((slot: 'a' | 'b', key: TeamKey) => {
-    if (slot === 'a') setTeamA(key);
-    else setTeamB(key);
+  const handleTeamSelect = useCallback((slot: PickerSlot, team: CompareTeamRow) => {
+    if (slot === 'left') {
+      setTeamParam('left', team);
+      if (teamB?.key === team.key) setTeamParam('right', null);
+      setPickerSlot('right');
+      return;
+    }
+    setTeamParam('right', team);
+    if (teamA?.key === team.key) setTeamParam('left', null);
     setPickerSlot(null);
-  }, [setTeamA, setTeamB]);
-
-  const stats = useMemo(() => {
-    if (!validA || !validB) return null;
-    return computeH2HStats(fixtures, validA, validB);
-  }, [fixtures, validA, validB]);
-
-  const tA = validA ? TEAM_ASSETS[validA] : null;
-  const tB = validB ? TEAM_ASSETS[validB] : null;
-
-  const cssVars = useMemo(() => {
-    if (!tA || !tB) return {} as React.CSSProperties;
-    return {
-      '--teamA': tA.colour,
-      '--teamB': tB.colour,
-      '--teamABg': hexToRgba(tA.colour, 0.06),
-      '--teamBBg': hexToRgba(tB.colour, 0.06),
-    } as React.CSSProperties;
-  }, [tA, tB]);
+  }, [setTeamParam, teamA?.key, teamB?.key]);
 
   return (
-    <div style={cssVars}>
-      {/* Team selection */}
-      <div className="teamSelect">
-        <div className="teamSelect__slots">
-          <button
-            type="button"
-            className="teamSelect__slot teamSelect__slot--a"
-            onClick={() => setPickerSlot('a')}
-          >
-            {validA && tA ? (
-              <>
-                <SmartImg className="teamSelect__slotLogo" src={assetUrl(tA.logoPath)} alt={tA.name} />
-                <div className="teamSelect__slotInfo">
-                  <span className="teamSelect__slotName">{tA.name}</span>
-                  <span className="teamSelect__slotTap">Tap to change</span>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="teamSelect__slotLogoEmpty" />
-                <div className="teamSelect__slotInfo">
-                  <span className="teamSelect__slotPrompt">Pick Team A</span>
-                </div>
-              </>
-            )}
-          </button>
-
-          <div className="teamSelect__divider">VS</div>
-
-          <button
-            type="button"
-            className="teamSelect__slot teamSelect__slot--b"
-            onClick={() => setPickerSlot('b')}
-          >
-            {validB && tB ? (
-              <>
-                <SmartImg className="teamSelect__slotLogo" src={assetUrl(tB.logoPath)} alt={tB.name} />
-                <div className="teamSelect__slotInfo">
-                  <span className="teamSelect__slotName">{tB.name}</span>
-                  <span className="teamSelect__slotTap">Tap to change</span>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="teamSelect__slotLogoEmpty" />
-                <div className="teamSelect__slotInfo">
-                  <span className="teamSelect__slotPrompt">Pick Team B</span>
-                </div>
-              </>
-            )}
-          </button>
-        </div>
+    <>
+      <div className="cmpVersus">
+        <div className="cmpVersus__line" />
+        <span className="cmpVersus__text">VS</span>
+        <div className="cmpVersus__line" />
       </div>
 
-      {/* Team picker modal */}
-      {pickerSlot && (
-        <TeamPickerModal
-          teams={Object.entries(TEAM_ASSETS).map(([key, asset]) => ({
-            id: key,
-            name: asset.name,
-            shortName: asset.shortName,
-            teamKey: key as TeamKey,
-            logoUrl: assetUrl(asset.logoPath),
-            colour: asset.colour,
-            stats: {},
-          }))}
-          selectedTeam={pickerSlot === 'a' ? validA : validB}
-          slot={pickerSlot}
-          onSelect={(key) => handleTeamSelect(pickerSlot, key)}
-          onClose={() => setPickerSlot(null)}
-        />
+      <div className="cmpFighters">
+        <CompareSlotCard title={teamA?.name || 'Team 1'} subtitle={teamA ? matchesLabel(teamA.matchesPlayed) : 'Tap to select'} image={teamA?.logoUrl} colour={teamA?.colour || '#7b8499'} placeholder="Team 1" icon={<Users size={36} />} onClick={() => setPickerSlot('left')} />
+        <CompareSlotCard title={teamB?.name || 'Team 2'} subtitle={teamB ? matchesLabel(teamB.matchesPlayed) : 'Tap to select'} image={teamB?.logoUrl} colour={teamB?.colour || '#7b8499'} placeholder="Team 2" icon={<Users size={36} />} onClick={() => setPickerSlot('right')} />
+      </div>
+
+      {teamA && teamB ? (
+        <motion.div className="egCompareBattle" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }} initial="hidden" animate="show" key={`${teamA.key}-${teamB.key}`}>
+          {TEAM_STAT_CONFIGS.map((config) => (
+            <motion.div key={config.key} variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.18 } } }}>
+              <BattleRow label={config.label.toUpperCase()} leftValue={safeNum(teamA.stats[config.key])} rightValue={safeNum(teamB.stats[config.key])} leftColour={teamA.colour} rightColour={teamB.colour} />
+            </motion.div>
+          ))}
+        </motion.div>
+      ) : (
+        <div className="cmpEmpty"><div className="cmpEmpty__text">Choose two teams to unlock the live season team battle.</div></div>
       )}
 
-      {/* H2H Stats */}
-      <AnimatePresence mode="wait">
-        {validA && validB && stats && tA && tB && (
-          <motion.div key={`${validA}-${validB}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-            {stats.totalMatches === 0 ? (
-              <div className="h2hEmpty">
-                <div className="h2hEmpty__icon">🤝</div>
-                <div className="h2hEmpty__text">{tA.name} and {tB.name} haven't met yet this season.<br />Check back after they play!</div>
-              </div>
-            ) : (
-              <motion.div className="h2hStats" variants={stagger} initial="hidden" animate="show">
-                {/* W-L-D Record */}
-                <motion.div className="h2hCard" variants={fadeUp}>
-                  <div className="h2hCard__title">Overall Record</div>
-                  <div className="h2hRecord">
-                    <div className="h2hRecord__side">
-                      <span className="h2hRecord__count h2hRecord__count--a">{stats.teamAWins}</span>
-                      <span className="h2hRecord__label">{tA.shortName}</span>
-                    </div>
-                    <div className="h2hRecord__center">
-                      <span className="h2hRecord__draws">{stats.draws}</span>
-                      <span className="h2hRecord__drawLabel">Draws</span>
-                    </div>
-                    <div className="h2hRecord__side">
-                      <span className="h2hRecord__count h2hRecord__count--b">{stats.teamBWins}</span>
-                      <span className="h2hRecord__label">{tB.shortName}</span>
-                    </div>
-                  </div>
-                  {(() => {
-                    const total = stats.teamAWins + stats.teamBWins + stats.draws;
-                    const aPct = total > 0 ? (stats.teamAWins / total) * 100 : 0;
-                    const bPct = total > 0 ? (stats.teamBWins / total) * 100 : 0;
-                    const dPct = total > 0 ? (stats.draws / total) * 100 : 0;
-                    return (
-                      <div className="h2hWinBar">
-                        <div className="h2hWinBar__fill h2hWinBar__fill--a" style={{ width: `${aPct}%` }} />
-                        <div className="h2hWinBar__fill h2hWinBar__fill--draw" style={{ width: `${dPct}%` }} />
-                        <div className="h2hWinBar__fill h2hWinBar__fill--b" style={{ width: `${bPct}%` }} />
-                      </div>
-                    );
-                  })()}
-                </motion.div>
-
-                {/* Key Stats */}
-                <motion.div className="h2hCard" variants={fadeUp}>
-                  <div className="h2hCard__title">Key Stats</div>
-                  <div className="h2hStatRow">
-                    <span className="h2hStatRow__val h2hStatRow__val--a">{stats.teamATotalPoints}</span>
-                    <span className="h2hStatRow__label">Total Points</span>
-                    <span className="h2hStatRow__val h2hStatRow__val--b">{stats.teamBTotalPoints}</span>
-                  </div>
-                  <div className="h2hStatRow">
-                    <span className="h2hStatRow__val" style={{ color: 'rgba(255,255,255,0.7)' }}>{stats.averageMargin}</span>
-                    <span className="h2hStatRow__label">Avg Margin</span>
-                    <span className="h2hStatRow__val" style={{ color: 'rgba(255,255,255,0.55)', fontSize: 11 }}>pts</span>
-                  </div>
-                </motion.div>
-
-                {/* Biggest Win */}
-                {stats.biggestWin && (
-                  <motion.div className="h2hCard" variants={fadeUp}>
-                    <div className="h2hCard__title">Biggest Win</div>
-                    <div className="h2hStatRow">
-                      <span className="h2hStatRow__val" style={{ color: stats.biggestWin.winner === 'A' ? 'var(--teamA)' : 'var(--teamB)' }}>
-                        {stats.biggestWin.winnerScore} – {stats.biggestWin.loserScore}
-                      </span>
-                      <span className="h2hStatRow__label">{stats.biggestWin.winner === 'A' ? tA.name : tB.name} by {stats.biggestWin.margin}</span>
-                      <span className="h2hStatRow__val" style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10 }}>{stats.biggestWin.roundLabel}</span>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Streak */}
-                {stats.currentStreak.count > 0 && stats.currentStreak.team && (
-                  <motion.div className={`h2hStreak${stats.currentStreak.team === 'B' ? ' h2hStreak--b' : ''}`} variants={fadeUp}>
-                    <span className="h2hStreak__icon">🔥</span>
-                    <span className="h2hStreak__text">
-                      <span className="h2hStreak__highlight">{stats.currentStreak.team === 'A' ? tA.name : tB.name}</span>{' '}
-                      {stats.currentStreak.count === 1 ? 'won the last meeting' : `on a ${stats.currentStreak.count}-game win streak`}
-                    </span>
-                  </motion.div>
-                )}
-
-                {/* Last Meetings */}
-                {stats.last5.length > 0 && (
-                  <motion.div className="h2hCard" variants={fadeUp}>
-                    <div className="h2hCard__title">{stats.meetings.length <= 5 ? 'All Meetings' : 'Last 5 Meetings'}</div>
-                    <div className="h2hMeetings">
-                      {stats.last5.map((m, i) => (
-                        <motion.div key={m.fixtureId} className="h2hMeeting" initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06, duration: 0.15 }}>
-                          <span className="h2hMeeting__round">R{m.round}</span>
-                          <div className="h2hMeeting__scores">
-                            <span className={`h2hMeeting__score h2hMeeting__score--a${m.winner === 'A' ? ' h2hMeeting__score--winner' : ''}`}>{m.teamAScore}</span>
-                            <span className="h2hMeeting__dash">–</span>
-                            <span className={`h2hMeeting__score h2hMeeting__score--b${m.winner === 'B' ? ' h2hMeeting__score--winner' : ''}`}>{m.teamBScore}</span>
-                          </div>
-                          <span className={`h2hMeeting__result${m.winner === 'A' ? ' h2hMeeting__result--a' : m.winner === 'B' ? ' h2hMeeting__result--b' : ' h2hMeeting__result--draw'}`}>
-                            {m.winner === 'A' ? tA.shortName : m.winner === 'B' ? tB.shortName : 'Draw'}
-                          </span>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </motion.div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+      <TeamPickerSheet isOpen={Boolean(pickerSlot)} teams={teams} leftTeam={teamA} rightTeam={teamB} slot={pickerSlot} onClose={() => setPickerSlot(null)} onClear={() => { setTeamParam('left', null); setTeamParam('right', null); }} onSelect={handleTeamSelect} />
+    </>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   Page
-   ═══════════════════════════════════════════════════════════ */
 export default function HeadToHeadPage() {
-  const [mode, setMode] = useState<CompareMode>('players');
-  const [players, setPlayers] = useState<PlayerRow[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const competitionKey = getStoredCompetitionKey();
-  const seasonSlug = getDataSeasonSlugForCompetition(competitionKey);
-  const { data: fixtureData } = useAllFixtures(seasonSlug, true);
-  const fixtures = (Array.isArray(fixtureData) ? fixtureData : []) as FixtureRow[];
+  const [params] = useSearchParams();
+  const initialMode = (params.get('mode') === 'teams' ? 'teams' : 'players') as CompareMode;
+  const [mode, setMode] = useState<CompareMode>(initialMode);
+  const [players, setPlayers] = useState<ComparePlayerRow[]>([]);
+  const [teams, setTeams] = useState<CompareTeamRow[]>([]);
+  const [loadingPlayers, setLoadingPlayers] = useState(true);
+  const [loadingTeams, setLoadingTeams] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    loadPlayers()
+    setLoadingPlayers(true);
+    loadComparePlayers()
       .then((rows) => { if (!cancelled) setPlayers(rows); })
-      .catch((err) => { 
-        console.error('[HeadToHeadPage] Error loading players:', err);
-        if (!cancelled) setPlayers([]); 
+      .catch((error) => {
+        console.error('[HeadToHeadPage] compare players failed', error);
+        if (!cancelled) setPlayers([]);
       })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .finally(() => { if (!cancelled) setLoadingPlayers(false); });
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingTeams(true);
+    loadCompareTeams()
+      .then((rows) => { if (!cancelled) setTeams(rows); })
+      .catch((error) => {
+        console.error('[HeadToHeadPage] compare teams failed', error);
+        if (!cancelled) setTeams([]);
+      })
+      .finally(() => { if (!cancelled) setLoadingTeams(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const competitionKey = getStoredCompetitionKey();
 
   return (
     <div className="h2hPage">
       <div className="h2hWrap">
         <section className="h2hHero">
-          <div className="kicker">{competitionKey.toUpperCase()} • Elite Gaming</div>
-          <div className="title">Compare</div>
-          <div className="hint">
-            {mode === 'players' ? 'Pick two players to compare their season stats' : 'Pick two teams to see their head-to-head record'}
-          </div>
+          <div className="h2hHero__kicker">{competitionKey.toUpperCase()} • Elite Gaming</div>
+          <h1 className="h2hHero__title">Compare</h1>
+          <p className="h2hHero__hint">{mode === 'players' ? 'Pick two players and compare their live season numbers.' : 'Pick two teams and compare their live season totals.'}</p>
         </section>
 
-        {/* Mode toggle */}
         <div className="cmpToggle">
           <button type="button" className={`cmpToggle__btn ${mode === 'players' ? 'cmpToggle__btn--active' : ''}`} onClick={() => setMode('players')}>
             <User size={14} /> Players
@@ -788,16 +462,11 @@ export default function HeadToHeadPage() {
           </button>
         </div>
 
-        {/* Content */}
         <div className="cmpContent">
           {mode === 'players' ? (
-            loading ? (
-              <div className="cmpEmpty"><div className="cmpEmpty__text">Loading players…</div></div>
-            ) : (
-              <PlayerCompare players={players} />
-            )
+            loadingPlayers ? <div className="cmpEmpty"><div className="cmpEmpty__text">Loading live player data…</div></div> : <PlayerCompare players={players} />
           ) : (
-            <TeamCompare fixtures={fixtures} />
+            loadingTeams ? <div className="cmpEmpty"><div className="cmpEmpty__text">Loading live team data…</div></div> : <TeamCompare teams={teams} />
           )}
         </div>
 

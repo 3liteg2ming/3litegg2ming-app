@@ -60,6 +60,7 @@ const AdminFlags = lazy(() => import('./routes/admin/pages/AdminFlags'));
 const AdminAssets = lazy(() => import('./routes/admin/pages/AdminAssets'));
 const AdminAudit = lazy(() => import('./routes/admin/pages/AdminAudit'));
 const AdminOdds = lazy(() => import('./routes/admin/pages/AdminOdds'));
+const AdminNews = lazy(() => import('./routes/admin/pages/AdminNews'));
 
 const GLOBAL_CRASH_EVENT = 'eg:global-crash';
 
@@ -289,6 +290,7 @@ function AppRoutes() {
                   <Route path="coaches" element={<AdminCoaches />} />
                   <Route path="submissions" element={<AdminSubmissions />} />
                   <Route path="content" element={<AdminContent />} />
+                  <Route path="news" element={<AdminNews />} />
                   <Route path="flags" element={<AdminFlags />} />
                   <Route path="assets" element={<AdminAssets />} />
                   <Route path="audit" element={<AdminAudit />} />

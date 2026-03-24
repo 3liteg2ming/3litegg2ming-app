@@ -389,6 +389,7 @@ export default function AdminConsolePage() {
     refreshAll();
   }, [hasToken, refreshAll, competitionKey]);
 
+
   const availableRounds = useMemo(() => {
     const values = fixtures
       .map((f) => (competitionKey === 'preseason' ? f.week_index : f.round))

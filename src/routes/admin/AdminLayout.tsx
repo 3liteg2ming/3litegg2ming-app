@@ -29,6 +29,7 @@ const links = [
   { to: '/admin/coaches', label: 'Coaches & Roles' },
   { to: '/admin/submissions', label: 'Submissions / OCR' },
   { to: '/admin/content', label: 'Content' },
+  { to: '/admin/news', label: 'Homepage News' },
   { to: '/admin/flags', label: 'Feature Flags' },
   { to: '/admin/assets', label: 'Assets Browser' },
   { to: '/admin/audit', label: 'Audit Log' },

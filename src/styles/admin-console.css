@@ -632,3 +632,137 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   NEWS MANAGEMENT
+═══════════════════════════════════════════════════════════ */
+.egAdminCardTitle {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: rgba(215,230,255,0.80);
+  letter-spacing: 0.04em;
+}
+
+.egAdminNewsForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.egAdminFormRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.egAdminFormRow label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(180,200,240,0.60);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.egAdminFormRow input,
+.egAdminFormRow select {
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  color: #eef3ff;
+  padding: 0 10px;
+  font-size: 0.82rem;
+}
+
+.egAdminFormRow.half {
+  flex-direction: row;
+  gap: 12px;
+}
+
+.egAdminFormRow.half > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.egAdminImageField {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.egAdminImageField input {
+  flex: 1;
+  min-width: 0;
+}
+
+.egAdminNewsPreview {
+  width: 100%;
+  max-width: 240px;
+  border-radius: 8px;
+  margin-top: 6px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.egAdminFormActions {
+  display: flex;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.egAdminNewsGrid {
+  display: grid;
+  gap: 10px;
+}
+
+.egAdminNewsItem {
+  display: flex;
+  gap: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.02);
+  padding: 10px;
+  align-items: flex-start;
+}
+
+.egAdminNewsItemImg {
+  width: 80px;
+  height: 54px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.egAdminNewsItemBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: rgba(220,235,255,0.88);
+}
+
+.egAdminNewsItemMeta {
+  display: flex;
+  gap: 8px;
+  font-size: 0.70rem;
+  color: rgba(180,200,240,0.50);
+}
+
+.egAdminNewsItemCat {
+  color: rgba(245,196,0,0.70);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.62rem;
+}
+
+.egAdminNewsItemActions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
