@@ -8,7 +8,7 @@ import { TEAM_ASSETS, assetUrl, getTeamAssets, type TeamKey } from '../lib/teamA
 import { getDataSeasonSlugForCompetition, getStoredCompetitionKey } from '../lib/competitionRegistry';
 import { useAllFixtures } from '../hooks/useFixtures';
 import { computeH2HStats, type H2HResult } from '../lib/h2hStats';
-import { fetchAflPlayers } from '../data/aflPlayers';
+import { fetchAflPlayers, type AflPlayer } from '../data/aflPlayers';
 import { fetchActiveCompetitionBaseline } from '../lib/seasonParticipantsRepo';
 import { PLAYER_STAT_CONFIGS, TEAM_STAT_CONFIGS } from '../types/stats2';
 import type { FixtureRow } from '../lib/fixturesRepo';
@@ -80,7 +80,7 @@ async function loadPlayers(): Promise<PlayerRow[]> {
     return [];
   }
 
-  const playersByTeam = new Map<string, typeof aflPlayers>();
+  const playersByTeam = new Map<string, AflPlayer[]>();
   for (const p of aflPlayers) {
     const tk = normalizeTeamKey(p.teamKey || p.teamName || '');
     if (!playersByTeam.has(tk)) playersByTeam.set(tk, []);
