@@ -2,7 +2,13 @@ export type StatsMode = 'players' | 'teams';
 export type StatsScope = 'total' | 'average';
 
 // Player keys shown in the Lovable design rail
-export type PlayerStatKey = 'goals' | 'disposals' | 'marks' | 'fantasyPoints';
+export type PlayerStatKey =
+  | 'goals'
+  | 'disposals'
+  | 'kicks'
+  | 'handballs'
+  | 'marks'
+  | 'fantasyPoints';
 
 export type TeamStatKey =
   | 'goals'
@@ -57,6 +63,8 @@ export type Team = {
 export const PLAYER_STAT_CONFIGS: PlayerStatConfig[] = [
   { key: 'goals', label: 'Goals', abbreviation: 'G' },
   { key: 'disposals', label: 'Disposals', abbreviation: 'D' },
+  { key: 'kicks', label: 'Kicks', abbreviation: 'K' },
+  { key: 'handballs', label: 'Handballs', abbreviation: 'HB' },
   { key: 'marks', label: 'Marks', abbreviation: 'M' },
   { key: 'fantasyPoints', label: 'Fantasy Points', abbreviation: 'FP' },
 ];

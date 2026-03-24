@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import SmartImg from './SmartImg';
 import { MelvinBetOddsStrip } from './MelvinBet';
 import { assetUrl, TEAM_ASSETS, type TeamKey } from '../lib/teamAssets';
+import { resolveTeamKey } from '../lib/entityResolvers';
 import '../styles/fixture-broadcast-shared.css';
 import '../styles/fixture-poster-card.css';
 
@@ -84,13 +85,14 @@ function normalizeTeamLabel(value: unknown): string {
 }
 
 function resolveTeamAsset(team: unknown) {
-  const key = String(team || '').trim();
-  const asset = (key ? TEAM_ASSETS[key as TeamKey] : null) || null;
+  const teamName = String(team || '').trim();
+  const resolvedKey = resolveTeamKey({ name: teamName });
+  const asset = TEAM_ASSETS[resolvedKey as TeamKey] || null;
   return {
-    key,
+    key: resolvedKey,
     asset: asset || {
-      name: normalizeTeamLabel(key),
-      shortName: normalizeTeamLabel(key).slice(0, 3).toUpperCase(),
+      name: normalizeTeamLabel(teamName),
+      shortName: normalizeTeamLabel(teamName).slice(0, 3).toUpperCase(),
       colour: '#2a2f38',
       logoPath: '',
       logoFile: '',

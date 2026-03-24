@@ -91,6 +91,7 @@ type SeasonTotalsRow = {
   marks?: number | null;
   tackles?: number | null;
   clearances?: number | null;
+  fantasy_points?: number | null;
 };
 
 type GoalAggregateRow = {
@@ -159,7 +160,7 @@ const LABELS: Record<StatKey, string> = {
   spoils: 'Spoils',
 };
 
-const CATEGORY_KEYS: StatKey[] = ['goals', 'disposals', 'marks', 'fantasyPoints'];
+const CATEGORY_KEYS: StatKey[] = ['goals', 'disposals', 'kicks', 'handballs', 'marks', 'fantasyPoints'];
 const TEAM_CATEGORY_KEYS: StatKey[] = [
   'disposals', 'kicks', 'handballs', 'inside50s', 'rebound50s', 'freesFor',
   'fiftyMetrePenalties', 'hitOuts', 'clearances', 'contestedPossessions',
@@ -280,7 +281,10 @@ function baselinePlayerRow(player: AflPlayer): PlayerMetricRow {
 }
 
 function baselineTeamRow(team: BaselineTeam): TeamMetricRow {
-  const teamKey = text(team.teamKey) || text(resolveTeamKey({ slug: team.slug, name: team.name })) || 'unknown';
+  const resolvedKey = text(resolveTeamKey({ slug: team.slug, teamKey: team.teamKey, name: team.name }));
+  const teamKey = resolvedKey && resolvedKey !== 'unknown'
+    ? resolvedKey
+    : text(team.teamKey) || text(team.slug) || 'unknown';
   return {
     id: text(team.id) || teamKey,
     name: text(team.name) || 'Unassigned',
@@ -314,7 +318,7 @@ async function fetchSeasonTotalsRows(seasonId: string): Promise<SeasonTotalsRow[
 
   const { data, error } = await supabase
     .from('eg_player_season_totals_ext')
-    .select('season_id,player_id,team_id,player_name,matches,disposals,kicks,handballs,marks,tackles,clearances')
+    .select('season_id,player_id,team_id,player_name,matches,disposals,kicks,handballs,marks,tackles,clearances,fantasy_points')
     .eq('season_id', seasonId)
     .limit(4000);
 
@@ -595,6 +599,12 @@ function teamMetaToResolved(teamId: string, teamMeta: Map<string, TeamMeta>) {
   };
 }
 
+function canonicalTeamKey(input: { teamKey?: string | null; slug?: string | null; name?: string | null }): string {
+  const resolved = text(resolveTeamKey({ teamKey: input.teamKey, slug: input.slug, name: input.name }));
+  if (resolved && resolved !== 'unknown') return resolved;
+  return text(input.teamKey) || text(input.slug) || 'unknown';
+}
+
 async function fetchLivePlayerMetrics(): Promise<PlayerMetricRow[]> {
   const season = await resolveActiveSeasonRecord();
   if (!season) return [];
@@ -692,6 +702,7 @@ async function fetchLivePlayerMetrics(): Promise<PlayerMetricRow[]> {
     target.totals.marks += safeNum(row.marks);
     target.totals.tackles += safeNum(row.tackles);
     target.totals.clearances += safeNum(row.clearances);
+    target.totals.fantasyPoints += safeNum(row.fantasy_points);
     target.avgs.goals = matches;
   }
 
@@ -724,6 +735,7 @@ async function fetchLivePlayerMetrics(): Promise<PlayerMetricRow[]> {
       row.avgs.marks = row.totals.marks / matches;
       row.avgs.tackles = row.totals.tackles / matches;
       row.avgs.clearances = row.totals.clearances / matches;
+      row.avgs.fantasyPoints = row.totals.fantasyPoints / matches;
       row.avgs.goalEfficiency = row.totals.goalEfficiency;
       return row;
     })
@@ -773,23 +785,6 @@ async function buildPlayers(statKey: StatKey): Promise<PlayerMetricRow[]> {
   }
 
   return Array.from(rowsById.values())
-    .map((row) => {
-      // Calculate Fantasy Points if needed based on other stats
-      // Formula: goals*6 + marks*3 + tackles*4 + disposals*1
-      if (row.totals.fantasyPoints === 0 && statKey === 'fantasyPoints') {
-        row.totals.fantasyPoints =
-          row.totals.goals * 6 +
-          row.totals.marks * 3 +
-          row.totals.tackles * 4 +
-          row.totals.disposals * 1;
-        row.avgs.fantasyPoints =
-          row.avgs.goals * 6 +
-          row.avgs.marks * 3 +
-          row.avgs.tackles * 4 +
-          row.avgs.disposals * 1;
-      }
-      return row;
-    })
     .sort((a, b) => {
       const diff = b.totals[statKey] - a.totals[statKey];
       if (Math.abs(diff) > 0.0001) return diff;
@@ -816,19 +811,20 @@ async function buildTeams(statKey: StatKey): Promise<TeamMetricRow[]> {
   // Build team ID → team key lookup from baseline
   const teamIdToKey = new Map<string, string>();
   for (const team of baseline.teams || []) {
-    if (team.id) teamIdToKey.set(text(team.id), text(team.teamKey) || text(resolveTeamKey({ slug: team.slug, name: team.name })) || 'unknown');
+    if (team.id) teamIdToKey.set(text(team.id), canonicalTeamKey({ teamKey: team.teamKey, slug: team.slug, name: team.name }));
   }
 
   for (const player of players) {
-    const prev = byTeam.get(player.teamKey) || {
-      id: player.teamKey,
+    const playerTeamKey = canonicalTeamKey({ teamKey: player.teamKey, name: player.teamName });
+    const prev = byTeam.get(playerTeamKey) || {
+      id: playerTeamKey,
       name: player.teamName,
-      teamKey: player.teamKey,
-      photoUrl: player.teamKey && player.teamKey !== 'unknown'
+      teamKey: playerTeamKey,
+      photoUrl: playerTeamKey && playerTeamKey !== 'unknown'
         ? resolveTeamLogoUrl({
-            teamKey: player.teamKey,
+            teamKey: playerTeamKey,
             name: player.teamName,
-            fallbackPath: TEAM_ASSETS[player.teamKey as TeamKey]?.logoFile || TEAM_ASSETS[player.teamKey as TeamKey]?.logoPath,
+            fallbackPath: TEAM_ASSETS[playerTeamKey as TeamKey]?.logoFile || TEAM_ASSETS[playerTeamKey as TeamKey]?.logoPath,
           })
         : undefined,
       totals: newStatRecord(),
@@ -840,7 +836,7 @@ async function buildTeams(statKey: StatKey): Promise<TeamMetricRow[]> {
       prev.avgs[key] += player.avgs[key];
     }
 
-    byTeam.set(player.teamKey, prev);
+    byTeam.set(playerTeamKey, prev);
   }
 
   // Merge coach-submitted team-level stats from fixtures (authoritative over player-derived zeros)

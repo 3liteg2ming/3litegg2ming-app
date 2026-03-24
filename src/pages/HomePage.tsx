@@ -366,7 +366,7 @@ function FeaturedMatchCard() {
       <button
         type="button"
         className="home-feature-card"
-        onClick={() => navigate(`/match-centre/afl26-season-two/${fixture.round}/${fixture.id}`)}
+        onClick={() => navigate(`/match-centre/${fixture.id}`)}
       >
         <div className="home-feature-card__meta">
           <span className="home-feature-card__round">Round {fixture.round || '-'}</span>

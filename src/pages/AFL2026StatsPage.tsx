@@ -152,6 +152,8 @@ async function buildStatsPlayersFromDb(): Promise<StatsPlayerRow[]> {
         stats: {
           goals: Number(player.goals || 0),
           disposals: Number(player.disposals || 0),
+          kicks: Number(player.kicks || 0),
+          handballs: Number(player.handballs || 0),
           marks: Number(player.marks || 0),
           fantasyPoints:
             Number(player.fantasyPoints || 0) ||

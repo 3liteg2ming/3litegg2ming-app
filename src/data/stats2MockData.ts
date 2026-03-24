@@ -10,6 +10,8 @@ function playerStats(overrides: Partial<Record<PlayerStatKey, number>>): Record<
   return {
     goals: 0,
     disposals: 0,
+    kicks: 0,
+    handballs: 0,
     marks: 0,
     fantasyPoints: 0,
     ...overrides,

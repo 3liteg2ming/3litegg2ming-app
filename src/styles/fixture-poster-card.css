@@ -11,7 +11,7 @@
   --tile: 60px;
   --logo: 36px;
   --gap: 10px;
-  --score: clamp(22px, 3.2vw, 34px);
+  --score: clamp(18px, 2.4vw, 26px);
   --dash: clamp(12px, 1.8vw, 16px);
   --minor: 12px;
   --statusH: 24px;
@@ -96,8 +96,8 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  opacity: 0.055;
-  filter: grayscale(1) brightness(0.22) contrast(1.12) blur(1px);
+  opacity: 0.012;
+  filter: grayscale(1) brightness(0.08) contrast(0.8) blur(2px);
 }
 
 .fxPosterCard__watermark--home {
@@ -185,7 +185,7 @@
   align-items: center;
   justify-items: center;
   column-gap: var(--gap);
-  padding: 16px var(--padX) 14px;
+  padding: 14px var(--padX) 12px;
   background: rgba(0, 0, 0, 0.16);
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -198,12 +198,12 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 8px 0;
+  padding: 6px 0;
   border-radius: 18px;
   background: rgba(0, 0, 0, 0.16);
   border: 1px solid rgba(255, 255, 255, 0.07);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 
@@ -331,7 +331,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
+  gap: 6px;
   width: 100%;
   min-width: 0;
   white-space: nowrap;
@@ -366,12 +366,12 @@
 }
 
 .fxPosterCard__minor {
-  margin-top: 5px;
+  margin-top: 3px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 4px 10px;
+  gap: 7px;
+  padding: 4px 9px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -425,7 +425,7 @@
   display: flex;
   justify-content: center;
   text-align: center;
-  padding: 0 var(--padX) 6px;
+  padding: 0 var(--padX) 4px;
 }
 
 .fxPosterCard__venue {
@@ -442,10 +442,11 @@
   position: relative;
   z-index: 3;
   text-align: center;
-  padding: 2px var(--padX) 10px;
-  font-size: 13px;
+  padding: 6px var(--padX) 8px;
+  font-size: 12px;
   font-weight: 950;
   color: rgba(245, 196, 0, 0.92);
+  letter-spacing: 0.01em;
 }
 
 .fxPosterCard__infoGrid {
@@ -453,17 +454,17 @@
   z-index: 3;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  padding: 10px var(--padX) 12px;
-  margin-bottom: 8px;
+  gap: 7px;
+  padding: 8px var(--padX) 10px;
+  margin-bottom: 6px;
 }
 
 .fxPosterCard__metaPill {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 8px 12px;
+  gap: 3px;
+  padding: 7px 11px;
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.07);
   background:
@@ -522,21 +523,29 @@
   width: 100%;
   border: 0;
   cursor: pointer;
+  min-height: 43px;
   padding: 12px 16px;
   border-radius: 0 0 var(--radius) var(--radius);
-  font-size: 12px;
-  font-weight: 950;
-  letter-spacing: 0.16em;
-  color: #111317;
+  border-top: 1px solid rgba(245, 196, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffd97a;
   background:
-    linear-gradient(180deg, rgba(255, 234, 151, 0.98) 0%, rgba(245, 196, 0, 0.98) 100%);
+    linear-gradient(90deg, rgba(245, 196, 0, 0.15), rgba(245, 196, 0, 0.04));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
     0 -1px 0 rgba(0, 0, 0, 0.12);
+  transition: opacity 0.12s ease;
 }
 
 .fxPosterCard__cta:active {
-  transform: translateY(1px);
+  opacity: 0.84;
 }
 
 @media (max-width: 520px) {
@@ -546,7 +555,7 @@
     --tile: 80px;
     --logo: 50px;
     --gap: 12px;
-    --score: clamp(20px, 5.4vw, 30px);
+    --score: clamp(18px, 4.8vw, 28px);
     --dash: 13px;
     --minor: 11px;
     --statusH: 24px;
@@ -587,12 +596,12 @@
   }
 
   .fxPosterCard__main {
-    padding: 14px var(--padX) 12px;
+    padding: 12px var(--padX) 10px;
     border-radius: 18px;
   }
 
   .fxPosterCard__center {
-    padding: 8px 0;
+    padding: 5px 0;
   }
 
   .fxPosterCard__teamBox {
@@ -620,13 +629,13 @@
   }
 
   .fxPosterCard__minor {
-    margin-top: 5px;
-    gap: 8px;
-    padding: 4px 9px;
+    margin-top: 3px;
+    gap: 7px;
+    padding: 4px 8px;
   }
 
   .fxPosterCard__metaBlock {
-    padding-bottom: 8px;
+    padding-bottom: 4px;
   }
 
   .fxPosterCard__venue {
@@ -635,19 +644,20 @@
   }
 
   .fxPosterCard__result {
-    padding-bottom: 12px;
-    font-size: 12px;
+    padding: 6px var(--padX) 10px;
+    font-size: 11px;
   }
 
   .fxPosterCard__infoGrid {
     gap: 6px;
-    padding: 8px var(--padX) 10px;
+    padding: 7px var(--padX) 8px;
+    margin-bottom: 5px;
   }
 
   .fxPosterCard__metaPill {
-    padding: 7px 10px;
+    padding: 6px 9px;
     border-radius: 12px;
-    gap: 3px;
+    gap: 2px;
   }
 
   .fxPosterCard__metaRow {
@@ -669,7 +679,7 @@
 
   .fxPosterCard__cta {
     padding: 12px 16px;
-    font-size: 11px;
-    letter-spacing: 0.14em;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
   }
 }

@@ -12,7 +12,7 @@ import type { Mode as LeadersMode, StatKey as LeadersStatKey, StatLeaders } from
 import { fetchAflPlayers } from '@/data/aflPlayers';
 import type { AflPlayer } from '@/data/aflPlayers';
 import { fetchActiveCompetitionBaseline } from '@/lib/seasonParticipantsRepo';
-import { assetUrl, getTeamAssets } from '@/lib/teamAssets';
+import { assetUrl } from '@/lib/teamAssets';
 import '@/styles/stat-leaders.css';
 
 const getInitials = (name: string) =>
@@ -55,7 +55,7 @@ const StatLeadersPage: React.FC = () => {
     const statKey = stat as LeadersStatKey;
 
     const supported =
-      (mode === 'players' && ['goals', 'disposals', 'kicks', 'handballs', 'marks', 'hitOuts', 'fantasyPoints'].includes(statKey)) ||
+      (mode === 'players' && PLAYER_STAT_CONFIGS.some((cfg) => cfg.key === statKey)) ||
       (mode === 'teams' && TEAM_STAT_CONFIGS.some((cfg) => cfg.key === statKey));
 
     if (!supported) {
