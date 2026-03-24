@@ -253,6 +253,8 @@ function MatchInfoPopup({ open, onClose }: { open: boolean; onClose: () => void 
         </div>
         <div className="fxMI__foot">
           <span>All Season Two matches use these settings.</span>
+          <br />
+          <span className="fxMI__footNote">Home team must take all photos and submit results.</span>
         </div>
       </div>
     </div>
@@ -503,6 +505,13 @@ export default function AFL26FixturesPage() {
             </button>
           </div>
         ) : null}
+
+        {fixturesPubliclyVisible && (
+          <div className="fxDeadlineNotice">
+            <span>Round 1 and Round 2 must be completed</span>
+            <span>before Sunday midnight.</span>
+          </div>
+        )}
 
         <div className="fxAflPanel">
           {!fixturesPubliclyVisible ? (

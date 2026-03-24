@@ -29,6 +29,7 @@ import { resolveTeamLogoUrl } from '@/lib/entityResolvers';
 import { GoalKickerPicker } from '../components/submit/GoalKickerPicker';
 import { fetchAflPlayers, type AflPlayer } from '../data/aflPlayers';
 import { FIXTURES_UNLOCK_LABEL, useFixtureVisibility } from '../lib/fixtureVisibility';
+import { getVisibleRounds } from '../lib/visibleRounds';
 import '../styles/submitPage.css';
 
 const supabase = requireSupabaseClient();
@@ -575,36 +576,49 @@ export default function SubmitPage() {
         if (!alive) return;
 
         const { fixtures: allFixtures } = await fetchSeasonFixturesBySeasonId(activeSeasonId, { limit: 1000, offset: 0 });
-        const currentRound = findCurrentRound(allFixtures);
-        if (currentRound === null) {
-          setPayload(null);
-          setLoadError(`All rounds in ${requestedSeasonSlug} are fully finalised. Nothing to submit.`);
-          return;
-        }
 
         const teamId = String(profile.team_id || '');
-        // Only the HOME team coach submits results for each fixture
-        const teamFixtureInRound = allFixtures.find(
-          (f) => f.round === currentRound && String(f.home_team_id || '') === teamId,
-        );
 
-        if (!teamFixtureInRound) {
-          // Check if they're the away team — show a clear message
-          const awayFixture = allFixtures.find(
-            (f) => f.round === currentRound && String(f.away_team_id || '') === teamId,
+        // Find the coach's eligible fixture across all visible rounds (Round 1 & 2).
+        // Pick the earliest round where this coach is the home team and the fixture is not final.
+        const visibleRounds = getVisibleRounds(allFixtures.map((f) => f.round));
+        const sortedVisible = Array.from(new Set(visibleRounds)).sort((a, b) => a - b);
+
+        let teamFixtureInRound: typeof allFixtures[number] | undefined;
+        let eligibleRound: number | null = null;
+
+        for (const round of sortedVisible) {
+          const candidate = allFixtures.find(
+            (f) => f.round === round && String(f.home_team_id || '') === teamId && !isFixtureFinal(f.status),
           );
-          setPayload(null);
-          if (awayFixture) {
-            setLoadError(`Your team is the away team in Round ${currentRound}. Only the home team coach submits the match result.`);
-          } else {
-            setLoadError(`No fixture found for your team in the current round (Round ${currentRound}).`);
+          if (candidate) {
+            teamFixtureInRound = candidate;
+            eligibleRound = round;
+            break;
           }
-          return;
         }
 
-        if (isFixtureFinal(teamFixtureInRound.status)) {
+        if (!teamFixtureInRound || eligibleRound === null) {
+          // Check if they have any fixture as away team across visible rounds
+          const awayFixture = allFixtures.find(
+            (f) => sortedVisible.includes(f.round) && String(f.away_team_id || '') === teamId && !isFixtureFinal(f.status),
+          );
+          // Check if all their home fixtures are already final
+          const allHomeFinal = sortedVisible.every((round) => {
+            const homeFixture = allFixtures.find(
+              (f) => f.round === round && String(f.home_team_id || '') === teamId,
+            );
+            return !homeFixture || isFixtureFinal(homeFixture.status);
+          });
+
           setPayload(null);
-          setLoadError(`Your fixture in Round ${currentRound} is already finalised. Waiting for other results in this round to complete.`);
+          if (awayFixture) {
+            setLoadError(`Your team is the away team in Round ${awayFixture.round}. Only the home team coach submits the match result.`);
+          } else if (allHomeFinal) {
+            setLoadError(`All your home fixtures in Round 1 and Round 2 are already finalised. Nothing to submit.`);
+          } else {
+            setLoadError(`No eligible fixture found for your team in the current rounds.`);
+          }
           return;
         }
 

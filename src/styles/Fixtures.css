@@ -105,6 +105,41 @@
   border-color: rgba(255, 255, 255, 0.14);
 }
 
+.fxDeadlineNotice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% - 16px);
+  margin: 6px auto 10px;
+  padding: 9px 16px;
+  border-radius: 12px;
+  background:
+    linear-gradient(170deg, rgba(245, 196, 0, 0.06) 0%, rgba(245, 196, 0, 0.015) 100%);
+  border: 1px solid rgba(245, 196, 0, 0.14);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: rgba(255, 237, 174, 0.88);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-align: center;
+  line-height: 1.5;
+  box-sizing: border-box;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(245, 196, 0, 0.08);
+}
+
+@media (max-width: 520px) {
+  .fxDeadlineNotice {
+    width: calc(100% - 12px);
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 0.72rem;
+  }
+}
+
 .fxAflPanel {
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.01);
@@ -612,5 +647,12 @@
   font-weight: 600;
   color: rgba(255, 255, 255, 0.28);
   letter-spacing: 0.01em;
+}
+
+.fxMI__footNote {
+  display: inline-block;
+  margin-top: 6px;
+  color: rgba(245, 196, 0, 0.6);
+  font-weight: 700;
 }
 

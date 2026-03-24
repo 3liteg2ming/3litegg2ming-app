@@ -109,7 +109,7 @@ export default function AdminLayout() {
               aria-expanded={mobileNavOpen}
               aria-controls="eg-admin-sections"
             >
-              {mobileNavOpen ? 'Close Sections' : 'Open Sections'}
+              {mobileNavOpen ? '\u2715 Close' : '\u2630 Sections'}
             </button>
           </div>
 

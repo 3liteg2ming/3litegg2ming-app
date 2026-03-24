@@ -353,57 +353,61 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
 
       {winner ? <div className="fxPosterCard__result">{winner}</div> : null}
 
-      <div className="fxPosterCard__infoGrid">
-        <div className="fxPosterCard__metaPill">
-          <div className="fxPosterCard__metaRow">
-            <span className="fxPosterCard__metaKey">Coach</span>
-            <span
-              className={`fxPosterCard__metaValue ${homeCoach === 'Coach TBC' ? 'is-tbc' : ''}`}
-              title={homeCoach}
-            >
-              {homeCoach}
-            </span>
+      {isUpcoming && (
+        <div className="fxPosterCard__infoGrid">
+          <div className="fxPosterCard__metaPill">
+            <div className="fxPosterCard__metaRow">
+              <span className="fxPosterCard__metaKey">Coach</span>
+              <span
+                className={`fxPosterCard__metaValue ${homeCoach === 'Coach TBC' ? 'is-tbc' : ''}`}
+                title={homeCoach}
+              >
+                {homeCoach}
+              </span>
+            </div>
+            <div className="fxPosterCard__metaRow">
+              <span className="fxPosterCard__metaKey">{homePlatform}</span>
+              <span
+                className={`fxPosterCard__metaValue fxPosterCard__metaValue--sub ${homePsn === 'PSN TBC' ? 'is-tbc' : ''}`}
+                title={homePsn}
+              >
+                {homePsn}
+              </span>
+            </div>
           </div>
-          <div className="fxPosterCard__metaRow">
-            <span className="fxPosterCard__metaKey">{homePlatform}</span>
-            <span
-              className={`fxPosterCard__metaValue fxPosterCard__metaValue--sub ${homePsn === 'PSN TBC' ? 'is-tbc' : ''}`}
-              title={homePsn}
-            >
-              {homePsn}
-            </span>
+
+          <div className="fxPosterCard__metaPill fxPosterCard__metaPill--away">
+            <div className="fxPosterCard__metaRow">
+              <span className="fxPosterCard__metaKey">Coach</span>
+              <span
+                className={`fxPosterCard__metaValue ${awayCoach === 'Coach TBC' ? 'is-tbc' : ''}`}
+                title={awayCoach}
+              >
+                {awayCoach}
+              </span>
+            </div>
+            <div className="fxPosterCard__metaRow">
+              <span className="fxPosterCard__metaKey">{awayPlatform}</span>
+              <span
+                className={`fxPosterCard__metaValue fxPosterCard__metaValue--sub ${awayPsn === 'PSN TBC' ? 'is-tbc' : ''}`}
+                title={awayPsn}
+              >
+                {awayPsn}
+              </span>
+            </div>
           </div>
         </div>
+      )}
 
-        <div className="fxPosterCard__metaPill fxPosterCard__metaPill--away">
-          <div className="fxPosterCard__metaRow">
-            <span className="fxPosterCard__metaKey">Coach</span>
-            <span
-              className={`fxPosterCard__metaValue ${awayCoach === 'Coach TBC' ? 'is-tbc' : ''}`}
-              title={awayCoach}
-            >
-              {awayCoach}
-            </span>
-          </div>
-          <div className="fxPosterCard__metaRow">
-            <span className="fxPosterCard__metaKey">{awayPlatform}</span>
-            <span
-              className={`fxPosterCard__metaValue fxPosterCard__metaValue--sub ${awayPsn === 'PSN TBC' ? 'is-tbc' : ''}`}
-              title={awayPsn}
-            >
-              {awayPsn}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <MelvinBetOddsStrip
-        matchId={safeMatch.id || `${homeKey}-${awayKey}`}
-        homeName={home.name}
-        awayName={away.name}
-        adminHomeOdds={safeMatch.adminHomeOdds}
-        adminAwayOdds={safeMatch.adminAwayOdds}
-      />
+      {isUpcoming && (
+        <MelvinBetOddsStrip
+          matchId={safeMatch.id || `${homeKey}-${awayKey}`}
+          homeName={home.name}
+          awayName={away.name}
+          adminHomeOdds={safeMatch.adminHomeOdds}
+          adminAwayOdds={safeMatch.adminAwayOdds}
+        />
+      )}
 
       <button className="fxPosterCard__cta" type="button" onClick={safeMatch.onMatchCentreClick}>
         MATCH CENTRE
