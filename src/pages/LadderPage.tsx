@@ -146,7 +146,7 @@ const LadderRow = memo(function LadderRow({ entry, mode }: { entry: LadderEntry;
         </div>
         <div className="ladRow__name" title={entry.teamName}>
           {displayName}
-          {entry.coachName && <div className="ladRow__coachName">Coach: {entry.coachName}</div>}
+          {entry.coachName && <div className="ladRow__coachName">{entry.coachName}</div>}
         </div>
       </div>
 
@@ -219,7 +219,7 @@ export default function LadderPage() {
           pos: idx + 1,
           teamKey,
           teamName: TEAM_ASSETS[teamKey]?.name || String(r.team_name || 'Team'),
-          coachName: coach?.display_name,
+          coachName: coach?.display_name ? String(coach.display_name).trim().split(/\s+/)[0] : undefined,
           played: Number(r.played || 0),
           wins: Number(r.wins || 0),
           losses: Number(r.losses || 0),

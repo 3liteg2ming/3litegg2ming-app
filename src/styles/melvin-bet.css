@@ -112,7 +112,9 @@
 .mb-pill {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
+  min-width: 40px;
   padding: 3px 8px;
   border-radius: 999px;
   font-size: 10px;
@@ -120,6 +122,7 @@
   letter-spacing: 0.04em;
   line-height: 1;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .mb-pill--lime {
@@ -286,13 +289,17 @@
   color: rgba(255, 255, 255, 0.6);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
-  min-width: 44px;
-  text-align: center;
-  padding: 5px 10px;
+  width: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 0 4px;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.07);
   transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+  box-sizing: border-box;
 }
 .mb-strip2__odd.is-fav {
   color: var(--mb-lime);

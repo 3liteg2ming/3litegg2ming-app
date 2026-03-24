@@ -39,6 +39,7 @@ const LadderPage = lazy(() => import('./pages/LadderPage'));
 const SubmitPage = lazy(() => import('./pages/SubmitPage'));
 const AFL2026StatsPage = lazy(() => import('./pages/AFL2026StatsPage'));
 const PlayerProfilePage = lazy(() => import('./pages/PlayerProfilePage'));
+const HeadToHeadPage = lazy(() => import('./pages/HeadToHeadPage'));
 const PreseasonPage = lazy(() => import('./pages/PreseasonPage'));
 const PreseasonRegistrationPage = lazy(() => import('./pages/PreseasonRegistrationPage'));
 const AdminConsolePage = lazy(() => import('./pages/AdminConsolePage'));
@@ -240,7 +241,7 @@ function AppRoutes() {
 
                 <Route path="/stats3" element={<AFL2026StatsPage />} />
                 <Route path="/stats3/leaders" element={<StatLeadersPage />} />
-                <Route path="/stats3/compare" element={<ComingSoonPage />} />
+                <Route path="/stats3/compare" element={<HeadToHeadPage />} />
                 <Route path="/player/:playerId" element={<PlayerProfilePage />} />
 
                 <Route path="/stats" element={<Navigate to="/stats3" replace />} />

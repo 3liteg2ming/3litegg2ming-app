@@ -270,27 +270,34 @@
 
 .ladRow__coachName {
   font-size: 10px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.6);
-  margin-top: 5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 3px;
+  letter-spacing: 0.01em;
 }
 
 /* ─── PREMIERSHIP ODDS ────────────────────────────────── */
 .ladRow__prem {
-  flex: 0 0 48px;
+  flex: 0 0 54px;
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .ladRow__premOdds {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 11px;
   font-weight: 800;
   color: var(--mb-lime, rgba(168, 255, 4, 0.85));
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
-  min-width: 38px;
+  width: 50px;
+  height: 28px;
   text-align: center;
-  padding: 4px 7px;
+  padding: 0 4px;
   border-radius: 7px;
   background: rgba(168, 255, 4, 0.07);
   border: 1px solid rgba(168, 255, 4, 0.12);

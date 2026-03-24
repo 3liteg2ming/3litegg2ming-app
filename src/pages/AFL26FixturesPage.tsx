@@ -359,7 +359,13 @@ export default function AFL26FixturesPage() {
       return allFixtures.filter((fixture) => {
         const homeId = String(fixture.home_team_id || '');
         const awayId = String(fixture.away_team_id || '');
-        return homeId === selectedTeamId || awayId === selectedTeamId;
+        const teamMatches = homeId === selectedTeamId || awayId === selectedTeamId;
+
+        // When filtering by team, only show rounds 1 and 2
+        const roundNumber = toPositiveInt(fixture.round) ?? toPositiveInt(fixture.stage_index) ?? 1;
+        const roundValid = isRoundVisible(roundNumber);
+
+        return teamMatches && roundValid;
       });
     }
 
