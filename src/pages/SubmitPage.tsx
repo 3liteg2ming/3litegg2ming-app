@@ -1362,8 +1362,12 @@ export default function SubmitPage() {
                       <div>
                         <div className="mdcGoalKickerSection__sub">Search players with headshots or add a manual name. Use + / - to adjust.</div>
                       </div>
-                      <div className={`mdcGoalKickerSection__status ${goalKickersValid ? 'is-valid' : 'is-warn'}`}>
-                        {goalKickersValid ? 'All goals assigned' : `${homeUnassignedGoals + awayUnassignedGoals} unassigned`}
+                      <div className={`mdcGoalKickerSection__status ${goalKickersValid && (homeGoalsN > 0 || awayGoalsN > 0) ? 'is-valid' : homeGoalsN === 0 && awayGoalsN === 0 ? '' : 'is-warn'}`}>
+                        {homeGoalsN === 0 && awayGoalsN === 0
+                          ? 'Enter score first'
+                          : goalKickersValid
+                            ? 'All goals assigned'
+                            : `${homeUnassignedGoals + awayUnassignedGoals} unassigned`}
                       </div>
                     </div>
 

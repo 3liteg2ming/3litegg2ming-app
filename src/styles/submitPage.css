@@ -1730,6 +1730,8 @@ button.mdcChecklist__row {
   background: linear-gradient(165deg, rgba(21, 26, 40, 0.72), rgba(10, 14, 22, 0.9));
   padding: 14px;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  overflow: hidden;
+  min-width: 0;
 }
 
 .kickerPicker__header {
