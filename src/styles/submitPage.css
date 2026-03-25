@@ -319,31 +319,32 @@
 /* ── Card ── */
 
 .mdcCard {
-  border-radius: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  background: linear-gradient(165deg, rgba(22, 26, 40, 0.85), rgba(7, 11, 18, 0.93));
-  box-shadow: 0 20px 60px -14px rgba(0, 0, 0, 0.82), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(165deg, rgba(20, 24, 38, 0.82), rgba(7, 11, 18, 0.92));
+  box-shadow: 0 16px 48px -14px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.07);
   overflow: hidden;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .mdcCard__head {
-  padding: 14px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 16px;
+  padding: 13px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 15px;
   font-weight: 900;
   letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .mdcCard__body {
-  padding: 16px 16px 18px;
+  padding: 14px 16px 18px;
 }
 
 .mdcCard__hint {
-  margin: 0 0 14px;
+  margin: 0 0 12px;
   font-size: 13px;
   line-height: 1.5;
-  color: rgba(221, 231, 241, 0.72);
+  color: rgba(221, 231, 241, 0.58);
 }
 
 /* ── Instructions card ── */
@@ -441,6 +442,12 @@
   font-weight: 900;
   padding: 0 10px;
   text-align: center;
+  transition: border-color 0.15s;
+}
+
+.mdcScoreInputs input:focus {
+  border-color: rgba(245, 196, 0, 0.4);
+  outline: none;
 }
 
 .mdcScoreTotal {
@@ -570,6 +577,12 @@
   font-weight: 900;
   text-align: center;
   padding: 0 4px;
+  transition: border-color 0.15s;
+}
+
+.mdcQuarterGrid__inputs input:focus {
+  border-color: rgba(245, 196, 0, 0.36);
+  outline: none;
 }
 
 .mdcQuarterGrid__total {
@@ -584,9 +597,10 @@
 .mdcTeamStatsGrid {
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) minmax(80px, 120px) minmax(80px, 120px);
-  gap: 10px 10px;
-  row-gap: 12px;
+  gap: 0 10px;
   align-items: center;
+  /* Zebra-stripe every other data row for easier scanning */
+  counter-reset: stat-row;
 }
 
 .mdcTeamStatsGrid__headerCell {
@@ -595,6 +609,8 @@
   text-transform: uppercase;
   color: rgba(221, 231, 241, 0.5);
   font-weight: 850;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .mdcTeamStatsGrid__headerCell--center {
@@ -604,24 +620,28 @@
 .mdcTeamStatsGrid__label {
   font-size: 13px;
   font-weight: 600;
-  color: rgba(243, 247, 252, 0.92);
+  color: rgba(243, 247, 252, 0.88);
+  padding: 8px 6px 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .mdcTeamStatsGrid__input {
   width: 100%;
   min-width: 0;
   text-align: center;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
   color: #f3f7fc;
-  padding: 11px 8px;
+  padding: 9px 6px;
   font-size: 15px;
   font-weight: 800;
+  margin: 4px 0;
 }
 
 .mdcTeamStatsGrid__input:focus {
   border-color: rgba(245, 196, 0, 0.44);
+  background: rgba(245, 196, 0, 0.04);
   outline: none;
 }
 
@@ -639,13 +659,14 @@
 
 .mdcSlot {
   border-radius: 14px;
-  border: 1px dashed rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1.5px dashed rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.02);
   padding: 10px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   min-height: 100px;
+  transition: border-color 0.15s, background 0.15s;
 }
 
 .mdcSlot--filled {
@@ -783,9 +804,9 @@
 
 .mdcReviewScore {
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+  padding: 16px 12px;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
@@ -793,50 +814,66 @@
 }
 
 .mdcReviewScore__value {
-  font-size: clamp(28px, 10vw, 56px);
+  font-size: clamp(30px, 10vw, 56px);
   font-weight: 950;
   line-height: 1;
+  color: rgba(255, 255, 255, 0.96);
 }
 
 .mdcReviewScore__teams {
   text-align: center;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.74);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
+  line-height: 1.5;
 }
 
 .mdcReviewScore__teams span {
-  margin: 0 6px;
-  color: rgba(245, 196, 0, 0.9);
+  display: block;
+  margin: 2px 0;
+  color: rgba(245, 196, 0, 0.8);
+  font-size: 9px;
+  letter-spacing: 0.16em;
 }
 
 /* ── Checklist ── */
 
 .mdcChecklist {
-  margin-top: 12px;
+  margin-top: 14px;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   overflow: hidden;
 }
 
 .mdcChecklist__row {
-  padding: 10px 12px;
+  padding: 11px 12px;
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.68);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.52);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
+  transition: color 0.15s, background 0.15s;
 }
 
 .mdcChecklist__row:last-child {
   border-bottom: 0;
 }
 
+.mdcChecklist__row svg:first-child {
+  opacity: 0.35;
+  transition: opacity 0.15s, color 0.15s;
+}
+
 .mdcChecklist__row.is-ok {
-  color: rgba(190, 255, 214, 0.95);
+  color: rgba(190, 255, 214, 0.92);
+}
+
+.mdcChecklist__row.is-ok svg:first-child {
+  opacity: 1;
+  color: rgba(74, 222, 128, 0.85);
 }
 
 /* ── Validation ── */
@@ -892,11 +929,11 @@
 
 .mdcBtn {
   min-width: 0;
-  height: 46px;
+  height: 48px;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.07);
-  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.85);
   font-size: 13px;
   font-weight: 900;
   letter-spacing: 0.05em;
@@ -906,6 +943,12 @@
   justify-content: center;
   gap: 6px;
   padding: 0 14px;
+  touch-action: manipulation;
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.mdcBtn:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .mdcBtn:disabled {
@@ -916,6 +959,11 @@
   border-color: rgba(245, 196, 0, 0.36);
   background: linear-gradient(145deg, rgba(245, 196, 0, 0.26), rgba(245, 196, 0, 0.1));
   color: rgba(255, 250, 230, 0.98);
+  box-shadow: 0 4px 16px -6px rgba(245, 196, 0, 0.15);
+}
+
+.mdcBtn--primary:active:not(:disabled) {
+  background: linear-gradient(145deg, rgba(245, 196, 0, 0.34), rgba(245, 196, 0, 0.16));
 }
 
 /* ── Success overlay ── */
@@ -1071,18 +1119,19 @@ label {
 
   .mdcTeamStatsGrid {
     grid-template-columns: minmax(0, 1.4fr) minmax(58px, 90px) minmax(58px, 90px);
-    gap: 6px 8px;
-    row-gap: 8px;
+    gap: 0 6px;
   }
 
   .mdcTeamStatsGrid__label {
     font-size: 12px;
+    padding: 6px 4px 6px 0;
   }
 
   .mdcTeamStatsGrid__input {
-    padding: 8px 4px;
+    padding: 7px 3px;
     font-size: 14px;
-    border-radius: 10px;
+    border-radius: 8px;
+    margin: 3px 0;
   }
 
   .mdcCard {
@@ -1147,81 +1196,79 @@ label {
 .mdcStepper {
   position: relative;
   display: flex;
-  gap: 8px;
+  gap: 0;
   margin: 0 0 16px;
-  padding: 4px 2px 10px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.mdcStepper::-webkit-scrollbar {
-  display: none;
+  padding: 0;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.03);
+  overflow: hidden;
 }
 
 .mdcStepper__track {
   position: absolute;
-  left: 18px;
-  right: 18px;
-  top: 28px;
-  height: 2px;
-  background: rgba(255, 255, 255, 0.07);
-  border-radius: 999px;
+  inset: 0;
   z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 14px;
 }
 
 .mdcStepper__fill {
   height: 100%;
-  background: linear-gradient(90deg, rgba(245, 196, 0, 0.95), rgba(245, 196, 0, 0.35));
-  border-radius: 999px;
-  transition: width 0.2s ease;
+  background: linear-gradient(90deg, rgba(245, 196, 0, 0.06), rgba(245, 196, 0, 0.03));
+  transition: width 0.25s ease;
 }
 
 .mdcStepper__step {
   position: relative;
   z-index: 1;
-  min-width: 64px;
-  flex: 1 0 64px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(165deg, rgba(18, 23, 36, 0.88), rgba(8, 11, 20, 0.96));
-  border-radius: 16px;
-  padding: 10px 6px 9px;
+  min-width: 0;
+  flex: 1;
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  padding: 10px 4px 9px;
   display: grid;
   justify-items: center;
-  gap: 6px;
-  color: rgba(255, 255, 255, 0.6);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+  gap: 4px;
+  color: rgba(255, 255, 255, 0.4);
+  transition: color 0.15s, background 0.15s;
+}
+
+/* Thin separator between steps */
+.mdcStepper__step + .mdcStepper__step {
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .mdcStepper__step.is-active {
-  border-color: rgba(245, 196, 0, 0.42);
-  background: linear-gradient(165deg, rgba(49, 40, 16, 0.74), rgba(10, 14, 22, 0.98));
+  background: linear-gradient(180deg, rgba(245, 196, 0, 0.1), rgba(245, 196, 0, 0.03));
   color: rgba(255, 245, 214, 0.98);
-  box-shadow: 0 12px 26px -18px rgba(245, 196, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 .mdcStepper__step.is-done,
 .mdcStepper__step.is-complete {
-  border-color: rgba(45, 212, 191, 0.25);
-  color: rgba(214, 255, 245, 0.9);
+  color: rgba(190, 255, 240, 0.82);
 }
 
 .mdcStepper__dot {
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   border-radius: 999px;
   display: grid;
   place-items: center;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
 }
 
 .mdcStepper__step.is-active .mdcStepper__dot {
-  border-color: rgba(245, 196, 0, 0.48);
-  background: rgba(245, 196, 0, 0.14);
+  border-color: rgba(245, 196, 0, 0.55);
+  background: rgba(245, 196, 0, 0.16);
   color: rgba(255, 239, 170, 0.98);
+  box-shadow: 0 0 12px -4px rgba(245, 196, 0, 0.35);
 }
 
 .mdcStepper__step.is-done .mdcStepper__dot,
@@ -1232,9 +1279,9 @@ label {
 }
 
 .mdcStepper__label {
-  font-size: 9px;
-  font-weight: 850;
-  letter-spacing: 0.09em;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   text-align: center;
   line-height: 1.15;
@@ -1242,7 +1289,9 @@ label {
 }
 
 .mdcStepNav {
-  margin-top: 22px;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
@@ -1256,14 +1305,15 @@ label {
 .mdcStepProgress {
   margin-bottom: 12px;
   font-size: 11px;
-  font-weight: 850;
-  letter-spacing: 0.08em;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.58);
+  color: rgba(255, 255, 255, 0.46);
 }
 
 .mdcStepProgress span {
-  color: rgba(245, 214, 102, 0.96);
+  color: rgba(245, 214, 102, 0.92);
+  font-weight: 900;
 }
 
 .mdcConfirmMatch {
@@ -1364,21 +1414,35 @@ label {
 
 .mdcScreenshotGroup {
   margin-top: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.02);
+  padding: 12px;
 }
 
 .mdcScreenshotGroup + .mdcScreenshotGroup {
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255,255,255,0.08);
+  margin-top: 12px;
 }
 
 .mdcScreenshotGroup__title {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.82);
+  color: rgba(255,255,255,0.76);
   margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mdcScreenshotGroup__title::before {
+  content: '';
+  width: 3px;
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(245, 196, 0, 0.5);
+  flex-shrink: 0;
 }
 
 .mdcUploadGuide {
@@ -1522,20 +1586,26 @@ label {
 
 .mdcBulkUpload__empty {
   width: 100%;
-  min-height: 122px;
+  min-height: 100px;
   border-radius: 14px;
-  border: 1px dashed rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.04);
+  border: 1.5px dashed rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.02);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  color: rgba(255,255,255,0.68);
-  font-size: 13px;
+  gap: 6px;
+  color: rgba(255,255,255,0.52);
+  font-size: 12px;
   font-weight: 800;
   text-align: center;
   padding: 12px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.mdcBulkUpload__empty:active {
+  border-color: rgba(245, 196, 0, 0.3);
+  color: rgba(255,235,170,0.88);
 }
 
 .mdcBulkUpload__empty svg {
@@ -1567,24 +1637,13 @@ button.mdcChecklist__row {
 }
 
 .mdcChecklist__row.is-ok {
-  border-color: rgba(45, 212, 191, 0.18);
-  background: rgba(45, 212, 191, 0.06);
-}
-
-@media (min-width: 741px) {
-  .mdcStepper__step {
-    min-width: 0;
-  }
+  border-color: rgba(45, 212, 191, 0.1);
+  background: rgba(45, 212, 191, 0.04);
 }
 
 @media (max-width: 740px) {
   .mdcStepper {
-    gap: 8px;
-    padding-bottom: 6px;
-  }
-
-  .mdcStepper__track {
-    display: none;
+    border-radius: 12px;
   }
 
   .mdcConfirmMatch__fixture {
@@ -1604,22 +1663,23 @@ button.mdcChecklist__row {
 }
 
 @media (max-width: 540px) {
+  .mdcStepper {
+    border-radius: 10px;
+  }
+
   .mdcStepper__step {
-    min-width: 58px;
-    flex-basis: 58px;
-    padding: 8px 4px 7px;
-    border-radius: 12px;
+    padding: 8px 2px 7px;
   }
 
   .mdcStepper__dot {
-    width: 26px;
-    height: 26px;
-    font-size: 10px;
+    width: 22px;
+    height: 22px;
+    font-size: 9px;
   }
 
   .mdcStepper__label {
-    font-size: 7.5px;
-    letter-spacing: 0.06em;
+    font-size: 7px;
+    letter-spacing: 0.04em;
   }
 
   .mdcStepNav {
@@ -1722,62 +1782,56 @@ button.mdcChecklist__row {
   color: rgba(255, 235, 170, 0.96);
 }
 
-/* ── Goal Kicker Picker (mobile-first redesign) ── */
+/* ── Goal Kicker Picker (mobile-first vertical redesign) ── */
 
-.kickerPicker {
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: linear-gradient(165deg, rgba(21, 26, 40, 0.72), rgba(10, 14, 22, 0.9));
-  padding: 14px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+.kp {
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.18);
+  padding: 12px;
   min-width: 0;
 }
 
-.kickerPicker__header {
-  margin-bottom: 10px;
+/* Prevent all picker interactive elements from double-tap zoom on iOS */
+.kp button,
+.kp input {
+  touch-action: manipulation;
 }
 
-.kickerPicker__title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  color: rgba(255,255,255,0.96);
-}
+/* ── Team toggle ── */
 
-.kickerPicker__subtitle {
-  margin: 4px 0 0;
-  font-size: 12px;
-  line-height: 1.4;
-  color: rgba(255,255,255,0.56);
-}
-
-/* ── Team toggle with built-in counter ── */
-
-.kickerPicker__toggle {
+.kp__toggle {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6px;
 }
 
-.kickerPicker__toggleBtn {
+.kp__toggleBtn {
   min-width: 0;
-  height: 44px;
+  height: 46px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.74);
+  border: 1.5px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: rgba(255,255,255,0.48);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 0 8px;
+  gap: 8px;
+  padding: 0 10px;
+  transition: border-color 0.15s, background 0.15s, color 0.15s, box-shadow 0.15s;
 }
 
-.kickerPicker__toggleName {
-  font-size: 12px;
+.kp__toggleBtn.is-active {
+  border-color: rgba(245,196,0,0.42);
+  background: linear-gradient(145deg, rgba(245,196,0,0.14), rgba(245,196,0,0.04));
+  color: rgba(255,245,214,0.98);
+  box-shadow: 0 0 16px -6px rgba(245, 196, 0, 0.2);
+}
+
+.kp__toggleName {
+  font-size: 13px;
   font-weight: 850;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
@@ -1785,127 +1839,101 @@ button.mdcChecklist__row {
   min-width: 0;
 }
 
-.kickerPicker__toggleBadge {
+.kp__toggleBadge {
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 900;
-  padding: 2px 7px;
+  padding: 3px 8px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.55);
   font-variant-numeric: tabular-nums;
+  transition: background 0.15s, color 0.15s;
 }
 
-.kickerPicker__toggleBtn.isActive {
-  border-color: rgba(245,196,0,0.34);
-  background: linear-gradient(145deg, rgba(245,196,0,0.16), rgba(255,255,255,0.04));
-  color: rgba(255,245,214,0.98);
-}
-
-.kickerPicker__toggleBtn.isActive .kickerPicker__toggleBadge {
+.kp__toggleBtn.is-active .kp__toggleBadge {
   background: rgba(245,196,0,0.22);
   color: rgba(255,245,214,0.98);
 }
 
-/* ── Status hint ── */
+/* ── Status bar ── */
 
-.kickerPicker__activeHint {
+.kp__status {
   margin-top: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  text-align: center;
-  padding: 6px;
-  border-radius: 8px;
-}
-
-.kickerPicker__activeHint.isDone {
-  color: rgba(74,222,128,0.92);
-  background: rgba(74,222,128,0.06);
-}
-
-.kickerPicker__activeHint.isWarn {
-  color: rgba(255,214,102,0.96);
-  background: rgba(245,196,0,0.08);
-}
-
-.kickerPicker__activeHint.isNeutral {
-  color: rgba(255,255,255,0.56);
-  background: rgba(255,255,255,0.04);
-}
-
-/* ── Selected kickers — horizontal scrollable row ── */
-
-.kickerPicker__selectedRow {
-  margin-top: 10px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
-  overscroll-behavior-x: contain;
-  padding-bottom: 8px;
-  scrollbar-width: none;
-}
-
-.kickerPicker__selectedRow::-webkit-scrollbar {
-  display: none;
-}
-
-.kickerPicker__selectedInner {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  gap: 8px;
-  width: max-content;
-  min-width: 100%;
-  padding-right: 16px;
-}
-
-
-.kickerSelected {
-  position: relative;
-  flex: 0 0 auto;
-  width: 80px;
-  border-radius: 14px;
-  border: 1px solid rgba(245,196,0,0.22);
-  background: rgba(245,196,0,0.06);
-  padding: 8px 4px 6px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.kickerSelected__remove {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,120,120,0.3);
-  background: rgba(255,120,120,0.15);
-  color: rgba(255,200,200,0.9);
-  display: grid;
-  place-items: center;
-  padding: 0;
-  cursor: pointer;
-}
-
-.kickerSelected__goalBadge {
-  position: absolute;
-  top: 3px;
-  right: 3px;
   font-size: 11px;
-  font-weight: 950;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: rgba(245,196,0,0.28);
-  color: rgba(255,245,214,0.98);
-  line-height: 1.4;
+  font-weight: 800;
+  text-align: center;
+  padding: 6px 12px;
+  border-radius: 8px;
+  letter-spacing: 0.03em;
+  /* Always render a border so height is stable across state changes */
+  border: 1px solid transparent;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
 
-.kickerSelected__avatar {
-  width: 36px;
-  height: 36px;
+.kp__status.is-done {
+  color: rgba(74,222,128,0.95);
+  background: rgba(74,222,128,0.06);
+  border-color: rgba(74,222,128,0.14);
+}
+
+.kp__status.is-warn {
+  color: rgba(255,220,110,0.95);
+  background: rgba(245,196,0,0.06);
+  border-color: rgba(245,196,0,0.16);
+}
+
+.kp__status.is-neutral {
+  color: rgba(255,255,255,0.38);
+  background: rgba(255,255,255,0.02);
+  border-color: rgba(255,255,255,0.04);
+  font-style: italic;
+}
+
+/* ── Selected kickers — vertical stacked cards ── */
+
+.kp__selected {
+  margin-top: 10px;
+  display: grid;
+  gap: 5px;
+  /* Cap height for many-kickers edge case — scrollable */
+  max-height: 320px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
+}
+
+.kp__selected::-webkit-scrollbar {
+  width: 3px;
+}
+
+.kp__selected::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.kp__selected::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 999px;
+}
+
+.kpKicker {
+  position: relative;
+  display: grid;
+  grid-template-columns: 38px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(245,196,0,0.18);
+  background: rgba(245,196,0,0.04);
+  padding: 7px 32px 7px 8px;
+  min-height: 52px;
+}
+
+.kpKicker__avatar {
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
   overflow: hidden;
   background: rgba(255,255,255,0.06);
@@ -1914,233 +1942,294 @@ button.mdcChecklist__row {
   flex-shrink: 0;
 }
 
-.kickerSelected__avatar img {
+.kpKicker__avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.kickerSelected__avatar svg {
-  color: rgba(255,255,255,0.45);
+.kpKicker__avatar svg {
+  color: rgba(255,255,255,0.35);
 }
 
-.kickerSelected__name {
-  font-size: 10px;
+.kpKicker__info {
+  min-width: 0;
+}
+
+.kpKicker__name {
+  font-size: 13px;
   font-weight: 800;
-  color: rgba(255,255,255,0.88);
-  text-align: center;
+  color: rgba(255,255,255,0.92);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%;
   line-height: 1.2;
 }
 
-.kickerSelected__controls {
-  display: flex;
-  gap: 4px;
+.kpKicker__goalLabel {
+  font-size: 11px;
+  color: rgba(255,220,110,0.82);
+  font-weight: 700;
+  margin-top: 1px;
 }
 
-.kickerSelected__btn {
-  width: 26px;
-  height: 22px;
-  border-radius: 6px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.8);
+.kpKicker__controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.kpKicker__btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.78);
   display: grid;
   place-items: center;
   padding: 0;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.08s;
 }
 
-.kickerSelected__btn--plus {
-  border-color: rgba(74,222,128,0.28);
-  background: rgba(74,222,128,0.1);
-  color: rgba(190,255,214,0.95);
+.kpKicker__btn:active {
+  background: rgba(255,255,255,0.12);
+}
+
+.kpKicker__btn--dec {
+  border-color: rgba(255,120,120,0.2);
+  background: rgba(255,120,120,0.07);
+  color: rgba(255,180,180,0.9);
+}
+
+.kpKicker__btn--dec:active {
+  background: rgba(255,120,120,0.16);
+}
+
+.kpKicker__btn--inc {
+  border-color: rgba(74,222,128,0.24);
+  background: rgba(74,222,128,0.08);
+  color: rgba(180,255,210,0.92);
+}
+
+.kpKicker__btn--inc:active {
+  background: rgba(74,222,128,0.18);
+}
+
+.kpKicker__count {
+  min-width: 30px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 950;
+  color: rgba(255,245,214,0.98);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.kpKicker__remove {
+  position: absolute;
+  top: 50%;
+  right: 5px;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,120,120,0.2);
+  background: rgba(255,120,120,0.08);
+  color: rgba(255,180,180,0.8);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.08s;
+}
+
+.kpKicker__remove:active {
+  background: rgba(255,120,120,0.22);
 }
 
 /* ── Search bar ── */
 
-.kickerPicker__search {
+.kp__search {
   margin-top: 10px;
   display: flex;
   align-items: center;
   gap: 8px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.04);
-  padding: 8px 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+  padding: 10px 12px;
+  transition: border-color 0.15s;
 }
 
-.kickerPicker__search svg {
+.kp__search:focus-within {
+  border-color: rgba(245,196,0,0.32);
+}
+
+.kp__search svg {
   flex-shrink: 0;
-  color: rgba(255,255,255,0.45);
+  color: rgba(255,255,255,0.36);
 }
 
-.kickerPicker__search input {
+.kp__search:focus-within svg {
+  color: rgba(245,196,0,0.6);
+}
+
+.kp__search input {
   min-width: 0;
   flex: 1;
   border: 0;
   outline: none;
   background: transparent;
   color: rgba(255,255,255,0.94);
+  /* 16px prevents iOS Safari auto-zoom on focus */
   font-size: 16px;
 }
 
-.kickerPicker__search input::placeholder {
-  color: rgba(255,255,255,0.38);
+.kp__search input::placeholder {
+  color: rgba(255,255,255,0.32);
 }
 
-.kickerPicker__addBtn {
+.kp__addBtn {
   flex-shrink: 0;
-  height: 30px;
-  border-radius: 8px;
+  height: 34px;
+  border-radius: 10px;
   border: 1px solid rgba(245,196,0,0.26);
   background: rgba(245,196,0,0.1);
   color: rgba(255,240,180,0.98);
-  padding: 0 10px;
+  padding: 0 12px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 850;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* ── Player chip scroll ── */
+/* ── Available players — vertical scrollable list ── */
 
-.kickerPicker__chipScroll {
+.kp__playerSection {
   margin-top: 10px;
-  overflow-x: auto;
-  overflow-y: hidden;
+}
+
+.kp__playerLabel {
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.38);
+  margin-bottom: 4px;
+  padding-left: 2px;
+}
+
+.kp__playerList {
+  position: relative;
+  max-height: 240px;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
-  overscroll-behavior-x: contain;
-  padding-bottom: 8px;
-  scrollbar-width: none;
+  overscroll-behavior-y: contain;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(0,0,0,0.14);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
 }
 
-.kickerPicker__chipScroll::-webkit-scrollbar {
-  display: none;
+.kp__playerList::-webkit-scrollbar {
+  width: 3px;
 }
 
-.kickerPicker__chipInner {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  gap: 6px;
-  width: max-content;
-  min-width: 100%;
-  padding-right: 16px;
+.kp__playerList::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.kickerChip {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.kp__playerList::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.05);
-  padding: 5px 10px 5px 5px;
+}
+
+.kpPlayer {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 34px 1fr 34px;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  background: transparent;
   color: rgba(255,255,255,0.86);
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.08s;
+  text-align: left;
 }
 
-.kickerChip:active {
-  background: rgba(245,196,0,0.12);
-  border-color: rgba(245,196,0,0.3);
+.kpPlayer:last-child {
+  border-bottom: 0;
 }
 
-.kickerChip__avatar {
-  width: 28px;
-  height: 28px;
+.kpPlayer:active {
+  background: rgba(245,196,0,0.1);
+}
+
+.kpPlayer__avatar {
+  width: 34px;
+  height: 34px;
   border-radius: 999px;
   overflow: hidden;
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.05);
   display: grid;
   place-items: center;
   flex-shrink: 0;
 }
 
-.kickerChip__avatar img {
+.kpPlayer__avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.kickerChip__avatar svg {
-  color: rgba(255,255,255,0.4);
+.kpPlayer__avatar svg {
+  color: rgba(255,255,255,0.3);
 }
 
-.kickerChip__name {
-  max-width: 110px;
+.kpPlayer__name {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
-.kickerPicker__manualHint {
+.kpPlayer__action {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(74,222,128,0.18);
+  background: rgba(74,222,128,0.06);
+  color: rgba(180,255,210,0.82);
+  display: grid;
+  place-items: center;
+}
+
+.kp__manualHint {
   margin-top: 8px;
   font-size: 12px;
-  color: rgba(255,214,102,0.92);
+  color: rgba(255,214,102,0.88);
   text-align: center;
-}
-
-/* ── Summary pills ── */
-
-.kickerPicker__summary {
-  margin-top: 10px;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  padding-top: 8px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
-  overscroll-behavior-x: contain;
-  padding-bottom: 6px;
-  scrollbar-width: none;
-}
-
-.kickerPicker__summary::-webkit-scrollbar {
-  display: none;
-}
-
-.kickerPicker__summaryChips {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  gap: 6px;
-  width: max-content;
-  min-width: 100%;
-}
-
-.kickerPicker__summaryChip {
-  flex: 0 0 auto;
-  white-space: nowrap;
-  border-radius: 999px;
-  padding: 5px 8px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.05);
-  font-size: 11px;
-  color: rgba(255,255,255,0.76);
-}
-
-.kickerPicker__summaryChip strong {
-  color: rgba(255,245,214,0.98);
-}
-
-.kickerPicker__summaryChip--warn {
-  border-color: rgba(245,196,0,0.26);
-  background: rgba(245,196,0,0.1);
-  color: rgba(255,235,170,0.96);
+  padding: 8px;
+  line-height: 1.45;
 }
 
 /* ── Goal Kicker Review (review step) ── */
@@ -2185,22 +2274,65 @@ button.mdcChecklist__row {
     align-items: stretch;
   }
 
-  .kickerPicker {
-    padding: 12px;
+  .kp {
+    padding: 10px;
+  }
+
+  .kp__playerList {
+    max-height: 200px;
+  }
+
+  .kp__selected {
+    max-height: 280px;
   }
 }
 
-@media (max-width: 540px) {
-  .kickerPicker__title {
-    font-size: 16px;
+@media (max-width: 380px) {
+  .kpKicker {
+    grid-template-columns: 32px 1fr auto;
+    gap: 8px;
+    padding: 6px 28px 6px 6px;
   }
 
-  .kickerSelected {
-    width: 72px;
-  }
-
-  .kickerSelected__avatar {
+  .kpKicker__avatar {
     width: 32px;
     height: 32px;
+    border-radius: 8px;
+  }
+
+  .kpKicker__btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .kpKicker__count {
+    font-size: 16px;
+    min-width: 24px;
+  }
+
+  .kpKicker__name {
+    font-size: 12px;
+  }
+
+  .kpPlayer {
+    grid-template-columns: 30px 1fr 30px;
+    gap: 8px;
+    padding: 6px;
+  }
+
+  .kpPlayer__avatar {
+    width: 30px;
+    height: 30px;
+  }
+
+  .kpPlayer__action {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+  }
+
+  .kpPlayer__name {
+    font-size: 12px;
   }
 }

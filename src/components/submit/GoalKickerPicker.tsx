@@ -91,88 +91,91 @@ export function GoalKickerPicker({
     searchInputRef.current?.blur();
   };
 
-  return (
-    <div className="kickerPicker">
-      {/* Compact header with toggle + status */}
-      <div className="kickerPicker__header">
-        <h3 className="kickerPicker__title">Goal Kickers</h3>
-        <p className="kickerPicker__subtitle">Tap a player to add, then use +/- to set goals.</p>
-      </div>
+  const handlePlayerTap = (player: AflPlayer) => {
+    onAddKicker(activeSide, { id: player.id, name: player.name, photoUrl: player.photoUrl });
+    // Only clear search text — don't blur keyboard so coach can keep searching for next scorer
+    if (searchQuery.trim()) {
+      setSearchQuery('');
+    }
+  };
 
+  return (
+    <div className="kp">
       {/* Team toggle */}
-      <div className="kickerPicker__toggle">
+      <div className="kp__toggle">
         <button
           type="button"
-          className={`kickerPicker__toggleBtn ${activeSide === 'home' ? 'isActive' : ''}`}
+          className={`kp__toggleBtn ${activeSide === 'home' ? 'is-active' : ''}`}
           onClick={() => { setActiveSide('home'); setSearchQuery(''); }}
         >
-          <span className="kickerPicker__toggleName">{homeTeamName}</span>
-          <span className="kickerPicker__toggleBadge">
+          <span className="kp__toggleName">{homeTeamName}</span>
+          <span className="kp__toggleBadge">
             {homeTaggedGoals}/{homeScoredGoals}
           </span>
         </button>
         <button
           type="button"
-          className={`kickerPicker__toggleBtn ${activeSide === 'away' ? 'isActive' : ''}`}
+          className={`kp__toggleBtn ${activeSide === 'away' ? 'is-active' : ''}`}
           onClick={() => { setActiveSide('away'); setSearchQuery(''); }}
         >
-          <span className="kickerPicker__toggleName">{awayTeamName}</span>
-          <span className="kickerPicker__toggleBadge">
+          <span className="kp__toggleName">{awayTeamName}</span>
+          <span className="kp__toggleBadge">
             {awayTaggedGoals}/{awayScoredGoals}
           </span>
         </button>
       </div>
 
-      {/* Status hint */}
-      <div className={`kickerPicker__activeHint ${activeScoredGoals === 0 && activeKickers.length === 0 ? 'isNeutral' : activeUnassignedGoals > 0 ? 'isWarn' : 'isDone'}`}>
+      {/* Status bar */}
+      <div className={`kp__status ${activeScoredGoals === 0 && activeKickers.length === 0 ? 'is-neutral' : activeUnassignedGoals > 0 ? 'is-warn' : 'is-done'}`}>
         {activeScoredGoals === 0 && activeKickers.length === 0
           ? 'Enter final score first to assign goal kickers'
           : activeUnassignedGoals > 0
-            ? `${activeUnassignedGoals} unassigned goal${activeUnassignedGoals === 1 ? '' : 's'} remaining`
+            ? `${activeUnassignedGoals} goal${activeUnassignedGoals === 1 ? '' : 's'} remaining`
             : 'All goals assigned'}
       </div>
 
-      {/* Selected kickers — compact inline cards */}
-      {activeKickers.length > 0 ? (
-        <div className="kickerPicker__selectedRow">
-          <div className="kickerPicker__selectedInner">
-            {[...activeKickers]
-              .sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name))
-              .map((kicker) => (
-                <div key={kicker.id} className="kickerSelected">
-                  <button
-                    type="button"
-                    className="kickerSelected__remove"
-                    onClick={() => onRemoveKicker(activeSide, kicker.id)}
-                    title="Remove"
-                  >
-                    <X size={10} />
-                  </button>
-                  <span className="kickerSelected__goalBadge">{kicker.goals}</span>
-                  <div className="kickerSelected__avatar">
-                    {kicker.photoUrl ? (
-                      <img src={kicker.photoUrl} alt={kicker.name} />
-                    ) : (
-                      <User size={14} />
-                    )}
-                  </div>
-                  <div className="kickerSelected__name">{kicker.name.split(' ').pop()}</div>
-                  <div className="kickerSelected__controls">
-                    <button type="button" onClick={() => onDecGoal(activeSide, kicker.id)} className="kickerSelected__btn">
-                      <Minus size={12} />
-                    </button>
-                    <button type="button" onClick={() => onIncGoal(activeSide, kicker.id)} className="kickerSelected__btn kickerSelected__btn--plus">
-                      <Plus size={12} />
-                    </button>
-                  </div>
+      {/* Selected kickers — vertical stacked cards */}
+      {activeKickers.length > 0 && (
+        <div className="kp__selected">
+          {[...activeKickers]
+            .sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name))
+            .map((kicker) => (
+              <div key={kicker.id} className="kpKicker">
+                <div className="kpKicker__avatar">
+                  {kicker.photoUrl ? (
+                    <img src={kicker.photoUrl} alt={kicker.name} />
+                  ) : (
+                    <User size={18} />
+                  )}
                 </div>
-              ))}
-          </div>
+                <div className="kpKicker__info">
+                  <div className="kpKicker__name">{kicker.name}</div>
+                  <div className="kpKicker__goalLabel">{kicker.goals} goal{kicker.goals !== 1 ? 's' : ''}</div>
+                </div>
+                <div className="kpKicker__controls">
+                  <button type="button" className="kpKicker__btn kpKicker__btn--dec" onClick={() => onDecGoal(activeSide, kicker.id)}>
+                    <Minus size={16} />
+                  </button>
+                  <span className="kpKicker__count">{kicker.goals}</span>
+                  <button type="button" className="kpKicker__btn kpKicker__btn--inc" onClick={() => onIncGoal(activeSide, kicker.id)}>
+                    <Plus size={16} />
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  className="kpKicker__remove"
+                  onClick={() => onRemoveKicker(activeSide, kicker.id)}
+                  title="Remove"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
         </div>
-      ) : null}
+      )}
 
       {/* Search */}
-      <div className="kickerPicker__search">
+      <div className="kp__search">
         <Search size={16} />
         <input
           ref={searchInputRef}
@@ -185,66 +188,58 @@ export function GoalKickerPicker({
           }}
           style={{ fontSize: 16 }}
           enterKeyHint="done"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
         />
         {searchQuery.trim() ? (
-          <button type="button" className="kickerPicker__addBtn" onClick={handleAddFromSearch} title="Add kicker">
+          <button type="button" className="kp__addBtn" onClick={handleAddFromSearch} title="Add kicker">
             <Plus size={14} /> Add
           </button>
         ) : null}
       </div>
 
-      {/* Player chips — horizontal scroll on mobile */}
-      {teamPlayers.length > 0 ? (
-        <div className="kickerPicker__chipScroll">
-          <div className="kickerPicker__chipInner">
+      {/* Available players — vertical scrollable list */}
+      {teamPlayers.length > 0 && (
+        <div className="kp__playerSection">
+          <div className="kp__playerLabel">
+            {searchQuery.trim() ? `${teamPlayers.length} result${teamPlayers.length !== 1 ? 's' : ''}` : 'Available players'}
+          </div>
+          <div className="kp__playerList">
             {teamPlayers.map((player) => (
               <button
                 key={player.id}
                 type="button"
-                className="kickerChip"
-                onClick={() => {
-                  onAddKicker(activeSide, { id: player.id, name: player.name, photoUrl: player.photoUrl });
-                  setSearchQuery('');
-                  searchInputRef.current?.blur();
-                }}
+                className="kpPlayer"
+                onClick={() => handlePlayerTap(player)}
               >
-                <div className="kickerChip__avatar">
+                <div className="kpPlayer__avatar">
                   {player.photoUrl ? (
                     <img src={player.photoUrl} alt={player.name} />
                   ) : (
-                    <User size={14} />
+                    <User size={16} />
                   )}
                 </div>
-                <span className="kickerChip__name">{player.name}</span>
+                <span className="kpPlayer__name">{player.name}</span>
+                <span className="kpPlayer__action"><Plus size={14} /></span>
               </button>
             ))}
           </div>
         </div>
-      ) : null}
+      )}
 
-      {searchQuery.trim() && teamPlayers.length === 0 ? (
-        <div className="kickerPicker__manualHint">
+      {searchQuery.trim() && teamPlayers.length === 0 && (
+        <div className="kp__manualHint">
           No match found. Press Enter or tap Add to add &ldquo;{searchQuery.trim()}&rdquo; manually.
         </div>
-      ) : null}
+      )}
 
-      {/* Summary */}
-      {(activeKickers.length > 0 || activeUnassignedGoals > 0) ? (
-        <div className="kickerPicker__summary">
-          <div className="kickerPicker__summaryChips">
-            {activeKickers.map((kicker) => (
-              <span key={kicker.id} className="kickerPicker__summaryChip">
-                {kicker.name} <strong>{kicker.goals}</strong>
-              </span>
-            ))}
-            {activeUnassignedGoals > 0 ? (
-              <span className="kickerPicker__summaryChip kickerPicker__summaryChip--warn">
-                Unassigned <strong>{activeUnassignedGoals}</strong>
-              </span>
-            ) : null}
-          </div>
+      {!searchQuery.trim() && teamPlayers.length === 0 && allPlayers.length === 0 && (
+        <div className="kp__manualHint">
+          Loading players… You can also type a name above and tap Add.
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
