@@ -2116,11 +2116,32 @@ button.mdcChecklist__row {
 
 .kickerPicker__summaryChips {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+}
+
+.kickerPicker__summaryChips::-webkit-scrollbar {
+  height: 4px;
+}
+
+.kickerPicker__summaryChips::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
+}
+
+.kickerPicker__summaryChips::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
 }
 
 .kickerPicker__summaryChip {
+  flex-shrink: 0;
+  white-space: nowrap;
   border-radius: 999px;
   padding: 5px 8px;
   border: 1px solid rgba(255,255,255,0.1);
