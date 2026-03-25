@@ -1837,36 +1837,32 @@ button.mdcChecklist__row {
 
 .kickerPicker__selectedRow {
   margin-top: 10px;
-  display: flex;
-  gap: 8px;
-  overflow-x: scroll;
+  overflow-x: auto;
   overflow-y: hidden;
-  padding-bottom: 8px;
-  padding-right: 16px;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scroll-snap-type: x proximity;
+  touch-action: pan-x;
   overscroll-behavior-x: contain;
-  max-width: 100%;
+  padding-bottom: 8px;
+  scrollbar-width: none;
 }
 
 .kickerPicker__selectedRow::-webkit-scrollbar {
-  height: 4px;
+  display: none;
 }
 
-.kickerPicker__selectedRow::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 999px;
+.kickerPicker__selectedInner {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  width: max-content;
+  min-width: 100%;
+  padding-right: 16px;
 }
 
-.kickerPicker__selectedRow::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.16);
-  border-radius: 999px;
-}
 
 .kickerSelected {
   position: relative;
-  flex-shrink: 0;
+  flex: 0 0 auto;
   width: 80px;
   border-radius: 14px;
   border: 1px solid rgba(245,196,0,0.22);
@@ -1876,7 +1872,6 @@ button.mdcChecklist__row {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  scroll-snap-align: start;
 }
 
 .kickerSelected__remove {
@@ -2021,31 +2016,26 @@ button.mdcChecklist__row {
 
 .kickerPicker__chipScroll {
   margin-top: 10px;
-  display: flex;
-  gap: 6px;
-  overflow-x: scroll;
+  overflow-x: auto;
   overflow-y: hidden;
-  padding-bottom: 8px;
-  padding-right: 16px;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scroll-snap-type: x proximity;
+  touch-action: pan-x;
   overscroll-behavior-x: contain;
-  max-width: 100%;
+  padding-bottom: 8px;
+  scrollbar-width: none;
 }
 
 .kickerPicker__chipScroll::-webkit-scrollbar {
-  height: 4px;
+  display: none;
 }
 
-.kickerPicker__chipScroll::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 999px;
-}
-
-.kickerPicker__chipScroll::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.16);
-  border-radius: 999px;
+.kickerPicker__chipInner {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  width: max-content;
+  min-width: 100%;
+  padding-right: 16px;
 }
 
 .kickerChip {
@@ -2063,7 +2053,6 @@ button.mdcChecklist__row {
   white-space: nowrap;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
-  scroll-snap-align: start;
 }
 
 .kickerChip:active {
@@ -2112,35 +2101,29 @@ button.mdcChecklist__row {
   margin-top: 10px;
   border-top: 1px solid rgba(255,255,255,0.08);
   padding-top: 8px;
-}
-
-.kickerPicker__summaryChips {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 6px;
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
   padding-bottom: 6px;
-  scrollbar-width: thin;
+  scrollbar-width: none;
 }
 
-.kickerPicker__summaryChips::-webkit-scrollbar {
-  height: 4px;
+.kickerPicker__summary::-webkit-scrollbar {
+  display: none;
 }
 
-.kickerPicker__summaryChips::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 999px;
-}
-
-.kickerPicker__summaryChips::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.16);
-  border-radius: 999px;
+.kickerPicker__summaryChips {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  width: max-content;
+  min-width: 100%;
 }
 
 .kickerPicker__summaryChip {
-  flex-shrink: 0;
+  flex: 0 0 auto;
   white-space: nowrap;
   border-radius: 999px;
   padding: 5px 8px;

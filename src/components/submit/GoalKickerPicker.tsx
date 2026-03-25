@@ -135,37 +135,39 @@ export function GoalKickerPicker({
       {/* Selected kickers — compact inline cards */}
       {activeKickers.length > 0 ? (
         <div className="kickerPicker__selectedRow">
-          {[...activeKickers]
-            .sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name))
-            .map((kicker) => (
-              <div key={kicker.id} className="kickerSelected">
-                <button
-                  type="button"
-                  className="kickerSelected__remove"
-                  onClick={() => onRemoveKicker(activeSide, kicker.id)}
-                  title="Remove"
-                >
-                  <X size={10} />
-                </button>
-                <span className="kickerSelected__goalBadge">{kicker.goals}</span>
-                <div className="kickerSelected__avatar">
-                  {kicker.photoUrl ? (
-                    <img src={kicker.photoUrl} alt={kicker.name} />
-                  ) : (
-                    <User size={14} />
-                  )}
-                </div>
-                <div className="kickerSelected__name">{kicker.name.split(' ').pop()}</div>
-                <div className="kickerSelected__controls">
-                  <button type="button" onClick={() => onDecGoal(activeSide, kicker.id)} className="kickerSelected__btn">
-                    <Minus size={12} />
+          <div className="kickerPicker__selectedInner">
+            {[...activeKickers]
+              .sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name))
+              .map((kicker) => (
+                <div key={kicker.id} className="kickerSelected">
+                  <button
+                    type="button"
+                    className="kickerSelected__remove"
+                    onClick={() => onRemoveKicker(activeSide, kicker.id)}
+                    title="Remove"
+                  >
+                    <X size={10} />
                   </button>
-                  <button type="button" onClick={() => onIncGoal(activeSide, kicker.id)} className="kickerSelected__btn kickerSelected__btn--plus">
-                    <Plus size={12} />
-                  </button>
+                  <span className="kickerSelected__goalBadge">{kicker.goals}</span>
+                  <div className="kickerSelected__avatar">
+                    {kicker.photoUrl ? (
+                      <img src={kicker.photoUrl} alt={kicker.name} />
+                    ) : (
+                      <User size={14} />
+                    )}
+                  </div>
+                  <div className="kickerSelected__name">{kicker.name.split(' ').pop()}</div>
+                  <div className="kickerSelected__controls">
+                    <button type="button" onClick={() => onDecGoal(activeSide, kicker.id)} className="kickerSelected__btn">
+                      <Minus size={12} />
+                    </button>
+                    <button type="button" onClick={() => onIncGoal(activeSide, kicker.id)} className="kickerSelected__btn kickerSelected__btn--plus">
+                      <Plus size={12} />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+          </div>
         </div>
       ) : null}
 
@@ -194,27 +196,29 @@ export function GoalKickerPicker({
       {/* Player chips — horizontal scroll on mobile */}
       {teamPlayers.length > 0 ? (
         <div className="kickerPicker__chipScroll">
-          {teamPlayers.map((player) => (
-            <button
-              key={player.id}
-              type="button"
-              className="kickerChip"
-              onClick={() => {
-                onAddKicker(activeSide, { id: player.id, name: player.name, photoUrl: player.photoUrl });
-                setSearchQuery('');
-                searchInputRef.current?.blur();
-              }}
-            >
-              <div className="kickerChip__avatar">
-                {player.photoUrl ? (
-                  <img src={player.photoUrl} alt={player.name} />
-                ) : (
-                  <User size={14} />
-                )}
-              </div>
-              <span className="kickerChip__name">{player.name}</span>
-            </button>
-          ))}
+          <div className="kickerPicker__chipInner">
+            {teamPlayers.map((player) => (
+              <button
+                key={player.id}
+                type="button"
+                className="kickerChip"
+                onClick={() => {
+                  onAddKicker(activeSide, { id: player.id, name: player.name, photoUrl: player.photoUrl });
+                  setSearchQuery('');
+                  searchInputRef.current?.blur();
+                }}
+              >
+                <div className="kickerChip__avatar">
+                  {player.photoUrl ? (
+                    <img src={player.photoUrl} alt={player.name} />
+                  ) : (
+                    <User size={14} />
+                  )}
+                </div>
+                <span className="kickerChip__name">{player.name}</span>
+              </button>
+            ))}
+          </div>
         </div>
       ) : null}
 
