@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Minus, Plus, Search, User, X } from 'lucide-react';
 
 type GoalKicker = {
@@ -60,6 +60,7 @@ export function GoalKickerPicker({
 }: GoalKickerPickerProps) {
   const [activeSide, setActiveSide] = useState<'home' | 'away'>('home');
   const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const activeTeamId = activeSide === 'home' ? homeTeamId : awayTeamId;
   const activeTeamName = activeSide === 'home' ? homeTeamName : awayTeamName;
@@ -87,6 +88,7 @@ export function GoalKickerPicker({
     if (!nextName) return;
     onAddKicker(activeSide, { name: nextName });
     setSearchQuery('');
+    searchInputRef.current?.blur();
   };
 
   return (
@@ -143,7 +145,7 @@ export function GoalKickerPicker({
                 >
                   <X size={10} />
                 </button>
-                <span className="kickerSelected__goalBadge">{kicker.goals}g</span>
+                <span className="kickerSelected__goalBadge">{kicker.goals}</span>
                 <div className="kickerSelected__avatar">
                   {kicker.photoUrl ? (
                     <img src={kicker.photoUrl} alt={kicker.name} />
@@ -169,6 +171,7 @@ export function GoalKickerPicker({
       <div className="kickerPicker__search">
         <Search size={16} />
         <input
+          ref={searchInputRef}
           type="text"
           placeholder={`Search ${activeTeamName} players…`}
           value={searchQuery}
@@ -176,6 +179,8 @@ export function GoalKickerPicker({
           onKeyDown={(e) => {
             if (e.key === 'Enter') handleAddFromSearch();
           }}
+          style={{ fontSize: 16 }}
+          enterKeyHint="done"
         />
         {searchQuery.trim() ? (
           <button type="button" className="kickerPicker__addBtn" onClick={handleAddFromSearch} title="Add kicker">
@@ -195,6 +200,7 @@ export function GoalKickerPicker({
               onClick={() => {
                 onAddKicker(activeSide, { id: player.id, name: player.name, photoUrl: player.photoUrl });
                 setSearchQuery('');
+                searchInputRef.current?.blur();
               }}
             >
               <div className="kickerChip__avatar">
@@ -222,12 +228,12 @@ export function GoalKickerPicker({
           <div className="kickerPicker__summaryChips">
             {activeKickers.map((kicker) => (
               <span key={kicker.id} className="kickerPicker__summaryChip">
-                {kicker.name} <strong>{kicker.goals}g</strong>
+                {kicker.name} <strong>{kicker.goals}</strong>
               </span>
             ))}
             {activeUnassignedGoals > 0 ? (
               <span className="kickerPicker__summaryChip kickerPicker__summaryChip--warn">
-                Unassigned <strong>{activeUnassignedGoals}g</strong>
+                Unassigned <strong>{activeUnassignedGoals}</strong>
               </span>
             ) : null}
           </div>

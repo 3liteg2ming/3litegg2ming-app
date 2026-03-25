@@ -122,20 +122,20 @@ const MANUAL_TEAM_STAT_FIELDS: Array<{ key: ManualTeamStatKey; label: string }> 
   { key: 'disposals', label: 'Disposals' },
   { key: 'kicks', label: 'Kicks' },
   { key: 'handballs', label: 'Handballs' },
-  { key: 'inside50s', label: 'Inside 50s' },
-  { key: 'rebound50s', label: 'Rebound 50s' },
-  { key: 'freesFor', label: 'Frees For' },
-  { key: 'fiftyMetrePenalties', label: '50m Penalties' },
-  { key: 'hitOuts', label: 'Hitouts' },
-  { key: 'clearances', label: 'Clearances' },
-  { key: 'contestedPossessions', label: 'Contested Possessions' },
-  { key: 'uncontestedPossessions', label: 'Uncontested Possessions' },
+  { key: 'tackles', label: 'Tackles' },
   { key: 'marks', label: 'Marks' },
   { key: 'contestedMarks', label: 'Contested Marks' },
   { key: 'interceptMarks', label: 'Intercept Marks' },
-  { key: 'tackles', label: 'Tackles' },
   { key: 'spoils', label: 'Spoils' },
+  { key: 'inside50s', label: 'Inside 50s' },
+  { key: 'rebound50s', label: 'Rebound 50s' },
+  { key: 'hitOuts', label: 'Hit Outs' },
+  { key: 'clearances', label: 'Clearances' },
+  { key: 'contestedPossessions', label: 'Contested Possessions' },
+  { key: 'uncontestedPossessions', label: 'Uncontested Possessions' },
+  { key: 'freesFor', label: 'Frees For' },
   { key: 'freesAgainst', label: 'Frees Against' },
+  { key: 'fiftyMetrePenalties', label: '50m Penalties' },
 ];
 
 const RESULT_SCREENSHOT_SLOTS = [
@@ -456,8 +456,8 @@ export default function SubmitPage() {
   const homeUnassignedGoals = Math.max(0, homeGoalsN - homeGoalKickerTotal);
   const awayUnassignedGoals = Math.max(0, awayGoalsN - awayGoalKickerTotal);
 
-  const homeGoalSummary = useMemo(() => homeGoalKickers.map((k) => `${k.name} ${k.goals}g`).join(' • '), [homeGoalKickers]);
-  const awayGoalSummary = useMemo(() => awayGoalKickers.map((k) => `${k.name} ${k.goals}g`).join(' • '), [awayGoalKickers]);
+  const homeGoalSummary = useMemo(() => homeGoalKickers.map((k) => `${k.name} ${k.goals}`).join(' • '), [homeGoalKickers]);
+  const awayGoalSummary = useMemo(() => awayGoalKickers.map((k) => `${k.name} ${k.goals}`).join(' • '), [awayGoalKickers]);
 
   const homeTeamColors = useMemo(() => {
     if (!homeTeam?.name) return { r: '0', g: '0', b: '0' };

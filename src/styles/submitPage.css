@@ -1835,9 +1835,27 @@ button.mdcChecklist__row {
   gap: 8px;
   overflow-x: auto;
   overflow-y: hidden;
-  padding-bottom: 4px;
+  padding-bottom: 8px;
+  padding-right: 16px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
+  scroll-snap-type: x proximity;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+}
+
+.kickerPicker__selectedRow::-webkit-scrollbar {
+  height: 4px;
+}
+
+.kickerPicker__selectedRow::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
+}
+
+.kickerPicker__selectedRow::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
 }
 
 .kickerSelected {
@@ -1852,6 +1870,7 @@ button.mdcChecklist__row {
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  scroll-snap-align: start;
 }
 
 .kickerSelected__remove {
@@ -1966,7 +1985,7 @@ button.mdcChecklist__row {
   outline: none;
   background: transparent;
   color: rgba(255,255,255,0.94);
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .kickerPicker__search input::placeholder {
