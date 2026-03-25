@@ -434,6 +434,7 @@ export default function SubmitPage() {
       teamId: player.teamId || '',
       teamName: player.teamName,
       photoUrl: player.headshotUrl,
+      seasonGoals: player.goals || 0,
     })),
     [allAflPlayers],
   );

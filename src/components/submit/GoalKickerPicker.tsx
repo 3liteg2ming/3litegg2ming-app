@@ -14,6 +14,7 @@ type AflPlayer = {
   teamId: string;
   teamName?: string;
   photoUrl?: string;
+  seasonGoals?: number;
 };
 
 type GoalKickerPickerProps = {
@@ -80,6 +81,7 @@ export function GoalKickerPicker({
       })
       .filter((player) => !selectedIds.has(player.id))
       .filter((player) => (!query ? true : player.name.toLowerCase().includes(query)))
+      .sort((a, b) => (b.seasonGoals || 0) - (a.seasonGoals || 0) || a.name.localeCompare(b.name))
       .slice(0, 30);
   }, [activeTeamId, activeTeamName, allPlayers, searchQuery, selectedIds]);
 
@@ -200,13 +202,15 @@ export function GoalKickerPicker({
         ) : null}
       </div>
 
-      {/* Available players — vertical scrollable list */}
+      {/* Available players — sorted by most goals, always visible */}
       {teamPlayers.length > 0 && (
         <div className="kp__playerSection">
           <div className="kp__playerLabel">
-            {searchQuery.trim() ? `${teamPlayers.length} result${teamPlayers.length !== 1 ? 's' : ''}` : 'Available players'}
+            {searchQuery.trim()
+              ? `${teamPlayers.length} result${teamPlayers.length !== 1 ? 's' : ''}`
+              : 'Top Goal Kickers'}
           </div>
-          <div className="kp__playerList">
+          <div className="kp__playerGrid">
             {teamPlayers.map((player) => (
               <button
                 key={player.id}
@@ -222,6 +226,9 @@ export function GoalKickerPicker({
                   )}
                 </div>
                 <span className="kpPlayer__name">{player.name}</span>
+                {(player.seasonGoals || 0) > 0 && (
+                  <span className="kpPlayer__goals">{player.seasonGoals}</span>
+                )}
                 <span className="kpPlayer__action"><Plus size={14} /></span>
               </button>
             ))}
