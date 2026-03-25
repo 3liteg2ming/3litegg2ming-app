@@ -53,7 +53,7 @@
   box-shadow: 0 24px 70px -18px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(24px) saturate(1.2);
   -webkit-backdrop-filter: blur(24px) saturate(1.2);
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   overflow: hidden;
 }
 
@@ -61,8 +61,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  padding: 14px 14px 8px;
+  gap: 10px;
+  padding: 12px 14px 6px;
 }
 
 .mdcHero__titleWrap {
@@ -248,7 +248,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 9px 14px 14px;
+  padding: 8px 14px 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -290,11 +290,11 @@
 /* ── Status banners ── */
 
 .mdcStatus {
-  border-radius: 14px;
+  border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.13);
   background: rgba(255, 255, 255, 0.07);
-  padding: 10px 12px;
-  margin-bottom: 10px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -337,13 +337,13 @@
 }
 
 .mdcCard__body {
-  padding: 14px 16px 18px;
+  padding: 12px 16px 14px;
 }
 
 .mdcCard__hint {
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.4;
   color: rgba(221, 231, 241, 0.58);
 }
 
@@ -351,8 +351,8 @@
 
 .mdcInstructions__list {
   display: grid;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 .mdcInstructions__item {
@@ -433,7 +433,7 @@
 .mdcScoreInputs input {
   width: 100%;
   min-width: 0;
-  height: 42px;
+  height: 48px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(0, 0, 0, 0.3);
@@ -442,12 +442,20 @@
   font-weight: 900;
   padding: 0 10px;
   text-align: center;
-  transition: border-color 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 0.15s, background 0.15s;
 }
 
 .mdcScoreInputs input:focus {
-  border-color: rgba(245, 196, 0, 0.4);
+  border-color: rgba(245, 196, 0, 0.44);
+  background: rgba(245, 196, 0, 0.06);
   outline: none;
+}
+
+.mdcScoreInputs input::placeholder {
+  color: rgba(255, 255, 255, 0.28);
+  font-weight: 700;
 }
 
 .mdcScoreTotal {
@@ -568,21 +576,29 @@
 .mdcQuarterGrid__inputs input {
   width: 100%;
   min-width: 0;
-  height: 38px;
+  height: 40px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(0, 0, 0, 0.28);
   color: rgba(255, 255, 255, 0.94);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 900;
   text-align: center;
   padding: 0 4px;
-  transition: border-color 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 0.15s, background 0.15s;
 }
 
 .mdcQuarterGrid__inputs input:focus {
-  border-color: rgba(245, 196, 0, 0.36);
+  border-color: rgba(245, 196, 0, 0.4);
+  background: rgba(245, 196, 0, 0.05);
   outline: none;
+}
+
+.mdcQuarterGrid__inputs input::placeholder {
+  color: rgba(255, 255, 255, 0.24);
+  font-weight: 700;
 }
 
 .mdcQuarterGrid__total {
@@ -633,16 +649,24 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.03);
   color: #f3f7fc;
-  padding: 9px 6px;
-  font-size: 15px;
+  padding: 8px 4px;
+  font-size: 16px;
   font-weight: 800;
-  margin: 4px 0;
+  margin: 3px 0;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 0.15s, background 0.15s;
 }
 
 .mdcTeamStatsGrid__input:focus {
   border-color: rgba(245, 196, 0, 0.44);
-  background: rgba(245, 196, 0, 0.04);
+  background: rgba(245, 196, 0, 0.06);
   outline: none;
+}
+
+.mdcTeamStatsGrid__input::placeholder {
+  color: rgba(255, 255, 255, 0.22);
+  font-weight: 600;
 }
 
 /* ── Screenshot slot grid ── */
@@ -795,9 +819,23 @@
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(0, 0, 0, 0.3);
   color: rgba(255, 255, 255, 0.92);
-  padding: 10px;
+  padding: 10px 12px;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 16px;
+  line-height: 1.5;
+  transition: border-color 0.15s, background 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.mdcNotes:focus {
+  border-color: rgba(245, 196, 0, 0.4);
+  background: rgba(0, 0, 0, 0.38);
+  outline: none;
+}
+
+.mdcNotes::placeholder {
+  color: rgba(255, 255, 255, 0.32);
 }
 
 /* ── Review score ── */
@@ -914,10 +952,10 @@
 /* ── Actions ── */
 
 .mdcActions {
-  margin-top: 14px;
+  margin-top: 10px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 8px;
 }
 
 .mdcActions--sticky {
@@ -1026,13 +1064,26 @@
   gap: 10px;
 }
 
-/* ── Reset tap highlight ── */
+/* ── Reset tap highlight + iOS zoom prevention ── */
 
 button,
 input,
 textarea,
 label {
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent iOS Safari auto-zoom on focus — inputs must be >= 16px */
+.egSubmitPage input,
+.egSubmitPage textarea,
+.egSubmitPage select {
+  font-size: 16px;
+  touch-action: manipulation;
+}
+
+/* Also prevent double-tap zoom on all interactive elements */
+.egSubmitPage button {
+  touch-action: manipulation;
 }
 
 /* ── Responsive ── */
@@ -1049,25 +1100,26 @@ label {
     justify-content: center;
   }
 
+  /* Keep hero matchup side-by-side on mobile — better look, better space usage */
   .mdcHero__match {
-    grid-template-columns: 1fr;
-    gap: 10px;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 6px;
+    padding: 0 10px 6px;
   }
 
-  .mdcHero__center {
-    order: 2;
-  }
-
-  .mdcHero__divider {
-    width: 34px;
-    height: 1px;
-    border-radius: 999px;
-    background: rgba(245, 196, 0, 0.58);
-    box-shadow: none;
+  .mdcTeamBlock__logo {
+    width: clamp(52px, 14vw, 72px);
+    border-radius: 16px;
   }
 
   .mdcTeamBlock__name {
-    font-size: clamp(14px, 4.6vw, 19px);
+    font-size: clamp(11px, 3.4vw, 15px);
+    max-width: 11ch;
+  }
+
+  .mdcHero__divider {
+    width: 6px;
+    height: 6px;
   }
 
   .mdcCoachPill {
@@ -1089,11 +1141,25 @@ label {
 
 @media (max-width: 540px) {
   .egSubmitPage__main {
-    padding: 10px 8px calc(var(--bottom-nav-h, 92px) + env(safe-area-inset-bottom) + 16px);
+    padding: 8px 6px calc(var(--bottom-nav-h, 92px) + env(safe-area-inset-bottom) + 12px);
   }
 
   .mdcHero {
-    border-radius: 20px;
+    border-radius: 18px;
+    margin-bottom: 8px;
+  }
+
+  .mdcHero__top {
+    padding: 10px 12px 5px;
+    gap: 8px;
+  }
+
+  .mdcHero__match {
+    padding: 0 10px 4px;
+  }
+
+  .mdcHero__bottom {
+    padding: 6px 12px 8px;
   }
 
   .mdcHero__top,
@@ -1101,12 +1167,12 @@ label {
   .mdcHero__bottom,
   .mdcCard__head,
   .mdcCard__body {
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-left: 10px;
+    padding-right: 10px;
   }
 
   .mdcHero__metaRow {
-    gap: 6px 8px;
+    gap: 4px 6px;
   }
 
   .mdcHero__metaItem {
@@ -1124,29 +1190,69 @@ label {
 
   .mdcTeamStatsGrid__label {
     font-size: 12px;
-    padding: 6px 4px 6px 0;
+    padding: 5px 4px 5px 0;
   }
 
   .mdcTeamStatsGrid__input {
-    padding: 7px 3px;
-    font-size: 14px;
+    padding: 6px 2px;
+    font-size: 16px;
     border-radius: 8px;
-    margin: 3px 0;
+    margin: 2px 0;
   }
 
   .mdcCard {
-    border-radius: 18px;
-    margin-bottom: 10px;
+    border-radius: 16px;
+    margin-bottom: 8px;
   }
 
   .mdcCard__head {
-    padding: 12px 12px;
-    font-size: 15px;
+    padding: 10px 10px;
+    font-size: 14px;
+  }
+
+  .mdcCard__body {
+    padding: 10px 10px 12px;
+  }
+
+  .mdcCard__hint {
+    margin: 0 0 6px;
+    font-size: 12px;
+  }
+
+  .mdcStepper {
+    margin: 0 0 8px;
+    border-radius: 12px;
+  }
+
+  .mdcStepper__step {
+    padding: 8px 3px 7px;
+  }
+
+  .mdcActions {
+    margin-top: 8px;
+    gap: 6px;
+  }
+
+  .mdcBtn {
+    height: 44px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  .mdcInstructions__list {
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .mdcIntegrity {
+    padding: 10px;
+    font-size: 11px;
+    gap: 8px;
   }
 
   .mdcQuarterGrid__inputs input {
     height: 34px;
-    font-size: 14px;
+    font-size: 16px;
   }
 
   .mdcSlotGrid {
@@ -1181,7 +1287,7 @@ label {
 
   .mdcQuarterGrid__inputs input {
     height: 32px;
-    font-size: 13px;
+    font-size: 16px;
     border-radius: 8px;
   }
 
@@ -1197,7 +1303,7 @@ label {
   position: relative;
   display: flex;
   gap: 0;
-  margin: 0 0 16px;
+  margin: 0 0 10px;
   padding: 0;
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.09);
@@ -1613,7 +1719,7 @@ label {
 }
 
 .mdcReviewNotes {
-  margin-top: 14px;
+  margin-top: 10px;
 }
 
 .mdcReviewNotes__label {
@@ -1705,8 +1811,8 @@ button.mdcChecklist__row {
   }
 
   .mdcCard__body {
-    padding-top: 14px;
-    padding-bottom: 16px;
+    padding-top: 10px;
+    padding-bottom: 12px;
   }
 }
 
@@ -1724,21 +1830,21 @@ button.mdcChecklist__row {
 /* ── Goal kicker picker ───────────────────────────────────────── */
 
 .mdcGoalKickerSection {
-  margin-top: 18px;
-  padding-top: 16px;
+  margin-top: 14px;
+  padding-top: 12px;
   border-top: 1px solid rgba(255,255,255,0.08);
 }
 
 .mdcCard__body > .mdcGoalKickerSection__head {
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .mdcGoalKickerSection__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .mdcGoalKickerSection__title {
@@ -1901,6 +2007,7 @@ button.mdcChecklist__row {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
+  touch-action: pan-y;
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,0.1) transparent;
 }
@@ -2088,10 +2195,14 @@ button.mdcChecklist__row {
   color: rgba(255,255,255,0.94);
   /* 16px prevents iOS Safari auto-zoom on focus */
   font-size: 16px;
+  -webkit-appearance: none;
+  appearance: none;
+  line-height: 1.4;
 }
 
 .kp__search input::placeholder {
   color: rgba(255,255,255,0.32);
+  font-weight: 500;
 }
 
 .kp__addBtn {
@@ -2136,6 +2247,7 @@ button.mdcChecklist__row {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
+  touch-action: pan-y;
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.07);
   background: rgba(0,0,0,0.14);

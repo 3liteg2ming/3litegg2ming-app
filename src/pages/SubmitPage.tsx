@@ -161,6 +161,9 @@ function sanitizeNumericInput(value: string): string {
   return value.replace(/[^\d]/g, '').slice(0, 3);
 }
 
+/** Select all text on focus — lets users tap a number field and immediately type to replace */
+const selectOnFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => e.target.select();
+
 function parseStatInput(value: unknown): number | null {
   const cleaned = String(value ?? '').replace(/[^\d]/g, '');
   if (!cleaned) return null;
@@ -898,9 +901,10 @@ export default function SubmitPage() {
     setter((prev) => prev.filter((entry) => entry.id !== kickerId));
   };
 
-  const goNext = () => setCurrentStep((step) => Math.min(step + 1, STEP_COUNT));
-  const goBack = () => setCurrentStep((step) => Math.max(step - 1, 1));
-  const goToStep = (step: number) => setCurrentStep(step);
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+  const goNext = () => { setCurrentStep((step) => Math.min(step + 1, STEP_COUNT)); scrollToTop(); };
+  const goBack = () => { setCurrentStep((step) => Math.max(step - 1, 1)); scrollToTop(); };
+  const goToStep = (step: number) => { setCurrentStep(step); scrollToTop(); };
 
   const submit = async () => {
     if (!fixture || !myTeamId || !canSubmit || !sessionUserId) return;
@@ -1205,45 +1209,26 @@ export default function SubmitPage() {
             <motion.div key={currentStep} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}>
               {currentStep === 1 && (
                 <section className="mdcCard">
-                  <div className="mdcCard__head">Step 1 — Confirm Your Match</div>
+                  <div className="mdcCard__head">Confirm &amp; Begin</div>
                   <div className="mdcCard__body">
-                    <div className="mdcConfirmMatch">
-                      <div className="mdcConfirmMatch__fixture">
-                        <div className="mdcConfirmMatch__team">
-                          <div className="mdcTeamBlock__logo mdcTeamBlock__logo--md">{homeTeam.logo ? <img src={homeTeam.logo} alt={homeTeam.name} /> : <span>{homeTeam.name.slice(0, 1)}</span>}</div>
-                          <span>{homeTeam.name}</span>
-                        </div>
-                        <div className="mdcConfirmMatch__vs">vs</div>
-                        <div className="mdcConfirmMatch__team">
-                          <div className="mdcTeamBlock__logo mdcTeamBlock__logo--md">{awayTeam.logo ? <img src={awayTeam.logo} alt={awayTeam.name} /> : <span>{awayTeam.name.slice(0, 1)}</span>}</div>
-                          <span>{awayTeam.name}</span>
-                        </div>
-                      </div>
+                    <div className="mdcConfirmMatch__meta">
+                      {heroMetaItems.map((item) => <span key={item} className="mdcConfirmMatch__metaItem">{item}</span>)}
+                    </div>
 
-                      <div className="mdcConfirmMatch__meta">
-                        {heroMetaItems.map((item) => <span key={item} className="mdcConfirmMatch__metaItem">{item}</span>)}
-                      </div>
-
-                      <div className="mdcIntegrity" style={{ marginTop: 4 }}>
-                        <Shield size={14} />
-                        <span>This is your only eligible fixture. Results are locked to the current round across the whole competition.</span>
-                      </div>
-
-                      <div className="mdcInstructions" style={{ marginTop: 6 }}>
-                        <div className="mdcCard__hint" style={{ marginBottom: 10, fontWeight: 800, color: 'rgba(255,255,255,0.82)' }}>What you will need:</div>
-                        <div className="mdcInstructions__list">
-                          <div className="mdcInstructions__item"><CheckCircle2 size={16} /><span>Final score for both teams</span></div>
-                          <div className="mdcInstructions__item"><CheckCircle2 size={16} /><span>Quarter-by-quarter progressive scores</span></div>
-                          <div className="mdcInstructions__item"><CheckCircle2 size={16} /><span>All team stats for both teams</span></div>
-                          <div className="mdcInstructions__item"><CheckCircle2 size={16} /><span>Goal kickers for both teams</span></div>
-                          <div className="mdcInstructions__item"><Camera size={16} /><span>3 required match screenshots + all player stats screenshots</span></div>
-                        </div>
+                    <div className="mdcInstructions" style={{ marginTop: 10 }}>
+                      <div className="mdcCard__hint" style={{ marginBottom: 8, fontWeight: 800, color: 'rgba(255,255,255,0.78)' }}>You will need:</div>
+                      <div className="mdcInstructions__list">
+                        <div className="mdcInstructions__item"><CheckCircle2 size={14} /><span>Final score &amp; quarter-by-quarter scores</span></div>
+                        <div className="mdcInstructions__item"><CheckCircle2 size={14} /><span>All 17 team stats for both teams</span></div>
+                        <div className="mdcInstructions__item"><CheckCircle2 size={14} /><span>Goal kickers for both teams</span></div>
+                        <div className="mdcInstructions__item"><Camera size={14} /><span>3 match screenshots + player stats screenshots</span></div>
                       </div>
                     </div>
 
-                    <button type="button" className="mdcHeroCta" style={{ marginTop: 16, width: '100%', justifyContent: 'center' }} onClick={() => navigate(`/match-centre/${fixture.id}`)}>
-                      View Match Centre <ChevronRight size={14} />
-                    </button>
+                    <div className="mdcIntegrity" style={{ marginTop: 8 }}>
+                      <Shield size={13} />
+                      <span>Results are locked to Round {fixture.round}. All submissions are reviewed by admin and AI.</span>
+                    </div>
 
                     {renderStepNav()}
                   </div>
@@ -1252,16 +1237,15 @@ export default function SubmitPage() {
 
               {currentStep === 2 && (
                 <section className="mdcCard">
-                  <div className="mdcCard__head">Step 2 — Final Score</div>
+                  <div className="mdcCard__head">Final Score</div>
                   <div className="mdcCard__body">
-                    <p className="mdcCard__hint">Enter the goals and behinds for each team at the end of the match.</p>
                     <div className="mdcScorePanel">
                       {[{ label: homeDisplayName, goals: homeGoals, behinds: homeBehinds, setGoals: setHomeGoals, setBehinds: setHomeBehinds, total: homeScore, goalsNum: homeGoalsN, behindsNum: homeBehindsN }, { label: awayDisplayName, goals: awayGoals, behinds: awayBehinds, setGoals: setAwayGoals, setBehinds: setAwayBehinds, total: awayScore, goalsNum: awayGoalsN, behindsNum: awayBehindsN }].map((team) => (
                         <div className="mdcScoreTeam" key={team.label}>
                           <div className="mdcScoreTeam__head">{team.label}</div>
                           <div className="mdcScoreInputs">
-                            <label>Goals<input inputMode="numeric" value={team.goals} onChange={(e) => team.setGoals(sanitizeNumericInput(e.target.value))} placeholder="0" /></label>
-                            <label>Behinds<input inputMode="numeric" value={team.behinds} onChange={(e) => team.setBehinds(sanitizeNumericInput(e.target.value))} placeholder="0" /></label>
+                            <label>Goals<input inputMode="numeric" autoComplete="off" autoCorrect="off" onFocus={selectOnFocus} value={team.goals} onChange={(e) => team.setGoals(sanitizeNumericInput(e.target.value))} placeholder="0" /></label>
+                            <label>Behinds<input inputMode="numeric" autoComplete="off" autoCorrect="off" onFocus={selectOnFocus} value={team.behinds} onChange={(e) => team.setBehinds(sanitizeNumericInput(e.target.value))} placeholder="0" /></label>
                           </div>
                           <div className="mdcScoreTotal">{team.goalsNum}.{team.behindsNum} <span>({team.total})</span></div>
                         </div>
@@ -1286,9 +1270,9 @@ export default function SubmitPage() {
 
               {currentStep === 3 && (
                 <section className="mdcCard">
-                  <div className="mdcCard__head">Step 3 — Quarter-by-Quarter Scores</div>
+                  <div className="mdcCard__head">Quarter Scores</div>
                   <div className="mdcCard__body">
-                    <p className="mdcCard__hint">Enter progressive cumulative scores. Q4 must match the final score above.</p>
+                    <p className="mdcCard__hint">Progressive cumulative scores. Q4 must match final score.</p>
                     <div className="mdcQuarterGrid">
                       <div className="mdcQuarterGrid__header">
                         <div className="mdcQuarterGrid__headerCell" />
@@ -1310,13 +1294,13 @@ export default function SubmitPage() {
                           <div key={q} className="mdcQuarterGrid__row">
                             <div className="mdcQuarterGrid__label">{QUARTER_LABELS[q]}</div>
                             <div className="mdcQuarterGrid__inputs">
-                              <input inputMode="numeric" value={row.homeGoals} onChange={(e) => setQuarterValue(q, 'homeGoals', e.target.value)} placeholder="0" />
-                              <input inputMode="numeric" value={row.homeBehinds} onChange={(e) => setQuarterValue(q, 'homeBehinds', e.target.value)} placeholder="0" />
+                              <input inputMode="numeric" autoComplete="off" autoCorrect="off" onFocus={selectOnFocus} value={row.homeGoals} onChange={(e) => setQuarterValue(q, 'homeGoals', e.target.value)} placeholder="0" />
+                              <input inputMode="numeric" autoComplete="off" autoCorrect="off" onFocus={selectOnFocus} value={row.homeBehinds} onChange={(e) => setQuarterValue(q, 'homeBehinds', e.target.value)} placeholder="0" />
                               <div className="mdcQuarterGrid__total">{hg * 6 + hb}</div>
                             </div>
                             <div className="mdcQuarterGrid__inputs">
-                              <input inputMode="numeric" value={row.awayGoals} onChange={(e) => setQuarterValue(q, 'awayGoals', e.target.value)} placeholder="0" />
-                              <input inputMode="numeric" value={row.awayBehinds} onChange={(e) => setQuarterValue(q, 'awayBehinds', e.target.value)} placeholder="0" />
+                              <input inputMode="numeric" autoComplete="off" autoCorrect="off" onFocus={selectOnFocus} value={row.awayGoals} onChange={(e) => setQuarterValue(q, 'awayGoals', e.target.value)} placeholder="0" />
+                              <input inputMode="numeric" autoComplete="off" autoCorrect="off" onFocus={selectOnFocus} value={row.awayBehinds} onChange={(e) => setQuarterValue(q, 'awayBehinds', e.target.value)} placeholder="0" />
                               <div className="mdcQuarterGrid__total">{ag * 6 + ab}</div>
                             </div>
                           </div>
@@ -1332,9 +1316,8 @@ export default function SubmitPage() {
 
               {currentStep === 4 && (
                 <section className="mdcCard">
-                  <div className="mdcCard__head">Step 4 — Team Stats</div>
+                  <div className="mdcCard__head">Team Stats</div>
                   <div className="mdcCard__body">
-                    <p className="mdcCard__hint">Enter all {MANUAL_TEAM_STAT_FIELDS.length} team stats for both teams. All fields are required.</p>
                     <div className="mdcStepProgress"><span>{teamStatsFilledCount} / {MANUAL_TEAM_STAT_FIELDS.length}</span> stats entered</div>
                     <div className="mdcTeamStatsGrid">
                       <div className="mdcTeamStatsGrid__headerCell">Stat</div>
@@ -1343,8 +1326,8 @@ export default function SubmitPage() {
                       {MANUAL_TEAM_STAT_FIELDS.map((field) => (
                         <React.Fragment key={field.key}>
                           <div className="mdcTeamStatsGrid__label">{field.label}</div>
-                          <input className="mdcTeamStatsGrid__input" inputMode="numeric" value={manualTeamStats[field.key].home} onChange={(e) => setManualTeamStatValue(field.key, 'home', e.target.value)} placeholder="0" />
-                          <input className="mdcTeamStatsGrid__input" inputMode="numeric" value={manualTeamStats[field.key].away} onChange={(e) => setManualTeamStatValue(field.key, 'away', e.target.value)} placeholder="0" />
+                          <input className="mdcTeamStatsGrid__input" inputMode="numeric" autoComplete="off" autoCorrect="off" onFocus={selectOnFocus} value={manualTeamStats[field.key].home} onChange={(e) => setManualTeamStatValue(field.key, 'home', e.target.value)} placeholder="0" />
+                          <input className="mdcTeamStatsGrid__input" inputMode="numeric" autoComplete="off" autoCorrect="off" onFocus={selectOnFocus} value={manualTeamStats[field.key].away} onChange={(e) => setManualTeamStatValue(field.key, 'away', e.target.value)} placeholder="0" />
                         </React.Fragment>
                       ))}
                     </div>
@@ -1355,12 +1338,11 @@ export default function SubmitPage() {
 
               {currentStep === 5 && (
                 <section className="mdcCard">
-                  <div className="mdcCard__head">Step 5 — Goal Kickers</div>
+                  <div className="mdcCard__head">Goal Kickers</div>
                   <div className="mdcCard__body">
-                    <p className="mdcCard__hint">Assign goal kickers for both teams. Tagged goals must match the final score.</p>
                     <div className="mdcGoalKickerSection__head">
                       <div>
-                        <div className="mdcGoalKickerSection__sub">Search players with headshots or add a manual name. Use + / - to adjust.</div>
+                        <div className="mdcGoalKickerSection__sub">Tap a player or search by name. Use +/- to adjust goals.</div>
                       </div>
                       <div className={`mdcGoalKickerSection__status ${goalKickersValid && (homeGoalsN > 0 || awayGoalsN > 0) ? 'is-valid' : homeGoalsN === 0 && awayGoalsN === 0 ? '' : 'is-warn'}`}>
                         {homeGoalsN === 0 && awayGoalsN === 0
@@ -1398,14 +1380,13 @@ export default function SubmitPage() {
                   <input ref={resultFileInputRef} type="file" accept="image/*" onChange={onResultFileSelected} hidden />
                   <input ref={playerFilesInputRef} type="file" accept="image/*" multiple onChange={onPlayerFilesSelected} hidden />
                   <section className="mdcCard">
-                    <div className="mdcCard__head">Step 6 — Upload Screenshots</div>
+                    <div className="mdcCard__head">Screenshots</div>
                     <div className="mdcCard__body">
-                      <div className="mdcStepProgress"><span>{resultScreenshotsCount} / 3</span> match screenshots • <span>{playerScreenshotCount}</span> player screenshots</div>
-                      {fileError && <div className="mdcStatus mdcStatus--danger mdcStatus--inline" style={{ marginBottom: 10 }}><AlertTriangle size={14} /> {fileError}</div>}
+                      <div className="mdcStepProgress"><span>{resultScreenshotsCount}/3</span> match • <span>{playerScreenshotCount}</span> player</div>
+                      {fileError && <div className="mdcStatus mdcStatus--danger mdcStatus--inline" style={{ marginBottom: 8 }}><AlertTriangle size={14} /> {fileError}</div>}
 
                       <div className="mdcScreenshotGroup">
-                        <div className="mdcScreenshotGroup__title">Required Match Screenshots</div>
-                        <p className="mdcCard__hint">Upload the final score + worm screenshot and both team stats pages.</p>
+                        <div className="mdcScreenshotGroup__title">Match Screenshots (3 required)</div>
                         <div className="mdcSlotGrid">
                           {RESULT_SCREENSHOT_SLOTS.map((slot) => {
                             const file = resultScreenshots[slot.key];
@@ -1426,7 +1407,7 @@ export default function SubmitPage() {
                                   </div>
                                 ) : (
                                   <button type="button" className="mdcSlot__upload" onClick={() => triggerResultUpload(slot.key)}>
-                                    <Upload size={18} />
+                                    <Upload size={16} />
                                     <span>Upload</span>
                                   </button>
                                 )}
@@ -1437,38 +1418,15 @@ export default function SubmitPage() {
                       </div>
 
                       <div className="mdcScreenshotGroup">
-                        <div className="mdcScreenshotGroup__title">Player Stats Pack</div>
-                        <p className="mdcCard__hint">Upload the player stats screenshots required for OCR. All player stats are required, and goal kickers stay separate in Step 5.</p>
-                        <div className="mdcUploadGuide" role="note" aria-label="Required player stats photos for OCR">
-                          <div className="mdcUploadGuide__eyebrow">Required photos for OCR</div>
-                          <div className="mdcUploadGuide__list">
-                            <div className="mdcUploadGuide__item is-photo">
-                              <Camera size={15} />
-                              <span>Full {homeStatsGuideLabel} player stats screen</span>
-                            </div>
-                            <div className="mdcUploadGuide__item is-photo">
-                              <Camera size={15} />
-                              <span>Full {awayStatsGuideLabel} player stats screen</span>
-                            </div>
-                            <div className="mdcUploadGuide__item is-detail">
-                              <CheckCircle2 size={15} />
-                              <span>Make sure all players are visible</span>
-                            </div>
-                            <div className="mdcUploadGuide__item is-detail">
-                              <CheckCircle2 size={15} />
-                              <span>Stats must include disposals, kicks, handballs, marks, behinds, and fantasy points</span>
-                            </div>
-                          </div>
-                          <div className="mdcUploadGuide__note">Upload everything together in this step. Goal kickers are already handled separately above.</div>
-                        </div>
+                        <div className="mdcScreenshotGroup__title">Player Stats Screenshots</div>
+                        <p className="mdcCard__hint">Both teams, all players — disposals, kicks, handballs, marks, behinds, fantasy points.</p>
                         <div className={`mdcBulkUpload ${playerScreenshotsValid ? 'is-valid' : ''}`}>
                           <div className="mdcBulkUpload__top">
                             <div>
-                              <div className="mdcBulkUpload__title">Upload Player Stats Screenshots</div>
-                              <div className="mdcBulkUpload__sub">{playerScreenshotCount} uploaded • both teams • all players • all required stats</div>
+                              <div className="mdcBulkUpload__title">{playerScreenshotCount} uploaded</div>
                             </div>
                             <button type="button" className="mdcBtn mdcBulkUpload__button" onClick={triggerPlayerUpload}>
-                              <Upload size={16} /> Add screenshots
+                              <Upload size={14} /> Add
                             </button>
                           </div>
 
@@ -1487,8 +1445,8 @@ export default function SubmitPage() {
                             </div>
                           ) : (
                             <button type="button" className="mdcBulkUpload__empty" onClick={triggerPlayerUpload}>
-                              <FileImage size={18} />
-                              <span>Upload player stats screenshots</span>
+                              <FileImage size={16} />
+                              <span>Tap to upload</span>
                             </button>
                           )}
                         </div>
@@ -1502,7 +1460,7 @@ export default function SubmitPage() {
 
               {currentStep === 7 && (
                 <section className="mdcCard">
-                  <div className="mdcCard__head">Step 7 — Review & Submit</div>
+                  <div className="mdcCard__head">Review &amp; Submit</div>
                   <div className="mdcCard__body">
                     <div className="mdcReviewScore">
                       <div className="mdcReviewScore__value">{homeScore}</div>
@@ -1510,38 +1468,23 @@ export default function SubmitPage() {
                       <div className="mdcReviewScore__value">{awayScore}</div>
                     </div>
 
-                    {(homeGoalKickers.length > 0 || awayGoalKickers.length > 0) && (
-                      <div className="mdcGoalKickerReview">
-                        <div className="mdcGoalKickerReview__title">Goal Kicker Split</div>
-                        <div className="mdcGoalKickerReview__row"><strong>{homeDisplayName}:</strong> <span>{homeGoalSummary || 'None added yet'}</span></div>
-                        <div className="mdcGoalKickerReview__row"><strong>{awayDisplayName}:</strong> <span>{awayGoalSummary || 'None added yet'}</span></div>
-                      </div>
-                    )}
-
                     <div className="mdcChecklist">
-                      <button type="button" className={`mdcChecklist__row ${scoreValid ? 'is-ok' : ''}`} onClick={() => goToStep(2)}><Check size={13} /> Final score entered {!scoreValid && <ChevronRight size={13} className="mdcChecklist__go" />}</button>
-                      <button type="button" className={`mdcChecklist__row ${quartersValid ? 'is-ok' : ''}`} onClick={() => goToStep(3)}><Check size={13} /> Quarter-by-quarter scores {!quartersValid && <ChevronRight size={13} className="mdcChecklist__go" />}</button>
-                      <button type="button" className={`mdcChecklist__row ${allTeamStatsFilled ? 'is-ok' : ''}`} onClick={() => goToStep(4)}><Check size={13} /> Team stats ({teamStatsFilledCount} / {MANUAL_TEAM_STAT_FIELDS.length}) {!allTeamStatsFilled && <ChevronRight size={13} className="mdcChecklist__go" />}</button>
-                      <button type="button" className={`mdcChecklist__row ${goalKickersValid ? 'is-ok' : ''}`} onClick={() => goToStep(5)}><Check size={13} /> Goal kickers ({homeGoalKickerTotal + awayGoalKickerTotal} tagged) {!goalKickersValid && <ChevronRight size={13} className="mdcChecklist__go" />}</button>
-                      <button type="button" className={`mdcChecklist__row ${allScreenshotsValid ? 'is-ok' : ''}`} onClick={() => goToStep(6)}><Check size={13} /> Match screenshots ({resultScreenshotsCount} / 3) • Player pack ({playerScreenshotCount} uploaded) {!allScreenshotsValid && <ChevronRight size={13} className="mdcChecklist__go" />}</button>
+                      <button type="button" className={`mdcChecklist__row ${scoreValid ? 'is-ok' : ''}`} onClick={() => goToStep(2)}><Check size={13} /> Score {!scoreValid && <ChevronRight size={13} className="mdcChecklist__go" />}</button>
+                      <button type="button" className={`mdcChecklist__row ${quartersValid ? 'is-ok' : ''}`} onClick={() => goToStep(3)}><Check size={13} /> Quarters {!quartersValid && <ChevronRight size={13} className="mdcChecklist__go" />}</button>
+                      <button type="button" className={`mdcChecklist__row ${allTeamStatsFilled ? 'is-ok' : ''}`} onClick={() => goToStep(4)}><Check size={13} /> Stats ({teamStatsFilledCount}/{MANUAL_TEAM_STAT_FIELDS.length}) {!allTeamStatsFilled && <ChevronRight size={13} className="mdcChecklist__go" />}</button>
+                      <button type="button" className={`mdcChecklist__row ${goalKickersValid ? 'is-ok' : ''}`} onClick={() => goToStep(5)}><Check size={13} /> Kickers ({homeGoalKickerTotal + awayGoalKickerTotal}) {!goalKickersValid && <ChevronRight size={13} className="mdcChecklist__go" />}</button>
+                      <button type="button" className={`mdcChecklist__row ${allScreenshotsValid ? 'is-ok' : ''}`} onClick={() => goToStep(6)}><Check size={13} /> Screenshots ({resultScreenshotsCount}/3 + {playerScreenshotCount}) {!allScreenshotsValid && <ChevronRight size={13} className="mdcChecklist__go" />}</button>
                     </div>
 
                     <div className="mdcReviewNotes">
-                      <div className="mdcReviewNotes__label">Notes for admin (optional)</div>
-                      <textarea className="mdcNotes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Issues with the match, corrections needed, etc." rows={3} />
+                      <div className="mdcReviewNotes__label">Notes (optional)</div>
+                      <textarea className="mdcNotes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Any issues or corrections…" rows={2} />
                     </div>
 
                     {validationMessages.length > 0 && (
                       <div className="mdcValidation">
-                        <div className="mdcValidation__title">Before you can submit:</div>
-                        {validationMessages.map((msg) => <div key={msg} className="mdcValidation__item"><AlertTriangle size={13} /> {msg}</div>)}
-                      </div>
-                    )}
-
-                    {canSubmit && (
-                      <div className="mdcIntegrity" style={{ marginTop: 14 }}>
-                        <Shield size={14} />
-                        <span>All submissions are reviewed and cross-checked by admin and AI before stats are finalised. Match result and team stats go live now. Player screenshots go to admin processing.</span>
+                        <div className="mdcValidation__title">Required:</div>
+                        {validationMessages.map((msg) => <div key={msg} className="mdcValidation__item"><AlertTriangle size={12} /> {msg}</div>)}
                       </div>
                     )}
 
