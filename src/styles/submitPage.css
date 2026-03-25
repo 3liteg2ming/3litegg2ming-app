@@ -1827,6 +1827,11 @@ button.mdcChecklist__row {
   background: rgba(245,196,0,0.08);
 }
 
+.kickerPicker__activeHint.isNeutral {
+  color: rgba(255,255,255,0.56);
+  background: rgba(255,255,255,0.04);
+}
+
 /* ── Selected kickers — horizontal scrollable row ── */
 
 .kickerPicker__selectedRow {
@@ -2019,9 +2024,27 @@ button.mdcChecklist__row {
   gap: 6px;
   overflow-x: auto;
   overflow-y: hidden;
-  padding-bottom: 4px;
+  padding-bottom: 8px;
+  padding-right: 16px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
+  scroll-snap-type: x proximity;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+}
+
+.kickerPicker__chipScroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.kickerPicker__chipScroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
+}
+
+.kickerPicker__chipScroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
 }
 
 .kickerChip {
@@ -2039,6 +2062,7 @@ button.mdcChecklist__row {
   white-space: nowrap;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
+  scroll-snap-align: start;
 }
 
 .kickerChip:active {

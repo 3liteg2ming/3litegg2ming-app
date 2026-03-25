@@ -124,10 +124,12 @@ export function GoalKickerPicker({
       </div>
 
       {/* Status hint */}
-      <div className={`kickerPicker__activeHint ${activeUnassignedGoals > 0 ? 'isWarn' : 'isDone'}`}>
-        {activeUnassignedGoals > 0
-          ? `${activeUnassignedGoals} unassigned goal${activeUnassignedGoals === 1 ? '' : 's'} remaining`
-          : 'All goals assigned'}
+      <div className={`kickerPicker__activeHint ${activeScoredGoals === 0 && activeKickers.length === 0 ? 'isNeutral' : activeUnassignedGoals > 0 ? 'isWarn' : 'isDone'}`}>
+        {activeScoredGoals === 0 && activeKickers.length === 0
+          ? 'Enter final score first to assign goal kickers'
+          : activeUnassignedGoals > 0
+            ? `${activeUnassignedGoals} unassigned goal${activeUnassignedGoals === 1 ? '' : 's'} remaining`
+            : 'All goals assigned'}
       </div>
 
       {/* Selected kickers — compact inline cards */}
