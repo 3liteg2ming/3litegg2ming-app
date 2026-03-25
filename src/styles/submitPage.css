@@ -1730,7 +1730,6 @@ button.mdcChecklist__row {
   background: linear-gradient(165deg, rgba(21, 26, 40, 0.72), rgba(10, 14, 22, 0.9));
   padding: 14px;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-  overflow: hidden;
   min-width: 0;
 }
 
@@ -1840,15 +1839,15 @@ button.mdcChecklist__row {
   margin-top: 10px;
   display: flex;
   gap: 8px;
-  overflow-x: auto;
+  overflow-x: scroll;
   overflow-y: hidden;
   padding-bottom: 8px;
   padding-right: 16px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scroll-snap-type: x proximity;
-  touch-action: pan-x;
   overscroll-behavior-x: contain;
+  max-width: 100%;
 }
 
 .kickerPicker__selectedRow::-webkit-scrollbar {
@@ -2024,15 +2023,15 @@ button.mdcChecklist__row {
   margin-top: 10px;
   display: flex;
   gap: 6px;
-  overflow-x: auto;
+  overflow-x: scroll;
   overflow-y: hidden;
   padding-bottom: 8px;
   padding-right: 16px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scroll-snap-type: x proximity;
-  touch-action: pan-x;
   overscroll-behavior-x: contain;
+  max-width: 100%;
 }
 
 .kickerPicker__chipScroll::-webkit-scrollbar {

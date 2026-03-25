@@ -543,7 +543,7 @@ export default function SubmitPage() {
       2: scoreValid,
       3: quartersValid,
       4: allTeamStatsFilled,
-      5: goalKickersValid,
+      5: scoreValid && goalKickersValid,
       6: allScreenshotsValid,
       7: canSubmit,
     }),
