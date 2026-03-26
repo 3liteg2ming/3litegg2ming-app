@@ -168,6 +168,16 @@
   box-shadow: 0 0 10px rgba(245, 196, 0, 0.38);
 }
 
+.fxPosterCard--pending .fxPosterCard__statusDot {
+  background: #fb923c;
+  box-shadow: 0 0 10px rgba(251, 146, 60, 0.4);
+}
+
+.fxPosterCard--pending .fxPosterCard__statusPill {
+  border-color: rgba(251, 146, 60, 0.22);
+  background: rgba(251, 146, 60, 0.08);
+}
+
 .fxPosterCard__statusText {
   font-size: 9px;
   font-weight: 900;
@@ -396,7 +406,8 @@
 }
 
 .fxPosterCard__liveState,
-.fxPosterCard__finalState {
+.fxPosterCard__finalState,
+.fxPosterCard__pendingState {
   margin-bottom: 5px;
   border-radius: 999px;
   padding: 5px 10px;
@@ -417,6 +428,12 @@
   color: rgba(229, 238, 255, 0.92);
   border: 1px solid rgba(213, 224, 246, 0.24);
   background: rgba(213, 224, 246, 0.1);
+}
+
+.fxPosterCard__pendingState {
+  color: rgba(255, 210, 160, 0.96);
+  border: 1px solid rgba(251, 146, 60, 0.34);
+  background: rgba(251, 146, 60, 0.14);
 }
 
 .fxPosterCard__metaBlock {

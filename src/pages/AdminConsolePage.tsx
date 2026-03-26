@@ -428,9 +428,10 @@ export default function AdminConsolePage() {
   }, [competitionKey, fixtureSort, fixtures, fixturesSearch, roundFilter, statusFilter, teamFilter]);
 
   const statusCounts = useMemo(() => {
-    const counts = { all: fixtures.length, SCHEDULED: 0, FINAL: 0 };
+    const counts = { all: fixtures.length, SCHEDULED: 0, PENDING_RESULTS: 0, FINAL: 0 };
     for (const f of fixtures) {
       if (f.status === 'FINAL') counts.FINAL += 1;
+      else if (f.status === 'PENDING_RESULTS') counts.PENDING_RESULTS += 1;
       else counts.SCHEDULED += 1;
     }
     return counts;
@@ -1004,6 +1005,7 @@ export default function AdminConsolePage() {
                   <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                     <option value="all">All ({statusCounts.all})</option>
                     <option value="SCHEDULED">Scheduled ({statusCounts.SCHEDULED})</option>
+                    <option value="PENDING_RESULTS">Pending Results ({statusCounts.PENDING_RESULTS})</option>
                     <option value="FINAL">Final ({statusCounts.FINAL})</option>
                   </select>
                 </label>
@@ -1158,6 +1160,7 @@ export default function AdminConsolePage() {
                                 onChange={(e) => updateFixtureDraft(rowId, { status: e.target.value.toUpperCase() })}
                               >
                                 <option value="SCHEDULED">SCHEDULED</option>
+                                <option value="PENDING_RESULTS">PENDING RESULTS</option>
                                 <option value="FINAL">FINAL</option>
                               </select>
                             </td>

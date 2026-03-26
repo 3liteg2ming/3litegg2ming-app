@@ -5,7 +5,7 @@ import { requireSupabaseClient } from './supabaseClient';
 const supabase = requireSupabaseClient();
 const FIXTURE_CACHE_TTL_MS = 60_000;
 
-export type FixtureStatus = 'SCHEDULED' | 'LIVE' | 'FINAL';
+export type FixtureStatus = 'SCHEDULED' | 'LIVE' | 'FINAL' | 'PENDING_RESULTS';
 
 type SeasonRecord = {
   id: string;
@@ -134,6 +134,8 @@ export function deriveFixtureRound(
   return 1;
 }
 
+const PENDING_RESULTS_STATUSES = new Set(['PENDING_RESULTS', 'PENDING RESULTS']);
+
 export function normalizeFixtureStatus(
   status: unknown,
   fixture?: Partial<RawFixtureRow> | Partial<FixtureRow>,
@@ -141,10 +143,8 @@ export function normalizeFixtureStatus(
   const normalized = text(status).toUpperCase();
 
   if (FINAL_STATUSES.has(normalized)) return 'FINAL';
+  if (PENDING_RESULTS_STATUSES.has(normalized)) return 'PENDING_RESULTS';
   if (LIVE_STATUSES.has(normalized)) return 'LIVE';
-  if (SCHEDULED_STATUSES.has(normalized)) {
-    if (normalized) return 'SCHEDULED';
-  }
 
   const hasResultTimestamp = Boolean(
     text(fixture?.submitted_at) || text(fixture?.verified_at) || text(fixture?.disputed_at) || text(fixture?.corrected_at),
@@ -162,6 +162,16 @@ export function normalizeFixtureStatus(
     const homeTotal = toNullableNumber(fixture?.home_total);
     const awayTotal = toNullableNumber(fixture?.away_total);
     if (homeTotal != null || awayTotal != null) return 'FINAL';
+  }
+
+  if (SCHEDULED_STATUSES.has(normalized)) {
+    /* Auto-derive: scheduled fixture whose start time has passed → pending results */
+    const startRaw = text(fixture?.start_time);
+    if (startRaw) {
+      const startMs = new Date(startRaw).getTime();
+      if (Number.isFinite(startMs) && startMs < Date.now()) return 'PENDING_RESULTS';
+    }
+    if (normalized) return 'SCHEDULED';
   }
 
   return 'SCHEDULED';

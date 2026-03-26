@@ -27,7 +27,7 @@ import { useMelvinOdds } from '../hooks/useMelvinOdds';
 import { useAuth } from '../state/auth/AuthProvider';
 import '../styles/Fixtures.css';
 
-type StatusFilter = 'ALL' | 'SCHEDULED' | 'FINAL';
+type StatusFilter = 'ALL' | 'SCHEDULED' | 'FINAL' | 'PENDING_RESULTS';
 
 type StageGroup = {
   id: string;
@@ -405,16 +405,23 @@ export default function AFL26FixturesPage() {
 
   const counts = useMemo(() => {
     const all = matchesAfterFilterSheet.length;
-    const scheduled = matchesAfterFilterSheet.filter((fixture) => normalizeFixtureStatus(fixture.status, fixture) === 'SCHEDULED').length;
-    const final = matchesAfterFilterSheet.filter((fixture) => normalizeFixtureStatus(fixture.status, fixture) === 'FINAL').length;
-    return { all, scheduled, final };
+    let scheduled = 0;
+    let pending = 0;
+    let final = 0;
+    for (const fixture of matchesAfterFilterSheet) {
+      const s = normalizeFixtureStatus(fixture.status, fixture);
+      if (s === 'FINAL') final += 1;
+      else if (s === 'PENDING_RESULTS') pending += 1;
+      else scheduled += 1;
+    }
+    return { all, scheduled, pending, final };
   }, [matchesAfterFilterSheet]);
 
   const filteredMatches = useMemo(() => {
     if (activeStatus === 'ALL') return matchesAfterFilterSheet;
     return matchesAfterFilterSheet.filter((fixture) => {
       const status = normalizeFixtureStatus(fixture.status, fixture);
-      return activeStatus === 'SCHEDULED' ? status === 'SCHEDULED' : status === 'FINAL';
+      return status === activeStatus;
     });
   }, [activeStatus, matchesAfterFilterSheet]);
 
@@ -454,6 +461,7 @@ export default function AFL26FixturesPage() {
   const statusPills: Array<{ key: StatusFilter; label: string; count: number | string }> = [
     { key: 'ALL', label: 'All', count: isLoading ? '—' : counts.all },
     { key: 'SCHEDULED', label: 'Scheduled', count: isLoading ? '—' : counts.scheduled },
+    { key: 'PENDING_RESULTS', label: 'Pending', count: isLoading ? '—' : counts.pending },
     { key: 'FINAL', label: 'Final', count: isLoading ? '—' : counts.final },
   ];
 

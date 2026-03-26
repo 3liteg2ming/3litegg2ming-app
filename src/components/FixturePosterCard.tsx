@@ -14,7 +14,7 @@ export type FixturePosterMatch = {
   venue?: string;
   dateText?: string;
 
-  status: 'SCHEDULED' | 'LIVE' | 'FINAL';
+  status: 'SCHEDULED' | 'LIVE' | 'FINAL' | 'PENDING_RESULTS';
   home: string;
   away: string;
 
@@ -69,6 +69,7 @@ function pickTeamTint(key: string, asset: any): string {
 function statusText(status: FixturePosterMatch['status']) {
   if (status === 'FINAL') return 'FULL TIME';
   if (status === 'LIVE') return 'LIVE';
+  if (status === 'PENDING_RESULTS') return 'PENDING RESULTS';
   return 'SCHEDULED';
 }
 
@@ -154,11 +155,12 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
   };
 
   const isUpcoming = safeMatch.status === 'SCHEDULED';
+  const isPending = safeMatch.status === 'PENDING_RESULTS';
   const homeScore = normalizeScore(safeMatch.homeScore);
   const awayScore = normalizeScore(safeMatch.awayScore);
 
   const hasScores = !!homeScore && !!awayScore;
-  const showScore = !isUpcoming && (safeMatch.status === 'LIVE' || safeMatch.status === 'FINAL') && hasScores;
+  const showScore = !isUpcoming && !isPending && (safeMatch.status === 'LIVE' || safeMatch.status === 'FINAL') && hasScores;
   const compactScore =
     showScore && Math.max(Number(homeScore?.total || 0), Number(awayScore?.total || 0)) >= 100;
 
@@ -198,7 +200,7 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
   const homeWins = showScore && homeScore && awayScore ? Number(homeScore.total) > Number(awayScore.total) : false;
   const awayWins = showScore && homeScore && awayScore ? Number(awayScore.total) > Number(homeScore.total) : false;
 
-  const statusClass = safeMatch.status === 'FINAL' ? 'final' : safeMatch.status === 'LIVE' ? 'live' : 'upcoming';
+  const statusClass = safeMatch.status === 'FINAL' ? 'final' : safeMatch.status === 'LIVE' ? 'live' : safeMatch.status === 'PENDING_RESULTS' ? 'pending' : 'upcoming';
   const homeLogoSrc = resolveLogoSrc(home);
   const awayLogoSrc = resolveLogoSrc(away);
   const headerMeta = String(safeMatch.headerTag || (safeMatch.round ? `Round ${safeMatch.round}` : 'Fixture')).trim();
@@ -267,9 +269,13 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
         </div>
 
         <div className="fxPosterCard__center">
-          {isUpcoming ? (
+          {isUpcoming || isPending ? (
             <>
-              <div className="fxPosterCard__fixtureState">Match Day</div>
+              {isPending ? (
+                <div className="fxPosterCard__pendingState">PENDING RESULTS</div>
+              ) : (
+                <div className="fxPosterCard__fixtureState">Match Day</div>
+              )}
               {venueLine ? <div className="fxPosterCard__fixtureMeta">{venueLine}</div> : null}
             </>
           ) : (
@@ -345,7 +351,7 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
         </div>
       </div>
 
-      {venueLine && !isUpcoming ? (
+      {venueLine && !isUpcoming && !isPending ? (
         <div className="fxPosterCard__metaBlock">
           <div className="fxPosterCard__venue">{venueLine}</div>
         </div>
@@ -353,7 +359,7 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
 
       {winner ? <div className="fxPosterCard__result">{winner}</div> : null}
 
-      {isUpcoming && (
+      {(isUpcoming || isPending) && (
         <div className="fxPosterCard__infoGrid">
           <div className="fxPosterCard__metaPill">
             <div className="fxPosterCard__metaRow">
@@ -399,7 +405,7 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
         </div>
       )}
 
-      {isUpcoming && (
+      {(isUpcoming || isPending) && (
         <MelvinBetOddsStrip
           matchId={safeMatch.id || `${homeKey}-${awayKey}`}
           homeName={home.name}

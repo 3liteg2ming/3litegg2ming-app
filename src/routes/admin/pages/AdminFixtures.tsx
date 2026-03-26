@@ -123,6 +123,7 @@ export default function AdminFixtures() {
   function statusBadge(s: string | null) {
     if (s === 'FINAL') return { bg: 'rgba(52,211,153,0.18)', color: '#6ee7b7', label: 'FINAL' };
     if (s === 'LIVE') return { bg: 'rgba(251,191,36,0.18)', color: '#fcd34d', label: 'LIVE' };
+    if (s === 'PENDING_RESULTS') return { bg: 'rgba(251,146,60,0.18)', color: '#fdba74', label: 'PENDING' };
     return { bg: 'rgba(148,163,184,0.12)', color: '#94a3b8', label: 'SCHED' };
   }
 
