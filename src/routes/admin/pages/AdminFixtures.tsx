@@ -213,6 +213,7 @@ export default function AdminFixtures() {
               <select value={status} onChange={(event) => setStatus(event.target.value)}>
                 <option value="all">Any</option>
                 <option value="SCHEDULED">Scheduled</option>
+                <option value="PENDING_RESULTS">Pending Results</option>
                 <option value="LIVE">Live</option>
                 <option value="FINAL">Final</option>
               </select>
@@ -338,6 +339,7 @@ export default function AdminFixtures() {
                           }
                         >
                           <option value="SCHEDULED">Scheduled</option>
+                          <option value="PENDING_RESULTS">Pending Results</option>
                           <option value="LIVE">Live</option>
                           <option value="FINAL">Final</option>
                         </select>

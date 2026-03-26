@@ -514,6 +514,7 @@ export default function AdminPanelPage() {
                 />
                 <select value={newFixture.status} onChange={(e) => setNewFixture({ ...newFixture, status: e.target.value })}>
                   <option value="SCHEDULED">SCHEDULED</option>
+                  <option value="PENDING_RESULTS">PENDING RESULTS</option>
                   <option value="LIVE">LIVE</option>
                   <option value="FINAL">FINAL</option>
                 </select>

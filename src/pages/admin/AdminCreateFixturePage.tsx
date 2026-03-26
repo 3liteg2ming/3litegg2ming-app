@@ -195,6 +195,7 @@ export default function AdminCreateFixturePage() {
           Status
           <select value={status} onChange={(e) => setStatus(e.target.value as Status)} style={{ width: "100%", height: 42 }}>
             <option value="SCHEDULED">SCHEDULED</option>
+            <option value="PENDING_RESULTS">PENDING RESULTS</option>
             <option value="LIVE">LIVE</option>
             <option value="FINAL">FINAL</option>
           </select>
