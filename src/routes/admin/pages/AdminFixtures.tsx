@@ -107,7 +107,7 @@ export default function AdminFixtures() {
       if (!map.has(r)) map.set(r, []);
       map.get(r)!.push(f);
     }
-    const entries = Array.from(map.entries()).sort((a, b) => a[0] - b[0]);
+    const entries = Array.from(map.entries()).sort((a, b) => b[0] - a[0]);
     return entries.filter(([round]) => isRoundVisible(round));
   }, [allFixtures]);
 
