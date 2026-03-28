@@ -6,7 +6,7 @@ export type ScoreLine = { total: number; goals: number; behinds: number };
 export type AflMatch = {
   id: string;
   venue?: string;
-  status: 'SCHEDULED' | 'LIVE' | 'FINAL';
+  status: 'SCHEDULED' | 'LIVE' | 'FINAL' | 'PENDING_RESULTS';
 
   home: string;
   away: string;
