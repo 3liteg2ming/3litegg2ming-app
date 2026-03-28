@@ -346,9 +346,9 @@ export default function AFL26FixturesPage() {
 
   useEffect(() => {
     if (!fixturesPubliclyVisible) return;
-    const first = regularStageGroups[0]?.id || '';
+    const last = regularStageGroups[regularStageGroups.length - 1]?.id || '';
     if (!activeStageId || !regularStageGroups.some((stage) => stage.id === activeStageId)) {
-      setActiveStageId(first);
+      setActiveStageId(last);
     }
   }, [activeStageId, fixturesPubliclyVisible, regularStageGroups]);
 
