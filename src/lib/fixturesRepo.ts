@@ -142,10 +142,22 @@ export function normalizeFixtureStatus(
 ): FixtureStatus {
   const normalized = text(status).toUpperCase();
 
+  // Explicit stored status values win over metadata auto-derivation.
   if (FINAL_STATUSES.has(normalized)) return 'FINAL';
   if (PENDING_RESULTS_STATUSES.has(normalized)) return 'PENDING_RESULTS';
   if (LIVE_STATUSES.has(normalized)) return 'LIVE';
+  // Explicit SCHEDULED (non-empty): allow time-based promotion to PENDING_RESULTS
+  // only; never force to FINAL based on stale timestamps or partial score data.
+  if (SCHEDULED_STATUSES.has(normalized) && normalized !== '') {
+    const startRaw = text(fixture?.start_time);
+    if (startRaw) {
+      const startMs = new Date(startRaw).getTime();
+      if (Number.isFinite(startMs) && startMs < Date.now()) return 'PENDING_RESULTS';
+    }
+    return 'SCHEDULED';
+  }
 
+  // Status is empty or unrecognized: auto-derive from fixture metadata.
   const hasResultTimestamp = Boolean(
     text(fixture?.submitted_at) || text(fixture?.verified_at) || text(fixture?.disputed_at) || text(fixture?.corrected_at),
   );
@@ -164,14 +176,11 @@ export function normalizeFixtureStatus(
     if (homeTotal != null || awayTotal != null) return 'FINAL';
   }
 
-  if (SCHEDULED_STATUSES.has(normalized)) {
-    /* Auto-derive: scheduled fixture whose start time has passed → pending results */
-    const startRaw = text(fixture?.start_time);
-    if (startRaw) {
-      const startMs = new Date(startRaw).getTime();
-      if (Number.isFinite(startMs) && startMs < Date.now()) return 'PENDING_RESULTS';
-    }
-    if (normalized) return 'SCHEDULED';
+  /* Auto-derive: unknown/empty status + start time has passed → pending results */
+  const startRaw = text(fixture?.start_time);
+  if (startRaw) {
+    const startMs = new Date(startRaw).getTime();
+    if (Number.isFinite(startMs) && startMs < Date.now()) return 'PENDING_RESULTS';
   }
 
   return 'SCHEDULED';
