@@ -5,7 +5,7 @@
  * Currently Round 1 and Round 2 are visible. This can be expanded later by updating this file.
  */
 
-const VISIBLE_ROUNDS = new Set([1, 2, 3]);
+const VISIBLE_ROUNDS = new Set([1, 2, 3, 4]);
 
 /**
  * Check if a round number should be visible to users
