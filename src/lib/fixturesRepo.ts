@@ -3,7 +3,7 @@ import { getCanonicalSeasonSlug, resolveSeasonRecord } from './seasonResolver';
 import { requireSupabaseClient } from './supabaseClient';
 
 const supabase = requireSupabaseClient();
-const FIXTURE_CACHE_TTL_MS = 60_000;
+const FIXTURE_CACHE_TTL_MS = 15_000;
 
 export type FixtureStatus = 'SCHEDULED' | 'LIVE' | 'FINAL' | 'PENDING_RESULTS';
 

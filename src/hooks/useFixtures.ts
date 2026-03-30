@@ -133,7 +133,7 @@ export function useSeasonFixtures(
   return useQuery<SeasonFixturesResult>({
     queryKey: ['fixtures', 'season', seasonSlug, limit, offset],
     queryFn: () => fetchResolvedSeasonFixtures(seasonSlug, limit, offset),
-    staleTime: 45_000,
+    staleTime: 15_000,
     gcTime: 1_200_000,
     enabled: options?.enabled ?? true,
   });
