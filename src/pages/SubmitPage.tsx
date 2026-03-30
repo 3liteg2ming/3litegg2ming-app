@@ -536,10 +536,13 @@ export default function SubmitPage() {
     return messages;
   }, [scoreValid, quartersFilled, quartersMatchFinal, quartersProgressive, allTeamStatsFilled, resultScreenshotsFilled, resultScreenshotsCount, playerScreenshotsValid, playerScreenshotCount]);
 
+  const isSuperAdmin = myRole === 'super_admin';
+
   const canSubmit = useMemo(() => {
     if (!fixture || !myTeamId || isSubmitting) return false;
+    if (isSuperAdmin) return scoreValid;
     return scoreValid && quartersValid && allTeamStatsFilled && goalKickersValid && allScreenshotsValid;
-  }, [fixture, myTeamId, isSubmitting, scoreValid, quartersValid, allTeamStatsFilled, goalKickersValid, allScreenshotsValid]);
+  }, [fixture, myTeamId, isSubmitting, isSuperAdmin, scoreValid, quartersValid, allTeamStatsFilled, goalKickersValid, allScreenshotsValid]);
 
   const stepComplete = useMemo(
     () => ({
