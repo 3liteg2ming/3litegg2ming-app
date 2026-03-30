@@ -539,8 +539,20 @@ export async function updateFixture(args: {
     p_start_time: args.startTime ?? null,
     p_venue: args.venue ?? null,
   });
-  if (error) unwrapRpcError(error);
-  return data as AdminFixture;
+  if (!error) return data as AdminFixture;
+
+  // Fallback: direct DB update when RPC is unavailable
+  const patch: Record<string, unknown> = {};
+  if (args.status !== undefined) patch.status = args.status;
+  if (args.startTime !== undefined) patch.start_time = args.startTime;
+  if (args.venue !== undefined) patch.venue = args.venue;
+
+  const { error: updateErr } = await supabase.from('eg_fixtures').update(patch).eq('id', args.fixtureId);
+  if (updateErr) unwrapRpcError(updateErr);
+
+  const { data: row, error: fetchErr } = await supabase.from('eg_fixtures').select('*').eq('id', args.fixtureId).single();
+  if (fetchErr) unwrapRpcError(fetchErr);
+  return row as AdminFixture;
 }
 
 export async function swapFixtureTeams(fixtureId: string) {

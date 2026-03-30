@@ -1449,13 +1449,10 @@ export default function AdminFixtureDetail() {
             <button
               type="button"
               className="eg-fd-btn eg-fd-btn-save"
-              disabled={scoreMutation.isPending || !scoreDraft}
-              onClick={() => {
-                if (!scoreDraft) { initScoreDraft(); return; }
-                scoreMutation.mutate();
-              }}
+              disabled={scoreMutation.isPending}
+              onClick={() => scoreMutation.mutate()}
             >
-              {scoreMutation.isPending ? 'Saving...' : scoreDraft ? 'Save Scores' : 'Edit Scores'}
+              {scoreMutation.isPending ? 'Saving...' : 'Save Scores'}
             </button>
           }
         >
@@ -1529,8 +1526,17 @@ export default function AdminFixtureDetail() {
               <select
                 value={scoreDraft?.status ?? fixture.status ?? ''}
                 onChange={(e) => {
-                  if (!scoreDraft) initScoreDraft();
-                  setScoreDraft((prev) => prev ? { ...prev, status: e.target.value } : prev);
+                  const newStatus = e.target.value;
+                  setScoreDraft((prev) => {
+                    if (prev) return { ...prev, status: newStatus };
+                    return {
+                      homeGoals: String(fixture.home_goals ?? ''),
+                      homeBehinds: String(fixture.home_behinds ?? ''),
+                      awayGoals: String(fixture.away_goals ?? ''),
+                      awayBehinds: String(fixture.away_behinds ?? ''),
+                      status: newStatus,
+                    };
+                  });
                 }}
               >
                 <option value="SCHEDULED">Scheduled</option>
@@ -1540,9 +1546,20 @@ export default function AdminFixtureDetail() {
               </select>
             </label>
             <label className="eg-admin-inline-field">
-              <span>Quick</span>
+              <span>Save</span>
               <div className="eg-admin-inline-buttons">
-                <button type="button" onClick={() => statusMutation.mutate('FINAL')}>
+                <button
+                  type="button"
+                  disabled={statusMutation.isPending}
+                  onClick={() => statusMutation.mutate(scoreDraft?.status ?? fixture.status ?? 'SCHEDULED')}
+                >
+                  {statusMutation.isPending ? 'Saving...' : 'Save Status'}
+                </button>
+                <button
+                  type="button"
+                  disabled={statusMutation.isPending}
+                  onClick={() => statusMutation.mutate('FINAL')}
+                >
                   Mark FINAL
                 </button>
               </div>
