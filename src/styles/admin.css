@@ -2331,6 +2331,72 @@
   white-space: nowrap;
 }
 
+/* ─── Worm Editor ─────────────────────────────────── */
+.eg-fd-worm-grid {
+  display: grid;
+  gap: 6px;
+}
+
+.eg-fd-worm-header-row {
+  display: grid;
+  grid-template-columns: 36px 1fr 1fr;
+  gap: 8px;
+  padding: 0 2px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.eg-fd-worm-team-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--admin-muted);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.eg-fd-worm-row {
+  display: grid;
+  grid-template-columns: 36px 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.eg-fd-worm-quarter {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--admin-gold);
+  letter-spacing: 0.05em;
+}
+
+.eg-fd-worm-field input {
+  width: 100%;
+  text-align: center;
+}
+
+.eg-fd-worm-hint {
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  color: var(--admin-muted);
+  line-height: 1.5;
+}
+
+.eg-fd-worm-preview {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.eg-fd-worm-preview-label {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--admin-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 @media (hover: hover) {
   .eg-fx-card:hover {
     background: rgba(245, 196, 0, 0.03);

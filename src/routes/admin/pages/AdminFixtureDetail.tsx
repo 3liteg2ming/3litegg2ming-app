@@ -13,11 +13,14 @@ import {
   lookupPlayersByAflId,
   updateFixture,
   updateFixtureScores,
+  updateFixtureQuarterScores,
   upsertFixturePlayerStats,
   deleteFixturePlayerStats,
   setOcrQueueStatus,
   type AdminFixturePlayerStat,
+  type WormQuarterPoint,
 } from '@/lib/adminApi';
+import WormGraph from '@/components/match-centre/broadcast/WormGraph';
 import type { EgJobStatus } from '@/lib/adminTypes';
 import { useAdminLayoutContext } from '../AdminLayout';
 import { formatDateTime } from '../useAdminTools';
@@ -62,6 +65,36 @@ type BulkPreviewRow = {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+type WormDraft = WormQuarterPoint;
+
+const QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4'] as const;
+
+function readExistingWormPoints(quarterScoresJson: unknown): WormDraft[] | null {
+  if (!quarterScoresJson) return null;
+  try {
+    const obj = typeof quarterScoresJson === 'string' ? JSON.parse(quarterScoresJson) : quarterScoresJson;
+    const pts = (obj as any)?.quarterProgression;
+    if (!Array.isArray(pts) || !pts.length) return null;
+    return QUARTERS.map((q, i) => {
+      const pt = pts.find((p: any) => String(p?.q || '').toUpperCase() === q) ?? pts[i] ?? {};
+      return { q, home: Math.round(Number(pt?.home ?? 0)), away: Math.round(Number(pt?.away ?? 0)) };
+    });
+  } catch {
+    return null;
+  }
+}
+
+function fallbackWormPoints(homeTotal: number | null, awayTotal: number | null): WormDraft[] {
+  const h = homeTotal ?? 0;
+  const a = awayTotal ?? 0;
+  return [
+    { q: 'Q1', home: Math.round(h * 0.20), away: Math.round(a * 0.20) },
+    { q: 'Q2', home: Math.round(h * 0.45), away: Math.round(a * 0.45) },
+    { q: 'Q3', home: Math.round(h * 0.75), away: Math.round(a * 0.75) },
+    { q: 'Q4', home: h, away: a },
+  ];
+}
+
 function toNum(v: string): number | null {
   const n = Number(v);
   return v.trim() === '' || !Number.isFinite(n) ? null : n;
@@ -77,7 +110,7 @@ export default function AdminFixtureDetail() {
   const queryClient = useQueryClient();
   const { pushToast, adminToken } = useAdminLayoutContext();
 
-  const [activeSection, setActiveSection] = useState<'scores' | 'players' | 'ocr' | 'submissions'>('players');
+  const [activeSection, setActiveSection] = useState<'scores' | 'players' | 'ocr' | 'submissions' | 'worm'>('players');
   const [scoreDraft, setScoreDraft] = useState<ScoreDraft | null>(null);
   const [playerDrafts, setPlayerDrafts] = useState<Map<string, PlayerStatDraft>>(new Map());
   const [addPlayerTeamId, setAddPlayerTeamId] = useState('');
@@ -89,6 +122,8 @@ export default function AdminFixtureDetail() {
   const [isApplying, setIsApplying] = useState(false);
   const [ocrHelperOpen, setOcrHelperOpen] = useState(false);
   const [isDownloadingPhotos, setIsDownloadingPhotos] = useState(false);
+  const [wormDraft, setWormDraft] = useState<WormDraft[] | null>(null);
+  const [wormDirty, setWormDirty] = useState(false);
 
   const fixtureQuery = useQuery({
     queryKey: ['admin', 'fixture-detail', fixtureId],
@@ -393,6 +428,37 @@ export default function AdminFixtureDetail() {
       }
     },
   });
+
+  const wormMutation = useMutation({
+    mutationFn: async () => {
+      if (!fixtureId || !wormDraft) throw new Error('No worm data');
+      await updateFixtureQuarterScores(fixtureId, wormDraft);
+    },
+    onSuccess: () => {
+      pushToast('Worm data saved.', 'success');
+      setWormDirty(false);
+      queryClient.invalidateQueries({ queryKey: ['admin', 'fixture-detail', fixtureId] });
+    },
+    onError: (error) => {
+      pushToast(error instanceof Error ? error.message : 'Failed to save worm data', 'error');
+    },
+  });
+
+  function initWormDraft(fix: typeof fixture) {
+    if (!fix) return;
+    const existing = readExistingWormPoints(fix.quarter_scores_json);
+    setWormDraft(existing ?? fallbackWormPoints(fix.home_total, fix.away_total));
+    setWormDirty(false);
+  }
+
+  function updateWormDraft(qi: number, side: 'home' | 'away', value: string) {
+    setWormDraft((prev) => {
+      if (!prev) return prev;
+      const next = prev.map((p, i) => i === qi ? { ...p, [side]: Math.max(0, Number(value) || 0) } : p);
+      return next;
+    });
+    setWormDirty(true);
+  }
 
   function updatePlayerDraft(playerId: string, field: keyof AdminFixturePlayerStat, value: string) {
     setPlayerDrafts((prev) => {
@@ -972,6 +1038,8 @@ export default function AdminFixtureDetail() {
     setBulkJsonInput('');
     setBulkPreview(null);
     setBulkError(null);
+    setWormDraft(null);
+    setWormDirty(false);
     navigate(`/admin/fixtures/${id}`);
   }
 
@@ -986,6 +1054,7 @@ export default function AdminFixtureDetail() {
   const sections = [
     { key: 'players' as const, label: `Player Stats`, count: playerStatsQuery.data?.length ?? 0 },
     { key: 'scores' as const, label: 'Scores', count: null },
+    { key: 'worm' as const, label: 'Worm', count: null },
     { key: 'submissions' as const, label: `Submissions`, count: submissionsQuery.data?.length ?? 0 },
     { key: 'ocr' as const, label: `OCR`, count: ocrQuery.data?.length ?? 0 },
   ];
@@ -1059,6 +1128,7 @@ export default function AdminFixtureDetail() {
             onClick={() => {
               setActiveSection(s.key);
               if (s.key === 'scores' && !scoreDraft) initScoreDraft();
+              if (s.key === 'worm' && !wormDraft) initWormDraft(fixture);
             }}
           >
             <span className="eg-fd-tab-label">{s.label}</span>
@@ -1438,6 +1508,99 @@ export default function AdminFixtureDetail() {
             </div>
           </AdminCard>
         </>
+      ) : null}
+
+      {/* ═══════ WORM SECTION ═══════ */}
+      {activeSection === 'worm' ? (
+        <AdminCard
+          title="Momentum Worm"
+          subtitle="Set cumulative quarter scores to power the match centre worm chart"
+          actions={
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="eg-fd-btn"
+                onClick={() => initWormDraft(fixture)}
+              >
+                Reset
+              </button>
+              <button
+                type="button"
+                className="eg-fd-btn eg-fd-btn-save"
+                disabled={wormMutation.isPending || !wormDirty || !wormDraft}
+                onClick={() => wormMutation.mutate()}
+              >
+                {wormMutation.isPending ? 'Saving...' : 'Save Worm'}
+              </button>
+            </div>
+          }
+        >
+          {!wormDraft ? (
+            <button
+              type="button"
+              className="eg-fd-btn eg-fd-btn-primary"
+              onClick={() => initWormDraft(fixture)}
+            >
+              Load Worm Editor
+            </button>
+          ) : (
+            <>
+              <div className="eg-fd-worm-grid">
+                <div className="eg-fd-worm-header-row">
+                  <span />
+                  <span className="eg-fd-worm-team-label">{homeName} (Home)</span>
+                  <span className="eg-fd-worm-team-label">{awayName} (Away)</span>
+                </div>
+                {wormDraft.map((pt, qi) => (
+                  <div key={pt.q} className="eg-fd-worm-row">
+                    <span className="eg-fd-worm-quarter">{pt.q}</span>
+                    <label className="eg-fd-worm-field">
+                      <input
+                        type="number"
+                        min={0}
+                        value={pt.home}
+                        onChange={(e) => updateWormDraft(qi, 'home', e.target.value)}
+                      />
+                    </label>
+                    <label className="eg-fd-worm-field">
+                      <input
+                        type="number"
+                        min={0}
+                        value={pt.away}
+                        onChange={(e) => updateWormDraft(qi, 'away', e.target.value)}
+                      />
+                    </label>
+                  </div>
+                ))}
+              </div>
+
+              <p className="eg-fd-worm-hint">
+                Enter <strong>cumulative</strong> scores at the end of each quarter.
+                {fixture.home_total != null ? ` Final: ${fixture.home_total} – ${fixture.away_total ?? '?'}.` : ''}
+                {' '}Q4 should equal the final score.
+              </p>
+
+              <div className="eg-fd-worm-preview">
+                <p className="eg-fd-worm-preview-label">Live Preview</p>
+                <WormGraph
+                  progression={wormDraft.filter((p) => p.home > 0 || p.away > 0)}
+                  homeColor="#FFD218"
+                  awayColor="#7BD6FF"
+                  waitingLabel="Enter quarter scores above to see worm preview"
+                />
+              </div>
+
+              {fixture.quarter_scores_json ? (
+                <details style={{ marginTop: 12 }}>
+                  <summary style={{ cursor: 'pointer', fontSize: '0.8rem', color: 'var(--admin-muted)' }}>
+                    Current saved data
+                  </summary>
+                  <pre className="eg-admin-json">{JSON.stringify(fixture.quarter_scores_json, null, 2)}</pre>
+                </details>
+              ) : null}
+            </>
+          )}
+        </AdminCard>
       ) : null}
 
       {/* ═══════ SCORES SECTION ═══════ */}

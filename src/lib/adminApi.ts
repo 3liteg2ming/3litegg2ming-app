@@ -651,6 +651,24 @@ export async function fetchFixtureDetail(fixtureId: string): Promise<AdminFixtur
   return data as AdminFixture | null;
 }
 
+export type WormQuarterPoint = {
+  q: 'Q1' | 'Q2' | 'Q3' | 'Q4';
+  home: number;
+  away: number;
+};
+
+export async function updateFixtureQuarterScores(
+  fixtureId: string,
+  points: WormQuarterPoint[],
+): Promise<void> {
+  const payload = { quarterProgression: points };
+  const { error } = await supabase
+    .from('eg_fixtures')
+    .update({ quarter_scores_json: payload })
+    .eq('id', fixtureId);
+  if (error) throw new Error(error.message);
+}
+
 export async function listFixtureIdsWithPlayerStats(): Promise<Set<string>> {
   try {
     const { data, error } = await supabase

@@ -79,6 +79,7 @@ export type AdminFixture = {
   verified_at?: string | null;
   disputed_at?: string | null;
   corrected_at?: string | null;
+  quarter_scores_json?: unknown;
 };
 
 export type AdminFeatureFlag = {
