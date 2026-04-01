@@ -60,7 +60,7 @@
   height: 50%;
   left: -20%;
   top: -10%;
-  background: radial-gradient(circle, rgba(95, 128, 255, 0.2) 0%, rgba(95, 128, 255, 0.04) 50%, transparent 78%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--kms-home, #7E90FF) 20%, transparent) 0%, transparent 78%);
 }
 
 .mcKeyStatsBlock__card.is-away .mcKeyStatsBlock__cardGlow--away {
@@ -68,7 +68,7 @@
   height: 50%;
   right: -20%;
   bottom: -10%;
-  background: radial-gradient(circle, rgba(245, 196, 0, 0.18) 0%, rgba(245, 196, 0, 0.04) 50%, transparent 78%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--kms-away, #F5C400) 18%, transparent) 0%, transparent 78%);
 }
 
 .mcKeyStatsBlock__label {
@@ -116,9 +116,12 @@
   text-align: right;
 }
 
-.mcKeyStatsBlock__card.is-home .mcKeyStatsBlock__value--home,
+.mcKeyStatsBlock__card.is-home .mcKeyStatsBlock__value--home {
+  color: var(--kms-home, #7E90FF);
+}
+
 .mcKeyStatsBlock__card.is-away .mcKeyStatsBlock__value--away {
-  color: rgba(255, 236, 174, 0.94);
+  color: var(--kms-away, #F5C400);
 }
 
 .mcKeyStatsBlock__card.is-home .mcKeyStatsBlock__value--away,
@@ -153,16 +156,19 @@
 }
 
 .mcKeyStatsBlock__barFill--home {
-  background: rgba(126, 144, 255, 0.7);
+  background: color-mix(in srgb, var(--kms-home, #7E90FF) 70%, transparent);
 }
 
 .mcKeyStatsBlock__barFill--away {
-  background: rgba(245, 196, 0, 0.7);
+  background: color-mix(in srgb, var(--kms-away, #F5C400) 70%, transparent);
 }
 
-.mcKeyStatsBlock__card.is-home .mcKeyStatsBlock__barFill--home,
+.mcKeyStatsBlock__card.is-home .mcKeyStatsBlock__barFill--home {
+  background: color-mix(in srgb, var(--kms-home, #7E90FF) 85%, transparent);
+}
+
 .mcKeyStatsBlock__card.is-away .mcKeyStatsBlock__barFill--away {
-  background: rgba(255, 236, 174, 0.8);
+  background: color-mix(in srgb, var(--kms-away, #F5C400) 85%, transparent);
 }
 
 .mcKeyStatsBlock__card.is-home .mcKeyStatsBlock__barFill--away,

@@ -40,8 +40,10 @@ export default function MatchTimeline({ model, loading }: { model: MatchCentreMo
   const homeKey = home ? slugToTeamKey(home.slug) : null;
   const awayKey = away ? slugToTeamKey(away.slug) : null;
 
-  const homeLogo = home?.logoUrl || (homeKey ? assetUrl(TEAM_ASSETS[homeKey].logoFile ?? '') : assetUrl('elite-gaming-logo.png'));
-  const awayLogo = away?.logoUrl || (awayKey ? assetUrl(TEAM_ASSETS[awayKey].logoFile ?? '') : assetUrl('elite-gaming-logo.png'));
+  const homeLogo  = home?.logoUrl || (homeKey ? assetUrl(TEAM_ASSETS[homeKey].logoFile ?? '') : assetUrl('elite-gaming-logo.png'));
+  const awayLogo  = away?.logoUrl || (awayKey ? assetUrl(TEAM_ASSETS[awayKey].logoFile ?? '') : assetUrl('elite-gaming-logo.png'));
+  const homeColor = home?.colour  || (homeKey ? TEAM_ASSETS[homeKey]?.colour : undefined) || '#FFD218';
+  const awayColor = away?.colour  || (awayKey ? TEAM_ASSETS[awayKey]?.colour : undefined) || '#7BD6FF';
 
   const progression = model?.quarterProgression || [];
   const isLoadingShell = !!loading && !model;
@@ -84,7 +86,7 @@ export default function MatchTimeline({ model, loading }: { model: MatchCentreMo
 
           <div className="mcMomentum__worm">
             <div className="mcMomentum__midline" />
-            <WormGraph progression={progression} waitingLabel={waitingLabel} />
+            <WormGraph progression={progression} homeColor={homeColor} awayColor={awayColor} waitingLabel={waitingLabel} />
           </div>
 
           <div className="mcMomentum__logoRight">

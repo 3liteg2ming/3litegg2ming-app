@@ -1,3 +1,4 @@
+import type React from 'react';
 import type { MatchCentreModel } from '@/lib/matchCentreRepo';
 import '@/styles/mc-key-stats.css';
 
@@ -6,6 +7,20 @@ type StatCard = {
   homeMatch: number;
   awayMatch: number;
 };
+
+// Boost dark hex colours for visibility on dark backgrounds
+function readableColor(raw: string, fallback: string): string {
+  const hex = String(raw ?? '').trim();
+  const h = hex.replace(/^#/, '');
+  if (!/^[0-9a-f]{6}$/i.test(h)) return hex || fallback;
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  if (lum >= 0.3) return hex;
+  const k = Math.min(4.5, 0.3 / Math.max(lum, 0.01));
+  return `rgb(${Math.round(Math.min(255, r * k))},${Math.round(Math.min(255, g * k))},${Math.round(Math.min(255, b * k))})`;
+}
 
 function toneClass(home: number, away: number) {
   if (home > away) return 'is-home';
@@ -42,8 +57,19 @@ function buildCards(model: MatchCentreModel | null): StatCard[] {
   return cards;
 }
 
-export default function KeyMatchStats({ model }: { model: MatchCentreModel | null; loading?: boolean }) {
+export default function KeyMatchStats({
+  model,
+  homeColor = '#7E90FF',
+  awayColor = '#F5C400',
+}: {
+  model: MatchCentreModel | null;
+  loading?: boolean;
+  homeColor?: string;
+  awayColor?: string;
+}) {
   const cards = buildCards(model);
+  const hc = readableColor(homeColor, '#7E90FF');
+  const ac = readableColor(awayColor, '#F5C400');
 
   return (
     <section className="mcKeyStatsBlock" aria-label="Key match stats">
@@ -62,6 +88,7 @@ export default function KeyMatchStats({ model }: { model: MatchCentreModel | nul
               key={`${stat.label}-${index}`}
               className={`mcKeyStatsBlock__card ${toneClass(home, away)}${bothZero ? ' is-zero' : ''}`}
               aria-label={`${stat.label}: ${home} versus ${away}`}
+              style={{ '--kms-home': hc, '--kms-away': ac } as React.CSSProperties}
             >
               <div className="mcKeyStatsBlock__cardAtmosphere" aria-hidden="true">
                 <span className="mcKeyStatsBlock__cardGlow mcKeyStatsBlock__cardGlow--home" />

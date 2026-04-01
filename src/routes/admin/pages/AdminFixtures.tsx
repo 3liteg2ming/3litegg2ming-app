@@ -4,6 +4,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import {
   AdminPermissionError,
   clearFixtureScores,
+  listFixtureIdsWithPlayerStats,
   listFixtures,
   listSeasons,
   listTeams,
@@ -97,6 +98,13 @@ export default function AdminFixtures() {
       queryClient.invalidateQueries({ queryKey: ['admin', 'fixtures'] });
     },
   });
+
+  const playerStatsQuery = useQuery({
+    queryKey: ['admin', 'fixtures', 'playerStatsIds'],
+    queryFn: listFixtureIdsWithPlayerStats,
+    staleTime: 60_000,
+  });
+  const fixtureIdsWithStats: Set<string> = playerStatsQuery.data ?? new Set();
 
   const allFixtures = fixturesQuery.data?.rows || [];
 
@@ -258,6 +266,7 @@ export default function AdminFixtures() {
                       const badge = statusBadge(f.status);
                       const scored = hasStats(f);
                       const score = scoreLabel(f);
+                      const hasStats2 = fixtureIdsWithStats.has(f.id);
                       return (
                         <Link
                           key={f.id}
@@ -270,15 +279,26 @@ export default function AdminFixtures() {
                               <span className="eg-fx-card-vs">v</span>
                               <span className="eg-fx-card-team">{away}</span>
                             </div>
-                            <span
-                              className="eg-admin-status-chip"
-                              style={{
-                                background: badge.bg,
-                                color: badge.color,
-                              }}
-                            >
-                              {badge.label}
-                            </span>
+                            <div className="eg-fx-card-right">
+                              <span
+                                className="eg-admin-status-chip"
+                                style={{
+                                  background: badge.bg,
+                                  color: badge.color,
+                                }}
+                              >
+                                {badge.label}
+                              </span>
+                              {hasStats2 ? (
+                                <span
+                                  className="eg-fx-stats-tick"
+                                  title="Player stats entered"
+                                  aria-label="Player stats entered"
+                                >
+                                  ✓ Stats
+                                </span>
+                              ) : null}
+                            </div>
                           </div>
                           <div className="eg-fx-card-bottom">
                             {score ? (
@@ -320,11 +340,22 @@ export default function AdminFixtures() {
                   return (
                     <tr key={fixture.id}>
                       <td data-label="Fixture">
-                        <Link to={`/admin/fixtures/${fixture.id}`} style={{ color: '#def0ff', textDecoration: 'none' }}>
-                          <strong>
-                            R{fixture.round ?? '?'}: {home} vs {away}
-                          </strong>
-                        </Link>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Link to={`/admin/fixtures/${fixture.id}`} style={{ color: '#def0ff', textDecoration: 'none' }}>
+                            <strong>
+                              R{fixture.round ?? '?'}: {home} vs {away}
+                            </strong>
+                          </Link>
+                          {fixtureIdsWithStats.has(fixture.id) ? (
+                            <span
+                              className="eg-fx-stats-tick"
+                              title="Player stats entered"
+                              aria-label="Player stats entered"
+                            >
+                              ✓ Stats
+                            </span>
+                          ) : null}
+                        </div>
                         <p className="mono">{fixture.id}</p>
                       </td>
                       <td data-label="Status">

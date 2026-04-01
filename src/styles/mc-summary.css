@@ -77,7 +77,7 @@
   grid-template-columns: 36px minmax(0, 1fr) 36px;
   gap: 10px;
   align-items: center;
-  padding: 14px 12px;
+  padding: 10px 12px;
   min-width: 0;
 }
 
@@ -97,22 +97,10 @@
 .mcSummaryTab__chart {
   position: relative;
   min-width: 0;
-  min-height: 104px;
-  padding: 10px;
+  padding: 8px 10px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.02);
-}
-
-.mcSummaryTab__chartMidline {
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  top: 50%;
-  height: 1px;
-  transform: translateY(-50%);
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15) 18%, rgba(255, 255, 255, 0.15) 82%, transparent);
-  pointer-events: none;
 }
 
 .mcSummaryTab__legend {
@@ -143,41 +131,20 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  height: 84px;
+  /* No fixed height — SVG drives its own height via aspect-ratio */
 }
 
 .mcSummaryTab .mcMomentum__svg {
-  width: 100%;
-  height: 100%;
   display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 560 / 88;
   overflow: visible;
-}
-
-.mcSummaryTab .mcMomentum__wormLine {
-  fill: none;
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.12));
-}
-
-.mcSummaryTab .mcMomentum__wormLine--home {
-  stroke: url(#mcWormHome);
-}
-
-.mcSummaryTab .mcMomentum__wormLine--away {
-  stroke: url(#mcWormAway);
-}
-
-.mcSummaryTab .mcMomentum__marker {
-  fill: rgba(255, 255, 255, 0.92);
-  stroke: rgba(255, 255, 255, 0.2);
-  stroke-width: 1;
 }
 
 .mcSummaryTab .mcMomentum__placeholder {
   width: 100%;
-  height: 84px;
+  aspect-ratio: 560 / 88;
   display: grid;
   place-items: center;
   padding: 0 12px;

@@ -651,6 +651,19 @@ export async function fetchFixtureDetail(fixtureId: string): Promise<AdminFixtur
   return data as AdminFixture | null;
 }
 
+export async function listFixtureIdsWithPlayerStats(): Promise<Set<string>> {
+  try {
+    const { data, error } = await supabase
+      .from('eg_fixture_player_stats')
+      .select('fixture_id')
+      .limit(2000);
+    if (error) return new Set();
+    return new Set((data || []).map((row) => row.fixture_id as string));
+  } catch {
+    return new Set();
+  }
+}
+
 export async function listFixturePlayerStats(fixtureId: string): Promise<AdminFixturePlayerStat[]> {
   const { data, error } = await supabase
     .from('eg_fixture_player_stats')

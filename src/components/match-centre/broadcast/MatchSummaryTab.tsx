@@ -61,8 +61,10 @@ export default function MatchSummaryTab({ model, loading }: Props) {
       ? 'Published scoring detail is still settling in.'
       : 'Momentum worm publishes here on match day.';
 
-  const homeAbbr = home?.abbreviation || home?.shortName || abbreviation(home?.fullName, 'H');
-  const awayAbbr = away?.abbreviation || away?.shortName || abbreviation(away?.fullName, 'A');
+  const homeAbbr  = home?.abbreviation || home?.shortName || abbreviation(home?.fullName, 'H');
+  const awayAbbr  = away?.abbreviation || away?.shortName || abbreviation(away?.fullName, 'A');
+  const homeColor = home?.colour || (homeKey ? TEAM_ASSETS[homeKey]?.colour : undefined) || '#FFD218';
+  const awayColor = away?.colour || (awayKey ? TEAM_ASSETS[awayKey]?.colour : undefined) || '#7BD6FF';
 
   return (
     <section className="mcSummaryTab">
@@ -95,7 +97,7 @@ export default function MatchSummaryTab({ model, loading }: Props) {
 
             <div className="mcSummaryTab__chart">
               <div className="mcSummaryTab__chartMidline" aria-hidden="true" />
-              <WormGraph progression={progression} waitingLabel={waitingLabel} />
+              <WormGraph progression={progression} homeColor={homeColor} awayColor={awayColor} waitingLabel={waitingLabel} />
             </div>
 
             <div className="mcSummaryTab__crestWrap">
@@ -134,7 +136,7 @@ export default function MatchSummaryTab({ model, loading }: Props) {
           <h2 className="mcSummaryTab__title">Key Match Stats</h2>
           <p className="mcSummaryTab__subtext">A team-by-team comparison of important stats.</p>
         </div>
-        <KeyMatchStats model={model} loading={loading} />
+        <KeyMatchStats model={model} loading={loading} homeColor={homeColor} awayColor={awayColor} />
       </div>
     </section>
   );
