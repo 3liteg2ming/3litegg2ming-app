@@ -1,349 +1,114 @@
 :root {
   --eg-yellow: #F5C400;
-  --eg-yellow-2: #D6AA00;
   --eg-ink: #0b0f14;
+  --bottom-nav-h: 64px;
 }
 
 /* ═══════════════════════════════════════════════════════════
-   PREMIUM DOCK — elite glass nav bar
+   BOTTOM NAV — clean, minimal tab bar
 ═══════════════════════════════════════════════════════════ */
-.egNavDock {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(max(env(safe-area-inset-bottom, 0px), 4px) + 10px);
-  width: min(440px, calc(100% - 12px));
+.egNav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   z-index: 9999;
-  pointer-events: none;
-  transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1), opacity 220ms ease;
-  will-change: transform, opacity;
-}
 
-.egNavDock--hidden {
-  transform: translateX(-50%) translateY(calc(100% + env(safe-area-inset-bottom, 0px) + 10px));
-  opacity: 0;
-}
-
-.egNavDock--hidden .egNavDock__glass {
-  pointer-events: none;
-}
-
-/* ── Shell — solid panel with minimal glass ──────────────── */
-.egNavDock__glass {
-  position: relative;
-  pointer-events: auto;
-  border-radius: 22px;
-  padding: 12px 8px;
-
-  background:
-    linear-gradient(180deg,
-      rgba(20,24,34,0.92) 0%,
-      rgba(12,15,22,0.94) 50%,
-      rgba(8,11,18,0.95) 100%
-    );
-
-  border: 1px solid rgba(255,255,255,0.08);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-
-  box-shadow:
-    0 8px 24px rgba(0,0,0,0.48),
-    0 2px 8px rgba(0,0,0,0.24),
-    inset 0 1px 0 rgba(255,255,255,0.06);
-}
-
-/* Top edge highlight — subtle */
-.egNavDock__glass::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 14%;
-  right: 14%;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(245,196,0,0.16) 25%,
-    rgba(255,255,255,0.08) 50%,
-    rgba(63,126,240,0.16) 75%,
-    transparent 100%
-  );
-  border-radius: 1px;
-  pointer-events: none;
-  z-index: 2;
-}
-
-/* ── Row layout ────────────────────────────────────────── */
-.egNavDock__row {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-width: 0;
+  align-items: stretch;
+  justify-content: space-around;
+
+  height: var(--bottom-nav-h);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+
+  background: rgba(8, 11, 18, 0.97);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+  transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1), opacity 220ms ease;
 }
 
-/* ── Inactive buttons — clean minimal squircles ────────── */
-.egNavDock__btn {
-  position: relative;
-  flex: 1 1 0;
-  min-width: 0;
-  width: auto;
-  height: clamp(56px, 15vw, 64px);
+.egNav--hidden {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+}
 
-  border-radius: 14px;
+/* ── Nav item — icon above label ─────────────────────────── */
+.egNav__item {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 3px;
-  padding: 8px 4px 9px;
+
   text-decoration: none;
-
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.07);
-
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.06),
-    inset 0 -1px 0 rgba(0,0,0,0.16);
-
-  transition: all 140ms cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s ease;
 }
 
-.egNavDock__btn:hover {
-  background: rgba(255,255,255,0.09);
-  border-color: rgba(255,255,255,0.12);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.08),
-    inset 0 -1px 0 rgba(0,0,0,0.14),
-    0 4px 14px rgba(0,0,0,0.22);
+.egNav__item:active {
+  opacity: 0.7;
 }
 
-.egNavDock__btn:active {
-  transform: scale(0.94);
-  transition-duration: 60ms;
+/* ── Icon ─────────────────────────────────────────────────── */
+.egNav__icon {
+  width: 22px;
+  height: 22px;
+  color: rgba(255, 255, 255, 0.4);
+  transition: color 0.15s ease;
 }
 
-/* ── Active pill — premium gold treatment ──────────────── */
-.egNavDock__pill {
-  position: relative;
-  flex: 2.05 1.2 0;
-  min-width: 0;
-  width: auto;
-
-  height: clamp(56px, 15vw, 64px);
-  border-radius: 14px;
-
-  display: flex;
-  align-items: center;
-  gap: 9px;
-
-  padding: 8px clamp(10px, 4vw, 16px) 8px 8px;
-  text-decoration: none;
-
-  background:
-    linear-gradient(160deg,
-      rgba(255,232,132,0.98) 0%,
-      rgba(245,196,0,0.96) 40%,
-      rgba(218,174,0,0.96) 100%
-    );
-
-  border: 1px solid rgba(255,240,160,0.38);
-
-  box-shadow:
-    0 0 22px rgba(245,196,0,0.26),
-    0 8px 24px rgba(0,0,0,0.32),
-    0 2px 8px rgba(245,196,0,0.10),
-    inset 0 1px 0 rgba(255,255,255,0.38),
-    inset 0 -1px 0 rgba(0,0,0,0.08);
-
-  transition: all 140ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.egNavDock__pill:hover {
-  transform: translateY(-1px);
-  box-shadow:
-    0 0 28px rgba(245,196,0,0.32),
-    0 10px 28px rgba(0,0,0,0.36),
-    0 2px 10px rgba(245,196,0,0.14),
-    inset 0 1px 0 rgba(255,255,255,0.40),
-    inset 0 -1px 0 rgba(0,0,0,0.06);
-}
-
-.egNavDock__pill:active {
-  transform: translateY(0) scale(0.98);
-  transition-duration: 60ms;
-}
-
-/* ── Pill internals ────────────────────────────────────── */
-.egNavDock__pillIcon {
-  width: clamp(28px, 7.5vw, 30px);
-  height: clamp(28px, 7.5vw, 30px);
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  background: rgba(0,0,0,0.13);
-  border: 1px solid rgba(0,0,0,0.05);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.16),
-    inset 0 -1px 0 rgba(0,0,0,0.10);
-}
-
-.egNavDock__pillText {
-  font-family: ui-sans-serif, system-ui, -apple-system, "SF Pro Display", "SF Pro Text",
-               "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  display: block;
-  min-width: 0;
-  font-size: clamp(11px, 3vw, 12.5px);
-  font-weight: 800;
-  letter-spacing: -0.1px;
-  color: var(--eg-ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* ── Inactive label ────────────────────────────────────── */
-.egNavDock__btnLabel {
-  font-family: ui-sans-serif, system-ui, -apple-system, "SF Pro Display", "SF Pro Text",
+/* ── Label ────────────────────────────────────────────────── */
+.egNav__label {
+  font-family: ui-sans-serif, system-ui, -apple-system, "SF Pro Text",
                "Segoe UI", Roboto, Helvetica, Arial;
-  display: block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: clamp(8px, 2.35vw, 9.5px);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: rgba(255,255,255,0.45);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.4);
   white-space: nowrap;
-  line-height: 1;
-  transition: color 140ms ease;
+  transition: color 0.15s ease;
 }
 
-.egNavDock__btn:hover .egNavDock__btnLabel {
-  color: rgba(255,255,255,0.72);
-}
-
-/* ── Icons ─────────────────────────────────────────────── */
-.egNavDock__icon {
-  width: clamp(18px, 4.9vw, 20px);
-  height: clamp(18px, 4.9vw, 20px);
-  color: rgba(255,255,255,0.52);
-  transition: color 140ms ease;
-}
-
-.egNavDock__btn:hover .egNavDock__icon {
-  color: rgba(255,255,255,0.78);
-}
-
-.egNavDock__icon--active {
-  width: clamp(17px, 4.4vw, 18px);
-  height: clamp(17px, 4.4vw, 18px);
-  color: var(--eg-ink);
-}
-
-/* ── Submit button — gold accent ───────────────────────────── */
-.egNavDock__submit.egNavDock__btn .egNavDock__icon {
+/* ── Active state — gold highlight ────────────────────────── */
+.egNav__item--active .egNav__icon {
   color: var(--eg-yellow);
 }
 
-.egNavDock__submit.egNavDock__btn:hover .egNavDock__icon {
-  color: #ffd54a;
-}
-
-.egNavDock__submit.egNavDock__btn .egNavDock__btnLabel {
+.egNav__item--active .egNav__label {
   color: var(--eg-yellow);
+  font-weight: 700;
 }
 
-.egNavDock__submit.egNavDock__btn:hover .egNavDock__btnLabel {
-  color: #ffd54a;
+/* ── Submit accent — gold when inactive too ───────────────── */
+.egNav__item--submit .egNav__icon {
+  color: rgba(245, 196, 0, 0.55);
 }
 
-.egNavDock__submit.egNavDock__pill .egNavDock__icon--active {
-  color: var(--eg-ink);
+.egNav__item--submit .egNav__label {
+  color: rgba(245, 196, 0, 0.55);
 }
 
-.egNavDock__submit.egNavDock__pill .egNavDock__pillText {
-  color: var(--eg-ink);
-}
-
-@media (max-width: 420px) {
-  .egNavDock {
-    width: calc(100% - 8px);
-    bottom: calc(max(env(safe-area-inset-bottom, 0px), 2px) + 8px);
-  }
-
-  .egNavDock__glass {
-    border-radius: 20px;
-    padding: 10px 6px;
-  }
-
-  .egNavDock__row {
-    gap: 4px;
-  }
-
-  .egNavDock__btn {
-    border-radius: 13px;
-    gap: 2px;
-    padding-inline: 3px;
-  }
-
-  .egNavDock__pill {
-    flex-grow: 1.85;
-    gap: 7px;
-    padding-right: 10px;
-  }
-
-  .egNavDock__pillText {
-    font-size: clamp(10.75px, 3vw, 12px);
-  }
-
-  .egNavDock__btnLabel {
-    letter-spacing: 0.01em;
-  }
+.egNav__item--submit.egNav__item--active .egNav__icon,
+.egNav__item--submit.egNav__item--active .egNav__label {
+  color: var(--eg-yellow);
 }
 
 /* ═══════════════════════════════════════════════════════════
-   EXTRA-SMALL PHONES — keep premium, shrink proportionally
+   SMALL PHONES
 ═══════════════════════════════════════════════════════════ */
 @media (max-width: 360px) {
-  .egNavDock {
-    width: calc(100% - 6px);
-    bottom: calc(max(env(safe-area-inset-bottom, 0px), 0px) + 6px);
+  :root {
+    --bottom-nav-h: 58px;
   }
 
-  .egNavDock__glass {
-    padding: 9px 5px;
-    border-radius: 18px;
+  .egNav__icon {
+    width: 20px;
+    height: 20px;
   }
 
-  .egNavDock__row { gap: 3px; }
-
-  .egNavDock__btn {
-    height: 54px;
-    border-radius: 12px;
-    padding: 7px 2px 8px;
+  .egNav__label {
+    font-size: 9px;
   }
-
-  .egNavDock__btnLabel {
-    font-size: 7.8px;
-  }
-
-  .egNavDock__pill {
-    flex-grow: 1.7;
-    height: 54px;
-    border-radius: 12px;
-    padding: 7px 8px 7px 7px;
-    gap: 6px;
-  }
-
-  .egNavDock__pillIcon {
-    width: 26px;
-    height: 26px;
-    border-radius: 9px;
-  }
-
-  .egNavDock__pillText { font-size: 10.5px; }
-
-  .egNavDock__icon { width: 17px; height: 17px; }
-  .egNavDock__icon--active { width: 16px; height: 16px; }
 }

@@ -77,43 +77,22 @@ export default function BottomNav({ hidden = false }: { hidden?: boolean }) {
   }, []);
 
   return (
-    <div className={`egNavDock${hidden ? ' egNavDock--hidden' : ''}`} aria-hidden={hidden ? 'true' : undefined}>
-      <div className="egNavDock__glass">
-        <div className="egNavDock__row">
-          {NAV.map(({ label, href, Icon }) => (
-            <NavLink
-              key={href}
-              to={href}
-              end={href === '/'}
-              className={({ isActive }) => `${isActive ? 'egNavDock__pill' : 'egNavDock__btn'}${href === '/submit' ? ' egNavDock__submit' : ''}`}
-              aria-label={label}
-              role="menuitem"
-              onMouseEnter={() => {
-                void prefetchRouteAndData(href);
-              }}
-              onFocus={() => {
-                void prefetchRouteAndData(href);
-              }}
-              onTouchStart={() => {
-                void prefetchRouteAndData(href);
-              }}
-            >
-              {({ isActive }) => (
-                <>
-                  {isActive && <div className="egNavDock__pillIcon">
-                    <Icon className="egNavDock__icon--active" />
-                  </div>}
-                  {!isActive && <Icon className="egNavDock__icon" />}
-                  {isActive
-                    ? <span className="egNavDock__pillText">{label}</span>
-                    : <span className="egNavDock__btnLabel">{label}</span>
-                  }
-                </>
-              )}
-            </NavLink>
-          ))}
-        </div>
-      </div>
-    </div>
+    <nav className={`egNav${hidden ? ' egNav--hidden' : ''}`} aria-hidden={hidden ? 'true' : undefined}>
+      {NAV.map(({ label, href, Icon }) => (
+        <NavLink
+          key={href}
+          to={href}
+          end={href === '/'}
+          className={({ isActive }) => `egNav__item${isActive ? ' egNav__item--active' : ''}${href === '/submit' ? ' egNav__item--submit' : ''}`}
+          aria-label={label}
+          onMouseEnter={() => void prefetchRouteAndData(href)}
+          onFocus={() => void prefetchRouteAndData(href)}
+          onTouchStart={() => void prefetchRouteAndData(href)}
+        >
+          <Icon className="egNav__icon" />
+          <span className="egNav__label">{label}</span>
+        </NavLink>
+      ))}
+    </nav>
   );
 }
