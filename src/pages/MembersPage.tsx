@@ -501,6 +501,19 @@ function StatCard({ icon, label, value, accent, subValue }: StatCardProps) {
   );
 }
 
+/* ── TargetCard sub-component ───────────────────────────────── */
+function TargetCard({ label, done }: { label: string; done: boolean }) {
+  return (
+    <div className={`chTargetCard ${done ? 'chTargetCard--done' : ''}`}>
+      <div className="chTargetCard__check">
+        {done ? <CheckCircle2 size={16} /> : <Circle size={16} />}
+      </div>
+      <span className="chTargetCard__label">{label}</span>
+      {done && <span className="chTargetCard__doneChip">Done</span>}
+    </div>
+  );
+}
+
 export default function MembersPage() {
   const nav = useNavigate();
   const { user, signOut } = useAuth();
@@ -998,6 +1011,20 @@ export default function MembersPage() {
             <span className="chProgress__title">Season Progress</span>
             <span className="chProgress__count">Round {roundsPlayed} of {TOTAL_ROUNDS}</span>
           </div>
+          <div className="chProgress__pips">
+            {Array.from({ length: TOTAL_ROUNDS }, (_, i) => {
+              const roundNum = i + 1;
+              const isPlayed = roundNum <= roundsPlayed;
+              const isCurrent = roundNum === roundsPlayed;
+              return (
+                <div
+                  key={roundNum}
+                  className={`chProgress__pip${isCurrent ? ' chProgress__pip--current' : isPlayed ? ' chProgress__pip--played' : ''}`}
+                  title={`Round ${roundNum}`}
+                />
+              );
+            })}
+          </div>
           <div className="chProgress__track">
             <div className="chProgress__fill" style={{ width: `${progressPct}%` }} />
           </div>
@@ -1025,20 +1052,15 @@ export default function MembersPage() {
           </section>
         )}
 
-        {/* ── Season Targets ─────────────────────────── */}
+        {/* ── Season Targets (v2) ────────────────────── */}
         <section className="member-panel member-panel--tight">
           <div className="member-panelTitle">
             <Target size={16} style={{ opacity: 0.75 }} /> Season Targets
-            <span className="chTargets__count">{completedTargets}/{seasonTargets.length}</span>
+            <span className="chTargets__countChip">{completedTargets}/{seasonTargets.length} complete</span>
           </div>
           <div className="chTargets">
             {seasonTargets.map((target) => (
-              <div key={target.label} className={`chTargets__item ${target.done ? 'chTargets__item--done' : ''}`}>
-                <div className={`chTargets__check ${target.done ? 'chTargets__check--done' : ''}`}>
-                  {target.done ? <Zap size={10} /> : <Lock size={9} />}
-                </div>
-                <span className="chTargets__label">{target.label}</span>
-              </div>
+              <TargetCard key={target.label} label={target.label} done={target.done} />
             ))}
           </div>
         </section>
