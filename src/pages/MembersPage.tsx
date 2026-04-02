@@ -514,6 +514,28 @@ function TargetCard({ label, done }: { label: string; done: boolean }) {
   );
 }
 
+/* ── SettingsAccordion sub-component ────────────────────────── */
+function SettingsAccordion({
+  open,
+  onToggle,
+  children,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={`chSettings ${open ? 'chSettings--open' : ''}`}>
+      <button type="button" className="chSettings__toggle" onClick={onToggle} aria-expanded={open}>
+        <Settings size={15} />
+        <span>Settings</span>
+        <ChevronDown size={14} className="chSettings__chevron" />
+      </button>
+      {open && <div className="chSettings__body">{children}</div>}
+    </div>
+  );
+}
+
 export default function MembersPage() {
   const nav = useNavigate();
   const { user, signOut } = useAuth();
@@ -1113,12 +1135,8 @@ export default function MembersPage() {
           )}
         </section>
 
-        {/* ── Account ────────────────────────────────── */}
-        <section className="member-panel member-panel--tight">
-          <div className="member-panelTitle">
-            <Mail size={16} style={{ opacity: 0.75 }} /> Account
-          </div>
-
+        {/* ── Settings Accordion ────────────────────────── */}
+        <SettingsAccordion open={settingsOpen} onToggle={() => setSettingsOpen(!settingsOpen)}>
           <div className="member-mini">
             <div className="member-miniRow">
               <Mail size={16} className="member-ico" />
@@ -1165,7 +1183,7 @@ export default function MembersPage() {
               </div>
             </div>
           </div>
-        </section>
+        </SettingsAccordion>
 
         {/* ── Actions ────────────────────────────────── */}
         <section className="coachActions">

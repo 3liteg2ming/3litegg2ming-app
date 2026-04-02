@@ -787,6 +787,52 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
+   SETTINGS ACCORDION
+═══════════════════════════════════════════════════════════ */
+.chSettings {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.chSettings__toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(245, 250, 255, 0.9);
+  background: none;
+  border: none;
+  text-align: left;
+  transition: background 0.2s;
+}
+
+.chSettings__toggle:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.chSettings__chevron {
+  margin-left: auto;
+  transition: transform 0.2s ease;
+  color: rgba(215, 225, 244, 0.6);
+  flex-shrink: 0;
+}
+
+.chSettings--open .chSettings__chevron {
+  transform: rotate(180deg);
+}
+
+.chSettings__body {
+  padding: 0 14px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ═══════════════════════════════════════════════════════════
    MANAGE ROW
 ═══════════════════════════════════════════════════════════ */
 .member-miniRow--manage {
