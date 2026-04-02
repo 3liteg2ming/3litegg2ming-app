@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, ChevronDown, Circle, CheckCircle2, Flame, Gamepad2, KeyRound, Lock, Mail, Pencil, Settings, Shield, Snowflake, Target, TrendingDown, TrendingUp, Trophy, Zap } from 'lucide-react';
+import { BarChart3, ChevronLeft, ChevronRight, ChevronDown, Circle, CheckCircle2, Flame, Gamepad2, KeyRound, Lock, Mail, Pencil, Settings, Shield, Snowflake, Target, TrendingDown, TrendingUp, Trophy, Zap } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -477,6 +477,29 @@ function getSeasonTargets(record: TeamRecord) {
   ];
 }
 
+/* ── StatCard sub-component for 6-stat grid ─────────────────── */
+type StatCardProps = {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+  accent?: string;
+  subValue?: React.ReactNode;
+};
+function StatCard({ icon, label, value, accent, subValue }: StatCardProps) {
+  return (
+    <article
+      className="chStatCard"
+      style={{ '--card-accent': accent || 'rgba(245,196,0,0.18)' } as React.CSSProperties}
+    >
+      <div className="chStatCard__icon" style={{ color: accent }}>
+        {icon}
+      </div>
+      <div className="chStatCard__value">{value}</div>
+      <div className="chStatCard__label">{label}</div>
+      {subValue && <div className="chStatCard__sub">{subValue}</div>}
+    </article>
+  );
+}
 
 export default function MembersPage() {
   const nav = useNavigate();
@@ -906,14 +929,54 @@ export default function MembersPage() {
         {/* ── Form Guide Strip ──────────────────────────── */}
         <FormGuideStrip results={coachLast5} />
 
-        {/* ── Quick Stats ──────────────────────────────── */}
-        <section className="coachQuickStats" aria-label="Quick stats">
-          {quickStats.map((item) => (
-            <article className={`coachQuickStats__item ${item.primary ? 'coachQuickStats__item--primary' : ''}`} key={item.label}>
-              <span className="coachQuickStats__label">{item.label}</span>
-              <strong className="coachQuickStats__value">{item.value}</strong>
-            </article>
-          ))}
+        {/* ── Season Stats Grid (v2) ──────────────────────── */}
+        <section className="chStatsGrid" aria-label="Season statistics">
+          <StatCard
+            icon={<Trophy size={16} />}
+            label="Current Rank"
+            value={record.rank ? `#${record.rank}` : '—'}
+            accent="#f5c400"
+            subValue={record.peakRank && record.rank !== null && record.peakRank !== null && record.rank !== record.peakRank ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                {record.rank < record.peakRank ? (
+                  <TrendingUp size={12} style={{ color: '#22c55e' }} />
+                ) : (
+                  <TrendingDown size={12} style={{ color: '#ef4444' }} />
+                )}
+                {Math.abs(record.rank - record.peakRank)}
+              </span>
+            ) : null}
+          />
+          <StatCard
+            icon={<span style={{ fontSize: '14px', fontWeight: 'bold' }}>W-L</span>}
+            label="Record"
+            value={record.wins === null || record.losses === null ? '—' : `${record.wins}-${record.losses}${record.draws ? `-${record.draws}` : ''}`}
+            accent="#3f7ef0"
+          />
+          <StatCard
+            icon={<BarChart3 size={16} />}
+            label="Win %"
+            value={clampPct(record.winPct) === null ? '—' : `${clampPct(record.winPct)!.toFixed(1)}%`}
+            accent="#7c5cff"
+          />
+          <StatCard
+            icon={<Zap size={16} />}
+            label="Points For"
+            value={<AnimatedStat value={record.pointsFor} />}
+            accent="#ff7830"
+          />
+          <StatCard
+            icon={<Target size={16} />}
+            label="Goals"
+            value={<AnimatedStat value={record.goals} />}
+            accent="#22c55e"
+          />
+          <StatCard
+            icon={<Flame size={16} />}
+            label="Streak"
+            value={statValue(record.streak)}
+            accent={record.streak?.startsWith('W') ? '#22c55e' : record.streak?.startsWith('L') ? '#ef4444' : '#f59e0b'}
+          />
         </section>
 
         {showMissingTagBanner ? (
@@ -940,31 +1003,6 @@ export default function MembersPage() {
           </div>
         </section>
 
-        {/* ── Performance Dashboard ──────────────────── */}
-        <section className="member-panel member-panel--tight">
-          <div className="member-panelTitle">
-            <Trophy size={16} style={{ opacity: 0.75 }} /> Performance Dashboard
-          </div>
-          <div className="profileMiniGrid">
-            <article className="profileMiniCard">
-              <div className="profileMiniCard__label">Matches</div>
-              <div className="profileMiniCard__value"><AnimatedStat value={record.played} /></div>
-            </article>
-            <article className="profileMiniCard">
-              <div className="profileMiniCard__label">Goals</div>
-              <div className="profileMiniCard__value"><AnimatedStat value={record.goals} /></div>
-            </article>
-            <article className="profileMiniCard">
-              <div className="profileMiniCard__label">Points For</div>
-              <div className="profileMiniCard__value"><AnimatedStat value={record.pointsFor} /></div>
-            </article>
-            <article className="profileMiniCard">
-              <div className="profileMiniCard__label">Peak Rank</div>
-              <div className="profileMiniCard__value">{record.peakRank ? <AnimatedStat value={record.peakRank} prefix="#" /> : '—'}</div>
-            </article>
-          </div>
-          {loadingStats ? <div className="profileDashHint">Refreshing latest stats…</div> : null}
-        </section>
 
         {/* ── Upcoming Match ─────────────────────────── */}
         {areFixturesVisible() ? (

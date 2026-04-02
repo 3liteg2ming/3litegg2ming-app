@@ -262,53 +262,72 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   QUICK STATS — 4-grid responsive
+   SEASON STATS GRID (v2) — 6 stat cards with color accents
 ═══════════════════════════════════════════════════════════ */
-.coachQuickStats {
+.chStatsGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }
 
-.coachQuickStats__item {
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+@media (max-width: 640px) {
+  .chStatsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.chStatCard {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
   background: rgba(255, 255, 255, 0.04);
   padding: 12px;
-  display: grid;
-  gap: 4px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.coachQuickStats__item:hover {
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+.chStatCard:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
-.coachQuickStats__item--primary {
-  border-color: rgba(245, 196, 0, 0.18);
-  background:
-    radial-gradient(ellipse at 20% 0%, rgba(245, 196, 0, 0.06) 0%, transparent 70%),
-    rgba(255, 255, 255, 0.04);
+.chStatCard--accent {
+  border-color: var(--card-accent, rgba(245, 196, 0, 0.18));
 }
 
-.coachQuickStats__item--primary:hover {
-  border-color: rgba(245, 196, 0, 0.3);
-  box-shadow: 0 4px 20px rgba(245, 196, 0, 0.08);
+.chStatCard__icon {
+  font-size: 14px;
+  opacity: 0.85;
+  flex-shrink: 0;
 }
 
-.coachQuickStats__label {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(213, 223, 242, 0.6);
-}
-
-.coachQuickStats__value {
-  font-size: 20px;
+.chStatCard__value {
+  font-size: clamp(20px, 4.5vw, 28px);
+  font-weight: 900;
   line-height: 1;
   color: rgba(245, 250, 255, 0.95);
+}
+
+.chStatCard__label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(215, 225, 244, 0.6);
+}
+
+.chStatCard__sub {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 10px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: rgba(215, 225, 244, 0.7);
 }
 
 /* ═══════════════════════════════════════════════════════════
