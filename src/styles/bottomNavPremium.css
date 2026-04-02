@@ -237,6 +237,31 @@
   color: var(--eg-ink);
 }
 
+/* ── Submit button — gold accent ───────────────────────────── */
+.egNavDock__submit.egNavDock__btn .egNavDock__icon {
+  color: var(--eg-yellow);
+}
+
+.egNavDock__submit.egNavDock__btn:hover .egNavDock__icon {
+  color: #ffd54a;
+}
+
+.egNavDock__submit.egNavDock__btn .egNavDock__btnLabel {
+  color: var(--eg-yellow);
+}
+
+.egNavDock__submit.egNavDock__btn:hover .egNavDock__btnLabel {
+  color: #ffd54a;
+}
+
+.egNavDock__submit.egNavDock__pill .egNavDock__icon--active {
+  color: var(--eg-ink);
+}
+
+.egNavDock__submit.egNavDock__pill .egNavDock__pillText {
+  color: var(--eg-ink);
+}
+
 /* ═══════════════════════════════════════════════════════════
    EXTRA-SMALL PHONES — keep premium, shrink proportionally
 ═══════════════════════════════════════════════════════════ */

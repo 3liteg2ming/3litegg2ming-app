@@ -66,7 +66,7 @@ export default function BottomNav({ hidden = false }: { hidden?: boolean }) {
   const isAuthed = !!user;
 
   const NAV: NavItem[] = useMemo(() => {
-    return isAuthed ? [...NAV_BASE, NAV_SUBMIT, NAV_PROFILE] : NAV_BASE;
+    return isAuthed ? [...NAV_BASE, NAV_PROFILE, NAV_SUBMIT] : NAV_BASE;
   }, [isAuthed]);
 
   useEffect(() => {
@@ -87,7 +87,7 @@ export default function BottomNav({ hidden = false }: { hidden?: boolean }) {
               key={href}
               to={href}
               end={href === '/'}
-              className={({ isActive }) => isActive ? 'egNavDock__pill' : 'egNavDock__btn'}
+              className={({ isActive }) => `${isActive ? 'egNavDock__pill' : 'egNavDock__btn'}${href === '/submit' ? ' egNavDock__submit' : ''}`}
               aria-label={label}
               role="menuitem"
               onMouseEnter={() => {
