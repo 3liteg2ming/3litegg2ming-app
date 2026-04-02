@@ -538,6 +538,7 @@ export default function MembersPage() {
   const [psnStatus, setPsnStatus] = useState<string | null>(null);
   const [psnSaveSuccess, setPsnSaveSuccess] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [badgeFilter, setBadgeFilter] = useState<string>('All');
   const profileRequestIdRef = useRef(0);
 
   const team = useMemo(() => {
@@ -817,6 +818,17 @@ export default function MembersPage() {
   const badgeGroups = useMemo(() => groupCoachBadgesByCategory(badges), [badges]);
   const unlockedCount = useMemo(() => badges.filter((b) => b.earned).length, [badges]);
 
+  // Badge category filtering
+  const badgeCategories = useMemo(() => {
+    const cats = [...new Set(badges.map((b) => b.category))].sort();
+    return ['All', ...cats];
+  }, [badges]);
+
+  const filteredBadgeGroups = useMemo(() => {
+    if (badgeFilter === 'All') return badgeGroups;
+    return badgeGroups.filter((g: any) => g.category === badgeFilter);
+  }, [badgeGroups, badgeFilter]);
+
   // Fetch ladder for Form Guide strip
   const seasonSlug = getDataSeasonSlugForCompetition(getStoredCompetitionKey());
   const { data: ladderRows } = useLadder(seasonSlug);
@@ -1070,6 +1082,20 @@ export default function MembersPage() {
           <div className="member-panelTitle">
             <Shield size={16} style={{ opacity: 0.75 }} /> Badges
           </div>
+          {!loadingBadges && badges.length > 0 && (
+            <div className="chBadgeFilters">
+              {badgeCategories.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  className={`chBadgeFilter ${badgeFilter === cat ? 'chBadgeFilter--active' : ''}`}
+                  onClick={() => setBadgeFilter(cat)}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="profileBadgeSummary">
             <span>{unlockedCount}/{badges.length || 0} unlocked</span>
             <span>Tap a badge for details</span>
@@ -1079,10 +1105,11 @@ export default function MembersPage() {
           ) : badges.length === 0 ? (
             <div className="badgeGrid__empty coachEmptyBadges">
               <div className="coachEmptyBadges__icon">🏅</div>
-              <div className="coachEmptyBadges__text">Badges unlock as the season progresses.</div>
+              <div className="coachEmptyBadges__title">No badges yet</div>
+              <div className="coachEmptyBadges__text">Badges unlock as you progress through the season.</div>
             </div>
           ) : (
-            <BadgeGrid groups={badgeGroups} onSelect={setSelectedBadge} />
+            <BadgeGrid groups={filteredBadgeGroups} onSelect={setSelectedBadge} />
           )}
         </section>
 

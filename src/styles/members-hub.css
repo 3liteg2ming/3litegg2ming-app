@@ -644,18 +644,65 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   BADGES — empty state
+   BADGES — filters + empty state
 ═══════════════════════════════════════════════════════════ */
+.chBadgeFilters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+  margin-bottom: 12px;
+}
+
+.chBadgeFilters::-webkit-scrollbar {
+  display: none;
+}
+
+.chBadgeFilter {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(215, 225, 244, 0.7);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chBadgeFilter:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.chBadgeFilter--active {
+  background: rgba(245, 196, 0, 0.15);
+  border-color: rgba(245, 196, 0, 0.35);
+  color: rgba(255, 230, 159, 0.95);
+}
+
 .coachEmptyBadges {
   display: grid;
   place-items: center;
   gap: 6px;
   text-align: center;
+  padding: 16px 12px;
 }
 
 .coachEmptyBadges__icon {
-  font-size: 18px;
+  font-size: 32px;
   line-height: 1;
+}
+
+.coachEmptyBadges__title {
+  font-size: 14px;
+  font-weight: 800;
+  color: rgba(245, 250, 255, 0.85);
 }
 
 .coachEmptyBadges__text {
