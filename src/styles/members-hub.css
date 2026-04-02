@@ -13,17 +13,18 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   HERO HEADER — premium coach identity card
+   HERO HEADER — premium coach identity card (v2)
 ═══════════════════════════════════════════════════════════ */
 .coachHubHero {
   position: relative;
   overflow: hidden;
-  border-radius: 20px;
+  border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  padding: 16px 16px 14px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
+  padding: 20px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 160px;
 }
 
 /* animated glass shimmer overlay */
@@ -49,28 +50,21 @@
   100% { background-position: -200% 0; }
 }
 
-.coachHubHero__left {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  min-width: 0;
-  position: relative;
-  z-index: 1;
-}
-
-.coachHubHero__logoWrap {
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.coachHubHero__avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 3px solid var(--team-colour, rgba(245, 196, 0, 0.6));
   background: rgba(7, 12, 20, 0.5);
+  overflow: hidden;
   display: grid;
   place-items: center;
-  overflow: hidden;
-  flex: 0 0 64px;
+  flex: 0 0 72px;
   box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 6px 20px rgba(0, 0, 0, 0.4);
+  position: relative;
+  z-index: 1;
 }
 
 .coachHubHero__logo {
@@ -79,7 +73,29 @@
   object-fit: contain;
 }
 
-.coachHubHero__meta {
+.coachHubHero__editBtn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.coachHubHero__editBtn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.coachHubHero__body {
   min-width: 0;
   display: grid;
   gap: 1px;
@@ -97,9 +113,10 @@
 
 .coachHubHero__name {
   margin: 0;
-  font-size: clamp(22px, 5vw, 30px);
+  font-size: clamp(26px, 6vw, 36px);
   line-height: 1.04;
   color: rgba(249, 252, 255, 0.97);
+  font-weight: 900;
 }
 
 .coachHubHero__team {
@@ -126,6 +143,15 @@
   opacity: 0.5;
 }
 
+.coachHubHero__chipRow {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+/* Legacy class kept for compatibility */
 .coachHubHero__chips {
   display: flex;
   flex-direction: column;
@@ -652,14 +678,5 @@
 }
 
 @media (max-width: 640px) {
-  .coachHubHero {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-
-  .coachHubHero__chips {
-    align-items: flex-start;
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
+  /* Hero is already flex-column, no changes needed */
 }

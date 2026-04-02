@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { NavLink } from 'react-router-dom';
-import { BarChart3, CalendarDays, Home, Trophy, Upload } from 'lucide-react';
+import { BarChart3, CalendarDays, Home, Trophy, Upload, User } from 'lucide-react';
 import { useAuth } from '../state/auth/AuthProvider';
 import '../styles/bottomNavPremium.css';
 
@@ -18,6 +18,7 @@ const NAV_BASE: NavItem[] = [
 ];
 
 const NAV_SUBMIT: NavItem = { label: 'Submit', href: '/submit', Icon: Upload };
+const NAV_PROFILE: NavItem = { label: 'Profile', href: '/members', Icon: User };
 
 const routePrefetchers: Record<string, () => Promise<any>> = {
   '/': () => import('../pages/HomePage'),
@@ -25,6 +26,7 @@ const routePrefetchers: Record<string, () => Promise<any>> = {
   '/ladder': () => import('../pages/LadderPage'),
   '/stats3': () => import('../pages/AFL2026StatsPage'),
   '/submit': () => import('../pages/SubmitPage'),
+  '/members': () => import('../pages/MembersPage'),
 };
 
 const warmedRoutes = new Set<string>();
@@ -64,7 +66,7 @@ export default function BottomNav({ hidden = false }: { hidden?: boolean }) {
   const isAuthed = !!user;
 
   const NAV: NavItem[] = useMemo(() => {
-    return isAuthed ? [...NAV_BASE, NAV_SUBMIT] : NAV_BASE;
+    return isAuthed ? [...NAV_BASE, NAV_SUBMIT, NAV_PROFILE] : NAV_BASE;
   }, [isAuthed]);
 
   useEffect(() => {

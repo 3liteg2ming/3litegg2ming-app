@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Flame, Gamepad2, KeyRound, Lock, Mail, Shield, Snowflake, Target, Trophy, Zap } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, Circle, CheckCircle2, Flame, Gamepad2, KeyRound, Lock, Mail, Pencil, Settings, Shield, Snowflake, Target, TrendingDown, TrendingUp, Trophy, Zap } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -499,6 +499,7 @@ export default function MembersPage() {
   const [savingPsn, setSavingPsn] = useState(false);
   const [psnStatus, setPsnStatus] = useState<string | null>(null);
   const [psnSaveSuccess, setPsnSaveSuccess] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const profileRequestIdRef = useRef(0);
 
   const team = useMemo(() => {
@@ -867,25 +868,25 @@ export default function MembersPage() {
 
       <div className="auth-card auth-card--wide member-card">
         {/* ── Hero Header ──────────────────────────────── */}
-        <section className="coachHubHero" style={{ background: heroGradient }}>
+        <section className="coachHubHero" style={{ background: heroGradient, '--team-colour': team?.colour } as React.CSSProperties}>
           <div className="coachHubHero__shimmer" />
-          <div className="coachHubHero__left">
-            <div className="coachHubHero__logoWrap">
-              <SmartImg className="coachHubHero__logo" src={teamLogo} alt={team?.name || 'Team'} fallbackText={team?.shortName || 'EG'} />
-            </div>
-            <div className="coachHubHero__meta">
-              <div className="coachHubHero__kicker">Season Two Coach</div>
-              <h1 className="coachHubHero__name">{displayName}</h1>
-              <p className="coachHubHero__team">{team?.name || 'Unassigned Team'}</p>
-              <div className="coachHubHero__sub">
-                <span>{resolvedPsn || 'PSN not set'}</span>
-                <span className="coachHubHero__dot">·</span>
-                <span>{resolvedEmail || '—'}</span>
-              </div>
+          <button type="button" className="coachHubHero__editBtn" onClick={() => setSettingsOpen(true)} aria-label="Edit profile">
+            <Pencil size={14} />
+          </button>
+          <div className="coachHubHero__avatar">
+            <SmartImg className="coachHubHero__logo" src={teamLogo} alt={team?.name || 'Team'} fallbackText={team?.shortName || 'EG'} />
+          </div>
+          <div className="coachHubHero__body">
+            <div className="coachHubHero__kicker">Season Two Coach</div>
+            <h1 className="coachHubHero__name">{displayName}</h1>
+            <p className="coachHubHero__team">{team?.name || 'Unassigned Team'}</p>
+            <div className="coachHubHero__sub">
+              <span>{resolvedPsn || 'PSN not set'}</span>
+              <span className="coachHubHero__dot">·</span>
+              <span>{resolvedEmail || '—'}</span>
             </div>
           </div>
-
-          <div className="coachHubHero__chips">
+          <div className="coachHubHero__chipRow">
             <span className="coachHubChip">{seasonChip}</span>
             <span className="coachHubChip coachHubChip--muted">{currentCompetition.label}</span>
           </div>
