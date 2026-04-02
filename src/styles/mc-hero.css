@@ -435,7 +435,7 @@
   }
 
   .mcHeroShell__stage {
-    gap: 10px;
+    gap: 8px;
     margin-top: 8px;
   }
 
@@ -446,24 +446,41 @@
     bottom: 20%;
   }
 
-  .mcHeroShell__logoWrap,
+  .mcHeroShell__logoWrap {
+    width: 56px;
+    height: 56px;
+  }
+
   .mcHeroShell__logo {
-    width: 66px;
-    height: 66px;
+    width: 44px;
+    height: 44px;
   }
 
   .mcHeroShell__teamName {
-    max-width: 118px;
-    font-size: 11px;
+    max-width: 100px;
+    font-size: 10px;
+  }
+
+  /* centreCol must accommodate 3-digit scores without overflowing */
+  .mcHeroShell__centreCol {
+    min-width: 90px;
+    max-width: 110px;
+  }
+
+  .mcHeroShell__centreMeta {
+    padding: 6px 8px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .mcHeroShell__score {
-    gap: 10px;
-    font-size: 42px;
+    gap: 6px;
+    font-size: 28px;
+    white-space: nowrap;
   }
 
   .mcHeroShell__score--final {
-    font-size: 38px;
+    font-size: 28px;
   }
 
   .mcHeroShell__score--vs {

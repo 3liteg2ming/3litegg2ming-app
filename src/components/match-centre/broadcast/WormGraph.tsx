@@ -220,8 +220,8 @@ export default function WormGraph({
             <line
               x1={chart.padL} y1={y.toFixed(1)}
               x2={chart.padL + chart.innerW} y2={y.toFixed(1)}
-              stroke={isCenter ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.06)'}
-              strokeWidth={isCenter ? '1' : '0.7'}
+              stroke={isCenter ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.08)'}
+              strokeWidth={isCenter ? '1.2' : '0.7'}
               strokeDasharray={isCenter ? undefined : '3 5'}
               vectorEffect="non-scaling-stroke"
             />
@@ -256,14 +256,14 @@ export default function WormGraph({
         <path
           d={chart.areaPath}
           fill={chart.hc}
-          fillOpacity="0.22"
+          fillOpacity="0.35"
           clipPath={`url(#${clipId}_homeClip)`}
         />
         {/* Away team leading: clip to bottom half */}
         <path
           d={chart.areaPath}
           fill={chart.ac}
-          fillOpacity="0.22"
+          fillOpacity="0.35"
           clipPath={`url(#${clipId}_awayClip)`}
         />
 
@@ -274,11 +274,11 @@ export default function WormGraph({
             d={s.d}
             fill="none"
             stroke={chart.sc(s.diff, s.destDiff)}
-            strokeWidth="2.2"
+            strokeWidth="3"
             strokeLinecap="square"
             strokeLinejoin="miter"
             vectorEffect="non-scaling-stroke"
-            style={{ filter: 'drop-shadow(0 0 3.5px rgba(255,255,255,0.3))' }}
+            style={{ filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.35))' }}
           />
         ))}
 
