@@ -3,8 +3,8 @@
   --eg-device-h: 100vh;
   --eg-header-h: 72px;
   --eg-header-height: 72px;
-  --bottom-nav-h: 108px;
-  --eg-bottom-nav-height: 108px;
+  --bottom-nav-h: 46px;
+  --eg-bottom-nav-height: 46px;
 }
 
 /* Critical guardrail: prevent any horizontal “100vw” scrollbar bleed */
