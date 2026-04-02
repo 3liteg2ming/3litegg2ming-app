@@ -33,7 +33,7 @@
   position: relative;
   pointer-events: auto;
   border-radius: 22px;
-  padding: 8px;
+  padding: 14px 8px;
 
   background:
     linear-gradient(180deg,
@@ -87,7 +87,7 @@
   position: relative;
   flex: 0 0 46px;
   width: 46px;
-  height: 52px;
+  height: 64px;
 
   border-radius: 14px;
   display: flex;
@@ -126,7 +126,7 @@
   position: relative;
   flex: 0 0 auto;
 
-  height: 52px;
+  height: 64px;
   border-radius: 14px;
 
   display: flex;
@@ -264,13 +264,13 @@
 ═══════════════════════════════════════════════════════════ */
 @media (max-width: 360px) {
   .egNavDock { width: calc(100% - 16px); }
-  .egNavDock__glass { padding: 7px; border-radius: 20px; }
+  .egNavDock__glass { padding: 10px 7px; border-radius: 20px; }
   .egNavDock__row { gap: 5px; }
 
   .egNavDock__btn {
     flex: 0 0 42px;
     width: 42px;
-    height: 48px;
+    height: 56px;
     border-radius: 12px;
   }
 
@@ -279,7 +279,7 @@
   }
 
   .egNavDock__pill {
-    height: 48px;
+    height: 56px;
     min-width: 112px;
     max-width: 144px;
     border-radius: 12px;
