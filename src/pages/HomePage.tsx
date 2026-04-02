@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   ChevronRight,
+  LayoutDashboard,
   User,
   ShieldCheck,
 } from 'lucide-react';
@@ -671,6 +672,28 @@ function LadderSnapshot() {
   );
 }
 
+function CoachHubBanner() {
+  const { user } = useAuth();
+  if (!user) return null;
+
+  const name = user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'Coach';
+
+  return (
+    <section className="home-module home-module--coachhub">
+      <Link to="/members" className="home-coachhub-card">
+        <div className="home-coachhub-card__icon">
+          <LayoutDashboard size={18} />
+        </div>
+        <div className="home-coachhub-card__text">
+          <h3 className="home-coachhub-card__title">{name}'s Coach Hub</h3>
+          <p className="home-coachhub-card__sub">View your stats, form guide, badges and season targets</p>
+        </div>
+        <ArrowRight size={16} className="home-coachhub-card__arrow" />
+      </Link>
+    </section>
+  );
+}
+
 export default function HomePage() {
   const { user } = useAuth();
   const fixturesVisible = useFixtureVisibility(user?.role);
@@ -679,6 +702,7 @@ export default function HomePage() {
     <div className="home-page">
       <main className="home-main">
         <HeroMasterCard />
+        <CoachHubBanner />
         <EgNewsSection />
         {fixturesVisible ? <FeaturedMatchCard /> : <LaunchPromoCard />}
         <LadderSnapshot />
