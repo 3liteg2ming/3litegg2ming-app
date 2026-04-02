@@ -6,6 +6,7 @@ import ComingSoonPage from './pages/ComingSoonPage';
 import MatchCentrePage from './pages/MatchCentrePage';
 import MembersPage from './pages/MembersPage';
 import { injectSpeedInsights } from '@vercel/speed-insights';
+import { Analytics } from '@vercel/analytics/react';
 
 injectSpeedInsights();
 
@@ -335,5 +336,10 @@ function AppShell() {
 
 
 export default function App() {
-  return <AppShell />;
+  return (
+    <>
+      <AppShell />
+      <Analytics />
+    </>
+  );
 }
