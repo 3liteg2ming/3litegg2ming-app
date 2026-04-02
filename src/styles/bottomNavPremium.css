@@ -1,7 +1,7 @@
 :root {
   --eg-yellow: #F5C400;
   --eg-ink: #0b0f14;
-  --bottom-nav-h: 64px;
+  --bottom-nav-h: 52px;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -100,7 +100,7 @@
 ═══════════════════════════════════════════════════════════ */
 @media (max-width: 360px) {
   :root {
-    --bottom-nav-h: 58px;
+    --bottom-nav-h: 48px;
   }
 
   .egNav__icon {
