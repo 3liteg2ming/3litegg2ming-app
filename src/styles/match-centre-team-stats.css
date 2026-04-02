@@ -477,18 +477,23 @@
   }
 
   .mcTeamStats__scoreHero {
-    gap: 10px;
-    padding: 6px 14px 16px;
+    gap: 8px;
+    padding: 6px 12px 16px;
   }
 
   .mcTeamStats__scoreCentre {
-    min-width: 104px;
-    padding: 7px 9px;
+    min-width: 88px;
+    padding: 7px 8px;
   }
 
   .mcTeamStats__scoreMeta {
-    max-width: 76px;
+    max-width: 72px;
     font-size: 7.5px;
+  }
+
+  /* Allow score value to scale down on narrow screens — 40px min is too large for 3-digit scores */
+  .mcTeamStats__scoreValue {
+    font-size: clamp(28px, 7vw, 48px);
   }
 
   .mcTeamStats__sections {
