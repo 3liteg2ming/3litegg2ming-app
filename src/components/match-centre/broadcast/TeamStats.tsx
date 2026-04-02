@@ -14,7 +14,7 @@ const TEAM_STAT_GROUPS = [
     title: 'Field Position',
     labels: ['Inside 50s', 'Rebound 50s', 'Marks', 'Contested Marks', 'Intercept Marks'],
   },
-  { title: 'Stoppages', labels: ['Hitouts'] },
+  { title: 'Stoppages', labels: ['Hitouts', 'Clearances', 'Tackles'] },
   { title: 'Defence / Pressure', labels: ['Spoils', 'Frees For'] },
 ] as const;
 

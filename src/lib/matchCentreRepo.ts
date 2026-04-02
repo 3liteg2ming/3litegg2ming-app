@@ -960,6 +960,8 @@ const TEAM_STAT_DISPLAY_ORDER = [
   'Frees For',
   '50m Penalties',
   'Hitouts',
+  'Clearances',
+  'Tackles',
   'Contested Possessions',
   'Uncontested Possessions',
   'Marks',
@@ -2370,6 +2372,16 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
       label: 'Marks',
       homeMatch: playerStats.filter((p) => p.team === home.fullName).reduce((acc, p) => acc + safeNum(p.M), 0),
       awayMatch: playerStats.filter((p) => p.team === away.fullName).reduce((acc, p) => acc + safeNum(p.M), 0),
+    },
+    {
+      label: 'Clearances',
+      homeMatch: playerStats.filter((p) => p.team === home.fullName).reduce((acc, p) => acc + safeNum(p.CLR), 0),
+      awayMatch: playerStats.filter((p) => p.team === away.fullName).reduce((acc, p) => acc + safeNum(p.CLR), 0),
+    },
+    {
+      label: 'Tackles',
+      homeMatch: playerStats.filter((p) => p.team === home.fullName).reduce((acc, p) => acc + safeNum(p.T), 0),
+      awayMatch: playerStats.filter((p) => p.team === away.fullName).reduce((acc, p) => acc + safeNum(p.T), 0),
     },
   ];
   // Primary source: team_stats_json stored directly on the fixture row (always readable)
