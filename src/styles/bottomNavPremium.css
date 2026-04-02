@@ -1,7 +1,7 @@
 :root {
   --eg-yellow: #F5C400;
   --eg-ink: #0b0f14;
-  --bottom-nav-h: 52px;
+  --bottom-nav-h: 46px;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -40,7 +40,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 1px;
 
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
@@ -53,8 +53,8 @@
 
 /* ── Icon ─────────────────────────────────────────────────── */
 .egNav__icon {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   color: rgba(255, 255, 255, 0.4);
   transition: color 0.15s ease;
 }
@@ -63,7 +63,7 @@
 .egNav__label {
   font-family: ui-sans-serif, system-ui, -apple-system, "SF Pro Text",
                "Segoe UI", Roboto, Helvetica, Arial;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.01em;
   color: rgba(255, 255, 255, 0.4);
@@ -100,15 +100,15 @@
 ═══════════════════════════════════════════════════════════ */
 @media (max-width: 360px) {
   :root {
-    --bottom-nav-h: 48px;
+    --bottom-nav-h: 42px;
   }
 
   .egNav__icon {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
   }
 
   .egNav__label {
-    font-size: 9px;
+    font-size: 8px;
   }
 }
