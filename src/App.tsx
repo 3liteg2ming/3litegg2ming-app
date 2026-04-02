@@ -5,10 +5,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ComingSoonPage from './pages/ComingSoonPage';
 import MatchCentrePage from './pages/MatchCentrePage';
 import MembersPage from './pages/MembersPage';
-import { injectSpeedInsights } from '@vercel/speed-insights';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Analytics } from '@vercel/analytics/react';
-
-injectSpeedInsights();
 
 import SignInPage from './pages/auth/SignInPage';
 import SignUpPage from './pages/auth/SignUpPage';
@@ -339,6 +337,7 @@ export default function App() {
   return (
     <>
       <AppShell />
+      <SpeedInsights />
       <Analytics />
     </>
   );
