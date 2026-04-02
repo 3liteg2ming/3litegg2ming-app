@@ -4,11 +4,13 @@ import { useNavigate } from 'react-router-dom';
 
 import BadgeGrid from '../components/BadgeGrid';
 import BadgeModal from '../components/BadgeModal';
+import FormGuideStrip from '../components/FormGuideStrip';
 import SmartImg from '../components/SmartImg';
 import { afl26LocalRounds } from '../data/afl26LocalRounds';
 import { getAfl26RoundsFromSupabase, type AflMatch, type AflRound } from '../data/afl26Supabase';
 import { fetchCoachBadges, groupCoachBadgesByCategory, type CoachBadgeModel } from '../lib/badges';
-import { getStoredCompetitionKey, getUiCompetition } from '../lib/competitionRegistry';
+import { getStoredCompetitionKey, getUiCompetition, getDataSeasonSlugForCompetition } from '../lib/competitionRegistry';
+import { useLadder } from '../hooks/useLadder';
 import { areFixturesVisible } from '../lib/fixtureVisibility';
 import { resolveGamerTag } from '../lib/gamerTag';
 import { requireSupabaseClient } from '../lib/supabaseClient';
@@ -779,6 +781,15 @@ export default function MembersPage() {
   const badgeGroups = useMemo(() => groupCoachBadgesByCategory(badges), [badges]);
   const unlockedCount = useMemo(() => badges.filter((b) => b.earned).length, [badges]);
 
+  // Fetch ladder for Form Guide strip
+  const seasonSlug = getDataSeasonSlugForCompetition(getStoredCompetitionKey());
+  const { data: ladderRows } = useLadder(seasonSlug);
+  const coachLast5 = useMemo(() => {
+    if (!ladderRows || !profileRow?.team_id) return [];
+    const row = ladderRows.find((r: any) => r.team_id === profileRow.team_id);
+    return (row?.last5_results ?? []) as string[];
+  }, [ladderRows, profileRow?.team_id]);
+
   const teamLogo = cleanProfileText(profileRow?.team_logo_url) || (team ? assetUrl(team.logoFile ?? '') : assetUrl('elite-gaming-logo.png'));
   const heroGradient = team
     ? `linear-gradient(135deg, ${team.colour}5a 0%, rgba(9,11,16,0.9) 56%, rgba(14,26,48,0.94) 100%)`
@@ -891,6 +902,9 @@ export default function MembersPage() {
             <span className="coachHubChip coachHubChip--muted">{currentCompetition.label}</span>
           </div>
         </section>
+
+        {/* ── Form Guide Strip ──────────────────────────── */}
+        <FormGuideStrip results={coachLast5} />
 
         {/* ── Quick Stats ──────────────────────────────── */}
         <section className="coachQuickStats" aria-label="Quick stats">

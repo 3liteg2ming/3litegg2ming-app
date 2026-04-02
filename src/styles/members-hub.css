@@ -183,6 +183,85 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
+   FORM GUIDE STRIP — last 5 results
+═══════════════════════════════════════════════════════════ */
+.formGuide {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.formGuide__label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(215, 225, 244, 0.6);
+  flex-shrink: 0;
+}
+
+.formGuide__chips {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.formGuide__chip {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 900;
+  border: 1px solid transparent;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.formGuide__chip--W {
+  background: rgba(34, 197, 94, 0.18);
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #86efac;
+}
+
+.formGuide__chip--W:hover {
+  background: rgba(34, 197, 94, 0.25);
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
+}
+
+.formGuide__chip--L {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.formGuide__chip--L:hover {
+  background: rgba(239, 68, 68, 0.22);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15);
+}
+
+.formGuide__chip--D {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #fcd34d;
+}
+
+.formGuide__chip--D:hover {
+  background: rgba(245, 158, 11, 0.22);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+}
+
+.formGuide__chip--empty {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgba(215, 225, 244, 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════
    QUICK STATS — 4-grid responsive
 ═══════════════════════════════════════════════════════════ */
 .coachQuickStats {
