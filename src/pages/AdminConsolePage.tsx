@@ -9,7 +9,6 @@ import {
   regenerateAdminPreseason,
   saveAdminFixture,
   saveAdminProfile,
-  saveAdminProfileEmail,
   setAdminProfileFlag,
   updateAdminRegistration,
   type AdminConsoleCompetition,
@@ -688,11 +687,8 @@ export default function AdminConsolePage() {
         display_name: draft.display_name || null,
         psn: draft.psn || null,
         team_id: draft.team_id || null,
+        email: draft.email || null,
       });
-      const original = profiles.find((p) => p.user_id === userId);
-      if (draft.email !== (original?.email ?? '')) {
-        await saveAdminProfileEmail(userId, draft.email || '');
-      }
       pushNotice('Profile updated.');
       await refreshAll();
       return true;

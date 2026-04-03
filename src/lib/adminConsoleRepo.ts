@@ -422,6 +422,7 @@ export async function saveAdminProfile(token: string, userId: string, patch: {
   display_name?: string | null;
   psn?: string | null;
   team_id?: string | null;
+  email?: string | null;
 }) {
   const { error } = await supabase.rpc('eg_admin_update_profile', {
     p_token: token,
@@ -429,6 +430,7 @@ export async function saveAdminProfile(token: string, userId: string, patch: {
     p_display_name: patch.display_name ?? null,
     p_psn: patch.psn ?? null,
     p_team_id: patch.team_id ?? null,
+    p_email: patch.email ?? null,
   });
   if (error) throw new Error(error.message || 'Unable to update profile');
   invalidateAdminConsoleCache();
