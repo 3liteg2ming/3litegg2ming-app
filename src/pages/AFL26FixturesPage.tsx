@@ -346,9 +346,10 @@ export default function AFL26FixturesPage() {
 
   useEffect(() => {
     if (!fixturesPubliclyVisible) return;
-    const last = regularStageGroups[regularStageGroups.length - 1]?.id || '';
+    const defaultRound = regularStageGroups.find((s) => s.id === 'round-5')?.id
+      || regularStageGroups[regularStageGroups.length - 1]?.id || '';
     if (!activeStageId || !regularStageGroups.some((stage) => stage.id === activeStageId)) {
-      setActiveStageId(last);
+      setActiveStageId(defaultRound);
     }
   }, [activeStageId, fixturesPubliclyVisible, regularStageGroups]);
 
