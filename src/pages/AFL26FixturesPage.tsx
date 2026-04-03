@@ -526,7 +526,7 @@ export default function AFL26FixturesPage() {
         {fixturesPubliclyVisible && (
           <div className={`fxDeadlineNotice ${deadline.expired ? 'is-expired' : ''}`}>
             <div className="fxDeadlineNotice__text">
-              Round 3 &amp; 4 submissions close Sunday midnight
+              Round 5 &amp; 6 submissions close Friday midnight
             </div>
             <div className="fxDeadlineNotice__countdown">
               {deadline.expired ? (

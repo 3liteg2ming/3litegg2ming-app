@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 
 /**
- * Hard deadline: Sunday 2026-04-05 at 23:59:59 Melbourne time (AEST, UTC+10).
+ * Hard deadline: Friday 2026-04-09 at 23:59:59 Melbourne time (AEST, UTC+10).
  * After this timestamp the countdown shows "Deadline passed".
  */
-const DEADLINE_ISO = '2026-04-05T23:59:59+10:00';
+const DEADLINE_ISO = '2026-04-09T23:59:59+10:00';
 const DEADLINE_MS = new Date(DEADLINE_ISO).getTime();
 
 export type CountdownResult = {
