@@ -9,6 +9,7 @@ import {
   regenerateAdminPreseason,
   saveAdminFixture,
   saveAdminProfile,
+  saveAdminProfileEmail,
   setAdminProfileFlag,
   updateAdminRegistration,
   type AdminConsoleCompetition,
@@ -74,6 +75,7 @@ type ProfileRow = {
   user_id: string;
   display_name: string;
   psn: string;
+  email: string;
   team_id: string | null;
   role?: string | null;
   is_admin?: boolean | null;
@@ -443,7 +445,7 @@ export default function AdminConsolePage() {
       ? profiles
       : profiles.filter((p) => {
           const teamName = teams.find((t) => t.id === p.team_id)?.name || '';
-          return [p.display_name, p.psn, p.user_id, teamName].join(' ').toLowerCase().includes(q);
+          return [p.display_name, p.psn, p.email, p.user_id, teamName].join(' ').toLowerCase().includes(q);
         });
     const sorted = [...filtered].sort((a, b) => {
       if (userSort === 'admin') {
@@ -687,6 +689,10 @@ export default function AdminConsolePage() {
         psn: draft.psn || null,
         team_id: draft.team_id || null,
       });
+      const original = profiles.find((p) => p.user_id === userId);
+      if (draft.email !== (original?.email ?? '')) {
+        await saveAdminProfileEmail(userId, draft.email || '');
+      }
       pushNotice('Profile updated.');
       await refreshAll();
       return true;
@@ -1214,7 +1220,7 @@ export default function AdminConsolePage() {
                     type="text"
                     value={userSearch}
                     onChange={(e) => setUserSearch(e.target.value)}
-                    placeholder="Search display name, PSN or team"
+                    placeholder="Search name, email, PSN or team"
                   />
                 </label>
                 <label>
@@ -1233,6 +1239,7 @@ export default function AdminConsolePage() {
                     <tr>
                       <th>User</th>
                       <th>Display name</th>
+                      <th>Email</th>
                       <th>PSN</th>
                       <th>Team</th>
                       <th>Admin</th>
@@ -1242,13 +1249,13 @@ export default function AdminConsolePage() {
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan={6} className="egAdminEmptyRow">
+                        <td colSpan={7} className="egAdminEmptyRow">
                           <span className="egAdminInlineSkeleton" />
                         </td>
                       </tr>
                     ) : filteredProfiles.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="egAdminEmptyRow">
+                        <td colSpan={7} className="egAdminEmptyRow">
                           No profiles found.
                         </td>
                       </tr>
@@ -1264,6 +1271,14 @@ export default function AdminConsolePage() {
                                 type="text"
                                 value={draft.display_name || ''}
                                 onChange={(e) => updateProfileDraft(userId, { display_name: e.target.value })}
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="email"
+                                value={draft.email || ''}
+                                onChange={(e) => updateProfileDraft(userId, { email: e.target.value })}
+                                placeholder="user@email.com"
                               />
                             </td>
                             <td>

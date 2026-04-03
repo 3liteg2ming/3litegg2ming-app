@@ -24,6 +24,7 @@ export type AdminConsoleProfile = {
   user_id: string;
   display_name: string;
   psn: string;
+  email: string;
   team_id: string | null;
   role?: string | null;
   is_admin?: boolean | null;
@@ -252,6 +253,7 @@ async function loadProfiles(): Promise<AdminConsoleProfile[]> {
     user_id: text(row.user_id || row.id),
     display_name: text(row.display_name),
     psn: text(row.psn),
+    email: text(row.email),
     team_id: text(row.team_id) || null,
     role: text(row.role) || null,
     is_admin: typeof row.is_admin === 'boolean' ? row.is_admin : null,
@@ -439,6 +441,12 @@ export async function setAdminProfileFlag(token: string, userId: string, isAdmin
     p_is_admin: isAdmin,
   });
   if (error) throw new Error(error.message || 'Unable to change admin flag');
+  invalidateAdminConsoleCache();
+}
+
+export async function saveAdminProfileEmail(userId: string, email: string) {
+  const { error } = await supabase.from('eg_profiles').update({ email }).eq('user_id', userId);
+  if (error) throw new Error(error.message || 'Unable to update email');
   invalidateAdminConsoleCache();
 }
 
