@@ -860,6 +860,61 @@ export default function MembersPage() {
     return (row?.last5_results ?? []) as string[];
   }, [ladderRows, profileRow?.team_id]);
 
+  const recentResults = useMemo(() => {
+    const teamKey = user?.teamKey as TeamKey | undefined;
+    if (!teamKey || !rounds.length) return [];
+
+    const results: Array<{
+      round: number;
+      opponent: string;
+      opponentKey: TeamKey;
+      teamScore: number;
+      oppScore: number;
+      result: 'W' | 'L' | 'D';
+    }> = [];
+
+    const sortedRounds = [...rounds].sort((a, b) => a.round - b.round);
+    for (const round of sortedRounds) {
+      for (const match of round.matches || []) {
+        if (String(match.status || '').toUpperCase() !== 'FINAL') continue;
+        const homeKey = teamKeyFromMatchSlug(match.home);
+        const awayKey = teamKeyFromMatchSlug(match.away);
+        if (homeKey !== teamKey && awayKey !== teamKey) continue;
+
+        const isHome = homeKey === teamKey;
+        const teamScore = totalOf(isHome ? match.homeScore : match.awayScore);
+        const oppScore = totalOf(isHome ? match.awayScore : match.homeScore);
+        const opponent = isHome ? match.away : match.home;
+        const opponentKey = isHome ? awayKey : homeKey;
+        const result: 'W' | 'L' | 'D' = teamScore > oppScore ? 'W' : teamScore < oppScore ? 'L' : 'D';
+
+        results.push({ round: round.round, opponent, opponentKey, teamScore, oppScore, result });
+      }
+    }
+
+    return results.slice(-4);
+  }, [rounds, user?.teamKey]);
+
+  const miniLadder = useMemo(() => {
+    if (!ladderRows?.length || !profileRow?.team_id) return [];
+    const sorted = [...ladderRows].sort((a: any, b: any) => (a.position ?? 99) - (b.position ?? 99));
+    const idx = sorted.findIndex((r: any) => r.team_id === profileRow.team_id);
+    if (idx < 0) return [];
+    const start = Math.max(0, idx - 1);
+    const end = Math.min(sorted.length, idx + 2);
+    return sorted.slice(start, end).map((r: any) => ({
+      position: r.position ?? r.rank ?? 0,
+      teamName: r.team_name ?? r.name ?? '',
+      teamId: r.team_id,
+      logoUrl: r.logo_url ?? r.team_logo_url ?? '',
+      wins: r.wins ?? 0,
+      losses: r.losses ?? 0,
+      points: r.points ?? r.premiership_points ?? 0,
+      pct: r.percentage != null ? Number(r.percentage).toFixed(1) : '0.0',
+      isUser: r.team_id === profileRow.team_id,
+    }));
+  }, [ladderRows, profileRow?.team_id]);
+
   const teamLogo = cleanProfileText(profileRow?.team_logo_url) || (team ? assetUrl(team.logoFile ?? '') : assetUrl('elite-gaming-logo.png'));
   const heroGradient = team
     ? `linear-gradient(135deg, ${team.colour}5a 0%, rgba(9,11,16,0.9) 56%, rgba(14,26,48,0.94) 100%)`
@@ -967,64 +1022,60 @@ export default function MembersPage() {
               <span>{resolvedEmail || '—'}</span>
             </div>
           </div>
-          <div className="coachHubHero__chipRow">
-            <span className="coachHubChip">{seasonChip}</span>
-            <span className="coachHubChip coachHubChip--muted">{currentCompetition.label}</span>
-          </div>
-        </section>
+          </section>
 
         {/* ── Form Guide Strip ──────────────────────────── */}
         <FormGuideStrip results={coachLast5} />
 
-        {/* ── Season Stats Grid (v2) ──────────────────────── */}
-        <section className="chStatsGrid" aria-label="Season statistics">
-          <StatCard
-            icon={<Trophy size={16} />}
-            label="Current Rank"
-            value={record.rank ? `#${record.rank}` : '—'}
-            accent="#f5c400"
-            subValue={record.peakRank && record.rank !== null && record.peakRank !== null && record.rank !== record.peakRank ? (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                {record.rank < record.peakRank ? (
-                  <TrendingUp size={12} style={{ color: '#22c55e' }} />
-                ) : (
-                  <TrendingDown size={12} style={{ color: '#ef4444' }} />
-                )}
-                {Math.abs(record.rank - record.peakRank)}
-              </span>
-            ) : null}
-          />
-          <StatCard
-            icon={<span style={{ fontSize: '14px', fontWeight: 'bold' }}>W-L</span>}
-            label="Record"
-            value={record.wins === null || record.losses === null ? '—' : `${record.wins}-${record.losses}${record.draws ? `-${record.draws}` : ''}`}
-            accent="#3f7ef0"
-          />
-          <StatCard
-            icon={<BarChart3 size={16} />}
-            label="Win %"
-            value={clampPct(record.winPct) === null ? '—' : `${clampPct(record.winPct)!.toFixed(1)}%`}
-            accent="#7c5cff"
-          />
-          <StatCard
-            icon={<Zap size={16} />}
-            label="Points For"
-            value={<AnimatedStat value={record.pointsFor} />}
-            accent="#ff7830"
-          />
-          <StatCard
-            icon={<Target size={16} />}
-            label="Goals"
-            value={<AnimatedStat value={record.goals} />}
-            accent="#22c55e"
-          />
-          <StatCard
-            icon={<Flame size={16} />}
-            label="Streak"
-            value={statValue(record.streak)}
-            accent={record.streak?.startsWith('W') ? '#22c55e' : record.streak?.startsWith('L') ? '#ef4444' : '#f59e0b'}
-          />
+        {/* ── Inline Stats Row ─────────────────────────── */}
+        <section className="chInlineStats" aria-label="Key statistics">
+          {quickStats.map((s, i) => (
+            <div key={s.label} className="chInlineStats__item">
+              {i > 0 && <div className="chInlineStats__divider" />}
+              <div className="chInlineStats__inner">
+                <span className="chInlineStats__value">{s.value}</span>
+                <span className="chInlineStats__label">{s.label}</span>
+              </div>
+            </div>
+          ))}
         </section>
+
+        {/* ── Recent Results ──────────────────────────── */}
+        {recentResults.length > 0 && (
+          <section className="chResults">
+            <div className="chResults__heading">Recent Results</div>
+            {recentResults.map((r) => {
+              const oppAssets = getTeamAssets(r.opponent);
+              return (
+                <div key={r.round} className="chResults__row">
+                  <span className="chResults__round">R{r.round}</span>
+                  <div className="chResults__opponent">
+                    <SmartImg className="chResults__logo" src={oppAssets.logo} alt={r.opponent} fallbackText="" />
+                    <span className="chResults__oppName">{r.opponent}</span>
+                  </div>
+                  <span className="chResults__score">{r.teamScore} - {r.oppScore}</span>
+                  <span className={`chResults__chip chResults__chip--${r.result}`}>{r.result}</span>
+                </div>
+              );
+            })}
+          </section>
+        )}
+
+        {/* ── Mini Ladder ─────────────────────────────── */}
+        {miniLadder.length > 0 && (
+          <section className="chLadder">
+            <div className="chLadder__heading">Ladder Position</div>
+            {miniLadder.map((row) => (
+              <div key={row.teamId} className={`chLadder__row ${row.isUser ? 'chLadder__row--user' : ''}`}>
+                <span className="chLadder__pos">#{row.position}</span>
+                <span className="chLadder__team">{row.teamName}</span>
+                <span className="chLadder__record">{row.wins}-{row.losses}</span>
+                <span className="chLadder__pts">{row.points} pts</span>
+                <span className="chLadder__pct">{row.pct}%</span>
+              </div>
+            ))}
+          </section>
+        )}
 
         {showMissingTagBanner ? (
           <section className="memberTagBanner" role="status" aria-live="polite">
@@ -1032,32 +1083,11 @@ export default function MembersPage() {
           </section>
         ) : null}
 
-        {/* ── Momentum Badge ──────────────────────────── */}
-        <section className={`chMomentum chMomentum--${momentum.tone}`}>
-          <momentum.icon size={16} className="chMomentum__icon" />
-          <span className="chMomentum__label">{momentum.label}</span>
-          <span className="chMomentum__sub">Coach Momentum</span>
-        </section>
-
         {/* ── Season Progress ─────────────────────────── */}
         <section className="chProgress">
           <div className="chProgress__head">
             <span className="chProgress__title">Season Progress</span>
             <span className="chProgress__count">Round {roundsPlayed} of {TOTAL_ROUNDS}</span>
-          </div>
-          <div className="chProgress__pips">
-            {Array.from({ length: TOTAL_ROUNDS }, (_, i) => {
-              const roundNum = i + 1;
-              const isPlayed = roundNum <= roundsPlayed;
-              const isCurrent = roundNum === roundsPlayed;
-              return (
-                <div
-                  key={roundNum}
-                  className={`chProgress__pip${isCurrent ? ' chProgress__pip--current' : isPlayed ? ' chProgress__pip--played' : ''}`}
-                  title={`Round ${roundNum}`}
-                />
-              );
-            })}
           </div>
           <div className="chProgress__track">
             <div className="chProgress__fill" style={{ width: `${progressPct}%` }} />
