@@ -26,6 +26,7 @@ const links = [
   { to: '/admin/players', label: 'Players' },
   { to: '/admin/fixtures', label: 'Fixtures & Results' },
   { to: '/admin/rebuild', label: 'Rebuild Tools' },
+  { to: '/admin/best-team', label: 'Best 23 Team' },
   { to: '/admin/coaches', label: 'Coaches & Roles' },
   { to: '/admin/submissions', label: 'Submissions / OCR' },
   { to: '/admin/content', label: 'Content' },

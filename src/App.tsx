@@ -39,6 +39,7 @@ const AFL26FixturesPage = lazy(() => import('./pages/AFL26FixturesPage'));
 const LadderPage = lazy(() => import('./pages/LadderPage'));
 const SubmitPage = lazy(() => import('./pages/SubmitPage'));
 const AFL2026StatsPage = lazy(() => import('./pages/AFL2026StatsPage'));
+const BestTeamPage = lazy(() => import('./pages/BestTeamPage'));
 const PlayerProfilePage = lazy(() => import('./pages/PlayerProfilePage'));
 const HeadToHeadPage = lazy(() => import('./pages/HeadToHeadPage'));
 const PreseasonPage = lazy(() => import('./pages/PreseasonPage'));
@@ -62,6 +63,7 @@ const AdminAssets = lazy(() => import('./routes/admin/pages/AdminAssets'));
 const AdminAudit = lazy(() => import('./routes/admin/pages/AdminAudit'));
 const AdminOdds = lazy(() => import('./routes/admin/pages/AdminOdds'));
 const AdminNews = lazy(() => import('./routes/admin/pages/AdminNews'));
+const AdminBestTeam = lazy(() => import('./routes/admin/pages/AdminBestTeam'));
 
 const GLOBAL_CRASH_EVENT = 'eg:global-crash';
 
@@ -240,6 +242,7 @@ function AppRoutes() {
 
                 <Route path="/fixtures" element={<AFL26FixturesPage />} />
                 <Route path="/ladder" element={<LadderPage />} />
+                <Route path="/best-team" element={<BestTeamPage />} />
 
                 <Route path="/stats3" element={<AFL2026StatsPage />} />
                 <Route path="/stats3/leaders" element={<StatLeadersPage />} />
@@ -296,6 +299,7 @@ function AppRoutes() {
                   <Route path="assets" element={<AdminAssets />} />
                   <Route path="audit" element={<AdminAudit />} />
                   <Route path="odds" element={<AdminOdds />} />
+                  <Route path="best-team" element={<AdminBestTeam />} />
                   <Route path="console" element={<AdminConsolePage />} />
                   <Route path="preseason-seeding" element={<AdminConsolePage />} />
                 </Route>

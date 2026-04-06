@@ -117,7 +117,7 @@ type PlayerMeta = {
   photoUrl?: string;
 };
 
-type PlayerMetricRow = {
+export type PlayerMetricRow = {
   id: string;
   playerId: string;
   name: string;
@@ -609,7 +609,7 @@ function canonicalTeamKey(input: { teamKey?: string | null; slug?: string | null
   return text(input.teamKey) || text(input.slug) || 'unknown';
 }
 
-async function fetchLivePlayerMetrics(): Promise<PlayerMetricRow[]> {
+export async function fetchLivePlayerMetrics(): Promise<PlayerMetricRow[]> {
   const season = await resolveActiveSeasonRecord();
   if (!season) return [];
 

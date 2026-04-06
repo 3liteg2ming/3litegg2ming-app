@@ -2,6 +2,7 @@ import { requireSupabaseClient } from '../lib/supabaseClient';
 import { fetchActiveCompetitionBaseline } from '../lib/seasonParticipantsRepo';
 import { resolveKnownPlayerHeadshot } from '../lib/playerHeadshots';
 import { resolveTeamKey } from '../lib/entityResolvers';
+import { resolveAuthoritativePosition } from '../lib/playerPositionMap';
 
 const supabase = requireSupabaseClient();
 
@@ -14,6 +15,7 @@ export type AflPlayer = {
   teamName?: string;
   teamKey?: string;
 
+  aflPlayerId?: string;
   position?: string;
   number?: number;
 
@@ -33,6 +35,7 @@ type TeamLookup = { id?: string; name?: string; teamKey?: string };
 type RawPlayerRow = Record<string, any>;
 type CsvPlayerRow = {
   id: string;
+  aflPlayerId?: string;
   name: string;
   headshotUrl?: string;
   photoUrl?: string;
@@ -90,13 +93,13 @@ function normalizeTeamToken(value: unknown) {
 
 async function fetchPlayersRaw() {
   const selectAttempts = [
-    'id,name,team_id,team_key,team_name,position,number,headshot_url,photo_url',
-    'id,name,team_id,team_name,position,number,headshot_url,photo_url',
-    'id,name,team_id,position,number,headshot_url,photo_url',
+    'id,afl_player_id,name,team_id,team_key,team_name,position,number,headshot_url,photo_url',
+    'id,afl_player_id,name,team_id,team_name,position,number,headshot_url,photo_url',
+    'id,afl_player_id,name,team_id,position,number,headshot_url,photo_url',
     'id,name,team_id,name,headshot_url,photo_url',
-    'id,name,team_id,display_name,full_name,first_name,last_name,position,number,headshot_url,photo_url',
-    'id,display_name,team_id,team_key,team_name,position,number,headshot_url,photo_url',
-    'id,full_name,team_id,team_key,team_name,position,number,headshot_url,photo_url',
+    'id,afl_player_id,name,team_id,display_name,full_name,first_name,last_name,position,number,headshot_url,photo_url',
+    'id,afl_player_id,display_name,team_id,team_key,team_name,position,number,headshot_url,photo_url',
+    'id,afl_player_id,full_name,team_id,team_key,team_name,position,number,headshot_url,photo_url',
   ] as const;
 
   let data: any[] = [];
@@ -210,6 +213,7 @@ async function fetchBundledPlayersCsv(): Promise<CsvPlayerRow[]> {
 
     players.push({
       id,
+      aflPlayerId: strOrUndef(readCell(cells, 'afl_player_id', 'AFL Player ID')) || undefined,
       name,
       headshotUrl:
         strOrUndef(readCell(cells, 'headshot_url', 'Headshot URL', 'headshot')) ||
@@ -322,6 +326,15 @@ function resolveTeamFields(p: any, teamById: Map<string, TeamLookup>) {
   return { teamId, teamName, teamKey };
 }
 
+function resolvePlayerPosition(args: { aflPlayerId?: string | number | null; teamName?: string | null; playerName?: string | null; rowPosition?: string | null; }): string | undefined {
+  return resolveAuthoritativePosition({
+    aflPlayerId: args.aflPlayerId,
+    teamName: args.teamName,
+    playerName: args.playerName,
+    existingPosition: args.rowPosition,
+  });
+}
+
 function toAflPlayer(p: any, teamById: Map<string, TeamLookup>): AflPlayer | null {
   const id = strOrUndef(p?.id);
   const first = strOrUndef(p?.first_name);
@@ -335,6 +348,7 @@ function toAflPlayer(p: any, teamById: Map<string, TeamLookup>): AflPlayer | nul
 
   return {
     id,
+    aflPlayerId: strOrUndef(p?.afl_player_id),
     name,
     headshotUrl: pickHeadshot(p),
 
@@ -342,7 +356,12 @@ function toAflPlayer(p: any, teamById: Map<string, TeamLookup>): AflPlayer | nul
     teamName,
     teamKey,
 
-    position: strOrUndef(p?.position),
+    position: resolvePlayerPosition({
+      aflPlayerId: p?.afl_player_id,
+      teamName,
+      playerName: name,
+      rowPosition: strOrUndef(p?.position),
+    }),
     number: numOrUndef(p?.number),
 
     gamesPlayed: numOrUndef(p?.games_played),
@@ -435,6 +454,7 @@ function toCsvAflPlayer(csv: CsvPlayerRow, teamById: Map<string, TeamLookup>): A
 
   return {
     id: csv.id,
+    aflPlayerId: csv.aflPlayerId,
     name: csv.name,
     headshotUrl:
       pickHeadshot({
@@ -445,7 +465,12 @@ function toCsvAflPlayer(csv: CsvPlayerRow, teamById: Map<string, TeamLookup>): A
     teamId: finalTeamId,
     teamName: finalTeamName,
     teamKey: finalTeamKey,
-    position: csv.position,
+    position: resolvePlayerPosition({
+      aflPlayerId: csv.aflPlayerId,
+      teamName: finalTeamName,
+      playerName: csv.name,
+      rowPosition: csv.position,
+    }),
     number: csv.number,
     gamesPlayed: 0,
     goals: 0,
