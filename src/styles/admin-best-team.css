@@ -1,0 +1,391 @@
+.abt-shell {
+  display: grid;
+  gap: 18px;
+}
+
+.abt-shell--loading {
+  min-height: 280px;
+  place-items: center;
+  color: rgba(220, 232, 255, 0.82);
+}
+
+.abt-hero,
+.abt-statusBar,
+.abt-panel {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(10, 16, 28, 0.98), rgba(5, 9, 18, 0.99)),
+    radial-gradient(circle at top left, rgba(42, 96, 190, 0.12), transparent 32%);
+  border-radius: 20px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.abt-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+  padding: 20px 22px;
+}
+
+.abt-kicker,
+.abt-panel__eyebrow {
+  display: inline-block;
+  margin-bottom: 6px;
+  color: rgba(245, 196, 0, 0.82);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.66rem;
+  font-weight: 900;
+}
+
+.abt-hero h2,
+.abt-panel__header h3,
+.abt-boardTop h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.52rem;
+  line-height: 1;
+}
+
+.abt-hero p,
+.abt-panel__meta,
+.abt-boardTop__meta {
+  margin: 8px 0 0;
+  color: rgba(198, 214, 243, 0.72);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.abt-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.abt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: #eef3ff;
+  cursor: pointer;
+  font-weight: 700;
+  transition: 160ms ease;
+}
+
+.abt-btn:hover { transform: translateY(-1px); }
+.abt-btn--primary {
+  border-color: rgba(245, 196, 0, 0.32);
+  background: linear-gradient(135deg, rgba(245, 196, 0, 0.18), rgba(255, 214, 99, 0.08));
+  color: #ffe692;
+}
+
+.abt-statusBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 14px 16px;
+}
+
+.abt-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(224, 234, 255, 0.86);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.abt-pill--status.saved { color: #8ef0b5; }
+.abt-pill--status.error { color: #ffb2b2; }
+
+.abt-grid {
+  display: grid;
+  grid-template-columns: 320px minmax(520px, 1fr) 280px;
+  gap: 18px;
+  align-items: start;
+}
+
+.abt-panel {
+  padding: 16px;
+}
+
+.abt-panel__header,
+.abt-boardTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.abt-slotSummary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 13px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.035);
+  margin-bottom: 12px;
+}
+
+.abt-slotSummary__label,
+.abt-benchCard__top,
+.abt-candidate__stats,
+.abt-slotCard__slot {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.63rem;
+  font-weight: 900;
+}
+
+.abt-slotSummary strong { color: #fff; display: block; }
+.abt-slotSummary__role {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(245, 196, 0, 0.12);
+  border: 1px solid rgba(245, 196, 0, 0.25);
+  color: #ffdf83;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.abt-searchWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(210, 224, 250, 0.65);
+}
+
+.abt-searchWrap input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.abt-filterRow,
+.abt-sortRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.abt-chipBtn,
+.abt-sortBtn {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(218, 229, 252, 0.84);
+  border-radius: 999px;
+  padding: 7px 11px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.abt-chipBtn.is-active,
+.abt-sortBtn.is-active {
+  background: rgba(245, 196, 0, 0.12);
+  border-color: rgba(245, 196, 0, 0.3);
+  color: #ffe38c;
+}
+
+.abt-candidateList {
+  display: grid;
+  gap: 10px;
+  max-height: 780px;
+  overflow: auto;
+  padding-right: 4px;
+  margin-top: 14px;
+}
+
+.abt-candidate {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(18, 24, 40, 0.9), rgba(11, 15, 26, 0.95));
+  color: #fff;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--abt-accent, #5ea8ff) 25%, transparent);
+  cursor: pointer;
+}
+
+.abt-candidate__avatar,
+.abt-slotCard__avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  display: grid;
+  place-items: center;
+}
+
+.abt-candidate__avatar img,
+.abt-slotCard__avatar img { width: 100%; height: 100%; object-fit: cover; }
+.abt-candidate__titleRow,
+.abt-candidate__stats {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.abt-candidate__titleRow strong { font-size: 0.92rem; }
+.abt-candidate__titleRow span,
+.abt-candidate__meta,
+.abt-candidate__stats,
+.abt-benchCard span,
+.abt-slotCard span,
+.abt-slotCard em {
+  color: rgba(196, 212, 241, 0.72);
+}
+
+.abt-candidate__stats {
+  margin-top: 6px;
+  font-size: 0.65rem;
+}
+
+.abt-empty {
+  padding: 22px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(196, 212, 241, 0.68);
+  text-align: center;
+}
+
+.abt-ovalBoard {
+  border-radius: 28px;
+  padding: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+}
+
+.abt-ovalBoard__surface {
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px;
+  padding: 26px 20px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(68, 142, 62, 0.28), transparent 42%),
+    linear-gradient(180deg, rgba(33, 96, 39, 0.98), rgba(15, 54, 22, 1));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.11), inset 0 20px 40px rgba(255, 255, 255, 0.04);
+}
+
+.abt-lineGroup {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+  position: relative;
+  z-index: 1;
+}
+.abt-lineGroup:last-child { margin-bottom: 0; }
+
+.abt-lineLabel {
+  justify-self: center;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(242, 248, 255, 0.84);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 900;
+}
+
+.abt-lineRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.abt-slotCard,
+.abt-benchCard {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(10, 14, 22, 0.94), rgba(4, 8, 14, 0.98));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--abt-accent, #5ea8ff) 26%, transparent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.abt-slotCard {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 10px 8px 12px;
+  min-height: 140px;
+}
+
+.abt-slotCard.is-active,
+.abt-benchCard.is-active {
+  transform: translateY(-1px);
+  border-color: rgba(245, 196, 0, 0.34);
+  box-shadow: 0 0 0 1px rgba(245, 196, 0, 0.24), 0 10px 28px rgba(245, 196, 0, 0.12);
+}
+
+.abt-slotCard strong,
+.abt-benchCard strong { font-size: 0.95rem; }
+.abt-slotCard em,
+.abt-benchCard em {
+  font-style: normal;
+  color: #ffe18c;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.abt-benchList {
+  display: grid;
+  gap: 12px;
+}
+
+.abt-benchCard {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+}
+
+@media (max-width: 1280px) {
+  .abt-grid {
+    grid-template-columns: 300px 1fr;
+  }
+  .abt-panel--bench {
+    grid-column: 1 / -1;
+  }
+  .abt-benchList {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .abt-hero {
+    flex-direction: column;
+  }
+  .abt-grid {
+    grid-template-columns: 1fr;
+  }
+  .abt-benchList {
+    grid-template-columns: 1fr 1fr;
+  }
+}
