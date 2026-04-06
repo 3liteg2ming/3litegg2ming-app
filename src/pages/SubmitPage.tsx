@@ -586,43 +586,62 @@ export default function SubmitPage() {
 
         const teamId = String(profile.team_id || '');
 
-        // Find the coach's eligible fixture across all visible rounds (Round 1 & 2).
-        // Pick the earliest round where this coach is the home team and the fixture is not final.
+        // Find the coach's eligible fixture across all visible rounds.
+        // Pick the earliest round where this coach's team (home or away) has a non-final fixture
+        // that hasn't already been submitted by the other coach.
         const visibleRounds = getVisibleRounds(allFixtures.map((f) => f.round));
         const sortedVisible = Array.from(new Set(visibleRounds)).sort((a, b) => a - b);
 
         let teamFixtureInRound: typeof allFixtures[number] | undefined;
         let eligibleRound: number | null = null;
+        let alreadySubmittedMsg: string | null = null;
 
         for (const round of sortedVisible) {
+          // Check both home and away fixtures for the coach's team
           const candidate = allFixtures.find(
-            (f) => f.round === round && String(f.home_team_id || '') === teamId && !isFixtureFinal(f.status),
+            (f) =>
+              f.round === round &&
+              (String(f.home_team_id || '') === teamId || String(f.away_team_id || '') === teamId) &&
+              !isFixtureFinal(f.status),
           );
-          if (candidate) {
-            teamFixtureInRound = candidate;
-            eligibleRound = round;
-            break;
+          if (!candidate) continue;
+
+          // Check if another coach already submitted for this fixture
+          const { data: existingSubs } = await supabase
+            .from('submissions')
+            .select('id, team_id')
+            .eq('fixture_id', candidate.id)
+            .limit(1);
+
+          if (existingSubs && existingSubs.length > 0) {
+            // Another coach already submitted — determine who
+            const isCoachHome = String(candidate.home_team_id || '') === teamId;
+            const otherRole = isCoachHome ? 'away' : 'home';
+            alreadySubmittedMsg = `The ${otherRole} coach has already submitted the result for Round ${round}. No further submission is needed.`;
+            continue;
           }
+
+          teamFixtureInRound = candidate;
+          eligibleRound = round;
+          break;
         }
 
         if (!teamFixtureInRound || eligibleRound === null) {
-          // Check if they have any fixture as away team across visible rounds
-          const awayFixture = allFixtures.find(
-            (f) => sortedVisible.includes(f.round) && String(f.away_team_id || '') === teamId && !isFixtureFinal(f.status),
-          );
-          // Check if all their home fixtures are already final
-          const allHomeFinal = sortedVisible.every((round) => {
-            const homeFixture = allFixtures.find(
-              (f) => f.round === round && String(f.home_team_id || '') === teamId,
+          // Check if all their fixtures are already final
+          const allFixturesFinal = sortedVisible.every((round) => {
+            const teamFixture = allFixtures.find(
+              (f) =>
+                f.round === round &&
+                (String(f.home_team_id || '') === teamId || String(f.away_team_id || '') === teamId),
             );
-            return !homeFixture || isFixtureFinal(homeFixture.status);
+            return !teamFixture || isFixtureFinal(teamFixture.status);
           });
 
           setPayload(null);
-          if (awayFixture) {
-            setLoadError(`Your team is the away team in Round ${awayFixture.round}. Only the home team coach submits the match result.`);
-          } else if (allHomeFinal) {
-            setLoadError(`All your home fixtures in Round 1 and Round 2 are already finalised. Nothing to submit.`);
+          if (alreadySubmittedMsg) {
+            setLoadError(alreadySubmittedMsg);
+          } else if (allFixturesFinal) {
+            setLoadError(`All your fixtures in the current rounds are already finalised. Nothing to submit.`);
           } else {
             setLoadError(`No eligible fixture found for your team in the current rounds.`);
           }

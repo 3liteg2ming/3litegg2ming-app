@@ -21,9 +21,11 @@ import { deriveFixtureRound, normalizeFixtureStatus, type FixtureRow } from '../
 import { fetchMatchCentre } from '../lib/matchCentreRepo';
 import { fetchCurrentCoaches, type HomeCoach } from '../lib/homeRepo';
 import { FIXTURES_UNLOCK_LABEL, useFixtureVisibility } from '../lib/fixtureVisibility';
-import { useDeadlineCountdown } from '../hooks/useDeadlineCountdown';
+import { useDeadlineCountdown, DEADLINE_R5_R6_MS, DEADLINE_R7_R8_MS } from '../hooks/useDeadlineCountdown';
 import { isRoundVisible } from '../lib/visibleRounds';
 import { useMelvinOdds } from '../hooks/useMelvinOdds';
+import { useLadder } from '../hooks/useLadder';
+import { buildTeamRatings, generateFixtureOdds } from '../lib/autoOdds';
 import { useAuth } from '../state/auth/AuthProvider';
 import '../styles/Fixtures.css';
 
@@ -267,8 +269,9 @@ export default function AFL26FixturesPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const fixturesPubliclyVisible = useFixtureVisibility(user?.role);
-  const deadline = useDeadlineCountdown();
-  const { data: oddsMap } = useMelvinOdds();
+  const deadlineR56 = useDeadlineCountdown(DEADLINE_R5_R6_MS);
+  const deadlineR78 = useDeadlineCountdown(DEADLINE_R7_R8_MS);
+  const { data: adminOddsMap } = useMelvinOdds();
 
   let competitionKey = getStoredCompetitionKey();
   // Ensure AFL 26 is always the default on this page
@@ -318,6 +321,20 @@ export default function AFL26FixturesPage() {
     () => (Array.isArray(seasonFixturesQuery.data?.fixtures) ? seasonFixturesQuery.data?.fixtures || [] : []),
     [seasonFixturesQuery.data?.fixtures],
   );
+
+  // Auto-odds: merge admin-set odds with algorithm-generated odds from ladder data
+  const ladderQuery = useLadder(seasonSlug);
+  const oddsMap = useMemo(() => {
+    const admin = adminOddsMap || {};
+    const ladder = ladderQuery.data;
+    if (!ladder || !ladder.length) return admin;
+
+    const ratings = buildTeamRatings(ladder);
+    const autoOdds = generateFixtureOdds(allFixtures, ratings, admin);
+
+    // Admin odds take priority, auto-odds fill the gaps
+    return { ...autoOdds, ...admin };
+  }, [adminOddsMap, ladderQuery.data, allFixtures]);
 
   useEffect(() => {
     const scrollEl = document.querySelector('.eg-content-scroll') as HTMLElement | null;
@@ -524,38 +541,75 @@ export default function AFL26FixturesPage() {
         ) : null}
 
         {fixturesPubliclyVisible && (
-          <div className={`fxDeadlineNotice ${deadline.expired ? 'is-expired' : ''}`}>
-            <div className="fxDeadlineNotice__text">
-              Round 5 &amp; 6 submissions close Friday midnight
+          <>
+            {/* Round 5 & 6 deadline — Friday 11 April midnight */}
+            <div className={`fxDeadlineNotice ${deadlineR56.expired ? 'is-expired' : ''}`}>
+              <div className="fxDeadlineNotice__text">
+                Round 5 &amp; 6 submissions close Friday midnight
+              </div>
+              <div className="fxDeadlineNotice__countdown">
+                {deadlineR56.expired ? (
+                  <span className="fxDeadlineNotice__expired">Deadline passed</span>
+                ) : (
+                  <>
+                    <div className="fxDeadlineNotice__unit">
+                      <span className="fxDeadlineNotice__num">{deadlineR56.days}</span>
+                      <span className="fxDeadlineNotice__lbl">days</span>
+                    </div>
+                    <span className="fxDeadlineNotice__sep">:</span>
+                    <div className="fxDeadlineNotice__unit">
+                      <span className="fxDeadlineNotice__num">{String(deadlineR56.hours).padStart(2, '0')}</span>
+                      <span className="fxDeadlineNotice__lbl">hrs</span>
+                    </div>
+                    <span className="fxDeadlineNotice__sep">:</span>
+                    <div className="fxDeadlineNotice__unit">
+                      <span className="fxDeadlineNotice__num">{String(deadlineR56.minutes).padStart(2, '0')}</span>
+                      <span className="fxDeadlineNotice__lbl">min</span>
+                    </div>
+                    <span className="fxDeadlineNotice__sep">:</span>
+                    <div className="fxDeadlineNotice__unit">
+                      <span className="fxDeadlineNotice__num">{String(deadlineR56.seconds).padStart(2, '0')}</span>
+                      <span className="fxDeadlineNotice__lbl">sec</span>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-            <div className="fxDeadlineNotice__countdown">
-              {deadline.expired ? (
-                <span className="fxDeadlineNotice__expired">Deadline passed</span>
-              ) : (
-                <>
-                  <div className="fxDeadlineNotice__unit">
-                    <span className="fxDeadlineNotice__num">{deadline.days}</span>
-                    <span className="fxDeadlineNotice__lbl">days</span>
-                  </div>
-                  <span className="fxDeadlineNotice__sep">:</span>
-                  <div className="fxDeadlineNotice__unit">
-                    <span className="fxDeadlineNotice__num">{String(deadline.hours).padStart(2, '0')}</span>
-                    <span className="fxDeadlineNotice__lbl">hrs</span>
-                  </div>
-                  <span className="fxDeadlineNotice__sep">:</span>
-                  <div className="fxDeadlineNotice__unit">
-                    <span className="fxDeadlineNotice__num">{String(deadline.minutes).padStart(2, '0')}</span>
-                    <span className="fxDeadlineNotice__lbl">min</span>
-                  </div>
-                  <span className="fxDeadlineNotice__sep">:</span>
-                  <div className="fxDeadlineNotice__unit">
-                    <span className="fxDeadlineNotice__num">{String(deadline.seconds).padStart(2, '0')}</span>
-                    <span className="fxDeadlineNotice__lbl">sec</span>
-                  </div>
-                </>
-              )}
+
+            {/* Round 6 & 7 deadline — Tuesday 14 April midnight */}
+            <div className={`fxDeadlineNotice ${deadlineR78.expired ? 'is-expired' : ''}`} style={{ marginTop: 6 }}>
+              <div className="fxDeadlineNotice__text">
+                Round 7 &amp; 8 submissions close Tuesday 14 April midnight
+              </div>
+              <div className="fxDeadlineNotice__countdown">
+                {deadlineR78.expired ? (
+                  <span className="fxDeadlineNotice__expired">Deadline passed</span>
+                ) : (
+                  <>
+                    <div className="fxDeadlineNotice__unit">
+                      <span className="fxDeadlineNotice__num">{deadlineR78.days}</span>
+                      <span className="fxDeadlineNotice__lbl">days</span>
+                    </div>
+                    <span className="fxDeadlineNotice__sep">:</span>
+                    <div className="fxDeadlineNotice__unit">
+                      <span className="fxDeadlineNotice__num">{String(deadlineR78.hours).padStart(2, '0')}</span>
+                      <span className="fxDeadlineNotice__lbl">hrs</span>
+                    </div>
+                    <span className="fxDeadlineNotice__sep">:</span>
+                    <div className="fxDeadlineNotice__unit">
+                      <span className="fxDeadlineNotice__num">{String(deadlineR78.minutes).padStart(2, '0')}</span>
+                      <span className="fxDeadlineNotice__lbl">min</span>
+                    </div>
+                    <span className="fxDeadlineNotice__sep">:</span>
+                    <div className="fxDeadlineNotice__unit">
+                      <span className="fxDeadlineNotice__num">{String(deadlineR78.seconds).padStart(2, '0')}</span>
+                      <span className="fxDeadlineNotice__lbl">sec</span>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
+          </>
         )}
 
         <div className="fxAflPanel">

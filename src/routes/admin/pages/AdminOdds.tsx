@@ -11,6 +11,8 @@ import { resolveTeamKey } from '@/lib/entityResolvers';
 import { TEAM_ASSETS, type TeamKey } from '@/lib/teamAssets';
 import { invalidateMelvinOddsCache } from '@/lib/melvinOddsRepo';
 import { invalidatePremOddsCache } from '@/lib/premOddsRepo';
+import { buildTeamRatings, generateFixtureOdds, generatePremOdds } from '@/lib/autoOdds';
+import { fetchLadderRows } from '@/lib/ladderRepo';
 import { requireSupabaseClient } from '@/lib/supabaseClient';
 import { useAdminLayoutContext } from '../AdminLayout';
 import { AdminCard, EmptyState } from './AdminUi';
@@ -82,8 +84,17 @@ export default function AdminOdds() {
         const slug = 'afl26';
         const seasonId = await resolveSeasonId(supabase, slug);
         if (!seasonId || !alive) return;
-        const { fixtures: rows } = await fetchSeasonFixturesBySeasonId(seasonId, { limit: 200, offset: 0 });
+
+        // Fetch fixtures and ladder in parallel
+        const [{ fixtures: rows }, ladderRows] = await Promise.all([
+          fetchSeasonFixturesBySeasonId(seasonId, { limit: 200, offset: 0 }),
+          fetchLadderRows(slug).catch(() => []),
+        ]);
         if (!alive) return;
+
+        // Build auto-odds from ladder data
+        const ratings = buildTeamRatings(ladderRows);
+        const autoOdds = generateFixtureOdds(rows, ratings, {});
 
         const mapped = rows
           .filter((f) => f.home_team_id && f.away_team_id && f.status === 'SCHEDULED')
@@ -91,13 +102,14 @@ export default function AdminOdds() {
           .map((f) => {
             const hk = resolveTeamKey({ slug: f.home_team_slug, name: f.home_team_name });
             const ak = resolveTeamKey({ slug: f.away_team_slug, name: f.away_team_name });
+            const auto = autoOdds[f.id];
             return {
               id: f.id,
               round: f.round || 0,
               homeName: TEAM_ASSETS[hk as keyof typeof TEAM_ASSETS]?.name || f.home_team_name || hk,
               awayName: TEAM_ASSETS[ak as keyof typeof TEAM_ASSETS]?.name || f.away_team_name || ak,
-              homeOdds: 1.85,
-              awayOdds: 1.95,
+              homeOdds: auto?.home ?? 1.85,
+              awayOdds: auto?.away ?? 1.95,
             };
           });
         setFixtures(mapped);
@@ -190,15 +202,34 @@ export default function AdminOdds() {
 
   const [premTeams, setPremTeams] = useState<PremTeamRow[]>([]);
 
-  // Initialise prem teams from ALL_TEAMS with default odds
+  // Initialise prem teams: admin-saved → auto-generated → fallback 10.0
   useEffect(() => {
-    setPremTeams(
-      ALL_TEAMS.map((t) => ({
-        key: t.key,
-        name: t.name,
-        odds: savedPremOdds[t.key] || 10.0,
-      })),
-    );
+    let alive = true;
+    (async () => {
+      try {
+        const ladderRows = await fetchLadderRows('afl26').catch(() => []);
+        if (!alive) return;
+        const ratings = buildTeamRatings(ladderRows);
+        const autoPrem = generatePremOdds(ladderRows, ratings, savedPremOdds);
+
+        setPremTeams(
+          ALL_TEAMS.map((t) => ({
+            key: t.key,
+            name: t.name,
+            odds: savedPremOdds[t.key] || autoPrem[t.key] || 10.0,
+          })),
+        );
+      } catch {
+        setPremTeams(
+          ALL_TEAMS.map((t) => ({
+            key: t.key,
+            name: t.name,
+            odds: savedPremOdds[t.key] || 10.0,
+          })),
+        );
+      }
+    })();
+    return () => { alive = false; };
   }, [savedPremOdds]);
 
   const updatePremOdds = (key: TeamKey, value: string) => {
@@ -244,7 +275,7 @@ export default function AdminOdds() {
       {/* Fixture Odds */}
       <AdminCard
         title="Fixture Odds"
-        subtitle="Set decimal odds for each fixture. Changes appear on fixture cards immediately after saving."
+        subtitle="Odds auto-generate from ladder data. Edit any value to override, then save. Changes appear on fixture cards immediately."
         actions={
           <button type="button" onClick={() => saveFixtureOdds.mutate()} disabled={saveFixtureOdds.isPending}>
             {saveFixtureOdds.isPending ? 'Saving…' : 'Save Fixture Odds'}
@@ -302,7 +333,7 @@ export default function AdminOdds() {
       {/* Premiership Odds */}
       <AdminCard
         title="Premiership Odds"
-        subtitle="Set premiership odds per team. Shown on the ladder next to each team."
+        subtitle="Auto-generated from ladder performance. Edit to override, then save. Shown on the ladder next to each team."
         actions={
           <button type="button" onClick={() => savePremOdds.mutate()} disabled={savePremOdds.isPending}>
             {savePremOdds.isPending ? 'Saving…' : 'Save Prem Odds'}

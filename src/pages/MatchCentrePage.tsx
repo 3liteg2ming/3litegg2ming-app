@@ -72,17 +72,16 @@ export default function MatchCentrePage() {
   const loading = matchCentreQuery.isLoading && !matchCentreQuery.data;
 
   // Determine if the signed-in coach is eligible to submit results for this fixture.
-  // Eligible = signed in, has a team, fixture is SCHEDULED (not FINAL), and coach's team is the home team.
+  // Eligible = signed in, has a team, fixture is SCHEDULED (not FINAL), and coach's team is home OR away.
   const showSubmitButton = (() => {
     if (!fixturesVisible || !user || !model) return false;
     const status = String(model.statusLabel || '').toUpperCase();
     if (status === 'FINAL' || status === 'COMPLETED' || status === 'COMPLETE') return false;
-    // Coach must have a team assigned
     const coachTeamId = user.teamId;
     if (!coachTeamId) return false;
-    // Only the home team coach can submit
     const homeId = String(model.home?.id || '');
-    return homeId === coachTeamId;
+    const awayId = String(model.away?.id || '');
+    return homeId === coachTeamId || awayId === coachTeamId;
   })();
 
   useEffect(() => {

@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react';
 
 /**
- * Hard deadline: Friday 2026-04-09 at 23:59:59 Melbourne time (AEST, UTC+10).
- * After this timestamp the countdown shows "Deadline passed".
+ * Round-specific submission deadlines (Melbourne time).
+ *
+ * Rounds 5 & 6 — Friday 11 April 2026, 23:59:59 AEST
+ * Rounds 7 & 8 — Tuesday 14 April 2026, 23:59:59 AEST
  */
-const DEADLINE_ISO = '2026-04-09T23:59:59+10:00';
-const DEADLINE_MS = new Date(DEADLINE_ISO).getTime();
+export const DEADLINE_R5_R6_ISO = '2026-04-11T23:59:59+10:00';
+export const DEADLINE_R7_R8_ISO = '2026-04-14T23:59:59+10:00';
+
+export const DEADLINE_R5_R6_MS = new Date(DEADLINE_R5_R6_ISO).getTime();
+export const DEADLINE_R7_R8_MS = new Date(DEADLINE_R7_R8_ISO).getTime();
 
 export type CountdownResult = {
   days: number;
@@ -16,8 +21,8 @@ export type CountdownResult = {
   label: string;
 };
 
-function computeCountdown(now: number): CountdownResult {
-  const diff = DEADLINE_MS - now;
+function computeCountdown(now: number, deadlineMs: number): CountdownResult {
+  const diff = deadlineMs - now;
   if (diff <= 0) {
     return { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true, label: 'Deadline passed' };
   }
@@ -38,23 +43,26 @@ function computeCountdown(now: number): CountdownResult {
 }
 
 /**
- * Live countdown to the round submission deadline.
+ * Live countdown to a round submission deadline.
  * Ticks every second and returns formatted time remaining.
+ *
+ * @param deadlineMs – epoch ms of the deadline (defaults to the R5/R6 deadline for backwards compat)
  */
-export function useDeadlineCountdown(): CountdownResult {
-  const [result, setResult] = useState(() => computeCountdown(Date.now()));
+export function useDeadlineCountdown(deadlineMs: number = DEADLINE_R5_R6_MS): CountdownResult {
+  const [result, setResult] = useState(() => computeCountdown(Date.now(), deadlineMs));
 
   useEffect(() => {
-    if (result.expired) return;
+    // Re-compute immediately if the deadline changed
+    setResult(computeCountdown(Date.now(), deadlineMs));
 
     const id = window.setInterval(() => {
-      const next = computeCountdown(Date.now());
+      const next = computeCountdown(Date.now(), deadlineMs);
       setResult(next);
       if (next.expired) window.clearInterval(id);
     }, 1_000);
 
     return () => window.clearInterval(id);
-  }, [result.expired]);
+  }, [deadlineMs]);
 
   return result;
 }

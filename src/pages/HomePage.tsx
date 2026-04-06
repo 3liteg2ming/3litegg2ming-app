@@ -4,6 +4,7 @@ import {
   ArrowRight,
   ChevronRight,
   LayoutDashboard,
+  Trophy,
   User,
   ShieldCheck,
 } from 'lucide-react';
@@ -66,16 +67,23 @@ function useHomepageStats() {
 
   useEffect(() => {
     let mounted = true;
-    (async () => {
+
+    const load = async (forceFresh: boolean, showCached = false) => {
       try {
-        const { fetchLeaderCategories, peekLeaderCategoriesCache } = await import(
+        const { clearStatLeadersCache, fetchLeaderCategories, peekLeaderCategoriesCache } = await import(
           '../lib/stats-leaders-cache'
         );
-        const cp = peekLeaderCategoriesCache('players');
-        const ct = peekLeaderCategoriesCache('teams');
-        if (mounted && cp) setPlayerData(cp);
-        if (mounted && ct) setTeamData(ct);
-        if (mounted && (cp || ct)) setIsLoading(false);
+
+        if (showCached) {
+          const cp = peekLeaderCategoriesCache('players');
+          const ct = peekLeaderCategoriesCache('teams');
+          if (mounted && cp) setPlayerData(cp);
+          if (mounted && ct) setTeamData(ct);
+          if (mounted && (cp || ct)) setIsLoading(false);
+        }
+
+        if (forceFresh) clearStatLeadersCache();
+
         const [fp, ft] = await Promise.all([
           fetchLeaderCategories('players'),
           fetchLeaderCategories('teams'),
@@ -92,9 +100,22 @@ function useHomepageStats() {
       } finally {
         if (mounted) setIsLoading(false);
       }
-    })();
+    };
+
+    void load(true, true);
+
+    const refresh = () => {
+      if (document.visibilityState === 'hidden') return;
+      void load(true);
+    };
+
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+
     return () => {
       mounted = false;
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
     };
   }, []);
 
@@ -674,22 +695,28 @@ function LadderSnapshot() {
 
 function CoachHubBanner() {
   const { user } = useAuth();
-  if (!user) return null;
 
-  const name = user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'Coach';
+  const name = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Coach';
+  const coachClubLabel = user?.teamName ? TEAM_SHORT_NAMES[user.teamName] || user.teamName : `${name}'s season`;
 
   return (
     <section className="home-module home-module--coachhub">
-      <Link to="/members" className="home-coachhub-card">
-        <div className="home-coachhub-card__icon">
-          <LayoutDashboard size={18} />
+      <div className="home-quickLinks">
+        {user ? (
+          <Link to="/members" className="home-quickLink home-quickLink--coach">
+            <LayoutDashboard size={15} className="home-quickLink__icon" />
+            <span className="home-quickLink__label">Coach Hub</span>
+            <span className="home-quickLink__meta">{coachClubLabel}</span>
+            <ArrowRight size={13} className="home-quickLink__arrow" />
+          </Link>
+        ) : null}
+
+        <div className="home-quickLink home-quickLink--bestTeam home-quickLink--disabled">
+          <Trophy size={15} className="home-quickLink__icon" />
+          <span className="home-quickLink__label">Best 23</span>
+          <span className="home-quickLink__tag">Coming Soon</span>
         </div>
-        <div className="home-coachhub-card__text">
-          <h3 className="home-coachhub-card__title">{name}'s Coach Hub</h3>
-          <p className="home-coachhub-card__sub">View your stats, form guide, badges and season targets</p>
-        </div>
-        <ArrowRight size={16} className="home-coachhub-card__arrow" />
-      </Link>
+      </div>
     </section>
   );
 }

@@ -7,6 +7,7 @@ import { getDataSeasonSlugForCompetition, getStoredCompetitionKey } from '../lib
 import { resolveTeamKey } from '../lib/entityResolvers';
 import { useLadder } from '../hooks/useLadder';
 import { usePremOdds } from '../hooks/usePremOdds';
+import { buildTeamRatings, generatePremOdds } from '../lib/autoOdds';
 import { useCoaches, type Coach } from '../hooks/useCoaches';
 
 import '../styles/ladder.css';
@@ -81,17 +82,24 @@ function toTeamKeyFromSlug(slug: string, name: string): TeamKey {
   return (key in TEAM_ASSETS ? (key as TeamKey) : 'adelaide') as TeamKey;
 }
 
-function enrichWinChance(rows: LadderEntry[], adminPremOdds: Record<string, number>): LadderEntry[] {
+function enrichWinChance(
+  rows: LadderEntry[],
+  adminPremOdds: Record<string, number>,
+  autoPremOdds: Record<string, number>,
+): LadderEntry[] {
   return rows.map((r) => {
     const seed = hash01(r.id);
     const base = 45 + seed * 40; // 45..85
     const rankBoost = (rows.length - r.pos) * 0.6;
     const winChance = clamp(base + rankBoost, 5, 95);
-    // Use admin-set prem odds if available, otherwise generate from position
+    // Priority: admin-set → auto-generated → fallback formula
     const adminOdd = adminPremOdds[r.teamKey];
+    const autoOdd = autoPremOdds[r.teamKey];
     let premOdds: string;
     if (adminOdd && adminOdd > 0) {
       premOdds = adminOdd.toFixed(2);
+    } else if (autoOdd && autoOdd > 0) {
+      premOdds = autoOdd.toFixed(2);
     } else {
       const premBase = Math.max(1.5, 2 + (r.pos - 1) * 2.8 + seed * 3);
       premOdds = premBase > 80 ? '81.00' : premBase.toFixed(2);
@@ -234,7 +242,11 @@ export default function LadderPage() {
         };
       });
 
-    return enrichWinChance(mapped, adminPremOdds || {});
+    // Generate auto premiership odds from ladder data
+    const ratings = buildTeamRatings(ladderRows || []);
+    const autoPremOdds = generatePremOdds(ladderRows || [], ratings, adminPremOdds || {});
+
+    return enrichWinChance(mapped, adminPremOdds || {}, autoPremOdds);
   }, [ladderRows, adminPremOdds, coaches]);
 
   return (

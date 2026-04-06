@@ -1231,6 +1231,366 @@
 .home-leader-sk__line   { height: 10px; width: 100%; }
 
 /* ═══════════════════════════════════════════════════════════
+   BEST TEAM — auto-picked honour side
+═══════════════════════════════════════════════════════════ */
+.home-module--honor {
+  background:
+    radial-gradient(520px 220px at 104% -12%, rgba(245,196,0,0.08), transparent 56%),
+    radial-gradient(420px 180px at -8% 102%, rgba(63,126,240,0.10), transparent 58%),
+    rgba(7, 11, 20, 0.95);
+}
+
+.home-honor__intro {
+  display: grid;
+  gap: 5px;
+}
+
+.home-honor__eyebrow {
+  font-size: 0.52rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(245,196,0,0.70);
+}
+
+.home-honor__sub {
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: rgba(198,216,248,0.68);
+}
+
+.home-honor__watch {
+  display: grid;
+  gap: 4px;
+  padding: 12px 13px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+}
+
+.home-honor__watch.is-hit {
+  border-color: rgba(245,196,0,0.24);
+  background:
+    radial-gradient(ellipse at 0% 50%, rgba(245,196,0,0.08), transparent 50%),
+    rgba(255,255,255,0.04);
+}
+
+.home-honor__watchKicker {
+  font-size: 0.5rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(245,196,0,0.76);
+}
+
+.home-honor__watchText {
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: rgba(232,241,255,0.88);
+  font-weight: 700;
+}
+
+.home-honor__specialists {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.home-honor-specialist {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(160deg, rgba(15,21,34,0.98), rgba(7,10,18,1));
+  color: #eff6ff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.home-honor-specialist:hover:not(:disabled) {
+  border-color: rgba(245,196,0,0.24);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.24);
+}
+
+.home-honor-specialist:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.home-honor-specialist.is-static,
+.home-honor-specialist:disabled {
+  cursor: default;
+  opacity: 0.76;
+}
+
+.home-honor-specialist__top {
+  display: grid;
+  gap: 3px;
+}
+
+.home-honor-specialist__label {
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: rgba(255,226,134,0.92);
+}
+
+.home-honor-specialist__subtitle {
+  font-size: 0.62rem;
+  color: rgba(185,205,242,0.6);
+  line-height: 1.35;
+}
+
+.home-honor-specialist__body {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.home-honor-specialist__avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(180,205,255,0.55);
+}
+
+.home-honor-specialist__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+
+.home-honor-specialist__meta {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.home-honor-specialist__meta strong {
+  font-size: 0.76rem;
+  font-weight: 900;
+  color: rgba(239,246,255,0.95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-honor-specialist__meta span {
+  font-size: 0.59rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(163,194,247,0.56);
+}
+
+.home-honor-specialist__value {
+  display: grid;
+  gap: 3px;
+  justify-items: end;
+}
+
+.home-honor-specialist__value strong {
+  font-size: 1.2rem;
+  font-weight: 1000;
+  line-height: 1;
+  color: #f5c400;
+}
+
+.home-honor-specialist__value span,
+.home-honor-specialist__empty {
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(185,205,242,0.54);
+}
+
+.home-honor__lines {
+  display: grid;
+  gap: 12px;
+}
+
+.home-honor-line {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.03);
+}
+
+.home-honor-line__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.home-honor-line__kicker {
+  font-size: 0.48rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(163,194,247,0.48);
+}
+
+.home-honor-line__title {
+  margin-top: 3px;
+  font-size: 0.88rem;
+  font-weight: 900;
+  color: rgba(237,245,255,0.96);
+}
+
+.home-honor-line__count {
+  min-width: 24px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(245,196,0,0.12);
+  border: 1px solid rgba(245,196,0,0.28);
+  color: rgba(255,224,130,0.92);
+  font-size: 0.64rem;
+  font-weight: 900;
+}
+
+.home-honor-line__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 9px;
+}
+
+.home-honor-card {
+  display: grid;
+  gap: 8px;
+  padding: 11px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(160deg, rgba(12,17,28,0.98), rgba(6,9,16,1));
+  color: #eef5ff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.home-honor-card:hover {
+  border-color: rgba(255,255,255,0.18);
+}
+
+.home-honor-card:active {
+  transform: scale(0.985);
+}
+
+.home-honor-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.home-honor-card__avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(180,205,255,0.55);
+}
+
+.home-honor-card__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+
+.home-honor-card__club {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  overflow: hidden;
+  color: rgba(185,205,242,0.72);
+  font-size: 0.52rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.home-honor-card__club img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.home-honor-card__name {
+  font-size: 0.77rem;
+  font-weight: 900;
+  color: rgba(240,246,255,0.96);
+  line-height: 1.2;
+}
+
+.home-honor-card__team {
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(163,194,247,0.52);
+}
+
+.home-honor-card__stat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.home-honor-card__stat strong {
+  font-size: 1rem;
+  font-weight: 1000;
+  color: #f5c400;
+}
+
+.home-honor-card__stat span {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,226,134,0.74);
+}
+
+.home-honor-skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.home-honor-skeleton {
+  height: 108px;
+  border-radius: 14px;
+}
+
+.home-honor-skeleton--hero {
+  height: 70px;
+}
+
+/* ═══════════════════════════════════════════════════════════
    LADDER SNAPSHOT
 ═══════════════════════════════════════════════════════════ */
 .home-ladder-card {
@@ -1367,6 +1727,13 @@
   .home-leaders-rail      { grid-auto-columns: minmax(206px, 280px); }
 }
 
+@media (max-width: 680px) {
+  .home-honor__specialists,
+  .home-honor-skeletonGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════
    LAUNCH PROMO CARD
 ═══════════════════════════════════════════════════════════ */
@@ -1380,74 +1747,353 @@
   box-shadow: none;
 }
 
-.home-coachhub-card {
-  display: flex;
-  align-items: center;
+.home-actionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  padding: 14px 16px;
+  align-items: stretch;
+}
+
+.home-actionGrid.is-single {
+  grid-template-columns: 1fr;
+}
+
+.home-actionCard {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 10px;
+  min-height: 110px;
+  padding: 16px;
   border-radius: var(--home-radius);
-  border: 1px solid rgba(245, 196, 0, 0.2);
-  background:
-    radial-gradient(600px 160px at 0% 50%, rgba(245, 196, 0, 0.07) 0%, transparent 60%),
-    rgba(9, 13, 21, 0.93);
   text-decoration: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  cursor: pointer;
+  transition: transform 0.18s cubic-bezier(0.23, 1, 0.32, 1), border-color 0.18s ease, box-shadow 0.2s ease;
+  overflow: hidden;
 }
 
-.home-coachhub-card:hover {
-  border-color: rgba(245, 196, 0, 0.35);
-  box-shadow: 0 4px 20px rgba(245, 196, 0, 0.08);
+.home-actionCard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.9;
 }
 
-.home-coachhub-card:active {
+.home-actionCard:hover {
+  transform: translateY(-2px);
+}
+
+.home-actionCard:active {
   transform: scale(0.99);
 }
 
-.home-coachhub-card__icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
-  background: rgba(245, 196, 0, 0.12);
-  border: 1px solid rgba(245, 196, 0, 0.25);
+.home-actionCard--coach {
+  border: 1px solid rgba(245, 196, 0, 0.22);
+  background:
+    radial-gradient(400px 140px at -10% 50%, rgba(245, 196, 0, 0.14), transparent 65%),
+    linear-gradient(180deg, rgba(12, 17, 27, 0.98), rgba(7, 11, 18, 0.99));
+  box-shadow:
+    0 16px 36px rgba(245, 196, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.home-actionCard--coach:hover {
+  border-color: rgba(245, 196, 0, 0.35);
+  transform: translateY(-4px);
+  box-shadow:
+    0 20px 44px rgba(245, 196, 0, 0.12),
+    0 8px 16px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.home-actionCard--bestTeam {
+  border: 1px solid rgba(63, 126, 240, 0.24);
+  background:
+    radial-gradient(380px 150px at 110% 0%, rgba(63, 126, 240, 0.18), transparent 60%),
+    radial-gradient(260px 110px at -5% 100%, rgba(245, 196, 0, 0.1), transparent 65%),
+    linear-gradient(180deg, rgba(10, 16, 29, 0.98), rgba(5, 10, 19, 0.99));
+  box-shadow:
+    0 16px 36px rgba(63, 126, 240, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.home-actionCard--bestTeam:hover {
+  border-color: rgba(92, 152, 255, 0.36);
+  transform: translateY(-4px);
+  box-shadow:
+    0 20px 44px rgba(63, 126, 240, 0.14),
+    0 8px 16px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.home-actionCard__icon {
+  position: relative;
+  z-index: 1;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+}
+
+.home-actionCard__head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.home-actionCard--coach .home-actionCard__icon {
   color: #f5c400;
-  flex-shrink: 0;
+  border: 1.5px solid rgba(245, 196, 0, 0.28);
+  background: linear-gradient(135deg, rgba(245, 196, 0, 0.15), rgba(255, 220, 110, 0.08));
+  box-shadow: 0 4px 12px rgba(245, 196, 0, 0.15);
 }
 
-.home-coachhub-card__text {
-  flex: 1;
+.home-actionCard--coach:hover .home-actionCard__icon {
+  border-color: rgba(245, 196, 0, 0.4);
+  background: linear-gradient(135deg, rgba(245, 196, 0, 0.2), rgba(255, 220, 110, 0.12));
+  box-shadow: 0 6px 16px rgba(245, 196, 0, 0.2);
+  transform: scale(1.08);
+}
+
+.home-actionCard--bestTeam .home-actionCard__icon {
+  color: #9dc3ff;
+  border: 1.5px solid rgba(63, 126, 240, 0.28);
+  background: linear-gradient(135deg, rgba(63, 126, 240, 0.16), rgba(92, 152, 255, 0.08));
+  box-shadow: 0 4px 12px rgba(63, 126, 240, 0.15);
+}
+
+.home-actionCard--bestTeam:hover .home-actionCard__icon {
+  border-color: rgba(63, 126, 240, 0.4);
+  background: linear-gradient(135deg, rgba(63, 126, 240, 0.22), rgba(92, 152, 255, 0.12));
+  box-shadow: 0 6px 16px rgba(63, 126, 240, 0.2);
+  transform: scale(1.08);
+}
+
+.home-actionCard__text {
+  position: relative;
+  z-index: 1;
   min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 3px;
 }
 
-.home-coachhub-card__title {
+.home-actionCard__title {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 1.05rem;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: -0.01em;
+  color: rgba(245, 249, 255, 0.98);
+  text-wrap: balance;
+}
+
+.home-actionCard__sub {
+  margin: 0;
+  max-width: 17ch;
+  font-size: 0.62rem;
+  line-height: 1.28;
+  color: rgba(212, 225, 246, 0.62);
+}
+
+.home-actionCard__footer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.home-actionCard__pill {
+  width: fit-content;
+  border-radius: 999px;
+  font-size: 0.51rem;
   font-weight: 900;
-  color: rgba(255, 230, 159, 0.95);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(228, 238, 255, 0.8);
+  transition: all 0.15s ease;
 }
 
-.home-coachhub-card__sub {
-  margin: 2px 0 0;
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: rgba(215, 225, 244, 0.55);
-  line-height: 1.3;
+.home-actionCard__pill--accent {
+  border-color: rgba(255, 255, 255, 0.18);
+  color: rgba(244, 248, 255, 0.96);
 }
 
-.home-coachhub-card__arrow {
-  color: rgba(245, 196, 0, 0.6);
+.home-actionCard--coach .home-actionCard__pill--accent {
+  border-color: rgba(245, 196, 0, 0.28);
+  background: linear-gradient(135deg, rgba(245, 196, 0, 0.15), rgba(255, 220, 110, 0.08));
+  color: rgba(255, 230, 140, 0.96);
+}
+
+.home-actionCard--bestTeam .home-actionCard__pill--accent {
+  border-color: rgba(63, 126, 240, 0.28);
+  background: linear-gradient(135deg, rgba(63, 126, 240, 0.15), rgba(92, 152, 255, 0.08));
+  color: rgba(200, 220, 255, 0.96);
+}
+
+.home-actionCard__pill--watch {
+  border-color: rgba(245, 196, 0, 0.32);
+  background: linear-gradient(135deg, rgba(245, 196, 0, 0.16), rgba(255, 220, 110, 0.08));
+  color: rgba(255, 235, 150, 0.94);
+}
+
+.home-actionCard__arrow {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.52);
   flex-shrink: 0;
-  transition: transform 0.15s ease;
+  margin-top: 2px;
+  transition: transform 0.18s cubic-bezier(0.23, 1, 0.32, 1), color 0.18s ease;
 }
 
-.home-coachhub-card:hover .home-coachhub-card__arrow {
-  transform: translateX(2px);
-  color: rgba(245, 196, 0, 0.9);
+.home-actionCard:hover .home-actionCard__arrow {
+  transform: translateX(4px);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+@media (max-width: 420px) {
+  .home-actionCard {
+    min-height: 105px;
+    padding: 14px;
+    gap: 8px;
+  }
+
+  .home-actionCard__icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .home-actionCard__title {
+    font-size: 0.96rem;
+  }
+
+  .home-actionCard__sub {
+    max-width: 15ch;
+    font-size: 0.59rem;
+  }
+
+  .home-actionCard__footer {
+    gap: 5px;
+  }
+
+  .home-actionCard__pill {
+    font-size: 0.48rem;
+    padding: 4px 8px;
+  }
+}
+
+/* ── Quick-link row buttons (Coach Hub / Best 23) ── */
+.home-quickLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.home-quickLink {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.home-quickLink:hover {
+  transform: translateY(-1px);
+}
+
+.home-quickLink:active {
+  transform: scale(0.99);
+}
+
+.home-quickLink--coach {
+  border: 1px solid rgba(245, 196, 0, 0.2);
+  background:
+    linear-gradient(90deg, rgba(245, 196, 0, 0.08), transparent 60%),
+    rgba(12, 15, 24, 0.95);
+}
+
+.home-quickLink--coach:hover {
+  border-color: rgba(245, 196, 0, 0.35);
+  box-shadow: 0 4px 14px rgba(245, 196, 0, 0.1);
+}
+
+.home-quickLink--bestTeam {
+  border: 1px solid rgba(63, 126, 240, 0.18);
+  background:
+    linear-gradient(90deg, rgba(63, 126, 240, 0.08), transparent 60%),
+    rgba(10, 14, 24, 0.95);
+}
+
+.home-quickLink--disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.home-quickLink__icon {
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.home-quickLink--coach .home-quickLink__icon {
+  color: #f5c400;
+}
+
+.home-quickLink--bestTeam .home-quickLink__icon {
+  color: #9dc3ff;
+}
+
+.home-quickLink__label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: rgba(245, 249, 255, 0.95);
+  letter-spacing: -0.01em;
+}
+
+.home-quickLink__meta {
+  margin-left: auto;
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(245, 196, 0, 0.7);
+}
+
+.home-quickLink__tag {
+  margin-left: auto;
+  font-size: 0.55rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(212, 225, 246, 0.55);
+}
+
+.home-quickLink__arrow {
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.35);
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.home-quickLink:hover .home-quickLink__arrow {
+  transform: translateX(3px);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .home-module--promo {

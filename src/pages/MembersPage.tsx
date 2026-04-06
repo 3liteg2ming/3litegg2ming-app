@@ -8,6 +8,7 @@ import FormGuideStrip from '../components/FormGuideStrip';
 import SmartImg from '../components/SmartImg';
 import { afl26LocalRounds } from '../data/afl26LocalRounds';
 import { getAfl26RoundsFromSupabase, type AflMatch, type AflRound } from '../data/afl26Supabase';
+import { getTeamOfTournamentClubSelections, useTeamOfTournament } from '../hooks/useTeamOfTournament';
 import { fetchCoachBadges, groupCoachBadgesByCategory, type CoachBadgeModel } from '../lib/badges';
 import { getStoredCompetitionKey, getUiCompetition, getDataSeasonSlugForCompetition } from '../lib/competitionRegistry';
 import { useLadder } from '../hooks/useLadder';
@@ -562,6 +563,7 @@ export default function MembersPage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [badgeFilter, setBadgeFilter] = useState<string>('All');
   const profileRequestIdRef = useRef(0);
+  const { data: honorTeam, isLoading: honorTeamLoading } = useTeamOfTournament();
 
   const team = useMemo(() => {
     if (cleanProfileText(profileRow?.team_name)) {
@@ -851,6 +853,11 @@ export default function MembersPage() {
     return badgeGroups.filter((g: any) => g.category === badgeFilter);
   }, [badgeGroups, badgeFilter]);
 
+  useEffect(() => {
+    if (badgeFilter === 'All') return;
+    if (!badgeCategories.includes(badgeFilter)) setBadgeFilter('All');
+  }, [badgeCategories, badgeFilter]);
+
   // Fetch ladder for Form Guide strip
   const seasonSlug = getDataSeasonSlugForCompetition(getStoredCompetitionKey());
   const { data: ladderRows } = useLadder(seasonSlug);
@@ -939,6 +946,13 @@ export default function MembersPage() {
   const completedTargets = seasonTargets.filter((t) => t.done).length;
   const roundsPlayed = record.played ?? 0;
   const progressPct = Math.min((roundsPlayed / TOTAL_ROUNDS) * 100, 100);
+  const coachClubName = cleanProfileText(profileRow?.team_name) || cleanProfileText(user?.teamName);
+  const honorRound = honorTeam?.selectionRound || honorTeam?.completedRounds || 0;
+  const honorTeamSelections = useMemo(
+    () => getTeamOfTournamentClubSelections(honorTeam, { teamKey: user?.teamKey, teamName: coachClubName }),
+    [honorTeam, user?.teamKey, coachClubName],
+  );
+  const showHonorTeamSection = Boolean(honorTeamLoading || (honorTeam && honorRound >= 4));
 
   async function handleSavePsn() {
     if (!user?.id) return;
@@ -1129,10 +1143,20 @@ export default function MembersPage() {
           </div>
         </section>
 
+        <section className="member-panel member-panel--tight">
+          <div className="member-panelTitle">
+            <Trophy size={16} style={{ opacity: 0.75 }} /> Best 23 Watch
+          </div>
+          <div className="chHonor__empty">Coming Soon — the Best 23 team selection is still being finalised.</div>
+        </section>
+
         {/* ── Badges ─────────────────────────────────── */}
         <section className="member-panel member-panel--tight">
           <div className="member-panelTitle">
             <Shield size={16} style={{ opacity: 0.75 }} /> Badges
+            {!loadingBadges && badges.length > 0 ? (
+              <span className="chBadges__countChip">{unlockedCount}/{badges.length} unlocked</span>
+            ) : null}
           </div>
           {!loadingBadges && badges.length > 0 && (
             <div className="chBadgeFilters">
@@ -1148,20 +1172,22 @@ export default function MembersPage() {
               ))}
             </div>
           )}
-          <div className="profileBadgeSummary">
-            <span>{unlockedCount}/{badges.length || 0} unlocked</span>
-            <span>Tap a badge for details</span>
-          </div>
           {loadingBadges ? (
             <div className="badgeGrid__loading">Loading badges…</div>
           ) : badges.length === 0 ? (
             <div className="badgeGrid__empty coachEmptyBadges">
               <div className="coachEmptyBadges__icon">🏅</div>
               <div className="coachEmptyBadges__title">No badges yet</div>
-              <div className="coachEmptyBadges__text">Badges unlock as you progress through the season.</div>
+              <div className="coachEmptyBadges__text">We’ll light these up as you progress through the season.</div>
             </div>
           ) : (
-            <BadgeGrid groups={filteredBadgeGroups} onSelect={setSelectedBadge} />
+            <>
+              <div className="profileBadgeSummary">
+                <span>Tap a badge for details</span>
+                <span>{badgeFilter === 'All' ? 'All categories' : badgeFilter}</span>
+              </div>
+              <BadgeGrid groups={filteredBadgeGroups} onSelect={setSelectedBadge} />
+            </>
           )}
         </section>
 
