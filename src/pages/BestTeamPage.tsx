@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Award, Shield, Star, Trophy, User, Zap } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ArrowLeft, Award, Star, Trophy, User, X, Zap } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 import SmartImg from '../components/SmartImg';
 import { useTeamOfTournament } from '../hooks/useTeamOfTournament';
@@ -29,6 +29,16 @@ function roleLabel(group?: string) {
   }
 }
 
+function roleFull(group?: string) {
+  switch (group) {
+    case 'defenders': return 'Defender';
+    case 'midfielders': return 'Midfielder';
+    case 'rucks': return 'Ruck';
+    case 'forwards': return 'Forward';
+    default: return 'Player';
+  }
+}
+
 function statTag(player: TotPlayer) {
   const label = String(player.statLabel || '').toLowerCase();
   if (label.includes('fantasy')) return { short: 'FPTS', val: player.statValue };
@@ -46,16 +56,150 @@ function teamLogo(teamKey: string) {
 }
 
 function teamShortName(player: TotPlayer | null | undefined) {
-  if (!player) return 'Club';
+  if (!player) return '';
   return TEAM_ASSETS[player.teamKey as TeamKey]?.shortName || player.teamName;
 }
 
-function PlayerCard({ player, slot, delay = 0 }: { player: TotPlayer | null; slot: string; delay?: number }) {
+function splitName(name: string): { first: string; last: string } {
+  const parts = name.trim().split(' ');
+  if (parts.length <= 1) return { first: '', last: name };
+  return { first: parts.slice(0, -1).join(' '), last: parts[parts.length - 1] };
+}
+
+type StatEntry = { label: string; value: number; highlight?: boolean };
+
+function getPlayerStats(player: TotPlayer): StatEntry[] {
+  const t = player.totals;
+  const stats: StatEntry[] = [
+    { label: 'Fantasy Pts', value: t.fantasyPoints, highlight: player.group === 'midfielders' || player.group === 'defenders' },
+    { label: 'Disposals', value: t.disposals, highlight: player.group === 'midfielders' },
+    { label: 'Goals', value: t.goals, highlight: player.group === 'forwards' },
+    { label: 'Marks', value: t.marks, highlight: player.group === 'defenders' },
+    { label: 'Tackles', value: t.tackles },
+    { label: 'Hit Outs', value: t.hitOuts, highlight: player.group === 'rucks' },
+  ];
+  return stats.filter((s) => s.value > 0 || s.highlight);
+}
+
+function getSelectionReason(player: TotPlayer): string {
+  const t = player.totals;
+  switch (player.group) {
+    case 'forwards':
+      return `Selected as a key forward for ${t.goals} goals this season${t.marks > 0 ? `, backed by ${t.marks} marks` : ''}. Leading forward option based on goal output and overall impact.`;
+    case 'defenders':
+      return `Earned selection as a ${roleFull(player.group).toLowerCase()} with ${t.marks} marks and ${t.fantasyPoints} fantasy points. Reliable across the back line with strong ball use (${t.disposals} disposals).`;
+    case 'midfielders':
+      return `Picked in the midfield for ${t.disposals} disposals and ${t.fantasyPoints} fantasy points. A dominant ball-winner${t.tackles > 0 ? ` with ${t.tackles} tackles` : ''} driving the engine room.`;
+    case 'rucks':
+      return `Selected as the number one ruck for ${t.hitOuts} hit outs${t.disposals > 0 ? ` and ${t.disposals} disposals around the ground` : ''}. Dominant tap work and follow-up presence.`;
+    default:
+      return `Selected based on overall season stats including ${t.fantasyPoints} fantasy points.`;
+  }
+}
+
+/* ── Player detail modal ── */
+function PlayerModal({ player, slot, onClose }: { player: TotPlayer; slot: string; onClose: () => void }) {
+  const logo = teamLogo(player.teamKey);
+  const stats = getPlayerStats(player);
+  const reason = getSelectionReason(player);
+  const maxStat = Math.max(...stats.map((s) => s.value), 1);
+
+  return (
+    <motion.div
+      className="bt-modal__backdrop"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.18 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="bt-modal"
+        initial={{ opacity: 0, y: 40, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 30, scale: 0.97 }}
+        transition={{ duration: 0.22 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button type="button" className="bt-modal__close" onClick={onClose}>
+          <X size={18} />
+        </button>
+
+        {/* Header */}
+        <div className="bt-modal__header" style={{ ['--bt-accent' as string]: roleColor(player.group) }}>
+          <div className="bt-modal__avatarWrap">
+            <div className="bt-modal__avatar">
+              {player.photoUrl ? <img src={player.photoUrl} alt={player.name} /> : <User size={36} />}
+            </div>
+            {logo ? (
+              <div className="bt-modal__clubBadge">
+                <SmartImg src={logo} alt="" />
+              </div>
+            ) : null}
+          </div>
+          <div className="bt-modal__identity">
+            <h3 className="bt-modal__name">{player.name}</h3>
+            <div className="bt-modal__meta">
+              <span className="bt-modal__roleTag" style={{ color: roleColor(player.group), borderColor: `${roleColor(player.group)}44` }}>
+                {roleLabel(player.group)}
+              </span>
+              <span>{teamShortName(player)}</span>
+              <span>{slot}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="bt-modal__stats">
+          <span className="bt-modal__sectionLabel">Season totals</span>
+          <div className="bt-modal__statGrid">
+            {stats.map((s) => (
+              <div key={s.label} className={`bt-modal__statRow ${s.highlight ? 'is-highlight' : ''}`}>
+                <span className="bt-modal__statLabel">{s.label}</span>
+                <div className="bt-modal__statBarTrack">
+                  <motion.div
+                    className="bt-modal__statBarFill"
+                    style={{ ['--bt-accent' as string]: s.highlight ? roleColor(player.group) : 'rgba(255,255,255,0.35)' }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min(100, (s.value / maxStat) * 100)}%` }}
+                    transition={{ duration: 0.4, delay: 0.1 }}
+                  />
+                </div>
+                <strong className={`bt-modal__statValue ${s.highlight ? 'is-highlight' : ''}`} style={s.highlight ? { color: roleColor(player.group) } : undefined}>
+                  {s.value}
+                </strong>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Why selected */}
+        <div className="bt-modal__reason">
+          <span className="bt-modal__sectionLabel">Why selected</span>
+          <p>{reason}</p>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/* ── Player card ── */
+function PlayerCard({
+  player,
+  slot,
+  delay = 0,
+  onTap,
+}: {
+  player: TotPlayer | null;
+  slot: string;
+  delay?: number;
+  onTap?: (player: TotPlayer, slot: string) => void;
+}) {
   if (!player) {
     return (
       <div className="bt-card bt-card--empty">
         <span className="bt-card__slot">{slot}</span>
-        <div className="bt-card__avatar"><User size={18} /></div>
+        <div className="bt-card__avatar"><User size={20} /></div>
         <span className="bt-card__emptyLabel">TBD</span>
       </div>
     );
@@ -63,23 +207,27 @@ function PlayerCard({ player, slot, delay = 0 }: { player: TotPlayer | null; slo
 
   const st = statTag(player);
   const logo = teamLogo(player.teamKey);
+  const { first, last } = splitName(player.name);
 
   return (
     <motion.div
-      className={`bt-card bt-card--${player.group}`}
+      className="bt-card"
       style={{ ['--bt-accent' as string]: roleColor(player.group) }}
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.24, delay }}
+      transition={{ duration: 0.22, delay }}
+      onClick={() => onTap?.(player, slot)}
+      role="button"
+      tabIndex={0}
     >
       <div className="bt-card__top">
         <span className="bt-card__slot">{slot}</span>
-        <span className="bt-card__position" style={{ color: roleColor(player.group) }}>{roleLabel(player.group)}</span>
+        <span className="bt-card__role" style={{ color: roleColor(player.group) }}>{roleLabel(player.group)}</span>
       </div>
 
       <div className="bt-card__avatarWrap">
         <div className="bt-card__avatar">
-          {player.photoUrl ? <img src={player.photoUrl} alt={player.name} /> : <User size={20} />}
+          {player.photoUrl ? <img src={player.photoUrl} alt={player.name} /> : <User size={22} />}
         </div>
         {logo ? (
           <div className="bt-card__clubBadge">
@@ -89,12 +237,14 @@ function PlayerCard({ player, slot, delay = 0 }: { player: TotPlayer | null; slo
       </div>
 
       <div className="bt-card__info">
-        <strong className="bt-card__name">{player.name}</strong>
+        {first ? <span className="bt-card__firstName">{first}</span> : null}
+        <strong className="bt-card__lastName">{last}</strong>
         <span className="bt-card__club">{teamShortName(player)}</span>
       </div>
 
-      <div className="bt-card__footer">
-        <span className="bt-card__stat">{st.val} {st.short}</span>
+      <div className="bt-card__stat">
+        <span className="bt-card__statVal">{st.val}</span>
+        <span className="bt-card__statLabel">{st.short}</span>
       </div>
     </motion.div>
   );
@@ -109,40 +259,51 @@ function SpecialistCard({ spec, icon }: { spec: TeamOfTournamentSpecialist; icon
   return (
     <motion.div
       className="bt-specialist"
-      initial={{ opacity: 0, scale: 0.96 }}
+      initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.28 }}
+      transition={{ duration: 0.24 }}
     >
-      <div className="bt-specialist__icon">{icon}</div>
-      <div className="bt-specialist__label">{spec.label}</div>
-      <div className="bt-specialist__playerRow">
+      <div className="bt-specialist__head">
+        <span className="bt-specialist__icon">{icon}</span>
+        <span className="bt-specialist__title">{spec.label}</span>
+      </div>
+      <div className="bt-specialist__body">
         <div className="bt-specialist__avatar">
-          {player.photoUrl ? <img src={player.photoUrl} alt={player.name} /> : <User size={15} />}
+          {player.photoUrl ? <img src={player.photoUrl} alt={player.name} /> : <User size={16} />}
         </div>
-        <div className="bt-specialist__playerInfo">
-          <div className="bt-specialist__player">{player.name}</div>
-          <div className="bt-specialist__meta">
-            {logo ? <SmartImg src={logo} alt="" className="bt-specialist__clubIcon" /> : null}
+        <div className="bt-specialist__details">
+          <strong>{player.name}</strong>
+          <span className="bt-specialist__meta">
+            {logo ? <SmartImg src={logo} alt="" className="bt-specialist__clubLogo" /> : null}
             {teamShortName(player)}
-          </div>
+          </span>
         </div>
       </div>
-      <div className="bt-specialist__value">{st.val} {st.short}</div>
+      <div className="bt-specialist__stat">{st.val} {st.short}</div>
     </motion.div>
   );
 }
 
-function FieldRow({ row, baseDelay }: { row: TeamOfTournamentFieldRow; baseDelay: number }) {
+function FieldRow({
+  row,
+  baseDelay,
+  onTapPlayer,
+}: {
+  row: TeamOfTournamentFieldRow;
+  baseDelay: number;
+  onTapPlayer: (player: TotPlayer, slot: string) => void;
+}) {
   return (
-    <div className="bt-oval__rowGroup">
-      <div className="bt-oval__rowLabel">{row.label}</div>
-      <div className="bt-oval__row">
+    <div className="bt-field__rowGroup">
+      <div className="bt-field__rowLabel">{row.label}</div>
+      <div className="bt-field__row">
         {row.players.map((player, i) => (
           <PlayerCard
             key={`${row.key}-${i}`}
             player={player}
             slot={row.slots[i]}
-            delay={baseDelay + i * 0.035}
+            delay={baseDelay + i * 0.03}
+            onTap={onTapPlayer}
           />
         ))}
       </div>
@@ -152,21 +313,25 @@ function FieldRow({ row, baseDelay }: { row: TeamOfTournamentFieldRow; baseDelay
 
 export default function BestTeamPage() {
   const { data, isLoading } = useTeamOfTournament();
+  const [modalPlayer, setModalPlayer] = useState<{ player: TotPlayer; slot: string } | null>(null);
+
+  const openModal = (player: TotPlayer, slot: string) => setModalPlayer({ player, slot });
+  const closeModal = () => setModalPlayer(null);
 
   const specialistIcons = useMemo(() => [
-    <Trophy size={14} key="g" />,
-    <Star size={14} key="d" />,
-    <Zap size={14} key="f" />,
+    <Trophy size={13} key="g" />,
+    <Star size={13} key="d" />,
+    <Zap size={13} key="f" />,
   ], []);
 
   const positionSpread = useMemo(() => {
     if (!data) return [] as Array<{ label: string; count: number; color: string }>;
     const all = [...data.fieldLayout.flatMap((row) => row.players).filter(Boolean), ...data.interchange] as TotPlayer[];
     return [
-      { label: 'DEF', count: all.filter((player) => player.group === 'defenders').length, color: roleColor('defenders') },
-      { label: 'MID', count: all.filter((player) => player.group === 'midfielders').length, color: roleColor('midfielders') },
-      { label: 'RUC', count: all.filter((player) => player.group === 'rucks').length, color: roleColor('rucks') },
-      { label: 'FWD', count: all.filter((player) => player.group === 'forwards').length, color: roleColor('forwards') },
+      { label: 'DEF', count: all.filter((p) => p.group === 'defenders').length, color: roleColor('defenders') },
+      { label: 'MID', count: all.filter((p) => p.group === 'midfielders').length, color: roleColor('midfielders') },
+      { label: 'RUC', count: all.filter((p) => p.group === 'rucks').length, color: roleColor('rucks') },
+      { label: 'FWD', count: all.filter((p) => p.group === 'forwards').length, color: roleColor('forwards') },
     ];
   }, [data]);
 
@@ -192,11 +357,12 @@ export default function BestTeamPage() {
     return (
       <div className="bt-page">
         <main className="bt-page__inner">
+          <div className="bt-topBar">
+            <Link to="/" className="bt-back"><ArrowLeft size={14} /> Back home</Link>
+          </div>
           <section className="bt-hero bt-hero--loading">
-            <Link to="/" className="bt-backLink"><ArrowLeft size={15} /> Back home</Link>
-            <span className="bt-hero__eyebrow">AFL 26 honour side</span>
-            <h1>{isLoading ? 'Loading Best 23…' : 'Best 23 — Coming Soon'}</h1>
-            <p>{isLoading ? 'Fetching the latest stats and selections…' : 'The Best 23 team selection is still being finalised. Check back soon!'}</p>
+            <h1>{isLoading ? 'Loading Best 23...' : 'Best 23 — Coming Soon'}</h1>
+            <p>{isLoading ? 'Fetching the latest stats...' : 'Check back soon!'}</p>
           </section>
         </main>
       </div>
@@ -206,54 +372,40 @@ export default function BestTeamPage() {
   return (
     <div className="bt-page">
       <main className="bt-page__inner">
+
+        <div className="bt-topBar">
+          <Link to="/" className="bt-back"><ArrowLeft size={14} /> Back home</Link>
+        </div>
+
         <section className="bt-hero">
-          <Link to="/" className="bt-backLink"><ArrowLeft size={15} /> Back home</Link>
-          <div className="bt-hero__header">
-            <span className="bt-hero__eyebrow">AFL 26 honour side</span>
-            <h1>Best 23</h1>
-            <p className="bt-hero__sub">Round {data.selectionRound} selection based on live season stats and official AFL player positions.</p>
-          </div>
-          <div className="bt-hero__chips">
-            <span className="bt-chip"><Award size={10} /> 18 on field</span>
-            <span className="bt-chip"><Shield size={10} /> 5 interchange</span>
-            <span className="bt-chip">Position locked</span>
-          </div>
-          <div className="bt-hero__miniGrid">
-            <div className="bt-miniPanel">
-              <span className="bt-miniPanel__label">Selection build</span>
-              <strong>Round {data.selectionRound}</strong>
-              <small>{data.completedRounds} completed rounds</small>
+          <span className="bt-eyebrow">AFL 26 honour side</span>
+          <h1>Best 23</h1>
+          <p className="bt-hero__sub">
+            Round {data.selectionRound} selection based on live season stats and official AFL player positions.
+          </p>
+          <div className="bt-hero__infoRow">
+            <div className="bt-infoPill">
+              <span className="bt-infoPill__label">Round</span>
+              <strong>{data.selectionRound}</strong>
             </div>
-            <div className="bt-miniPanel">
-              <span className="bt-miniPanel__label">Position spread</span>
-              <div className="bt-tokenRow">
-                {positionSpread.map((item) => (
-                  <span key={item.label} className="bt-token" style={{ ['--bt-accent' as string]: item.color }}>
-                    <b>{item.label}</b>
-                    <span>{item.count}</span>
-                  </span>
-                ))}
+            {positionSpread.map((item) => (
+              <div key={item.label} className="bt-infoPill" style={{ ['--bt-accent' as string]: item.color }}>
+                <span className="bt-infoPill__label" style={{ color: item.color }}>{item.label}</span>
+                <strong>{item.count}</strong>
               </div>
-            </div>
+            ))}
           </div>
         </section>
 
         {clubSpread.length > 0 && (
-          <section className="bt-spreadCard">
-            <div className="bt-section-header">
-              <div>
-                <span className="bt-section-header__kicker">Club spread</span>
-                <h2>Most represented clubs</h2>
-              </div>
-            </div>
-            <div className="bt-clubSpread">
+          <section className="bt-clubs">
+            <span className="bt-eyebrow">Most represented clubs</span>
+            <div className="bt-clubs__grid">
               {clubSpread.map((club) => (
                 <div key={club.key} className="bt-clubChip">
-                  <div className="bt-clubChip__left">
-                    {club.logo ? <SmartImg src={club.logo} alt="" className="bt-clubChip__logo" /> : null}
-                    <span>{club.label}</span>
-                  </div>
-                  <b>{club.count} selected</b>
+                  {club.logo ? <SmartImg src={club.logo} alt="" className="bt-clubChip__logo" /> : null}
+                  <span className="bt-clubChip__name">{club.label}</span>
+                  <span className="bt-clubChip__count">{club.count}</span>
                 </div>
               ))}
             </div>
@@ -268,48 +420,56 @@ export default function BestTeamPage() {
           </div>
         )}
 
-        <section className="bt-field-section">
-          <div className="bt-section-header">
+        <section className="bt-fieldSection">
+          <div className="bt-sectionHead">
             <div>
-              <span className="bt-section-header__kicker">On field</span>
+              <span className="bt-eyebrow">On field</span>
               <h2>Starting 18</h2>
             </div>
-            <span className="bt-section-header__note">AFL-style line by line selection</span>
+            <span className="bt-sectionHead__note">Tap a player for stats</span>
           </div>
 
-          <div className="bt-oval">
-            <div className="bt-oval__surface">
+          <div className="bt-field">
+            <div className="bt-field__surface">
               {data.fieldLayout.map((row, ri) => (
-                <FieldRow key={row.key} row={row} baseDelay={ri * 0.06} />
+                <FieldRow key={row.key} row={row} baseDelay={ri * 0.05} onTapPlayer={openModal} />
               ))}
             </div>
           </div>
         </section>
 
-        <section className="bt-bench-section">
-          <div className="bt-section-header">
+        <section className="bt-benchSection">
+          <div className="bt-sectionHead">
             <div>
-              <span className="bt-section-header__kicker">Depth</span>
+              <span className="bt-eyebrow">Depth</span>
               <h2>Interchange</h2>
             </div>
-            <div className="bt-bench__headerRight">
-              <span className="bt-bench__meta">{data.interchange.length}/5 selected</span>
-            </div>
+            <span className="bt-sectionHead__note">{data.interchange.length}/5</span>
           </div>
           <div className="bt-bench__grid">
             {data.interchange.map((player, i) => (
-              <PlayerCard key={player.id} player={player} slot={`INT ${i + 1}`} delay={i * 0.05} />
+              <PlayerCard key={player.id} player={player} slot={`INT ${i + 1}`} delay={i * 0.04} onTap={openModal} />
             ))}
           </div>
         </section>
 
         <div className="bt-footnote">
-          <Award size={14} />
+          <Award size={12} />
           <span>Selected from live game stats with official-position eligibility.</span>
         </div>
 
         <div className="safeBottom" />
       </main>
+
+      <AnimatePresence>
+        {modalPlayer && (
+          <PlayerModal
+            player={modalPlayer.player}
+            slot={modalPlayer.slot}
+            onClose={closeModal}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

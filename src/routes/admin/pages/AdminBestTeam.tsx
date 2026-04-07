@@ -2,11 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   Check,
-  LayoutGrid,
   RefreshCcw,
   Save,
   Search,
-  Shield,
   Sparkles,
   User,
   Users,
@@ -167,18 +165,18 @@ export default function AdminBestTeam() {
       setAutoTeam(baseTeam);
       setTeam(nextTeam);
       setLastSavedFingerprint(getTeamFingerprint(nextTeam));
-      setRoleFilter(slotPreferredRole(selectedSlot));
     } catch (error) {
       console.error(error);
       pushToast('Failed to load Best 23 data', 'error');
     } finally {
       setIsLoading(false);
     }
-  }, [pushToast, selectedSlot]);
+  }, [pushToast]);
 
   useEffect(() => {
     void load(true);
-  }, [load]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     setRoleFilter(slotPreferredRole(selectedSlot));
@@ -263,7 +261,24 @@ export default function AdminBestTeam() {
     const score = (player: TotPlayer) => {
       const fitBonus = preferred !== 'all' && player.group === preferred ? 100000 : 0;
       const hybridBonus = preferred !== 'all' && player.position.includes('/') ? 2500 : 0;
-      return fitBonus + hybridBonus + player.statValue * 10 + total(player, 'fantasyPoints');
+      let statScore: number;
+      switch (preferred) {
+        case 'forwards':
+          statScore = total(player, 'goals') * 50 + total(player, 'fantasyPoints') * 0.5 + total(player, 'marks') * 2;
+          break;
+        case 'defenders':
+          statScore = total(player, 'fantasyPoints') * 1.5 + total(player, 'marks') * 20 + total(player, 'disposals') * 2;
+          break;
+        case 'midfielders':
+          statScore = total(player, 'disposals') * 10 + total(player, 'fantasyPoints') * 1.2 + total(player, 'tackles') * 3;
+          break;
+        case 'rucks':
+          statScore = total(player, 'hitOuts') * 15 + total(player, 'fantasyPoints') * 0.8;
+          break;
+        default:
+          statScore = player.statValue * 10 + total(player, 'fantasyPoints');
+      }
+      return fitBonus + hybridBonus + statScore;
     };
 
     return [...filtered].sort((a, b) => {
@@ -373,26 +388,19 @@ export default function AdminBestTeam() {
         </section>
 
         <section className="abt-summaryStrip">
-          <div className="abt-summaryCard">
-            <div className="abt-summaryCard__head"><Shield size={15} /> Position spread</div>
-            <div className="abt-summaryCard__chips">
-              {squadCounts.map((item) => (
-                <span key={item.key} className="abt-rolePill" style={{ borderColor: `${item.color}55`, color: item.color, background: `${item.color}18` }}>
-                  {roleLabel(item.key)} {item.count}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="abt-summaryCard">
-            <div className="abt-summaryCard__head"><LayoutGrid size={15} /> Club spread</div>
-            <div className="abt-summaryCard__clubs">
-              {clubSummary.map((club) => (
-                <span key={club.label} className="abt-clubPill">
-                  {club.logo ? <SmartImg src={club.logo} alt="" className="abt-clubPill__logo" /> : null}
-                  {club.label} · {club.count}
-                </span>
-              ))}
-            </div>
+          <div className="abt-spreadRow">
+            {squadCounts.map((item) => (
+              <span key={item.key} className="abt-rolePill" style={{ borderColor: `${item.color}55`, color: item.color, background: `${item.color}18` }}>
+                {roleLabel(item.key)} {item.count}
+              </span>
+            ))}
+            <span className="abt-spreadDivider" />
+            {clubSummary.map((club) => (
+              <span key={club.label} className="abt-clubChip">
+                {club.logo ? <SmartImg src={club.logo} alt="" className="abt-clubChip__logo" /> : null}
+                {club.label} <b>{club.count}</b>
+              </span>
+            ))}
           </div>
         </section>
 
