@@ -49,6 +49,35 @@ type StatRow = {
   matches?: number | null;
 };
 
+type LatestStatRow = {
+  disposals?: number | null;
+  kicks?: number | null;
+  handballs?: number | null;
+  marks?: number | null;
+  tackles?: number | null;
+  clearances?: number | null;
+  goals?: number | null;
+  behinds?: number | null;
+  hit_outs?: number | null;
+  fantasy_points?: number | null;
+};
+
+type AverageStatRow = {
+  matches?: number | null;
+  avg_disposals?: number | null;
+  avg_kicks?: number | null;
+  avg_handballs?: number | null;
+  avg_marks?: number | null;
+  avg_tackles?: number | null;
+  avg_clearances?: number | null;
+  avg_goals?: number | null;
+  avg_behinds?: number | null;
+  avg_hit_outs?: number | null;
+  avg_fantasy_points?: number | null;
+};
+
+type TotalsStatRow = StatRow;
+
 type StatConfig = { key: keyof StatRow; label: string; short: string };
 
 const ALL_STATS: StatConfig[] = [
@@ -71,7 +100,6 @@ const HERO_TILES: StatConfig[] = [
   { key: 'tackles', label: 'Tackles', short: 'TKL' },
 ];
 
-const STAT_SELECT = 'disposals,kicks,handballs,marks,tackles,clearances,goals,behinds,hit_outs,fantasy_points';
 
 function mergeName(player: PlayerRow | null): string {
   if (!player) return 'Player not linked';
@@ -113,6 +141,23 @@ function statVal(row: StatRow | null, key: keyof StatRow): number | null {
   return v === undefined || v === null ? null : Number(v);
 }
 
+function toStatRow(row: LatestStatRow | AverageStatRow | TotalsStatRow | null | undefined): StatRow | null {
+  if (!row) return null;
+  return {
+    matches: 'matches' in row ? row.matches ?? null : null,
+    disposals: (row as any).disposals ?? (row as any).avg_disposals ?? null,
+    kicks: (row as any).kicks ?? (row as any).avg_kicks ?? null,
+    handballs: (row as any).handballs ?? (row as any).avg_handballs ?? null,
+    marks: (row as any).marks ?? (row as any).avg_marks ?? null,
+    tackles: (row as any).tackles ?? (row as any).avg_tackles ?? null,
+    clearances: (row as any).clearances ?? (row as any).avg_clearances ?? null,
+    goals: (row as any).goals ?? (row as any).avg_goals ?? null,
+    behinds: (row as any).behinds ?? (row as any).avg_behinds ?? null,
+    hit_outs: (row as any).hit_outs ?? (row as any).avg_hit_outs ?? null,
+    fantasy_points: (row as any).fantasy_points ?? (row as any).avg_fantasy_points ?? null,
+  };
+}
+
 /* ── Full stats sheet (modal) ── */
 function StatsSheet({
   stats,
@@ -130,7 +175,7 @@ function StatsSheet({
   const decimals = tab === 'latest' ? 0 : 1;
   const visibleStats = ALL_STATS.filter((s) => {
     const v = statVal(stats, s.key);
-    return v !== null && v > 0;
+    return v !== null;
   });
   const maxVal = Math.max(1, ...visibleStats.map((s) => statVal(stats, s.key) || 0));
 
@@ -259,28 +304,28 @@ export default function PlayerProfilePage() {
           Promise.resolve(
             supabase
               .from('eg_player_latest_fixture_statline')
-              .select(STAT_SELECT)
+              .select('disposals,kicks,handballs,marks,tackles,clearances')
               .eq('player_id', playerId)
               .maybeSingle(),
           ).catch(() => ({ data: null, error: null })),
           Promise.resolve(
             supabase
               .from('eg_player_season_averages')
-              .select(STAT_SELECT)
+              .select('matches,avg_disposals,avg_kicks,avg_handballs,avg_marks,avg_tackles,avg_clearances')
               .eq('player_id', playerId)
               .maybeSingle(),
           ).catch(() => ({ data: null, error: null })),
           Promise.resolve(
             supabase
               .from('eg_player_career_averages')
-              .select(STAT_SELECT)
+              .select('matches,avg_disposals,avg_kicks,avg_handballs,avg_marks,avg_tackles,avg_clearances')
               .eq('player_id', playerId)
               .maybeSingle(),
           ).catch(() => ({ data: null, error: null })),
           Promise.resolve(
             supabase
               .from('eg_player_season_totals_ext')
-              .select('matches,' + STAT_SELECT)
+              .select('matches,disposals,kicks,handballs,marks,tackles,clearances,fantasy_points')
               .eq('player_id', playerId)
               .maybeSingle(),
           ).catch(() => ({ data: null, error: null })),
@@ -290,11 +335,12 @@ export default function PlayerProfilePage() {
 
         setPlayer(playerRow);
         if (!teamRes.error) setTeam((teamRes.data as TeamRow | null) || null);
-        if (latestRes && !latestRes.error && latestRes.data) setLatestStats(latestRes.data as StatRow);
-        if (seasonRes && !seasonRes.error && seasonRes.data) setSeasonStats(seasonRes.data as StatRow);
-        if (careerRes && !careerRes.error && careerRes.data) setCareerStats(careerRes.data as StatRow);
+        if (latestRes && !latestRes.error && latestRes.data) setLatestStats(toStatRow(latestRes.data as LatestStatRow));
+        if (seasonRes && !seasonRes.error && seasonRes.data) setSeasonStats(toStatRow(seasonRes.data as AverageStatRow));
+        if (careerRes && !careerRes.error && careerRes.data) setCareerStats(toStatRow(careerRes.data as AverageStatRow));
         if (totalsRes && !totalsRes.error && totalsRes.data) {
-          setMatchCount(Number((totalsRes.data as any).matches) || 0);
+          const totalsRow = toStatRow(totalsRes.data as TotalsStatRow);
+          setMatchCount(Number(totalsRow?.matches) || 0);
         }
       } catch (e: any) {
         if (!cancelled) setError(e?.message || 'Unable to load player profile.');
@@ -319,7 +365,7 @@ export default function PlayerProfilePage() {
   const decimals = tab === 'latest' ? 0 : 1;
 
   const hasAnyStats = useMemo(() => {
-    return HERO_TILES.some(({ key }) => statVal(activeStats, key) !== null);
+    return activeStats !== null;
   }, [activeStats]);
 
   const headshotSrc = resolvePlayerPhotoUrl({
@@ -434,7 +480,7 @@ export default function PlayerProfilePage() {
           </header>
 
           <div className="ppMoreGrid">
-            {ALL_STATS.slice(0, 6).map(({ key, label }) => {
+            {ALL_STATS.map(({ key, label }) => {
               const v = statVal(activeStats, key);
               if (v === null) return null;
               return (
