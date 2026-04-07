@@ -111,6 +111,32 @@
   font-size: 12px;
 }
 
+.ppHero__games {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: rgba(245, 196, 0, 0.12);
+  border: 1px solid rgba(245, 196, 0, 0.28);
+}
+
+.ppHero__gamesVal {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #f7d348;
+  line-height: 1;
+}
+
+.ppHero__gamesLabel {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: rgba(245, 200, 60, 0.82);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .ppHero__headshot {
   z-index: 1;
   width: 140px;
@@ -328,6 +354,139 @@
 
 .ppPage__footerGap {
   height: 6px;
+}
+
+.ppViewAllBtn {
+  appearance: none;
+  border: 1px solid rgba(245, 196, 0, 0.28);
+  border-radius: 999px;
+  background: rgba(245, 196, 0, 0.1);
+  color: #f7d348;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: background 120ms;
+}
+
+.ppViewAllBtn:active {
+  background: rgba(245, 196, 0, 0.18);
+}
+
+/* ── Stats sheet modal ── */
+.ppSheet__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 14px;
+}
+
+.ppSheet {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  max-height: 80vh;
+  overflow-y: auto;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(160deg, rgba(14, 20, 34, 0.98), rgba(8, 12, 22, 0.99));
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.4);
+  padding: 20px 16px;
+  display: grid;
+  gap: 16px;
+}
+
+.ppSheet__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  appearance: none;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(230, 240, 255, 0.85);
+  cursor: pointer;
+}
+
+.ppSheet__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ppSheet__icon {
+  color: rgba(245, 196, 0, 0.78);
+  flex-shrink: 0;
+}
+
+.ppSheet__head strong {
+  display: block;
+  font-size: 1.05rem;
+  color: #fff;
+  line-height: 1.15;
+}
+
+.ppSheet__tabLabel {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(190, 208, 238, 0.6);
+  margin-top: 2px;
+}
+
+.ppSheet__grid {
+  display: grid;
+  gap: 12px;
+}
+
+.ppSheet__row {
+  display: grid;
+  grid-template-columns: 90px 1fr 48px;
+  gap: 10px;
+  align-items: center;
+}
+
+.ppSheet__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: rgba(200, 214, 240, 0.72);
+}
+
+.ppSheet__barTrack {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.ppSheet__barFill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(245, 196, 0, 0.7), rgba(245, 196, 0, 0.4));
+}
+
+.ppSheet__value {
+  font-size: 0.88rem;
+  font-weight: 900;
+  color: #f4f8ff;
+  text-align: right;
+}
+
+.ppSheet__empty {
+  padding: 20px 0;
+  text-align: center;
+  color: rgba(190, 208, 238, 0.5);
+  font-size: 0.82rem;
 }
 
 @keyframes ppShimmer {

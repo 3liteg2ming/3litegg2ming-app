@@ -94,6 +94,47 @@
   color: rgba(255, 255, 255, 0.96);
 }
 
+.mdcRoundSelect {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.mdcRoundSelect__dropdown {
+  appearance: none;
+  border: 1px solid rgba(245, 196, 0, 0.3);
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(245, 196, 0, 0.1), rgba(245, 196, 0, 0.04));
+  color: #fff;
+  font-size: clamp(18px, 4vw, 26px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  padding: 6px 34px 6px 12px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 120ms;
+}
+
+.mdcRoundSelect__dropdown:focus {
+  outline: none;
+  border-color: rgba(245, 196, 0, 0.5);
+}
+
+.mdcRoundSelect__dropdown option {
+  background: #141a28;
+  color: #fff;
+  font-weight: 800;
+}
+
+.mdcRoundSelect__chevron {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+  color: rgba(245, 196, 0, 0.7);
+  pointer-events: none;
+}
+
 .mdcHero__metaRow {
   display: flex;
   flex-wrap: wrap;

@@ -360,6 +360,13 @@
   text-align: center;
   position: relative;
   overflow: hidden;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 120ms, border-color 120ms;
+}
+
+.bt-card:active {
+  transform: scale(0.96);
 }
 
 .bt-card::before {

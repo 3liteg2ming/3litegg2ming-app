@@ -283,6 +283,35 @@ function isFixtureFinal(status: unknown): boolean {
   return FINAL_STATUSES.has(String(status || '').trim().toUpperCase());
 }
 
+function buildPayloadFromFixture(f: FixtureRow): NonNullable<NextFixturePayload> {
+  const homeName = String(f.home_team_name || 'unknown');
+  const awayName = String(f.away_team_name || 'unknown');
+  return {
+    fixture: {
+      id: String(f.id),
+      round: safeNum(f.round),
+      venue: String(f.venue || 'TBC'),
+      status: String(f.status || 'SCHEDULED'),
+      seasonId: f.season_id ? String(f.season_id) : undefined,
+      startTime: f.start_time ? String(f.start_time) : undefined,
+    },
+    homeTeam: {
+      id: String(f.home_team_id || ''),
+      name: homeName,
+      shortName: deriveShortName(homeName, f.home_team_short_name || TEAM_SHORT_NAMES[homeName]),
+      logo: resolveTeamLogo(homeName, f.home_team_logo_url || undefined),
+      teamKey: f.home_team_key || undefined,
+    },
+    awayTeam: {
+      id: String(f.away_team_id || ''),
+      name: awayName,
+      shortName: deriveShortName(awayName, f.away_team_short_name || TEAM_SHORT_NAMES[awayName]),
+      logo: resolveTeamLogo(awayName, f.away_team_logo_url || undefined),
+      teamKey: f.away_team_key || undefined,
+    },
+  };
+}
+
 function validateFile(file: File): string | null {
   if (file.size > MAX_FILE_SIZE) return `${file.name} exceeds 15 MB limit.`;
   if (ALLOWED_TYPES.length && !ALLOWED_TYPES.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|webp|heic|heif)$/i)) {
@@ -381,6 +410,9 @@ export default function SubmitPage() {
   const [myTeamId, setMyTeamId] = useState<string | null>(null);
   const [myCoachName, setMyCoachName] = useState<string | null>(null);
   const [myRole, setMyRole] = useState<string | null>(null);
+
+  const [eligibleFixtures, setEligibleFixtures] = useState<Array<{ round: number; fixture: FixtureRow }>>([]);
+  const [selectedRound, setSelectedRound] = useState<number | null>(null);
 
   const [payload, setPayload] = useState<NextFixturePayload>(null);
   const [venue, setVenue] = useState('');
@@ -586,18 +618,13 @@ export default function SubmitPage() {
 
         const teamId = String(profile.team_id || '');
 
-        // Find the coach's eligible fixture across all visible rounds.
-        // Pick the earliest round where this coach's team (home or away) has a non-final fixture
-        // that hasn't already been submitted by the other coach.
+        // Collect ALL eligible fixtures across visible rounds (not just the first).
         const visibleRounds = getVisibleRounds(allFixtures.map((f) => f.round));
         const sortedVisible = Array.from(new Set(visibleRounds)).sort((a, b) => a - b);
 
-        let teamFixtureInRound: typeof allFixtures[number] | undefined;
-        let eligibleRound: number | null = null;
-        let alreadySubmittedMsg: string | null = null;
+        const eligible: Array<{ round: number; fixture: typeof allFixtures[number] }> = [];
 
         for (const round of sortedVisible) {
-          // Check both home and away fixtures for the coach's team
           const candidate = allFixtures.find(
             (f) =>
               f.round === round &&
@@ -613,21 +640,15 @@ export default function SubmitPage() {
             .eq('fixture_id', candidate.id)
             .limit(1);
 
-          if (existingSubs && existingSubs.length > 0) {
-            // Another coach already submitted — determine who
-            const isCoachHome = String(candidate.home_team_id || '') === teamId;
-            const otherRole = isCoachHome ? 'away' : 'home';
-            alreadySubmittedMsg = `The ${otherRole} coach has already submitted the result for Round ${round}. No further submission is needed.`;
-            continue;
-          }
+          if (existingSubs && existingSubs.length > 0) continue;
 
-          teamFixtureInRound = candidate;
-          eligibleRound = round;
-          break;
+          eligible.push({ round, fixture: candidate });
         }
 
-        if (!teamFixtureInRound || eligibleRound === null) {
-          // Check if all their fixtures are already final
+        if (!alive) return;
+        setEligibleFixtures(eligible);
+
+        if (!eligible.length) {
           const allFixturesFinal = sortedVisible.every((round) => {
             const teamFixture = allFixtures.find(
               (f) =>
@@ -638,43 +659,19 @@ export default function SubmitPage() {
           });
 
           setPayload(null);
-          if (alreadySubmittedMsg) {
-            setLoadError(alreadySubmittedMsg);
-          } else if (allFixturesFinal) {
-            setLoadError(`All your fixtures in the current rounds are already finalised. Nothing to submit.`);
+          if (allFixturesFinal) {
+            setLoadError('All your fixtures in the current rounds are already finalised. Nothing to submit.');
           } else {
-            setLoadError(`No eligible fixture found for your team in the current rounds.`);
+            setLoadError('No eligible fixture found for your team in the current rounds.');
           }
           return;
         }
 
-        const homeName = String(teamFixtureInRound.home_team_name || 'unknown');
-        const awayName = String(teamFixtureInRound.away_team_name || 'unknown');
-        setPayload({
-          fixture: {
-            id: String(teamFixtureInRound.id),
-            round: safeNum(teamFixtureInRound.round),
-            venue: String(teamFixtureInRound.venue || 'TBC'),
-            status: String(teamFixtureInRound.status || 'SCHEDULED'),
-            seasonId: teamFixtureInRound.season_id ? String(teamFixtureInRound.season_id) : undefined,
-            startTime: teamFixtureInRound.start_time ? String(teamFixtureInRound.start_time) : undefined,
-          },
-          homeTeam: {
-            id: String(teamFixtureInRound.home_team_id || ''),
-            name: homeName,
-            shortName: deriveShortName(homeName, teamFixtureInRound.home_team_short_name || TEAM_SHORT_NAMES[homeName]),
-            logo: resolveTeamLogo(homeName, teamFixtureInRound.home_team_logo_url || undefined),
-            teamKey: teamFixtureInRound.home_team_key || undefined,
-          },
-          awayTeam: {
-            id: String(teamFixtureInRound.away_team_id || ''),
-            name: awayName,
-            shortName: deriveShortName(awayName, teamFixtureInRound.away_team_short_name || TEAM_SHORT_NAMES[awayName]),
-            logo: resolveTeamLogo(awayName, teamFixtureInRound.away_team_logo_url || undefined),
-            teamKey: teamFixtureInRound.away_team_key || undefined,
-          },
-        });
-        setVenue(String(teamFixtureInRound.venue || ''));
+        // Default to the earliest eligible round
+        const first = eligible[0];
+        setSelectedRound(first.round);
+        setPayload(buildPayloadFromFixture(first.fixture));
+        setVenue(String(first.fixture.venue || ''));
       } catch (error: any) {
         console.error('[Submit] load failed:', error);
         if (alive) setLoadError(error?.message || 'Failed to load submit page.');
@@ -686,6 +683,14 @@ export default function SubmitPage() {
       alive = false;
     };
   }, [requestedSeasonSlug]);
+
+  const handleRoundChange = (round: number) => {
+    const match = eligibleFixtures.find((e) => e.round === round);
+    if (!match) return;
+    setSelectedRound(round);
+    setPayload(buildPayloadFromFixture(match.fixture));
+    setVenue(String(match.fixture.venue || ''));
+  };
 
   useEffect(() => {
     let alive = true;
@@ -1173,7 +1178,22 @@ export default function SubmitPage() {
               <div className="mdcHero__titleWrap">
                 <div className="mdcHero__eyebrow">Submit Results</div>
                 <div className="mdcHero__titleRow">
-                  <div className="mdcHero__title">Round {fixture.round}</div>
+                  {eligibleFixtures.length > 1 ? (
+                    <div className="mdcRoundSelect">
+                      <select
+                        value={selectedRound ?? fixture.round}
+                        onChange={(e) => handleRoundChange(Number(e.target.value))}
+                        className="mdcRoundSelect__dropdown"
+                      >
+                        {eligibleFixtures.map((ef) => (
+                          <option key={ef.round} value={ef.round}>Round {ef.round}</option>
+                        ))}
+                      </select>
+                      <ChevronRight size={14} className="mdcRoundSelect__chevron" />
+                    </div>
+                  ) : (
+                    <div className="mdcHero__title">Round {fixture.round}</div>
+                  )}
                   <span className={`mdcChip ${submitSuccess ? 'mdcChip--success' : draftSavedAt ? 'mdcChip--muted' : 'mdcChip--warning'}`}>
                     {submitSuccess ? 'Submitted' : draftSavedAt ? 'Draft saved' : 'In progress'}
                   </span>
@@ -1208,7 +1228,7 @@ export default function SubmitPage() {
             <div className="mdcHero__bottom">
               <div className="mdcHero__bottomMeta">
                 <div className="mdcProgressMeta">{totalUploadsCount} uploads</div>
-                <div className="mdcHero__bottomSub">Round {fixture.round} — Fixture locked in</div>
+                <div className="mdcHero__bottomSub">Round {fixture.round}{eligibleFixtures.length > 1 ? ` — ${eligibleFixtures.length} rounds available` : ' — Fixture locked in'}</div>
               </div>
               <button type="button" className="mdcHeroCta" onClick={() => navigate(`/match-centre/${fixture.id}`)}>
                 Match Centre <ChevronRight size={14} />
@@ -1250,7 +1270,7 @@ export default function SubmitPage() {
 
                     <div className="mdcIntegrity" style={{ marginTop: 8 }}>
                       <Shield size={13} />
-                      <span>Results are locked to Round {fixture.round}. All submissions are reviewed by admin and AI.</span>
+                      <span>Submitting for Round {fixture.round}.{eligibleFixtures.length > 1 ? ' Use the round selector above to change.' : ''} All submissions are reviewed by admin and AI.</span>
                     </div>
 
                     {renderStepNav()}
