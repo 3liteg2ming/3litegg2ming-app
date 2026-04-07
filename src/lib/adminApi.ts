@@ -675,7 +675,7 @@ export async function listFixtureIdsWithPlayerStats(fixtureIds: string[] = []): 
 
     const { data, error } = await supabase
       .from('eg_fixture_player_stats')
-      .select('fixture_id', { distinct: true })
+      .select('fixture_id')
       .in('fixture_id', fixtureIds);
 
     if (error) return new Set();
