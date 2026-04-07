@@ -1026,6 +1026,19 @@
   color: rgba(215, 225, 244, 0.72);
 }
 
+.chHonor__link {
+  display: block;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(245, 196, 0, 0.2);
+  background: linear-gradient(135deg, rgba(245, 196, 0, 0.08), rgba(255, 220, 110, 0.04));
+  color: rgba(255, 220, 110, 0.92);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
 /* ═══════════════════════════════════════════════════════════
    PERFORMANCE DASHBOARD CARDS
 ═══════════════════════════════════════════════════════════ */

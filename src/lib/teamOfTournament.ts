@@ -423,8 +423,14 @@ function toCandidate(metric: PlayerMetricRow, playerMap: Map<string, AflPlayer>)
     [];
   const resolvedGroups = resolveEligibleGroups(aflPlayer.position);
   const statProfileGroups = resolveStatProfileGroups(metric);
-  const eligibleGroups = uniqueGroups([...overrideGroups, ...resolvedGroups, ...statProfileGroups]);
-  const primaryGroup = eligibleGroups[0] || 'midfielders';
+  const eligibleGroups = uniqueGroups(
+    overrideGroups.length
+      ? overrideGroups
+      : resolvedGroups.length
+        ? resolvedGroups
+        : statProfileGroups,
+  );
+  const primaryGroup = eligibleGroups[0] || resolvedGroups[0] || statProfileGroups[0] || 'midfielders';
 
   return {
     ...metric,
@@ -530,6 +536,18 @@ function rankGroupCandidates(candidates: Candidate[], group: TeamOfTournamentGro
       : compareCandidatesForGroup(a, b, group);
 
   return [...eligiblePool].sort(sortCandidates).map((candidate) => toTotPlayer(candidate, statKey, statLabel, group));
+}
+
+function rankAllCandidates(candidates: Candidate[]): TotPlayer[] {
+  const sorted = [...candidates].sort((a, b) => compareCandidates(a, b, INTERCHANGE_CONFIG.metric.key));
+  return sorted.map((candidate) => {
+    const preferredGroup = candidate.primaryGroup || candidate.eligibleGroups[0] || 'midfielders';
+    const config = GROUP_PICK_CONFIG[preferredGroup];
+    const primaryMetric = metricValue(candidate, config.primaryMetric.key) > 0
+      ? config.primaryMetric
+      : INTERCHANGE_CONFIG.metric;
+    return toTotPlayer(candidate, primaryMetric.key, primaryMetric.label, preferredGroup);
+  });
 }
 
 function pickGroup(rankedPlayers: TotPlayer[], group: TeamOfTournamentGroup, selectedIds: Set<string>): TotPlayer[] {
@@ -669,6 +687,7 @@ async function buildTeamOfTournament(): Promise<TeamOfTournament> {
   const availableMidfielders = rankGroupCandidates(candidates, 'midfielders');
   const availableRucks = rankGroupCandidates(candidates, 'rucks');
   const availableForwards = rankGroupCandidates(candidates, 'forwards');
+  const availablePool = rankAllCandidates(candidates);
 
   const selectedIds = new Set<string>();
   const rucks = pickGroup(availableRucks, 'rucks', selectedIds);
@@ -690,13 +709,7 @@ async function buildTeamOfTournament(): Promise<TeamOfTournament> {
     availableMidfielders,
     availableRucks,
     availableForwards,
-    availablePlayers: dedupeTotPlayers([
-      ...availableDefenders,
-      ...availableMidfielders,
-      ...availableRucks,
-      ...availableForwards,
-      ...interchange,
-    ]),
+    availablePlayers: dedupeTotPlayers(availablePool),
     fieldLayout,
     specialists: pickSpecialists(candidates),
   };

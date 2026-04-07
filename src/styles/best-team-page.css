@@ -2,41 +2,44 @@
   min-height: 100%;
   color: #e8edf5;
   background:
-    radial-gradient(900px 500px at 50% -20%, rgba(245, 196, 0, 0.12), transparent 55%),
-    radial-gradient(600px 400px at 100% 100%, rgba(99, 169, 255, 0.08), transparent 60%),
+    radial-gradient(860px 480px at 50% -16%, rgba(245, 196, 0, 0.12), transparent 56%),
+    radial-gradient(620px 380px at 100% 100%, rgba(99, 169, 255, 0.08), transparent 60%),
     linear-gradient(180deg, #060a10 0%, #020408 100%);
 }
 
 .bt-page__inner {
   width: 100%;
-  max-width: 500px;
+  max-width: 472px;
   margin: 0 auto;
-  padding: max(calc(env(safe-area-inset-top) + 10px), 16px) 14px calc(122px + env(safe-area-inset-bottom));
+  padding: max(calc(env(safe-area-inset-top) + 10px), 16px) 14px calc(116px + env(safe-area-inset-bottom));
   display: grid;
-  gap: 16px;
+  gap: 12px;
   box-sizing: border-box;
 }
 
 .bt-hero,
 .bt-field-section,
 .bt-bench-section,
-.bt-footnote {
-  border-radius: 26px;
-  border: 1px solid rgba(255, 255, 255, 0.11);
+.bt-footnote,
+.bt-spreadCard,
+.bt-specialist {
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   background:
     linear-gradient(135deg, rgba(12, 18, 32, 0.98), rgba(6, 10, 20, 0.99)),
-    radial-gradient(circle at 100% 0%, rgba(99, 169, 255, 0.1), transparent 50%);
+    radial-gradient(circle at 100% 0%, rgba(99, 169, 255, 0.08), transparent 50%);
   box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.35),
+    0 16px 44px rgba(0, 0, 0, 0.34),
     inset 0 1px 1px rgba(255, 255, 255, 0.08);
 }
 
 .bt-hero,
 .bt-field-section,
-.bt-bench-section {
-  padding: 18px;
+.bt-bench-section,
+.bt-spreadCard {
+  padding: 15px;
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .bt-backLink {
@@ -57,83 +60,180 @@
 .bt-hero--loading { min-height: 180px; align-content: center; }
 
 .bt-hero__eyebrow,
-.bt-section-header__kicker {
-  font-size: 0.58rem;
+.bt-section-header__kicker,
+.bt-miniPanel__label,
+.bt-specialist__label {
+  font-size: 0.54rem;
   font-weight: 950;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(255, 220, 100, 0.86);
-  text-shadow: 0 2px 6px rgba(245, 196, 0, 0.15);
+  color: rgba(255, 220, 100, 0.84);
 }
 
-.bt-hero__header { display: grid; gap: 5px; }
-.bt-hero h1 { margin: 0; font-size: 1.7rem; font-weight: 900; line-height: 1; color: #fff; }
-.bt-hero__sub { margin: 0; font-size: 0.84rem; color: rgba(205, 220, 246, 0.72); }
-.bt-hero p { margin: 0; font-size: 0.8rem; line-height: 1.5; color: rgba(200, 215, 240, 0.62); }
+.bt-hero__header {
+  display: grid;
+  gap: 5px;
+}
 
-.bt-hero__chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.bt-hero h1,
+.bt-section-header h2 {
+  margin: 0;
+  color: #fff;
+  font-weight: 900;
+}
+
+.bt-hero h1 {
+  font-size: 1.7rem;
+  line-height: 0.98;
+}
+
+.bt-hero__sub,
+.bt-section-header__note,
+.bt-bench__meta,
+.bt-footnote,
+.bt-miniPanel small {
+  margin: 0;
+  color: rgba(198, 214, 243, 0.66);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.bt-hero__chips,
+.bt-tokenRow,
+.bt-clubSpread,
+.bt-specialists {
+  display: grid;
+  gap: 9px;
+}
+
+.bt-hero__chips {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .bt-chip {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 8px 14px;
+  min-height: 34px;
+  padding: 0 10px;
   border-radius: 999px;
-  border: 1px solid rgba(245, 196, 0, 0.35);
-  background: linear-gradient(135deg, rgba(245, 196, 0, 0.15), rgba(255, 220, 110, 0.08));
-  color: rgba(255, 220, 120, 0.88);
-  font-size: 0.57rem;
-  font-weight: 950;
-  letter-spacing: 0.14em;
+  border: 1px solid rgba(245, 196, 0, 0.24);
+  background: linear-gradient(135deg, rgba(245, 196, 0, 0.12), rgba(255, 220, 110, 0.04));
+  color: rgba(255, 228, 148, 0.9);
+  font-size: 0.54rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  box-shadow: 0 4px 12px rgba(245, 196, 0, 0.12);
+  text-align: center;
 }
 
-/* ── Specialists ── */
-.bt-specialists {
+.bt-hero__miniGrid {
   display: grid;
+  grid-template-columns: 0.88fr 1.12fr;
+  gap: 8px;
+}
+
+.bt-miniPanel {
+  display: grid;
+  gap: 6px;
+  padding: 11px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bt-miniPanel strong {
+  color: #f6faff;
+  font-size: 0.96rem;
+}
+
+.bt-tokenRow {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.bt-token {
+  --bt-accent: #63a9ff;
+  display: grid;
+  gap: 2px;
+  padding: 8px 6px;
+  border-radius: 14px;
+  text-align: center;
+  border: 1px solid color-mix(in srgb, var(--bt-accent) 28%, rgba(255, 255, 255, 0.1));
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.bt-token b {
+  color: var(--bt-accent);
+  font-size: 0.68rem;
+}
+
+.bt-token span {
+  color: #f5f8ff;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.bt-clubSpread {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.bt-clubChip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bt-clubChip__left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.bt-clubChip__left span {
+  color: #f3f7ff;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.bt-clubChip__logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  border-radius: 999px;
+}
+
+.bt-clubChip b {
+  color: rgba(214, 226, 250, 0.74);
+  font-size: 0.63rem;
+  font-weight: 800;
+}
+
+.bt-specialists {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 9px;
 }
 
 .bt-specialist {
   display: grid;
-  gap: 10px;
-  padding: 16px 14px;
-  border-radius: 18px;
-  border: 1px solid rgba(245, 196, 0, 0.25);
-  background: linear-gradient(135deg, rgba(28, 36, 52, 0.88), rgba(12, 18, 32, 0.96));
-  color: #eef4ff;
-  text-align: left;
-  box-shadow:
-    0 6px 16px rgba(0, 0, 0, 0.25),
-    inset 0 1px 1px rgba(255, 255, 255, 0.08);
-  transition: 160ms ease;
-}
-
-.bt-specialist:hover {
-  transform: translateY(-2px);
-  border-color: rgba(245, 196, 0, 0.35);
-  box-shadow:
-    0 10px 24px rgba(0, 0, 0, 0.3),
-    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  gap: 7px;
+  padding: 12px 10px;
 }
 
 .bt-specialist__icon {
   color: rgba(245, 196, 0, 0.8);
 }
 
-.bt-specialist__label {
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-weight: 900;
-  font-size: 0.5rem;
-  color: rgba(245, 196, 0, 0.72);
-}
-
 .bt-specialist__playerRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
 }
 
 .bt-specialist__avatar {
@@ -146,16 +246,30 @@
   place-items: center;
   flex-shrink: 0;
 }
-.bt-specialist__avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-.bt-specialist__player { font-size: 0.7rem; font-weight: 800; color: rgba(242, 248, 255, 0.92); }
+.bt-specialist__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bt-specialist__playerInfo {
+  min-width: 0;
+}
+
+.bt-specialist__player {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: rgba(242, 248, 255, 0.94);
+  line-height: 1.2;
+}
 
 .bt-specialist__meta {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.52rem;
   color: rgba(188, 205, 235, 0.62);
+  font-size: 0.52rem;
 }
 
 .bt-specialist__clubIcon {
@@ -166,116 +280,146 @@
 }
 
 .bt-specialist__value {
-  font-size: 1.14rem;
+  font-size: 0.98rem;
   font-weight: 900;
   color: #ffe790;
 }
 
-.bt-specialist__sub {
-  font-size: 0.5rem;
-  color: rgba(188, 205, 235, 0.5);
-}
-
-/* ── Field ── */
 .bt-section-header {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 12px;
 }
-.bt-section-header h2 { margin: 0; font-size: 1.3rem; font-weight: 900; color: #fff; }
-.bt-section-header__note,
-.bt-bench__meta { font-size: 0.62rem; color: rgba(180, 200, 230, 0.56); }
-.bt-bench__headerRight { display: grid; gap: 5px; justify-items: end; }
+
+.bt-section-header h2 {
+  font-size: 1.18rem;
+}
+
+.bt-bench__headerRight {
+  display: grid;
+  gap: 4px;
+  justify-items: end;
+}
 
 .bt-oval {
-  border-radius: 28px;
+  border-radius: 26px;
   padding: 8px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01)), rgba(4, 10, 18, 0.96);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .bt-oval__surface {
   position: relative;
   overflow: hidden;
-  padding: 18px 10px;
+  padding: 12px 8px;
   border-radius: 999px;
   background:
-    radial-gradient(300px 200px at 50% 50%, rgba(76, 160, 68, 0.22), transparent 70%),
-    linear-gradient(180deg, rgba(32, 100, 38, 0.98), rgba(14, 52, 20, 1));
+    radial-gradient(320px 220px at 50% 50%, rgba(76, 160, 68, 0.22), transparent 70%),
+    radial-gradient(circle at 50% 15%, rgba(255, 255, 255, 0.15), transparent 34%),
+    linear-gradient(180deg, rgba(30, 108, 36, 0.98), rgba(12, 52, 18, 1));
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.14),
     inset 0 24px 48px rgba(255, 255, 255, 0.06),
     inset 0 -20px 40px rgba(0, 0, 0, 0.15);
 }
 
-.bt-oval__rowGroup { display: grid; gap: 6px; margin-bottom: 8px; position: relative; z-index: 1; }
+.bt-oval__rowGroup {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+}
+
 .bt-oval__rowGroup:last-child { margin-bottom: 0; }
+
 .bt-oval__rowLabel {
   justify-self: center;
   padding: 4px 11px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   font-size: 0.46rem;
   font-weight: 900;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: rgba(240, 248, 255, 0.82);
 }
-.bt-oval__row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 
-/* ── Player card ── */
+.bt-oval__row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
 .bt-card {
   display: grid;
   gap: 6px;
+  align-content: start;
   justify-items: center;
-  padding: 12px 8px 12px;
-  min-height: 135px;
+  min-height: 126px;
+  padding: 9px 7px 10px;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(135deg, rgba(12, 18, 32, 0.94), rgba(6, 10, 20, 0.97));
+  background: linear-gradient(135deg, rgba(12, 18, 32, 0.95), rgba(6, 10, 20, 0.98));
   color: #fff;
   text-align: center;
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--bt-accent, #5ea8ff) 30%, transparent),
-    0 4px 12px rgba(0, 0, 0, 0.2);
-  transition: 160ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    inset 0 0 0 1px color-mix(in srgb, var(--bt-accent, #5ea8ff) 28%, transparent),
+    0 5px 14px rgba(0, 0, 0, 0.22);
 }
 
-.bt-card:hover:not(.bt-card--empty) {
-  transform: translateY(-2px);
-  border-color: var(--bt-accent, #5ea8ff);
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--bt-accent, #5ea8ff) 40%, transparent),
-    0 8px 20px rgba(0, 0, 0, 0.3);
+.bt-card--empty {
+  opacity: 0.42;
 }
-.bt-card--empty { opacity: 0.45; }
-.bt-card__slot {
+
+.bt-card__top {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.bt-card__slot,
+.bt-card__position {
   font-size: 0.44rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   font-weight: 900;
-  color: rgba(194, 209, 240, 0.6);
 }
 
-.bt-card__avatarWrap { position: relative; }
+.bt-card__slot {
+  color: rgba(194, 209, 240, 0.58);
+}
+
+.bt-card__avatarWrap {
+  position: relative;
+}
+
 .bt-card__avatar {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   overflow: hidden;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.06);
   display: grid;
   place-items: center;
 }
-.bt-card__avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.bt-card__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .bt-card__clubBadge {
   position: absolute;
-  right: -5px;
-  bottom: -5px;
-  width: 20px;
-  height: 20px;
+  right: -4px;
+  bottom: -4px;
+  width: 19px;
+  height: 19px;
   border-radius: 999px;
   overflow: hidden;
   background: rgba(7, 12, 20, 0.95);
@@ -283,69 +427,195 @@
   display: grid;
   place-items: center;
 }
-.bt-card__clubBadge img { width: 100%; height: 100%; object-fit: contain; }
 
-.bt-card__info { display: grid; gap: 1px; }
-.bt-card__firstName {
-  font-size: 0.48rem;
-  color: rgba(198, 214, 243, 0.65);
+.bt-card__clubBadge img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
-.bt-card__lastName {
-  font-size: 0.76rem;
-  line-height: 1.05;
+
+.bt-card__info {
+  display: grid;
+  gap: 2px;
+}
+
+.bt-card__name {
+  font-size: 0.72rem;
+  line-height: 1.12;
   font-weight: 800;
 }
+
+.bt-card__club,
 .bt-card__emptyLabel {
-  font-size: 0.56rem;
-  color: rgba(198, 214, 243, 0.5);
+  color: rgba(198, 214, 243, 0.58);
+  font-size: 0.46rem;
 }
 
-.bt-card__tagRow {
+.bt-card__footer {
   display: flex;
   align-items: center;
-  gap: 5px;
-}
-
-.bt-card__position {
-  font-size: 0.44rem;
-  font-weight: 900;
-  letter-spacing: 0.1em;
+  justify-content: center;
 }
 
 .bt-card__stat {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  padding: 3px 7px;
+  min-height: 24px;
+  padding: 0 8px;
   border-radius: 999px;
   background: rgba(245, 196, 0, 0.1);
   border: 1px solid rgba(245, 196, 0, 0.18);
   color: #ffe188;
-  font-size: 0.5rem;
+  font-size: 0.48rem;
   font-weight: 900;
 }
 
-/* ── Bench ── */
 .bt-bench__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
-.bt-bench__grid .bt-card { min-height: 135px; }
+
+.bt-bench__grid .bt-card {
+  min-height: 122px;
+}
+
 .bt-bench__grid .bt-card:last-child:nth-child(odd) {
   grid-column: 1 / -1;
   max-width: 50%;
   justify-self: center;
 }
 
-/* ── Footnote ── */
 .bt-footnote {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   padding: 12px 14px;
-  color: rgba(196, 212, 241, 0.68);
-  font-size: 0.72rem;
   text-align: center;
+}
+
+@media (max-width: 420px) {
+  .bt-page__inner {
+    padding-inline: 12px;
+  }
+
+  .bt-hero__chips,
+  .bt-hero__miniGrid,
+  .bt-clubSpread,
+  .bt-specialists {
+    grid-template-columns: 1fr;
+  }
+
+  .bt-tokenRow {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+
+.bt-hero,
+.bt-field-section,
+.bt-bench-section,
+.bt-spreadCard,
+.bt-footnote,
+.bt-specialist {
+  backdrop-filter: blur(18px);
+}
+
+.bt-chip,
+.bt-token,
+.bt-clubChip,
+.bt-specialist,
+.bt-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.bt-chip::after,
+.bt-token::after,
+.bt-clubChip::after,
+.bt-specialist::after,
+.bt-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), transparent 40%);
+  pointer-events: none;
+}
+
+.bt-card {
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bt-accent, #5ea8ff) 26%, transparent), 0 10px 22px rgba(0, 0, 0, 0.24);
+}
+
+.bt-card__name {
+  font-size: 0.7rem;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+}
+
+.bt-card__club {
+  font-size: 0.48rem;
+  color: rgba(197, 214, 243, 0.64);
+}
+
+.bt-card__footer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.bt-card__stat {
+  min-width: 58px;
+  justify-content: center;
+}
+
+.bt-oval {
+  padding: 7px;
+}
+
+.bt-oval__surface::before,
+.bt-oval__surface::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.bt-oval__surface::before {
+  inset: 10px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bt-oval__surface::after {
+  top: 50%;
+  width: 58%;
+  height: 18%;
+  border: 1px solid rgba(255,255,255,0.08);
+  transform: translate(-50%, -50%);
+}
+
+.bt-clubChip b,
+.bt-specialist__value,
+.bt-card__stat {
+  text-shadow: 0 0 18px rgba(245,196,0,0.16);
+}
+
+@media (max-width: 380px) {
+  .bt-page__inner {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .bt-hero__chips,
+  .bt-specialists {
+    gap: 7px;
+  }
+
+  .bt-card {
+    min-height: 112px;
+  }
 }

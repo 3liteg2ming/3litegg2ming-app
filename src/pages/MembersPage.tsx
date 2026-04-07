@@ -1,6 +1,6 @@
 import { BarChart3, ChevronLeft, ChevronRight, ChevronDown, Circle, CheckCircle2, Flame, Gamepad2, KeyRound, Lock, Mail, Pencil, Settings, Shield, Snowflake, Target, TrendingDown, TrendingUp, Trophy, Zap } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import BadgeGrid from '../components/BadgeGrid';
 import BadgeModal from '../components/BadgeModal';
@@ -1145,9 +1145,11 @@ export default function MembersPage() {
 
         <section className="member-panel member-panel--tight">
           <div className="member-panelTitle">
-            <Trophy size={16} style={{ opacity: 0.75 }} /> Best 23 Watch
+            <Trophy size={16} style={{ opacity: 0.75 }} /> Best 23
           </div>
-          <div className="chHonor__empty">Coming Soon — the Best 23 team selection is still being finalised.</div>
+          <Link to="/best-team" className="chHonor__link">
+            View the Best 23 honour side →
+          </Link>
         </section>
 
         {/* ── Badges ─────────────────────────────────── */}

@@ -711,11 +711,11 @@ function CoachHubBanner() {
           </Link>
         ) : null}
 
-        <div className="home-quickLink home-quickLink--bestTeam home-quickLink--disabled">
+        <Link to="/best-team" className="home-quickLink home-quickLink--bestTeam">
           <Trophy size={15} className="home-quickLink__icon" />
           <span className="home-quickLink__label">Best 23</span>
-          <span className="home-quickLink__tag">Coming Soon</span>
-        </div>
+          <ArrowRight size={13} className="home-quickLink__arrow" />
+        </Link>
       </div>
     </section>
   );

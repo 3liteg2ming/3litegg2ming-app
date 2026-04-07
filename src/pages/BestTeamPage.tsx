@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Trophy, User, Star, Award, Zap } from 'lucide-react';
+import { ArrowLeft, Award, Shield, Star, Trophy, User, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import SmartImg from '../components/SmartImg';
 import { useTeamOfTournament } from '../hooks/useTeamOfTournament';
 import { TEAM_ASSETS, assetUrl, type TeamKey } from '../lib/teamAssets';
-import { TEAM_OF_TOURNAMENT_FIELD_ROWS, type TotPlayer, type TeamOfTournamentFieldRow, type TeamOfTournamentSpecialist } from '../lib/teamOfTournament';
+import { type TotPlayer, type TeamOfTournamentFieldRow, type TeamOfTournamentSpecialist } from '../lib/teamOfTournament';
 import '../styles/best-team-page.css';
 
 function roleColor(group?: string) {
@@ -45,20 +45,23 @@ function teamLogo(teamKey: string) {
   return t ? assetUrl(t.logoFile ?? '') : '';
 }
 
+function teamShortName(player: TotPlayer | null | undefined) {
+  if (!player) return 'Club';
+  return TEAM_ASSETS[player.teamKey as TeamKey]?.shortName || player.teamName;
+}
+
 function PlayerCard({ player, slot, delay = 0 }: { player: TotPlayer | null; slot: string; delay?: number }) {
   if (!player) {
     return (
       <div className="bt-card bt-card--empty">
         <span className="bt-card__slot">{slot}</span>
-        <div className="bt-card__avatar"><User size={20} /></div>
+        <div className="bt-card__avatar"><User size={18} /></div>
         <span className="bt-card__emptyLabel">TBD</span>
       </div>
     );
   }
 
   const st = statTag(player);
-  const firstName = player.name.split(' ').slice(0, -1).join(' ');
-  const lastName = player.name.split(' ').slice(-1)[0];
   const logo = teamLogo(player.teamKey);
 
   return (
@@ -67,27 +70,30 @@ function PlayerCard({ player, slot, delay = 0 }: { player: TotPlayer | null; slo
       style={{ ['--bt-accent' as string]: roleColor(player.group) }}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, delay }}
+      transition={{ duration: 0.24, delay }}
     >
-      <span className="bt-card__slot">{slot}</span>
+      <div className="bt-card__top">
+        <span className="bt-card__slot">{slot}</span>
+        <span className="bt-card__position" style={{ color: roleColor(player.group) }}>{roleLabel(player.group)}</span>
+      </div>
+
       <div className="bt-card__avatarWrap">
         <div className="bt-card__avatar">
-          {player.photoUrl
-            ? <img src={player.photoUrl} alt={player.name} />
-            : <User size={22} />}
+          {player.photoUrl ? <img src={player.photoUrl} alt={player.name} /> : <User size={20} />}
         </div>
-        {logo && (
+        {logo ? (
           <div className="bt-card__clubBadge">
             <SmartImg src={logo} alt={player.teamKey} />
           </div>
-        )}
+        ) : null}
       </div>
+
       <div className="bt-card__info">
-        <span className="bt-card__firstName">{firstName}</span>
-        <strong className="bt-card__lastName">{lastName}</strong>
+        <strong className="bt-card__name">{player.name}</strong>
+        <span className="bt-card__club">{teamShortName(player)}</span>
       </div>
-      <div className="bt-card__tagRow">
-        <span className="bt-card__position" style={{ color: roleColor(player.group) }}>{roleLabel(player.group)}</span>
+
+      <div className="bt-card__footer">
         <span className="bt-card__stat">{st.val} {st.short}</span>
       </div>
     </motion.div>
@@ -103,26 +109,25 @@ function SpecialistCard({ spec, icon }: { spec: TeamOfTournamentSpecialist; icon
   return (
     <motion.div
       className="bt-specialist"
-      initial={{ opacity: 0, scale: 0.95 }}
+      initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.28 }}
     >
       <div className="bt-specialist__icon">{icon}</div>
-      <span className="bt-specialist__label">{spec.label}</span>
+      <div className="bt-specialist__label">{spec.label}</div>
       <div className="bt-specialist__playerRow">
         <div className="bt-specialist__avatar">
-          {player.photoUrl ? <img src={player.photoUrl} alt={player.name} /> : <User size={16} />}
+          {player.photoUrl ? <img src={player.photoUrl} alt={player.name} /> : <User size={15} />}
         </div>
-        <div>
+        <div className="bt-specialist__playerInfo">
           <div className="bt-specialist__player">{player.name}</div>
           <div className="bt-specialist__meta">
-            {logo && <SmartImg src={logo} alt="" className="bt-specialist__clubIcon" />}
-            {TEAM_ASSETS[player.teamKey as TeamKey]?.shortName || player.teamName}
+            {logo ? <SmartImg src={logo} alt="" className="bt-specialist__clubIcon" /> : null}
+            {teamShortName(player)}
           </div>
         </div>
       </div>
       <div className="bt-specialist__value">{st.val} {st.short}</div>
-      <span className="bt-specialist__sub">{spec.subtitle}</span>
     </motion.div>
   );
 }
@@ -137,7 +142,7 @@ function FieldRow({ row, baseDelay }: { row: TeamOfTournamentFieldRow; baseDelay
             key={`${row.key}-${i}`}
             player={player}
             slot={row.slots[i]}
-            delay={baseDelay + i * 0.04}
+            delay={baseDelay + i * 0.035}
           />
         ))}
       </div>
@@ -149,17 +154,46 @@ export default function BestTeamPage() {
   const { data, isLoading } = useTeamOfTournament();
 
   const specialistIcons = useMemo(() => [
-    <Trophy size={16} key="g" />,
-    <Star size={16} key="d" />,
-    <Zap size={16} key="f" />,
+    <Trophy size={14} key="g" />,
+    <Star size={14} key="d" />,
+    <Zap size={14} key="f" />,
   ], []);
+
+  const positionSpread = useMemo(() => {
+    if (!data) return [] as Array<{ label: string; count: number; color: string }>;
+    const all = [...data.fieldLayout.flatMap((row) => row.players).filter(Boolean), ...data.interchange] as TotPlayer[];
+    return [
+      { label: 'DEF', count: all.filter((player) => player.group === 'defenders').length, color: roleColor('defenders') },
+      { label: 'MID', count: all.filter((player) => player.group === 'midfielders').length, color: roleColor('midfielders') },
+      { label: 'RUC', count: all.filter((player) => player.group === 'rucks').length, color: roleColor('rucks') },
+      { label: 'FWD', count: all.filter((player) => player.group === 'forwards').length, color: roleColor('forwards') },
+    ];
+  }, [data]);
+
+  const clubSpread = useMemo(() => {
+    if (!data) return [] as Array<{ key: string; count: number; label: string; logo: string }>;
+    const counts = new Map<string, number>();
+    [...data.fieldLayout.flatMap((row) => row.players).filter(Boolean), ...data.interchange].forEach((player) => {
+      const p = player as TotPlayer;
+      counts.set(p.teamKey, (counts.get(p.teamKey) || 0) + 1);
+    });
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([teamKey, count]) => ({
+        key: teamKey,
+        count,
+        label: TEAM_ASSETS[teamKey as TeamKey]?.shortName || teamKey,
+        logo: teamLogo(teamKey),
+      }));
+  }, [data]);
 
   if (isLoading || !data) {
     return (
       <div className="bt-page">
         <main className="bt-page__inner">
           <section className="bt-hero bt-hero--loading">
-            <Link to="/" className="bt-backLink"><ArrowLeft size={16} /> Back home</Link>
+            <Link to="/" className="bt-backLink"><ArrowLeft size={15} /> Back home</Link>
             <span className="bt-hero__eyebrow">AFL 26 honour side</span>
             <h1>{isLoading ? 'Loading Best 23…' : 'Best 23 — Coming Soon'}</h1>
             <p>{isLoading ? 'Fetching the latest stats and selections…' : 'The Best 23 team selection is still being finalised. Check back soon!'}</p>
@@ -172,22 +206,60 @@ export default function BestTeamPage() {
   return (
     <div className="bt-page">
       <main className="bt-page__inner">
-        {/* Hero */}
         <section className="bt-hero">
-          <Link to="/" className="bt-backLink"><ArrowLeft size={16} /> Back home</Link>
+          <Link to="/" className="bt-backLink"><ArrowLeft size={15} /> Back home</Link>
           <div className="bt-hero__header">
             <span className="bt-hero__eyebrow">AFL 26 honour side</span>
             <h1>Best 23</h1>
-            <p className="bt-hero__sub">Round {data.selectionRound} selection</p>
+            <p className="bt-hero__sub">Round {data.selectionRound} selection based on live season stats and official AFL player positions.</p>
           </div>
           <div className="bt-hero__chips">
             <span className="bt-chip"><Award size={10} /> 18 on field</span>
-            <span className="bt-chip">5 interchange</span>
-            <span className="bt-chip">Auto-selected from stats</span>
+            <span className="bt-chip"><Shield size={10} /> 5 interchange</span>
+            <span className="bt-chip">Position locked</span>
+          </div>
+          <div className="bt-hero__miniGrid">
+            <div className="bt-miniPanel">
+              <span className="bt-miniPanel__label">Selection build</span>
+              <strong>Round {data.selectionRound}</strong>
+              <small>{data.completedRounds} completed rounds</small>
+            </div>
+            <div className="bt-miniPanel">
+              <span className="bt-miniPanel__label">Position spread</span>
+              <div className="bt-tokenRow">
+                {positionSpread.map((item) => (
+                  <span key={item.label} className="bt-token" style={{ ['--bt-accent' as string]: item.color }}>
+                    <b>{item.label}</b>
+                    <span>{item.count}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* Specialists */}
+        {clubSpread.length > 0 && (
+          <section className="bt-spreadCard">
+            <div className="bt-section-header">
+              <div>
+                <span className="bt-section-header__kicker">Club spread</span>
+                <h2>Most represented clubs</h2>
+              </div>
+            </div>
+            <div className="bt-clubSpread">
+              {clubSpread.map((club) => (
+                <div key={club.key} className="bt-clubChip">
+                  <div className="bt-clubChip__left">
+                    {club.logo ? <SmartImg src={club.logo} alt="" className="bt-clubChip__logo" /> : null}
+                    <span>{club.label}</span>
+                  </div>
+                  <b>{club.count} selected</b>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {data.specialists.length > 0 && (
           <div className="bt-specialists">
             {data.specialists.map((spec, i) => (
@@ -196,26 +268,24 @@ export default function BestTeamPage() {
           </div>
         )}
 
-        {/* Field */}
         <section className="bt-field-section">
           <div className="bt-section-header">
             <div>
               <span className="bt-section-header__kicker">On field</span>
               <h2>Starting 18</h2>
             </div>
-            <span className="bt-section-header__note">Tap for details</span>
+            <span className="bt-section-header__note">AFL-style line by line selection</span>
           </div>
 
           <div className="bt-oval">
             <div className="bt-oval__surface">
               {data.fieldLayout.map((row, ri) => (
-                <FieldRow key={row.key} row={row} baseDelay={ri * 0.08} />
+                <FieldRow key={row.key} row={row} baseDelay={ri * 0.06} />
               ))}
             </div>
           </div>
         </section>
 
-        {/* Interchange */}
         <section className="bt-bench-section">
           <div className="bt-section-header">
             <div>
@@ -228,15 +298,14 @@ export default function BestTeamPage() {
           </div>
           <div className="bt-bench__grid">
             {data.interchange.map((player, i) => (
-              <PlayerCard key={player.id} player={player} slot={`INT ${i + 1}`} delay={i * 0.06} />
+              <PlayerCard key={player.id} player={player} slot={`INT ${i + 1}`} delay={i * 0.05} />
             ))}
           </div>
         </section>
 
-        {/* Footer */}
         <div className="bt-footnote">
           <Award size={14} />
-          <span>Selected from live game stats • Entertainment only</span>
+          <span>Selected from live game stats with official-position eligibility.</span>
         </div>
 
         <div className="safeBottom" />
