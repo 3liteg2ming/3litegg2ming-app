@@ -256,30 +256,34 @@ export default function PlayerProfilePage() {
                 .eq('id', playerRow.team_id)
                 .maybeSingle()
             : Promise.resolve({ data: null, error: null }),
-          supabase
-            .from('eg_player_latest_fixture_statline')
-            .select(STAT_SELECT)
-            .eq('player_id', playerId)
-            .maybeSingle()
-            .catch(() => ({ data: null, error: null })),
-          supabase
-            .from('eg_player_season_averages')
-            .select(STAT_SELECT)
-            .eq('player_id', playerId)
-            .maybeSingle()
-            .catch(() => ({ data: null, error: null })),
-          supabase
-            .from('eg_player_career_averages')
-            .select(STAT_SELECT)
-            .eq('player_id', playerId)
-            .maybeSingle()
-            .catch(() => ({ data: null, error: null })),
-          supabase
-            .from('eg_player_season_totals_ext')
-            .select('matches,' + STAT_SELECT)
-            .eq('player_id', playerId)
-            .maybeSingle()
-            .catch(() => ({ data: null, error: null })),
+          Promise.resolve(
+            supabase
+              .from('eg_player_latest_fixture_statline')
+              .select(STAT_SELECT)
+              .eq('player_id', playerId)
+              .maybeSingle(),
+          ).catch(() => ({ data: null, error: null })),
+          Promise.resolve(
+            supabase
+              .from('eg_player_season_averages')
+              .select(STAT_SELECT)
+              .eq('player_id', playerId)
+              .maybeSingle(),
+          ).catch(() => ({ data: null, error: null })),
+          Promise.resolve(
+            supabase
+              .from('eg_player_career_averages')
+              .select(STAT_SELECT)
+              .eq('player_id', playerId)
+              .maybeSingle(),
+          ).catch(() => ({ data: null, error: null })),
+          Promise.resolve(
+            supabase
+              .from('eg_player_season_totals_ext')
+              .select('matches,' + STAT_SELECT)
+              .eq('player_id', playerId)
+              .maybeSingle(),
+          ).catch(() => ({ data: null, error: null })),
         ]);
 
         if (cancelled) return;
