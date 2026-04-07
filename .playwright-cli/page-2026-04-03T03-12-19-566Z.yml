@@ -1,0 +1,77 @@
+- application "Elite Gaming App" [ref=e4]:
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - button "Go to home" [ref=e7] [cursor=pointer]
+      - button "Sign In" [ref=e10] [cursor=pointer]
+  - main [ref=e11]:
+    - main [ref=e13]:
+      - generic [ref=e16]:
+        - generic [ref=e17]: Season Live
+        - generic [ref=e19]:
+          - img "Elite Gaming" [ref=e20]
+          - img "BGL Media" [ref=e22]
+        - img "AFL26" [ref=e24]
+        - generic [ref=e25]:
+          - heading "Season Two" [level=1] [ref=e26]
+          - paragraph [ref=e27]: Official hub for coaches and players.
+      - generic [ref=e28]:
+        - generic [ref=e29]:
+          - heading "Featured Match" [level=2] [ref=e30]
+          - link "All Fixtures" [ref=e31] [cursor=pointer]:
+            - /url: /fixtures
+            - text: All Fixtures
+            - img [ref=e32]
+        - button "Round 1 Full Time GWS Giants GWS Giants vs North Melbourne Kangaroos North Melbourne Kangaroos Enter Match Centre" [ref=e34] [cursor=pointer]:
+          - generic [ref=e35]:
+            - generic [ref=e36]: Round 1
+            - generic [ref=e37]: Full Time
+          - generic [ref=e38]:
+            - generic [ref=e39]:
+              - img "GWS Giants" [ref=e41]
+              - generic [ref=e42]: GWS Giants
+            - generic [ref=e43]: vs
+            - generic [ref=e44]:
+              - img "North Melbourne Kangaroos" [ref=e46]
+              - generic [ref=e47]: North Melbourne Kangaroos
+          - generic [ref=e48]:
+            - generic [ref=e49]: Enter Match Centre
+            - img [ref=e50]
+      - generic [ref=e53]:
+        - heading "Ladder Snapshot" [level=2] [ref=e54]
+        - link "Full Ladder" [ref=e55] [cursor=pointer]:
+          - /url: /ladder
+          - text: Full Ladder
+          - img [ref=e56]
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - heading "Season Leaders" [level=2] [ref=e71]
+          - link "Stats Hub" [ref=e72] [cursor=pointer]:
+            - /url: /stats3
+            - text: Stats Hub
+            - img [ref=e73]
+        - tablist [ref=e75]:
+          - tab "Player" [selected] [ref=e76] [cursor=pointer]
+          - tab "Team" [ref=e77] [cursor=pointer]
+      - generic [ref=e107]:
+        - heading "Best Team" [level=2] [ref=e108]
+        - link "Stats Hub" [ref=e109] [cursor=pointer]:
+          - /url: /stats3
+          - text: Stats Hub
+          - img [ref=e110]
+  - navigation [ref=e117]:
+    - link "Home" [ref=e118] [cursor=pointer]:
+      - /url: /
+      - img [ref=e119]
+      - generic [ref=e122]: Home
+    - link "Fixtures" [ref=e123] [cursor=pointer]:
+      - /url: /fixtures
+      - img [ref=e124]
+      - generic [ref=e126]: Fixtures
+    - link "Ladder" [ref=e127] [cursor=pointer]:
+      - /url: /ladder
+      - img [ref=e128]
+      - generic [ref=e134]: Ladder
+    - link "Stats" [ref=e135] [cursor=pointer]:
+      - /url: /stats3
+      - img [ref=e136]
+      - generic [ref=e138]: Stats

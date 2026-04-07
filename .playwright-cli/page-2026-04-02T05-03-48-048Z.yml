@@ -1,0 +1,51 @@
+- application "Elite Gaming App" [ref=e4]:
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - button "Go to home" [ref=e7] [cursor=pointer]
+      - button "Sign In" [ref=e10] [cursor=pointer]
+  - main [ref=e11]:
+    - main [ref=e13]:
+      - generic [ref=e16]:
+        - generic [ref=e17]: Season Live
+        - generic [ref=e19]:
+          - img "Elite Gaming" [ref=e20]
+          - img "BGL Media" [ref=e22]
+        - img "AFL26" [ref=e24]
+        - generic [ref=e25]:
+          - heading "Season Two" [level=1] [ref=e26]
+          - paragraph [ref=e27]: Official hub for coaches and players.
+      - generic [ref=e29]:
+        - heading "Featured Match" [level=2] [ref=e30]
+        - link "All Fixtures" [ref=e31] [cursor=pointer]:
+          - /url: /fixtures
+          - text: All Fixtures
+          - img [ref=e32]
+      - generic [ref=e36]:
+        - heading "Ladder Snapshot" [level=2] [ref=e37]
+        - link "Full Ladder" [ref=e38] [cursor=pointer]:
+          - /url: /ladder
+          - text: Full Ladder
+          - img [ref=e39]
+      - generic [ref=e52]:
+        - generic [ref=e53]:
+          - heading "Season Leaders" [level=2] [ref=e54]
+          - link "Stats Hub" [ref=e55] [cursor=pointer]:
+            - /url: /stats3
+            - text: Stats Hub
+            - img [ref=e56]
+        - tablist [ref=e58]:
+          - tab "Player" [selected] [ref=e59] [cursor=pointer]
+          - tab "Team" [ref=e60] [cursor=pointer]
+  - generic [ref=e90]:
+    - menuitem "Home" [ref=e91] [cursor=pointer]:
+      - img [ref=e93]
+      - generic [ref=e96]: Home
+    - menuitem "Fixtures" [ref=e97] [cursor=pointer]:
+      - img [ref=e98]
+      - generic [ref=e100]: Fixtures
+    - menuitem "Ladder" [ref=e101] [cursor=pointer]:
+      - img [ref=e102]
+      - generic [ref=e108]: Ladder
+    - menuitem "Stats" [ref=e109] [cursor=pointer]:
+      - img [ref=e110]
+      - generic [ref=e112]: Stats

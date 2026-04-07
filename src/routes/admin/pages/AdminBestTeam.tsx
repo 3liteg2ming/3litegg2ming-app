@@ -16,6 +16,8 @@ import {
   type TeamOfTournamentFieldRowKey,
   type TotPlayer,
 } from '../../../lib/teamOfTournament';
+import SmartImg from '../../../components/SmartImg';
+import { TEAM_ASSETS, assetUrl, type TeamKey } from '../../../lib/teamAssets';
 import { useAdminLayoutContext } from '../AdminLayout';
 import { AdminCard } from './AdminUi';
 import '../../../styles/admin-best-team.css';
@@ -31,16 +33,21 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 function roleColor(group?: string) {
   switch (group) {
-    case 'defenders':
-      return '#63a9ff';
-    case 'midfielders':
-      return '#f2c450';
-    case 'rucks':
-      return '#c58cff';
-    case 'forwards':
-      return '#ff9d59';
-    default:
-      return '#90a5c8';
+    case 'defenders': return '#63a9ff';
+    case 'midfielders': return '#f2c450';
+    case 'rucks': return '#c58cff';
+    case 'forwards': return '#ff9d59';
+    default: return '#90a5c8';
+  }
+}
+
+function roleLabel(group?: string) {
+  switch (group) {
+    case 'defenders': return 'DEF';
+    case 'midfielders': return 'MID';
+    case 'rucks': return 'RUC';
+    case 'forwards': return 'FWD';
+    default: return '';
   }
 }
 
@@ -69,6 +76,11 @@ function compactStatLabel(label: string) {
   return String(label || '').toUpperCase();
 }
 
+function teamLogo(teamKey: string) {
+  const t = TEAM_ASSETS[teamKey as TeamKey];
+  return t ? assetUrl(t.logoFile ?? '') : '';
+}
+
 function cloneTeam(team: TeamOfTournament): TeamOfTournament {
   return {
     ...team,
@@ -92,23 +104,23 @@ function syncDerivedGroups(team: TeamOfTournament): TeamOfTournament {
   };
 }
 
-function buildFreshFieldLayout(team: TeamOfTournament): TeamOfTournamentFieldRow[] {
-  return buildTeamOfTournamentFieldLayout({
-    defenders: team.defenders,
-    midfielders: team.midfielders,
-    rucks: team.rucks,
-    forwards: team.forwards,
-  });
-}
-
 function readSlotPlayer(team: TeamOfTournament, slot: SelectedSlot | null): TotPlayer | null {
   if (!slot) return null;
   if (slot.section === 'interchange') return team.interchange[slot.index] || null;
   return team.fieldLayout[slot.rowIndex]?.players?.[slot.slotIndex] || null;
 }
 
-function shortTeam(teamName: string) {
-  return teamName.split(' ').slice(0, 2).join(' ');
+function MiniStatBar({ label, value, max }: { label: string; value: number; max: number }) {
+  const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
+  return (
+    <div className="abt-miniStat">
+      <span className="abt-miniStat__label">{label}</span>
+      <div className="abt-miniStat__bar">
+        <div className="abt-miniStat__fill" style={{ width: `${pct}%` }} />
+      </div>
+      <span className="abt-miniStat__value">{value}</span>
+    </div>
+  );
 }
 
 export default function AdminBestTeam() {
@@ -160,6 +172,20 @@ export default function AdminBestTeam() {
     }
     return ids;
   }, [team, selectedSlot]);
+
+  // Compute max stats for bar scaling
+  const maxStats = useMemo(() => {
+    if (!team) return { goals: 1, disposals: 1, marks: 1, tackles: 1, hitOuts: 1, fantasyPoints: 1 };
+    const all = team.availablePlayers;
+    return {
+      goals: Math.max(1, ...all.map(p => total(p, 'goals'))),
+      disposals: Math.max(1, ...all.map(p => total(p, 'disposals'))),
+      marks: Math.max(1, ...all.map(p => total(p, 'marks'))),
+      tackles: Math.max(1, ...all.map(p => total(p, 'tackles'))),
+      hitOuts: Math.max(1, ...all.map(p => total(p, 'hitOuts'))),
+      fantasyPoints: Math.max(1, ...all.map(p => total(p, 'fantasyPoints'))),
+    };
+  }, [team]);
 
   const candidatePool = useMemo(() => {
     if (!team) return [] as TotPlayer[];
@@ -262,19 +288,19 @@ export default function AdminBestTeam() {
       <div className="abt-shell">
         <section className="abt-hero">
           <div>
-            <span className="abt-kicker">Launch control centre</span>
+            <span className="abt-kicker">SuperCoach-style builder</span>
             <h2>Best 23 Manager</h2>
-            <p>Round {team.selectionRound} selection — premium honour side builder using the live stats leaders and corrected positional pools.</p>
+            <p>Round {team.selectionRound} selection — auto-selected from live stats with correct AFL positions.</p>
           </div>
           <div className="abt-hero__actions">
             <button type="button" className="abt-btn abt-btn--ghost" onClick={refreshFromStats} disabled={isLoading}>
-              <Sparkles size={15} /> Refresh from stats
+              <Sparkles size={15} /> Refresh
             </button>
             <button type="button" className="abt-btn abt-btn--ghost" onClick={resetToAuto}>
-              <RotateCcw size={15} /> Reset to auto team
+              <RotateCcw size={15} /> Reset
             </button>
             <button type="button" className="abt-btn abt-btn--primary" onClick={saveCurrentTeam} disabled={saveState === 'saving'}>
-              <Save size={15} /> {saveState === 'saving' ? 'Saving…' : 'Save Best 23'}
+              <Save size={15} /> {saveState === 'saving' ? 'Saving…' : 'Publish'}
             </button>
           </div>
         </section>
@@ -285,18 +311,23 @@ export default function AdminBestTeam() {
           <div className="abt-pill">5 interchange</div>
           <div className={`abt-pill abt-pill--status abt-pill--${saveState}`}>
             {saveState === 'saved' ? <Check size={14} /> : saveState === 'error' ? <AlertCircle size={14} /> : <Users size={14} />}
-            {saveState === 'saved' ? 'Published override saved' : saveState === 'error' ? 'Save failed' : 'Editing draft state'}
+            {saveState === 'saved' ? 'Published' : saveState === 'error' ? 'Save failed' : 'Editing'}
           </div>
         </section>
 
         <div className="abt-grid">
+          {/* ── Picker panel ── */}
           <aside className="abt-panel abt-panel--picker">
             <div className="abt-panel__header">
               <div>
-                <span className="abt-panel__eyebrow">Selection drawer</span>
+                <span className="abt-panel__eyebrow">Player pool</span>
                 <h3>{selectedPlayer ? selectedPlayer.name : 'Choose a slot'}</h3>
               </div>
-              {selectedPlayer ? <span className="abt-panel__meta">{selectedPlayer.teamName} • {selectedPlayer.position}</span> : null}
+              {selectedPlayer && (
+                <span className="abt-roleTag" style={{ background: roleColor(selectedPlayer.group) + '22', color: roleColor(selectedPlayer.group), borderColor: roleColor(selectedPlayer.group) + '44' }}>
+                  {roleLabel(selectedPlayer.group)}
+                </span>
+              )}
             </div>
 
             <div className="abt-slotSummary">
@@ -310,7 +341,7 @@ export default function AdminBestTeam() {
                       : 'Tap any card on the board'}
                 </strong>
               </div>
-              <span className="abt-slotSummary__role">{slotPreferredRole(selectedSlot) === 'all' ? 'Any role' : slotPreferredRole(selectedSlot)}</span>
+              <span className="abt-slotSummary__role">{slotPreferredRole(selectedSlot) === 'all' ? 'Any' : roleLabel(slotPreferredRole(selectedSlot) === 'all' ? undefined : slotPreferredRole(selectedSlot))}</span>
             </div>
 
             <label className="abt-searchWrap">
@@ -318,7 +349,7 @@ export default function AdminBestTeam() {
               <input
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Search name, club, role or stat…"
+                placeholder="Search name, club, role…"
               />
             </label>
 
@@ -328,55 +359,66 @@ export default function AdminBestTeam() {
                   key={role}
                   type="button"
                   className={`abt-chipBtn ${roleFilter === role ? 'is-active' : ''}`}
+                  style={roleFilter === role && role !== 'all' ? { borderColor: roleColor(role) + '55', color: roleColor(role) } : undefined}
                   onClick={() => setRoleFilter(role)}
                 >
-                  {role === 'all' ? 'All' : role.replace(/s$/, '')}
+                  {role === 'all' ? 'All' : roleLabel(role)}
                 </button>
               ))}
             </div>
 
             <div className="abt-sortRow">
               <button type="button" className={`abt-sortBtn ${sortMode === 'fit' ? 'is-active' : ''}`} onClick={() => setSortMode('fit')}>Best fit</button>
-              <button type="button" className={`abt-sortBtn ${sortMode === 'stat' ? 'is-active' : ''}`} onClick={() => setSortMode('stat')}>Highest stat</button>
+              <button type="button" className={`abt-sortBtn ${sortMode === 'stat' ? 'is-active' : ''}`} onClick={() => setSortMode('stat')}>Stat</button>
               <button type="button" className={`abt-sortBtn ${sortMode === 'alpha' ? 'is-active' : ''}`} onClick={() => setSortMode('alpha')}>A–Z</button>
             </div>
 
             <div className="abt-candidateList">
-              {candidatePool.map((player) => (
-                <button
-                  key={player.id}
-                  type="button"
-                  className="abt-candidate"
-                  style={{ ['--abt-accent' as string]: roleColor(player.group) }}
-                  onClick={() => replaceSelected(player)}
-                >
-                  <div className="abt-candidate__avatar">
-                    {player.photoUrl ? <img src={player.photoUrl} alt={player.name} /> : <User size={16} />}
-                  </div>
-                  <div className="abt-candidate__body">
-                    <div className="abt-candidate__titleRow">
-                      <strong>{player.name}</strong>
-                      <span>{player.position}</span>
+              {candidatePool.map((player) => {
+                const logo = teamLogo(player.teamKey);
+                return (
+                  <button
+                    key={player.id}
+                    type="button"
+                    className="abt-candidate"
+                    style={{ ['--abt-accent' as string]: roleColor(player.group) }}
+                    onClick={() => replaceSelected(player)}
+                  >
+                    <div className="abt-candidate__left">
+                      <div className="abt-candidate__avatar">
+                        {player.photoUrl ? <img src={player.photoUrl} alt={player.name} /> : <User size={16} />}
+                      </div>
+                      {logo && <SmartImg src={logo} alt="" className="abt-candidate__clubBadge" />}
                     </div>
-                    <div className="abt-candidate__meta">{player.teamName}</div>
-                    <div className="abt-candidate__stats">
-                      <span>{player.statValue} {compactStatLabel(player.statLabel)}</span>
-                      <span>{total(player, 'fantasyPoints')} FPTS</span>
+                    <div className="abt-candidate__body">
+                      <div className="abt-candidate__titleRow">
+                        <strong>{player.name}</strong>
+                        <span className="abt-candidate__roleTag" style={{ color: roleColor(player.group) }}>{roleLabel(player.group)}</span>
+                      </div>
+                      <div className="abt-candidate__meta">{TEAM_ASSETS[player.teamKey as TeamKey]?.shortName || player.teamName}</div>
+                      <div className="abt-candidate__statBars">
+                        <MiniStatBar label="GLS" value={total(player, 'goals')} max={maxStats.goals} />
+                        <MiniStatBar label="DIS" value={total(player, 'disposals')} max={maxStats.disposals} />
+                        <MiniStatBar label="MRK" value={total(player, 'marks')} max={maxStats.marks} />
+                        <MiniStatBar label="TKL" value={total(player, 'tackles')} max={maxStats.tackles} />
+                        <MiniStatBar label="FPT" value={total(player, 'fantasyPoints')} max={maxStats.fantasyPoints} />
+                      </div>
                     </div>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
               {!candidatePool.length ? <div className="abt-empty">No available players for the current filters.</div> : null}
             </div>
           </aside>
 
+          {/* ── Board panel ── */}
           <section className="abt-panel abt-panel--board">
             <div className="abt-boardTop">
               <div>
                 <span className="abt-panel__eyebrow">Tactical board</span>
-                <h3>MCG honour side layout</h3>
+                <h3>Field layout</h3>
               </div>
-              <span className="abt-boardTop__meta">Tap any field card to replace it</span>
+              <span className="abt-boardTop__meta">Tap any card to replace</span>
             </div>
 
             <div className="abt-ovalBoard">
@@ -387,6 +429,7 @@ export default function AdminBestTeam() {
                     <div className="abt-lineRow">
                       {row.players.map((player, slotIndex) => {
                         const active = selectedSlot?.section === 'field' && selectedSlot.rowIndex === rowIndex && selectedSlot.slotIndex === slotIndex;
+                        const logo = player ? teamLogo(player.teamKey) : '';
                         return (
                           <button
                             key={`${row.key}-${slotIndex}`}
@@ -396,12 +439,17 @@ export default function AdminBestTeam() {
                             onClick={() => setSelectedSlot({ section: 'field', rowKey: row.key, rowIndex, slotIndex, player: player || null })}
                           >
                             <span className="abt-slotCard__slot">{row.slots[slotIndex]}</span>
-                            <div className="abt-slotCard__avatar">
-                              {player?.photoUrl ? <img src={player.photoUrl} alt={player.name} /> : <User size={18} />}
+                            <div className="abt-slotCard__avatarWrap">
+                              <div className="abt-slotCard__avatar">
+                                {player?.photoUrl ? <img src={player.photoUrl} alt={player.name} /> : <User size={18} />}
+                              </div>
+                              {player && logo && <SmartImg src={logo} alt="" className="abt-slotCard__clubBadge" />}
                             </div>
                             <strong>{player ? player.name.split(' ').slice(-1)[0] : 'Select'}</strong>
-                            <span>{player ? shortTeam(player.teamName) : 'Empty slot'}</span>
-                            {player ? <em>{player.statValue} {compactStatLabel(player.statLabel)}</em> : null}
+                            <span className="abt-slotCard__teamName">{player ? (TEAM_ASSETS[player.teamKey as TeamKey]?.shortName || player.teamName.split(' ')[0]) : 'Empty'}</span>
+                            {player && (
+                              <em>{player.statValue} {compactStatLabel(player.statLabel)}</em>
+                            )}
                           </button>
                         );
                       })}
@@ -412,18 +460,20 @@ export default function AdminBestTeam() {
             </div>
           </section>
 
+          {/* ── Bench panel ── */}
           <aside className="abt-panel abt-panel--bench">
             <div className="abt-panel__header">
               <div>
                 <span className="abt-panel__eyebrow">Depth</span>
                 <h3>Interchange</h3>
               </div>
-              <span className="abt-panel__meta">{team.interchange.length}/5 locked</span>
+              <span className="abt-panel__meta">{team.interchange.length}/5</span>
             </div>
 
             <div className="abt-benchList">
               {team.interchange.map((player, index) => {
                 const active = selectedSlot?.section === 'interchange' && selectedSlot.index === index;
+                const logo = teamLogo(player.teamKey);
                 return (
                   <button
                     key={`${player.id}-${index}`}
@@ -434,10 +484,15 @@ export default function AdminBestTeam() {
                   >
                     <div className="abt-benchCard__top">
                       <span>INT {index + 1}</span>
-                      <span>{player.position}</span>
+                      <span className="abt-benchCard__roleTag" style={{ color: roleColor(player.group) }}>{roleLabel(player.group)}</span>
                     </div>
-                    <strong>{player.name}</strong>
-                    <span>{player.teamName}</span>
+                    <div className="abt-benchCard__playerRow">
+                      {logo && <SmartImg src={logo} alt="" className="abt-benchCard__clubBadge" />}
+                      <div>
+                        <strong>{player.name}</strong>
+                        <span>{TEAM_ASSETS[player.teamKey as TeamKey]?.shortName || player.teamName}</span>
+                      </div>
+                    </div>
                     <em>{player.statValue} {compactStatLabel(player.statLabel)}</em>
                   </button>
                 );

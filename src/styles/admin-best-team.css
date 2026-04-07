@@ -1,6 +1,6 @@
 .abt-shell {
   display: grid;
-  gap: 18px;
+  gap: 20px;
 }
 
 .abt-shell--loading {
@@ -12,31 +12,37 @@
 .abt-hero,
 .abt-statusBar,
 .abt-panel {
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   background:
-    linear-gradient(180deg, rgba(10, 16, 28, 0.98), rgba(5, 9, 18, 0.99)),
-    radial-gradient(circle at top left, rgba(42, 96, 190, 0.12), transparent 32%);
-  border-radius: 20px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    linear-gradient(135deg, rgba(12, 18, 32, 0.99), rgba(6, 10, 20, 0.99)),
+    radial-gradient(circle at 80% 20%, rgba(99, 169, 255, 0.15), transparent 40%),
+    radial-gradient(circle at 20% 80%, rgba(245, 196, 0, 0.08), transparent 40%);
+  border-radius: 24px;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.4),
+    inset 0 1px 1px rgba(255, 255, 255, 0.08),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.4);
 }
 
 .abt-hero {
   display: flex;
   justify-content: space-between;
-  gap: 18px;
+  gap: 20px;
   align-items: flex-start;
-  padding: 20px 22px;
+  padding: 24px 28px;
+  background: linear-gradient(135deg, rgba(15, 22, 40, 0.99), rgba(8, 12, 24, 0.99));
 }
 
 .abt-kicker,
 .abt-panel__eyebrow {
   display: inline-block;
-  margin-bottom: 6px;
-  color: rgba(245, 196, 0, 0.82);
+  margin-bottom: 8px;
+  color: rgba(255, 220, 100, 0.88);
   text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-size: 0.66rem;
-  font-weight: 900;
+  letter-spacing: 0.2em;
+  font-size: 0.68rem;
+  font-weight: 950;
+  text-shadow: 0 2px 8px rgba(245, 196, 0, 0.2);
 }
 
 .abt-hero h2,
@@ -68,21 +74,36 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
   color: #eef3ff;
   cursor: pointer;
   font-weight: 700;
-  transition: 160ms ease;
+  font-size: 0.9rem;
+  transition: 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.abt-btn:hover { transform: translateY(-1px); }
+.abt-btn:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
 .abt-btn--primary {
-  border-color: rgba(245, 196, 0, 0.32);
-  background: linear-gradient(135deg, rgba(245, 196, 0, 0.18), rgba(255, 214, 99, 0.08));
-  color: #ffe692;
+  border-color: rgba(245, 196, 0, 0.4);
+  background: linear-gradient(135deg, rgba(245, 196, 0, 0.22), rgba(255, 214, 99, 0.12));
+  color: #ffe78f;
+  box-shadow: 0 6px 16px rgba(245, 196, 0, 0.15);
+}
+
+.abt-btn--primary:hover {
+  border-color: rgba(245, 196, 0, 0.6);
+  background: linear-gradient(135deg, rgba(245, 196, 0, 0.28), rgba(255, 214, 99, 0.18));
+  box-shadow: 0 10px 24px rgba(245, 196, 0, 0.2);
 }
 
 .abt-statusBar {
@@ -96,18 +117,34 @@
 .abt-pill {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 7px 12px;
+  gap: 8px;
+  padding: 9px 14px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(224, 234, 255, 0.86);
-  font-size: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(224, 234, 255, 0.88);
+  font-size: 0.78rem;
   font-weight: 800;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
-.abt-pill--status.saved { color: #8ef0b5; }
-.abt-pill--status.error { color: #ffb2b2; }
+.abt-pill--status {
+  background: linear-gradient(135deg, rgba(99, 169, 255, 0.12), rgba(99, 169, 255, 0.06));
+  border-color: rgba(99, 169, 255, 0.25);
+}
+
+.abt-pill--status.saved {
+  color: #7eff9f;
+  background: linear-gradient(135deg, rgba(126, 255, 159, 0.15), rgba(126, 255, 159, 0.08));
+  border-color: rgba(126, 255, 159, 0.3);
+}
+
+.abt-pill--status.error {
+  color: #ff9999;
+  background: linear-gradient(135deg, rgba(255, 153, 153, 0.15), rgba(255, 153, 153, 0.08));
+  border-color: rgba(255, 153, 153, 0.3);
+}
 
 .abt-grid {
   display: grid;
@@ -166,12 +203,18 @@
 .abt-searchWrap {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 11px 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(210, 224, 250, 0.65);
+  gap: 12px;
+  padding: 13px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(210, 224, 250, 0.72);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.abt-searchWrap svg {
+  flex-shrink: 0;
+  opacity: 0.8;
 }
 
 .abt-searchWrap input {
@@ -180,7 +223,12 @@
   outline: 0;
   background: transparent;
   color: #fff;
-  font-size: 0.9rem;
+  font-size: 0.93rem;
+  font-weight: 500;
+}
+
+.abt-searchWrap input::placeholder {
+  color: rgba(210, 224, 250, 0.5);
 }
 
 .abt-filterRow,
@@ -212,25 +260,55 @@
 
 .abt-candidateList {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   max-height: 780px;
   overflow: auto;
-  padding-right: 4px;
-  margin-top: 14px;
+  padding-right: 8px;
+  margin-top: 16px;
+}
+
+.abt-candidateList::-webkit-scrollbar {
+  width: 8px;
+}
+
+.abt-candidateList::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.abt-candidateList::-webkit-scrollbar-thumb {
+  background: rgba(245, 196, 0, 0.4);
+  border-radius: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.05);
+}
+
+.abt-candidateList::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 196, 0, 0.6);
 }
 
 .abt-candidate {
   display: grid;
   grid-template-columns: 52px 1fr;
-  gap: 12px;
+  gap: 14px;
   align-items: center;
-  padding: 10px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(180deg, rgba(18, 24, 40, 0.9), rgba(11, 15, 26, 0.95));
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, rgba(18, 26, 44, 0.92), rgba(12, 18, 32, 0.96));
   color: #fff;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--abt-accent, #5ea8ff) 25%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--abt-accent, #5ea8ff) 30%, transparent),
+    0 4px 12px rgba(0, 0, 0, 0.2);
   cursor: pointer;
+  transition: 160ms ease;
+}
+
+.abt-candidate:hover {
+  border-color: var(--abt-accent, #5ea8ff);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--abt-accent, #5ea8ff) 40%, transparent),
+    0 8px 20px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
 }
 
 .abt-candidate__avatar,
@@ -277,19 +355,23 @@
 
 .abt-ovalBoard {
   border-radius: 28px;
-  padding: 10px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .abt-ovalBoard__surface {
   position: relative;
   overflow: hidden;
   border-radius: 999px;
-  padding: 26px 20px;
+  padding: 30px 24px;
   background:
-    radial-gradient(circle at 50% 50%, rgba(68, 142, 62, 0.28), transparent 42%),
-    linear-gradient(180deg, rgba(33, 96, 39, 0.98), rgba(15, 54, 22, 1));
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.11), inset 0 20px 40px rgba(255, 255, 255, 0.04);
+    radial-gradient(circle at 50% 50%, rgba(76, 160, 68, 0.32), transparent 45%),
+    linear-gradient(180deg, rgba(38, 110, 44, 0.99), rgba(16, 60, 24, 1));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.15),
+    inset 0 24px 48px rgba(255, 255, 255, 0.06),
+    inset 0 -20px 40px rgba(0, 0, 0, 0.2);
 }
 
 .abt-lineGroup {
