@@ -669,12 +669,15 @@ export async function updateFixtureQuarterScores(
   if (error) throw new Error(error.message);
 }
 
-export async function listFixtureIdsWithPlayerStats(): Promise<Set<string>> {
+export async function listFixtureIdsWithPlayerStats(fixtureIds: string[] = []): Promise<Set<string>> {
   try {
+    if (!fixtureIds.length) return new Set();
+
     const { data, error } = await supabase
       .from('eg_fixture_player_stats')
-      .select('fixture_id')
-      .limit(2000);
+      .select('fixture_id', { distinct: true })
+      .in('fixture_id', fixtureIds);
+
     if (error) return new Set();
     return new Set((data || []).map((row) => row.fixture_id as string));
   } catch {

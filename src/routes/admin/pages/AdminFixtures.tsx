@@ -99,14 +99,16 @@ export default function AdminFixtures() {
     },
   });
 
+  const allFixtures = fixturesQuery.data?.rows || [];
+  const fixtureIds = useMemo(() => allFixtures.map((fixture) => fixture.id), [allFixtures]);
+
   const playerStatsQuery = useQuery({
-    queryKey: ['admin', 'fixtures', 'playerStatsIds'],
-    queryFn: listFixtureIdsWithPlayerStats,
+    queryKey: ['admin', 'fixtures', 'playerStatsIds', fixtureIds.join(',')],
+    queryFn: () => listFixtureIdsWithPlayerStats(fixtureIds),
+    enabled: fixtureIds.length > 0,
     staleTime: 60_000,
   });
   const fixtureIdsWithStats: Set<string> = playerStatsQuery.data ?? new Set();
-
-  const allFixtures = fixturesQuery.data?.rows || [];
 
   const roundsGrouped = useMemo(() => {
     const map = new Map<number, typeof allFixtures>();
