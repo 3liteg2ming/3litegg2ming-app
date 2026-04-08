@@ -387,6 +387,7 @@ export default function AdminFixtureDetail() {
     onSuccess: () => {
       pushToast('Player stats saved.', 'success');
       queryClient.invalidateQueries({ queryKey: ['admin', 'fixture-player-stats', fixtureId] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'fixtures', 'playerStatsIds'] });
     },
     onError: (error) => {
       if (error instanceof AdminPermissionError) {
@@ -419,6 +420,7 @@ export default function AdminFixtureDetail() {
       pushToast(`Deleted ${deleted} player stat row(s).`, 'success');
       setPlayerDrafts(new Map());
       queryClient.invalidateQueries({ queryKey: ['admin', 'fixture-player-stats', fixtureId] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'fixtures', 'playerStatsIds'] });
     },
     onError: (error) => {
       if (error instanceof AdminPermissionError) {
