@@ -106,7 +106,7 @@ export default function AdminFixtures() {
     queryKey: ['admin', 'fixtures', 'playerStatsIds', fixtureIds.join(',')],
     queryFn: () => listFixtureIdsWithPlayerStats(fixtureIds),
     enabled: fixtureIds.length > 0,
-    staleTime: 60_000,
+    staleTime: 0,
   });
   const fixtureIdsWithStats: Set<string> = playerStatsQuery.data ?? new Set();
 
