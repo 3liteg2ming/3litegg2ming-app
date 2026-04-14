@@ -101,20 +101,22 @@ export default function TeamProfilePage() {
           .select('id,name,short_name,logo_url,primary_color,coach_name,coach_psn')
           .eq('id', teamId)
           .maybeSingle(),
-        supabase
-          .from('eg_players')
-          .select('id,number,position,headshot_url,photo_url,full_name,display_name,name')
-          .eq('team_id', teamId)
-          .order('number', { ascending: true, nullsFirst: false })
-          .then(r => r).catch(() => ({ data: null, error: null })),
-        supabase
-          .rpc('eg_list_current_coaches')
-          .then(r => r).catch(() => ({ data: null, error: null })),
-        supabase
-          .from('eg_player_season_totals_ext')
-          .select('player_id,player_name,matches,disposals,kicks,handballs,marks,tackles,clearances,fantasy_points')
-          .eq('team_id', teamId)
-          .then(r => r).catch(() => ({ data: null, error: null })),
+        Promise.resolve(
+          supabase
+            .from('eg_players')
+            .select('id,number,position,headshot_url,photo_url,full_name,display_name,name')
+            .eq('team_id', teamId)
+            .order('number', { ascending: true, nullsFirst: false }),
+        ).catch(() => ({ data: null, error: null })),
+        Promise.resolve(
+          supabase.rpc('eg_list_current_coaches'),
+        ).catch(() => ({ data: null, error: null })),
+        Promise.resolve(
+          supabase
+            .from('eg_player_season_totals_ext')
+            .select('player_id,player_name,matches,disposals,kicks,handballs,marks,tackles,clearances,fantasy_points')
+            .eq('team_id', teamId),
+        ).catch(() => ({ data: null, error: null })),
       ]);
 
       if (cancelled) return;
