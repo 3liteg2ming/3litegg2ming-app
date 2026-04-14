@@ -64,6 +64,8 @@ const AdminAudit = lazy(() => import('./routes/admin/pages/AdminAudit'));
 const AdminOdds = lazy(() => import('./routes/admin/pages/AdminOdds'));
 const AdminNews = lazy(() => import('./routes/admin/pages/AdminNews'));
 const AdminBestTeam = lazy(() => import('./routes/admin/pages/AdminBestTeam'));
+const TeamsPage = lazy(() => import('./pages/TeamsPage'));
+const TeamProfilePage = lazy(() => import('./pages/TeamProfilePage'));
 
 const GLOBAL_CRASH_EVENT = 'eg:global-crash';
 
@@ -248,6 +250,8 @@ function AppRoutes() {
                 <Route path="/stats3/leaders" element={<StatLeadersPage />} />
                 <Route path="/stats3/compare" element={<HeadToHeadPage />} />
                 <Route path="/player/:playerId" element={<PlayerProfilePage />} />
+                <Route path="/teams" element={<TeamsPage />} />
+                <Route path="/teams/:teamId" element={<TeamProfilePage />} />
 
                 <Route path="/stats" element={<Navigate to="/stats3" replace />} />
                 <Route path="/stats/leaders" element={<Navigate to="/stats3/leaders" replace />} />

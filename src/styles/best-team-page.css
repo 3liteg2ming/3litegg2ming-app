@@ -12,7 +12,7 @@
   width: 100%;
   max-width: 520px;
   margin: 0 auto;
-  padding: max(calc(env(safe-area-inset-top) + 8px), 14px) 14px calc(100px + env(safe-area-inset-bottom));
+  padding: max(calc(env(safe-area-inset-top) + 8px), 14px) 14px calc(140px + env(safe-area-inset-bottom));
   display: grid;
   gap: 14px;
   box-sizing: border-box;
@@ -277,9 +277,9 @@
 
 .bt-field__surface {
   position: relative;
-  overflow: hidden;
-  padding: 16px 8px;
-  border-radius: 999px;
+  overflow: visible;
+  padding: 20px 8px 24px;
+  border-radius: 32px;
   background:
     radial-gradient(340px 240px at 50% 50%, rgba(72, 156, 64, 0.2), transparent 68%),
     radial-gradient(circle at 50% 12%, rgba(255, 255, 255, 0.1), transparent 28%),

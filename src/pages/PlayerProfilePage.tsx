@@ -29,10 +29,8 @@ type TeamRow = {
   id: string;
   name?: string | null;
   short_name?: string | null;
-  abbreviation?: string | null;
   logo_url?: string | null;
   primary_color?: string | null;
-  colour?: string | null;
 };
 
 type StatRow = {
@@ -42,9 +40,6 @@ type StatRow = {
   marks?: number | null;
   tackles?: number | null;
   clearances?: number | null;
-  goals?: number | null;
-  behinds?: number | null;
-  hit_outs?: number | null;
   fantasy_points?: number | null;
   matches?: number | null;
 };
@@ -56,9 +51,6 @@ type LatestStatRow = {
   marks?: number | null;
   tackles?: number | null;
   clearances?: number | null;
-  goals?: number | null;
-  behinds?: number | null;
-  hit_outs?: number | null;
   fantasy_points?: number | null;
 };
 
@@ -70,9 +62,6 @@ type AverageStatRow = {
   avg_marks?: number | null;
   avg_tackles?: number | null;
   avg_clearances?: number | null;
-  avg_goals?: number | null;
-  avg_behinds?: number | null;
-  avg_hit_outs?: number | null;
   avg_fantasy_points?: number | null;
 };
 
@@ -85,17 +74,14 @@ const ALL_STATS: StatConfig[] = [
   { key: 'kicks', label: 'Kicks', short: 'K' },
   { key: 'handballs', label: 'Handballs', short: 'HB' },
   { key: 'marks', label: 'Marks', short: 'MRK' },
-  { key: 'goals', label: 'Goals', short: 'GLS' },
-  { key: 'behinds', label: 'Behinds', short: 'BHD' },
   { key: 'tackles', label: 'Tackles', short: 'TKL' },
   { key: 'clearances', label: 'Clearances', short: 'CLR' },
-  { key: 'hit_outs', label: 'Hit Outs', short: 'HO' },
   { key: 'fantasy_points', label: 'Fantasy Pts', short: 'FPTS' },
 ];
 
 const HERO_TILES: StatConfig[] = [
   { key: 'disposals', label: 'Disposals', short: 'DISP' },
-  { key: 'goals', label: 'Goals', short: 'GLS' },
+  { key: 'fantasy_points', label: 'Fantasy', short: 'FPTS' },
   { key: 'marks', label: 'Marks', short: 'MRK' },
   { key: 'tackles', label: 'Tackles', short: 'TKL' },
 ];
@@ -117,13 +103,13 @@ function safeNumber(value: number | null | undefined, decimals = 1): string {
 }
 
 function teamColor(team: TeamRow | null): string {
-  return String(team?.primary_color || team?.colour || '#1f2937');
+  return String(team?.primary_color || '#1f2937');
 }
 
 function tName(team: TeamRow | null): string {
   return resolveTeamName({
     name: team?.name,
-    shortName: team?.short_name || team?.abbreviation,
+    shortName: team?.short_name,
   });
 }
 
@@ -151,9 +137,6 @@ function toStatRow(row: LatestStatRow | AverageStatRow | TotalsStatRow | null | 
     marks: (row as any).marks ?? (row as any).avg_marks ?? null,
     tackles: (row as any).tackles ?? (row as any).avg_tackles ?? null,
     clearances: (row as any).clearances ?? (row as any).avg_clearances ?? null,
-    goals: (row as any).goals ?? (row as any).avg_goals ?? null,
-    behinds: (row as any).behinds ?? (row as any).avg_behinds ?? null,
-    hit_outs: (row as any).hit_outs ?? (row as any).avg_hit_outs ?? null,
     fantasy_points: (row as any).fantasy_points ?? (row as any).avg_fantasy_points ?? null,
   };
 }
@@ -297,28 +280,28 @@ export default function PlayerProfilePage() {
           playerRow.team_id
             ? supabase
                 .from('eg_teams')
-                .select('id,name,short_name,abbreviation,logo_url,primary_color,colour')
+                .select('id,name,short_name,logo_url,primary_color')
                 .eq('id', playerRow.team_id)
                 .maybeSingle()
             : Promise.resolve({ data: null, error: null }),
           Promise.resolve(
             supabase
               .from('eg_player_latest_fixture_statline')
-              .select('disposals,kicks,handballs,marks,tackles,clearances')
+              .select('disposals,kicks,handballs,marks,tackles,clearances,fantasy_points')
               .eq('player_id', playerId)
               .maybeSingle(),
           ).catch(() => ({ data: null, error: null })),
           Promise.resolve(
             supabase
               .from('eg_player_season_averages')
-              .select('matches,avg_disposals,avg_kicks,avg_handballs,avg_marks,avg_tackles,avg_clearances')
+              .select('matches,avg_disposals,avg_kicks,avg_handballs,avg_marks,avg_tackles,avg_clearances,avg_fantasy_points')
               .eq('player_id', playerId)
               .maybeSingle(),
           ).catch(() => ({ data: null, error: null })),
           Promise.resolve(
             supabase
               .from('eg_player_career_averages')
-              .select('matches,avg_disposals,avg_kicks,avg_handballs,avg_marks,avg_tackles,avg_clearances')
+              .select('matches,avg_disposals,avg_kicks,avg_handballs,avg_marks,avg_tackles,avg_clearances,avg_fantasy_points')
               .eq('player_id', playerId)
               .maybeSingle(),
           ).catch(() => ({ data: null, error: null })),
@@ -420,7 +403,13 @@ export default function PlayerProfilePage() {
             </div>
 
             <h1 className="ppHero__name">{profileName}</h1>
-            <p className="ppHero__team">{tName(team)}</p>
+            {team?.id ? (
+              <p className="ppHero__team" style={{ cursor: 'pointer' }} onClick={() => navigate(`/teams/${team.id}`)}>
+                {tName(team)}
+              </p>
+            ) : (
+              <p className="ppHero__team">{tName(team)}</p>
+            )}
 
             {matchCount > 0 && (
               <div className="ppHero__games">

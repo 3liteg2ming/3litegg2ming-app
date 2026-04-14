@@ -231,8 +231,11 @@ const StatLeadersPage: React.FC = () => {
           const teamName = modeParam === 'players' ? (entry.teamName || undefined) : undefined;
           const src = modeParam === 'players' ? (entry.headshotUrl || '') : (entry.logoUrl || '');
           const canOpenPlayer = modeParam === 'players' && isValidPlayerId(entry.playerId);
-          const openPlayer = () => {
+          const canOpenTeam = modeParam === 'teams' && isValidPlayerId(entry.playerId);
+          const canOpen = canOpenPlayer || canOpenTeam;
+          const openEntry = () => {
             if (canOpenPlayer) navigate(`/player/${entry.playerId}`);
+            else if (canOpenTeam) navigate(`/teams/${entry.playerId}`);
           };
 
           return (
@@ -240,15 +243,15 @@ const StatLeadersPage: React.FC = () => {
               <span className="eg-list-rank">{idx + 1}</span>
               <div
                 className="eg-list-avatar"
-                onClick={canOpenPlayer ? openPlayer : undefined}
-                role={canOpenPlayer ? 'button' : undefined}
-                tabIndex={canOpenPlayer ? 0 : undefined}
+                onClick={canOpen ? openEntry : undefined}
+                role={canOpen ? 'button' : undefined}
+                tabIndex={canOpen ? 0 : undefined}
                 onKeyDown={
-                  canOpenPlayer
+                  canOpen
                     ? (e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
-                          openPlayer();
+                          openEntry();
                         }
                       }
                     : undefined
@@ -262,15 +265,15 @@ const StatLeadersPage: React.FC = () => {
               </div>
               <div
                 className="eg-list-info"
-                onClick={canOpenPlayer ? openPlayer : undefined}
-                role={canOpenPlayer ? 'button' : undefined}
-                tabIndex={canOpenPlayer ? 0 : undefined}
+                onClick={canOpen ? openEntry : undefined}
+                role={canOpen ? 'button' : undefined}
+                tabIndex={canOpen ? 0 : undefined}
                 onKeyDown={
-                  canOpenPlayer
+                  canOpen
                     ? (e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
-                          openPlayer();
+                          openEntry();
                         }
                       }
                     : undefined

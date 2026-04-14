@@ -34,6 +34,7 @@ export type FixturePosterMatch = {
   adminAwayOdds?: number;
 
   onMatchCentreClick?: () => void;
+  statusTextOverride?: string;
 };
 
 function hexToRgb(hex: string) {
@@ -220,7 +221,7 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
         <div className="fxPosterCard__headerBadge">{headerMeta}</div>
         <div className="fxPosterCard__statusPill">
           <span className="fxPosterCard__statusDot" />
-          <span className="fxPosterCard__statusText">{statusText(safeMatch.status)}</span>
+          <span className="fxPosterCard__statusText">{safeMatch.statusTextOverride || statusText(safeMatch.status)}</span>
         </div>
       </div>
 

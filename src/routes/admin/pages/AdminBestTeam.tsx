@@ -19,6 +19,7 @@ import {
 } from '../../../lib/best23Repo';
 import {
   fetchTeamOfTournament,
+  clearTeamOfTournamentCache,
   type TeamOfTournament,
   type TeamOfTournamentFieldRow,
   type TeamOfTournamentFieldRowKey,
@@ -156,10 +157,10 @@ export default function AdminBestTeam() {
     setIsLoading(true);
     setSaveState('idle');
     try {
-      const [baseTeam, override] = await Promise.all([
-        fetchTeamOfTournament({ force }),
-        fetchBest23Override().catch(() => null),
-      ]);
+      // When forcing a refresh, clear caches upfront for guaranteed fresh data
+      const baseTeam = await fetchTeamOfTournament({ force });
+      const override = await fetchBest23Override().catch(() => null);
+
       const resolved = applyBest23Override(baseTeam, override);
       const nextTeam = cloneTeam(resolved);
       setAutoTeam(baseTeam);
@@ -318,9 +319,17 @@ export default function AdminBestTeam() {
   };
 
   const refreshFromStats = async () => {
+    setIsLoading(true);
+    setSaveState('idle');
     setSelectedSlot(null);
     setSearchTerm('');
-    await load(true);
+    try {
+      await load(true);
+      pushToast('Refreshed Best 23 from latest stats', 'success');
+    } catch (error) {
+      console.error('Refresh failed:', error);
+      pushToast('Failed to refresh Best 23', 'error');
+    }
   };
 
   const saveCurrentTeam = async () => {
@@ -332,10 +341,16 @@ export default function AdminBestTeam() {
       setLastSavedFingerprint(nextFingerprint);
       setSaveState('saved');
       pushToast(`Saved ${BEST23_CONTENT_KEY}`, 'success');
+      // Clear caches after successful save so next refresh gets fresh data
+      clearTeamOfTournamentCache();
+      // Auto-clear the saved state after 2 seconds
+      setTimeout(() => setSaveState('idle'), 2000);
     } catch (error) {
       console.error(error);
       setSaveState('error');
       pushToast('Failed to save Best 23', 'error');
+      // Auto-clear error state after 3 seconds
+      setTimeout(() => setSaveState('idle'), 3000);
     }
   };
 

@@ -21,7 +21,7 @@ import { deriveFixtureRound, normalizeFixtureStatus, type FixtureRow } from '../
 import { fetchMatchCentre } from '../lib/matchCentreRepo';
 import { fetchCurrentCoaches, type HomeCoach } from '../lib/homeRepo';
 import { FIXTURES_UNLOCK_LABEL, useFixtureVisibility } from '../lib/fixtureVisibility';
-import { useDeadlineCountdown, DEADLINE_R5_R6_MS, DEADLINE_R7_R8_MS } from '../hooks/useDeadlineCountdown';
+import { useDeadlineCountdown, DEADLINE_R9_R10_MS } from '../hooks/useDeadlineCountdown';
 import { isRoundVisible } from '../lib/visibleRounds';
 import { useMelvinOdds } from '../hooks/useMelvinOdds';
 import { useLadder } from '../hooks/useLadder';
@@ -149,11 +149,16 @@ function mapToPosterMatch(
 
   const posterStatus = normalizeFixtureStatus(fixture.status, fixture) as FixturePosterMatch['status'];
 
+  // Gold Coast Suns games show as TBA while coach is unavailable
+  const isGoldCoastGame = home === 'goldcoast' || away === 'goldcoast';
+  const isNotFinal = posterStatus !== 'FINAL';
+  const showAsTba = isGoldCoastGame && isNotFinal;
+
   const previewState = {
     matchCentrePreview: {
       fixtureId: fixture.id,
       round: roundNumber,
-      dateText: formatDateText(fixture.start_time),
+      dateText: showAsTba ? 'TBC' : formatDateText(fixture.start_time),
       venue: fixture.venue || 'TBA',
       statusLabel: posterStatus,
       home: {
@@ -192,9 +197,10 @@ function mapToPosterMatch(
   return {
     id: fixture.id,
     round: roundNumber,
-    dateText: formatDateText(fixture.start_time),
+    dateText: showAsTba ? 'TBC' : formatDateText(fixture.start_time),
     venue: fixture.venue || 'TBA',
-    status: posterStatus,
+    status: showAsTba ? 'SCHEDULED' as FixturePosterMatch['status'] : posterStatus,
+    statusTextOverride: showAsTba ? 'DELAYED' : undefined,
     home: stageHasIdentity(fixture, 'home') ? home : 'unknown',
     away: stageHasIdentity(fixture, 'away') ? away : 'unknown',
     homeCoachName: homeCoach?.display_name || undefined,
@@ -269,8 +275,7 @@ export default function AFL26FixturesPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const fixturesPubliclyVisible = useFixtureVisibility(user?.role);
-  const deadlineR56 = useDeadlineCountdown(DEADLINE_R5_R6_MS);
-  const deadlineR78 = useDeadlineCountdown(DEADLINE_R7_R8_MS);
+  const deadlineR910 = useDeadlineCountdown(DEADLINE_R9_R10_MS);
   const { data: adminOddsMap } = useMelvinOdds();
 
   let competitionKey = getStoredCompetitionKey();
@@ -294,6 +299,7 @@ export default function AFL26FixturesPage() {
   const [matchInfoOpen, setMatchInfoOpen] = useState(false);
 
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const roundBarRef = useRef<HTMLDivElement | null>(null);
 
   const seasonFixturesQuery = useSeasonFixtures(seasonSlug, {
     limit: 1000,
@@ -363,12 +369,24 @@ export default function AFL26FixturesPage() {
 
   useEffect(() => {
     if (!fixturesPubliclyVisible) return;
-    const defaultRound = regularStageGroups.find((s) => s.id === 'round-5')?.id
+    const defaultRound = regularStageGroups.find((s) => s.id === 'round-9')?.id
       || regularStageGroups[regularStageGroups.length - 1]?.id || '';
     if (!activeStageId || !regularStageGroups.some((stage) => stage.id === activeStageId)) {
       setActiveStageId(defaultRound);
     }
   }, [activeStageId, fixturesPubliclyVisible, regularStageGroups]);
+
+  // Auto-scroll round bar so the active pill is visible
+  useEffect(() => {
+    const el = roundBarRef.current;
+    if (!el || !activeStageId) return;
+    const active = el.querySelector('.is-active') as HTMLElement | null;
+    if (active) {
+      requestAnimationFrame(() => {
+        active.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+      });
+    }
+  }, [activeStageId]);
 
   const isTeamView = selectedTeamId !== 'ALL';
 
@@ -515,7 +533,7 @@ export default function AFL26FixturesPage() {
 
         {fixturesPubliclyVisible ? (
           <div className={`fxRoundBar ${isDockCompact ? 'is-compact' : ''}`} aria-label="Round selector">
-            <div className="fxRoundBar__inner">
+            <div className="fxRoundBar__inner" ref={roundBarRef}>
               {regularStageGroups.map((stage) => (
                 <button
                   key={stage.id}
@@ -542,67 +560,33 @@ export default function AFL26FixturesPage() {
 
         {fixturesPubliclyVisible && (
           <>
-            {/* Round 5 & 6 deadline — Friday 11 April midnight */}
-            <div className={`fxDeadlineNotice ${deadlineR56.expired ? 'is-expired' : ''}`}>
+            {/* Round 9 & 10 deadline — Monday 20 April midnight */}
+            <div className={`fxDeadlineNotice ${deadlineR910.expired ? 'is-expired' : ''}`}>
               <div className="fxDeadlineNotice__text">
-                Round 5 &amp; 6 submissions close Friday midnight
+                Round 9 &amp; 10 submissions close Monday 20 April midnight
               </div>
               <div className="fxDeadlineNotice__countdown">
-                {deadlineR56.expired ? (
+                {deadlineR910.expired ? (
                   <span className="fxDeadlineNotice__expired">Deadline passed</span>
                 ) : (
                   <>
                     <div className="fxDeadlineNotice__unit">
-                      <span className="fxDeadlineNotice__num">{deadlineR56.days}</span>
+                      <span className="fxDeadlineNotice__num">{deadlineR910.days}</span>
                       <span className="fxDeadlineNotice__lbl">days</span>
                     </div>
                     <span className="fxDeadlineNotice__sep">:</span>
                     <div className="fxDeadlineNotice__unit">
-                      <span className="fxDeadlineNotice__num">{String(deadlineR56.hours).padStart(2, '0')}</span>
+                      <span className="fxDeadlineNotice__num">{String(deadlineR910.hours).padStart(2, '0')}</span>
                       <span className="fxDeadlineNotice__lbl">hrs</span>
                     </div>
                     <span className="fxDeadlineNotice__sep">:</span>
                     <div className="fxDeadlineNotice__unit">
-                      <span className="fxDeadlineNotice__num">{String(deadlineR56.minutes).padStart(2, '0')}</span>
+                      <span className="fxDeadlineNotice__num">{String(deadlineR910.minutes).padStart(2, '0')}</span>
                       <span className="fxDeadlineNotice__lbl">min</span>
                     </div>
                     <span className="fxDeadlineNotice__sep">:</span>
                     <div className="fxDeadlineNotice__unit">
-                      <span className="fxDeadlineNotice__num">{String(deadlineR56.seconds).padStart(2, '0')}</span>
-                      <span className="fxDeadlineNotice__lbl">sec</span>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Round 6 & 7 deadline — Tuesday 14 April midnight */}
-            <div className={`fxDeadlineNotice ${deadlineR78.expired ? 'is-expired' : ''}`} style={{ marginTop: 6 }}>
-              <div className="fxDeadlineNotice__text">
-                Round 7 &amp; 8 submissions close Tuesday 14 April midnight
-              </div>
-              <div className="fxDeadlineNotice__countdown">
-                {deadlineR78.expired ? (
-                  <span className="fxDeadlineNotice__expired">Deadline passed</span>
-                ) : (
-                  <>
-                    <div className="fxDeadlineNotice__unit">
-                      <span className="fxDeadlineNotice__num">{deadlineR78.days}</span>
-                      <span className="fxDeadlineNotice__lbl">days</span>
-                    </div>
-                    <span className="fxDeadlineNotice__sep">:</span>
-                    <div className="fxDeadlineNotice__unit">
-                      <span className="fxDeadlineNotice__num">{String(deadlineR78.hours).padStart(2, '0')}</span>
-                      <span className="fxDeadlineNotice__lbl">hrs</span>
-                    </div>
-                    <span className="fxDeadlineNotice__sep">:</span>
-                    <div className="fxDeadlineNotice__unit">
-                      <span className="fxDeadlineNotice__num">{String(deadlineR78.minutes).padStart(2, '0')}</span>
-                      <span className="fxDeadlineNotice__lbl">min</span>
-                    </div>
-                    <span className="fxDeadlineNotice__sep">:</span>
-                    <div className="fxDeadlineNotice__unit">
-                      <span className="fxDeadlineNotice__num">{String(deadlineR78.seconds).padStart(2, '0')}</span>
+                      <span className="fxDeadlineNotice__num">{String(deadlineR910.seconds).padStart(2, '0')}</span>
                       <span className="fxDeadlineNotice__lbl">sec</span>
                     </div>
                   </>

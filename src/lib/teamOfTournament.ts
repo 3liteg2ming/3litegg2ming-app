@@ -160,7 +160,6 @@ const PLAYER_GROUP_OVERRIDES: Record<string, TeamOfTournamentGroup[]> = {
   toukmiller: ['midfielders'],
   callummills: ['midfielders'],
   willday: ['midfielders'],
-  daynezerko: ['midfielders'],
   daynezorko: ['midfielders'],
   darcywilmot: ['midfielders'],
   tobybedford: ['midfielders'],
@@ -198,7 +197,6 @@ const PLAYER_GROUP_OVERRIDES: Record<string, TeamOfTournamentGroup[]> = {
   darcyfogarty: ['forwards'],
   aaroncadman: ['forwards'],
   haydenmclean: ['forwards', 'rucks'],
-  mabiorchor: ['forwards'],
   mabiorchol: ['forwards'],
   jackginnivan: ['forwards'],
   dylanmoore: ['forwards'],
@@ -210,7 +208,6 @@ const PLAYER_GROUP_OVERRIDES: Record<string, TeamOfTournamentGroup[]> = {
   izakrankine: ['forwards'],
   paulcurtis: ['forwards'],
   jyeamiss: ['forwards'],
-  grylanmiers: ['forwards'],
   gryanmiers: ['forwards'],
   jamesworpel: ['midfielders', 'forwards'],
   harryhimmelberg: ['forwards'],
@@ -234,7 +231,6 @@ const PLAYER_GROUP_OVERRIDES: Record<string, TeamOfTournamentGroup[]> = {
   danerampe: ['defenders'],
   baileydale: ['defenders'],
   johnoble: ['defenders'],
-  nasiahanganenmilera: ['defenders'],
   nasiahwanganeenmilera: ['defenders'],
   bradleyhill: ['defenders'],
   lachiewhitfield: ['defenders'],
@@ -243,7 +239,6 @@ const PLAYER_GROUP_OVERRIDES: Record<string, TeamOfTournamentGroup[]> = {
   markkeane: ['defenders'],
   darcygardiner: ['defenders'],
   tomstewart: ['defenders'],
-  tomsteward: ['defenders'],
   tommccartin: ['defenders', 'rucks'],
   jarmanimpey: ['defenders'],
   jackpayne: ['defenders'],
@@ -640,26 +635,88 @@ function removePlayersFromPool(players: TotPlayer[], picked: Array<TotPlayer | n
 
 export function buildTeamOfTournamentFieldLayout(team: Pick<TeamOfTournament, 'defenders' | 'midfielders' | 'rucks' | 'forwards'>): TeamOfTournamentFieldRow[] {
   const defenderPool = [...team.defenders];
-  const fullBack = sortPlayersByScore(defenderPool, (player) => totalValue(player, 'marks') * 2.4 + totalValue(player, 'tackles') * 1.25 + totalValue(player, 'fantasyPoints') * 0.02)[0] || null;
-  const afterFullBack = removePlayersFromPool(defenderPool, [fullBack]);
-  const centerHalfBack = sortPlayersByScore(afterFullBack, (player) => totalValue(player, 'marks') * 2.1 + totalValue(player, 'disposals') * 0.8 + totalValue(player, 'tackles') * 1.15)[0] || null;
-  const afterKeyBacks = removePlayersFromPool(afterFullBack, [centerHalfBack]);
-  const halfBacks = sortPlayersByScore(afterKeyBacks, (player) => totalValue(player, 'disposals') * 2.35 + totalValue(player, 'marks') * 1.05 + totalValue(player, 'fantasyPoints') * 0.03).slice(0, 2);
-  const backPockets = sortPlayersByScore(removePlayersFromPool(afterKeyBacks, halfBacks), (player) => totalValue(player, 'marks') * 1.7 + totalValue(player, 'tackles') * 1.1 + totalValue(player, 'fantasyPoints') * 0.02).slice(0, 2);
 
-  const midfielders = sortPlayersByScore([...team.midfielders], (player) => totalValue(player, 'disposals') * 3 + totalValue(player, 'tackles') * 1.2 + totalValue(player, 'fantasyPoints') * 0.03);
+  // Full Back: prioritize marks and defensive ability
+  const fullBack = sortPlayersByScore(defenderPool, (player) => {
+    const baseScore = totalValue(player, 'marks') * 2.4 + totalValue(player, 'tackles') * 1.25 + totalValue(player, 'fantasyPoints') * 0.02;
+    // Bonus for explicit defender eligibility
+    const positionBonus = player.group === 'defenders' ? 500 : 0;
+    return baseScore + positionBonus;
+  })[0] || null;
+
+  const afterFullBack = removePlayersFromPool(defenderPool, [fullBack]);
+
+  // Center Half Back: balanced marks and disposals
+  const centerHalfBack = sortPlayersByScore(afterFullBack, (player) => {
+    const baseScore = totalValue(player, 'marks') * 2.1 + totalValue(player, 'disposals') * 0.8 + totalValue(player, 'tackles') * 1.15;
+    const positionBonus = player.group === 'defenders' ? 400 : 0;
+    return baseScore + positionBonus;
+  })[0] || null;
+
+  const afterKeyBacks = removePlayersFromPool(afterFullBack, [centerHalfBack]);
+
+  // Half Backs: disposal-heavy, but still defensive
+  const halfBacks = sortPlayersByScore(afterKeyBacks, (player) => {
+    const baseScore = totalValue(player, 'disposals') * 2.35 + totalValue(player, 'marks') * 1.05 + totalValue(player, 'fantasyPoints') * 0.03;
+    const positionBonus = player.group === 'defenders' ? 300 : 0;
+    return baseScore + positionBonus;
+  }).slice(0, 2);
+
+  // Back Pockets: marking and tackling
+  const backPockets = sortPlayersByScore(removePlayersFromPool(afterKeyBacks, halfBacks), (player) => {
+    const baseScore = totalValue(player, 'marks') * 1.7 + totalValue(player, 'tackles') * 1.1 + totalValue(player, 'fantasyPoints') * 0.02;
+    const positionBonus = player.group === 'defenders' ? 200 : 0;
+    return baseScore + positionBonus;
+  }).slice(0, 2);
+
+  const midfielders = sortPlayersByScore([...team.midfielders], (player) => {
+    const baseScore = totalValue(player, 'disposals') * 3 + totalValue(player, 'tackles') * 1.2 + totalValue(player, 'fantasyPoints') * 0.03;
+    const positionBonus = player.group === 'midfielders' ? 400 : 0;
+    return baseScore + positionBonus;
+  });
+
+  // Centre: high disposal, can handle physical
   const centre = midfielders[0] || null;
+  // Rover: balanced midfielder
   const rover = midfielders[1] || null;
+  // Ruck Rover: midfielder who can work with ruck
   const ruckRover = midfielders[2] || null;
+  // Wings: fast, skilled midfielders
   const wings = midfielders.slice(3, 5);
 
   const forwardPool = [...team.forwards];
-  const fullForward = sortPlayersByScore(forwardPool, (player) => totalValue(player, 'goals') * 3.2 + totalValue(player, 'marks') * 1.2 + totalValue(player, 'fantasyPoints') * 0.02)[0] || null;
+
+  // Full Forward: primary goal kicker
+  const fullForward = sortPlayersByScore(forwardPool, (player) => {
+    const baseScore = totalValue(player, 'goals') * 3.2 + totalValue(player, 'marks') * 1.2 + totalValue(player, 'fantasyPoints') * 0.02;
+    const positionBonus = player.group === 'forwards' ? 500 : 0;
+    return baseScore + positionBonus;
+  })[0] || null;
+
   const afterFullForward = removePlayersFromPool(forwardPool, [fullForward]);
-  const centerHalfForward = sortPlayersByScore(afterFullForward, (player) => totalValue(player, 'marks') * 2 + totalValue(player, 'goals') * 2.2 + totalValue(player, 'disposals') * 0.75)[0] || null;
+
+  // Center Half Forward: marking and goal kicking
+  const centerHalfForward = sortPlayersByScore(afterFullForward, (player) => {
+    const baseScore = totalValue(player, 'marks') * 2 + totalValue(player, 'goals') * 2.2 + totalValue(player, 'disposals') * 0.75;
+    const positionBonus = player.group === 'forwards' ? 400 : 0;
+    return baseScore + positionBonus;
+  })[0] || null;
+
   const afterKeyForwards = removePlayersFromPool(afterFullForward, [centerHalfForward]);
-  const halfForwards = sortPlayersByScore(afterKeyForwards, (player) => totalValue(player, 'disposals') * 1.6 + totalValue(player, 'marks') * 1.15 + totalValue(player, 'goals') * 1.1).slice(0, 2);
-  const forwardPockets = sortPlayersByScore(removePlayersFromPool(afterKeyForwards, halfForwards), (player) => totalValue(player, 'goals') * 2.5 + totalValue(player, 'fantasyPoints') * 0.02 + totalValue(player, 'disposals') * 0.4).slice(0, 2);
+
+  // Half Forwards: link-up play and versatility
+  const halfForwards = sortPlayersByScore(afterKeyForwards, (player) => {
+    const baseScore = totalValue(player, 'disposals') * 1.6 + totalValue(player, 'marks') * 1.15 + totalValue(player, 'goals') * 1.1;
+    const positionBonus = player.group === 'forwards' ? 300 : 0;
+    return baseScore + positionBonus;
+  }).slice(0, 2);
+
+  // Forward Pockets: finishers
+  const forwardPockets = sortPlayersByScore(removePlayersFromPool(afterKeyForwards, halfForwards), (player) => {
+    const baseScore = totalValue(player, 'goals') * 2.5 + totalValue(player, 'fantasyPoints') * 0.02 + totalValue(player, 'disposals') * 0.4;
+    const positionBonus = player.group === 'forwards' ? 250 : 0;
+    return baseScore + positionBonus;
+  }).slice(0, 2);
 
   return [
     { key: 'backLine', label: 'Back Line', slots: ['BP', 'FB', 'BP'], players: [backPockets[0] || null, fullBack, backPockets[1] || null] },

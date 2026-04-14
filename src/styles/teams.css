@@ -1,0 +1,151 @@
+/* ── Teams List Page ── */
+
+.tpListPage {
+  min-height: 100vh;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tpListPage__inner {
+  max-width: 580px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.tpListPage__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tpListPage__icon {
+  color: rgba(255, 255, 255, 0.7);
+  width: 18px;
+  height: 18px;
+}
+
+.tpListPage__header h1 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #fff;
+}
+
+.tpListPage__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.tpTeamCard {
+  --tp-color: #f5c400;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 6px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+  cursor: pointer;
+  transition: all 160ms ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.tpTeamCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--tp-color);
+  opacity: 0.6;
+}
+
+.tpTeamCard:hover {
+  transform: translateY(-2px);
+  border-color: var(--tp-color);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.tpTeamCard--skeleton {
+  min-height: 100px;
+  background: rgba(255, 255, 255, 0.04);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.tpTeamCard__logoWrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tpTeamCard__logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+
+.tpTeamCard__name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #f4f8ff;
+  text-align: center;
+  line-height: 1.25;
+}
+
+.tpTeamCard__accent {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--tp-color), transparent);
+  opacity: 0.4;
+}
+
+.tpListPage__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: rgba(188, 204, 232, 0.68);
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@media (max-width: 400px) {
+  .tpListPage__grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .tpTeamCard {
+    padding: 10px 4px 8px;
+  }
+
+  .tpTeamCard__logoWrap {
+    width: 44px;
+    height: 44px;
+  }
+
+  .tpTeamCard__name {
+    font-size: 0.68rem;
+  }
+}

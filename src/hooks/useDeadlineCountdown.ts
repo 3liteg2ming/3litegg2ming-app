@@ -3,14 +3,11 @@ import { useEffect, useState } from 'react';
 /**
  * Round-specific submission deadlines (Melbourne time).
  *
- * Rounds 5 & 6 — Friday 11 April 2026, 23:59:59 AEST
- * Rounds 7 & 8 — Tuesday 14 April 2026, 23:59:59 AEST
+ * Rounds 9 & 10 — Monday 20 April 2026, 23:59:59 AEST
  */
-export const DEADLINE_R5_R6_ISO = '2026-04-11T23:59:59+10:00';
-export const DEADLINE_R7_R8_ISO = '2026-04-14T23:59:59+10:00';
+export const DEADLINE_R9_R10_ISO = '2026-04-20T23:59:59+10:00';
 
-export const DEADLINE_R5_R6_MS = new Date(DEADLINE_R5_R6_ISO).getTime();
-export const DEADLINE_R7_R8_MS = new Date(DEADLINE_R7_R8_ISO).getTime();
+export const DEADLINE_R9_R10_MS = new Date(DEADLINE_R9_R10_ISO).getTime();
 
 export type CountdownResult = {
   days: number;
@@ -48,7 +45,7 @@ function computeCountdown(now: number, deadlineMs: number): CountdownResult {
  *
  * @param deadlineMs – epoch ms of the deadline (defaults to the R5/R6 deadline for backwards compat)
  */
-export function useDeadlineCountdown(deadlineMs: number = DEADLINE_R5_R6_MS): CountdownResult {
+export function useDeadlineCountdown(deadlineMs: number = DEADLINE_R9_R10_MS): CountdownResult {
   const [result, setResult] = useState(() => computeCountdown(Date.now(), deadlineMs));
 
   useEffect(() => {
