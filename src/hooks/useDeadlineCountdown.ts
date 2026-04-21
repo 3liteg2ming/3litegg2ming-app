@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 
 /**
- * Round-specific submission deadlines (Melbourne time).
+ * Season-wide submission deadline (Melbourne time).
  *
- * Round 11 — Sunday 26 April 2026, 23:59:59 AEST
+ * All Season Two games must be submitted by Saturday 25 April 2026, 23:59:59 AEST.
  */
-export const DEADLINE_R11_ISO = '2026-04-26T23:59:59+10:00';
+export const DEADLINE_R11_ISO = '2026-04-25T23:59:59+10:00';
 
 export const DEADLINE_R11_MS = new Date(DEADLINE_R11_ISO).getTime();
 

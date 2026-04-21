@@ -560,10 +560,10 @@ export default function AFL26FixturesPage() {
 
         {fixturesPubliclyVisible && (
           <>
-            {/* Round 11 deadline — Sunday 26 April midnight */}
+            {/* Season submission deadline — Saturday 25 April midnight */}
             <div className={`fxDeadlineNotice ${deadlineR11.expired ? 'is-expired' : ''}`}>
               <div className="fxDeadlineNotice__text">
-                Round 11 submissions close Sunday 26 April midnight
+                ANNOUNCEMENT: All Season Two games must be submitted by Saturday night (25 April, midnight)
               </div>
               <div className="fxDeadlineNotice__countdown">
                 {deadlineR11.expired ? (
