@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 
 /**
- * Round-specific submission deadlines (Melbourne time).
+ * Season-wide submission deadline (Melbourne time).
  *
- * Rounds 9 & 10 — Monday 20 April 2026, 23:59:59 AEST
+ * All Season Two games must be submitted by Saturday 25 April 2026, 23:59:59 AEST.
  */
-export const DEADLINE_R9_R10_ISO = '2026-04-20T23:59:59+10:00';
+export const DEADLINE_R11_ISO = '2026-04-25T23:59:59+10:00';
 
-export const DEADLINE_R9_R10_MS = new Date(DEADLINE_R9_R10_ISO).getTime();
+export const DEADLINE_R11_MS = new Date(DEADLINE_R11_ISO).getTime();
 
 export type CountdownResult = {
   days: number;
@@ -42,10 +42,8 @@ function computeCountdown(now: number, deadlineMs: number): CountdownResult {
 /**
  * Live countdown to a round submission deadline.
  * Ticks every second and returns formatted time remaining.
- *
- * @param deadlineMs – epoch ms of the deadline (defaults to the R5/R6 deadline for backwards compat)
  */
-export function useDeadlineCountdown(deadlineMs: number = DEADLINE_R9_R10_MS): CountdownResult {
+export function useDeadlineCountdown(deadlineMs: number = DEADLINE_R11_MS): CountdownResult {
   const [result, setResult] = useState(() => computeCountdown(Date.now(), deadlineMs));
 
   useEffect(() => {
