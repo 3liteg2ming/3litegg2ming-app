@@ -21,7 +21,7 @@ import { deriveFixtureRound, normalizeFixtureStatus, type FixtureRow } from '../
 import { fetchMatchCentre } from '../lib/matchCentreRepo';
 import { fetchCurrentCoaches, type HomeCoach } from '../lib/homeRepo';
 import { FIXTURES_UNLOCK_LABEL, useFixtureVisibility } from '../lib/fixtureVisibility';
-import { useDeadlineCountdown, DEADLINE_R9_R10_MS } from '../hooks/useDeadlineCountdown';
+import { useDeadlineCountdown, DEADLINE_R11_MS } from '../hooks/useDeadlineCountdown';
 import { isRoundVisible } from '../lib/visibleRounds';
 import { useMelvinOdds } from '../hooks/useMelvinOdds';
 import { useLadder } from '../hooks/useLadder';
@@ -275,7 +275,7 @@ export default function AFL26FixturesPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const fixturesPubliclyVisible = useFixtureVisibility(user?.role);
-  const deadlineR910 = useDeadlineCountdown(DEADLINE_R9_R10_MS);
+  const deadlineR11 = useDeadlineCountdown(DEADLINE_R11_MS);
   const { data: adminOddsMap } = useMelvinOdds();
 
   let competitionKey = getStoredCompetitionKey();
@@ -369,7 +369,7 @@ export default function AFL26FixturesPage() {
 
   useEffect(() => {
     if (!fixturesPubliclyVisible) return;
-    const defaultRound = regularStageGroups.find((s) => s.id === 'round-9')?.id
+    const defaultRound = regularStageGroups.find((s) => s.id === 'round-11')?.id
       || regularStageGroups[regularStageGroups.length - 1]?.id || '';
     if (!activeStageId || !regularStageGroups.some((stage) => stage.id === activeStageId)) {
       setActiveStageId(defaultRound);
@@ -560,33 +560,33 @@ export default function AFL26FixturesPage() {
 
         {fixturesPubliclyVisible && (
           <>
-            {/* Round 9 & 10 deadline — Monday 20 April midnight */}
-            <div className={`fxDeadlineNotice ${deadlineR910.expired ? 'is-expired' : ''}`}>
+            {/* Round 11 deadline — Sunday 26 April midnight */}
+            <div className={`fxDeadlineNotice ${deadlineR11.expired ? 'is-expired' : ''}`}>
               <div className="fxDeadlineNotice__text">
-                Round 9 &amp; 10 submissions close Monday 20 April midnight
+                Round 11 submissions close Sunday 26 April midnight
               </div>
               <div className="fxDeadlineNotice__countdown">
-                {deadlineR910.expired ? (
+                {deadlineR11.expired ? (
                   <span className="fxDeadlineNotice__expired">Deadline passed</span>
                 ) : (
                   <>
                     <div className="fxDeadlineNotice__unit">
-                      <span className="fxDeadlineNotice__num">{deadlineR910.days}</span>
+                      <span className="fxDeadlineNotice__num">{deadlineR11.days}</span>
                       <span className="fxDeadlineNotice__lbl">days</span>
                     </div>
                     <span className="fxDeadlineNotice__sep">:</span>
                     <div className="fxDeadlineNotice__unit">
-                      <span className="fxDeadlineNotice__num">{String(deadlineR910.hours).padStart(2, '0')}</span>
+                      <span className="fxDeadlineNotice__num">{String(deadlineR11.hours).padStart(2, '0')}</span>
                       <span className="fxDeadlineNotice__lbl">hrs</span>
                     </div>
                     <span className="fxDeadlineNotice__sep">:</span>
                     <div className="fxDeadlineNotice__unit">
-                      <span className="fxDeadlineNotice__num">{String(deadlineR910.minutes).padStart(2, '0')}</span>
+                      <span className="fxDeadlineNotice__num">{String(deadlineR11.minutes).padStart(2, '0')}</span>
                       <span className="fxDeadlineNotice__lbl">min</span>
                     </div>
                     <span className="fxDeadlineNotice__sep">:</span>
                     <div className="fxDeadlineNotice__unit">
-                      <span className="fxDeadlineNotice__num">{String(deadlineR910.seconds).padStart(2, '0')}</span>
+                      <span className="fxDeadlineNotice__num">{String(deadlineR11.seconds).padStart(2, '0')}</span>
                       <span className="fxDeadlineNotice__lbl">sec</span>
                     </div>
                   </>
