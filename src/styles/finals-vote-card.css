@@ -1,0 +1,441 @@
+.finalsVoteCard {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  padding: 16px;
+  display: grid;
+  gap: 14px;
+  color: rgba(245, 248, 255, 0.96);
+  background:
+    radial-gradient(420px 200px at -8% 0%, rgba(255, 215, 0, 0.08), transparent 58%),
+    radial-gradient(380px 220px at 108% 100%, rgba(255, 215, 0, 0.05), transparent 62%),
+    linear-gradient(180deg, rgba(12, 16, 24, 0.96), rgba(7, 10, 17, 0.96));
+  border: 1px solid rgba(255, 215, 0, 0.24);
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 24px rgba(255, 215, 0, 0.04);
+  backdrop-filter: blur(18px) saturate(1.08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.08);
+}
+
+.finalsVoteCard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0) 40%),
+    linear-gradient(120deg, transparent 8%, rgba(255, 215, 0, 0.07) 48%, transparent 78%);
+}
+
+.finalsVoteCard::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: calc(24px - 1px);
+  pointer-events: none;
+  border: 1px solid rgba(255, 215, 0, 0.08);
+}
+
+.finalsVoteCard.is-disabled {
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.finalsVoteCard__watermark {
+  position: absolute;
+  top: 50%;
+  width: 128px;
+  height: 128px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.finalsVoteCard__watermark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.03;
+  filter: grayscale(1) brightness(1.15) blur(1px);
+}
+
+.finalsVoteCard__watermark--home {
+  left: -34px;
+}
+
+.finalsVoteCard__watermark--away {
+  right: -34px;
+}
+
+.finalsVoteCard > * {
+  position: relative;
+  z-index: 1;
+}
+
+.finalsVoteCard__topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.finalsVoteCard__badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffd95b, #caa118);
+  color: #11151d;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  box-shadow:
+    0 10px 24px rgba(255, 215, 0, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.finalsVoteCard__topMeta {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.finalsVoteCard__kickoff,
+.finalsVoteCard__round {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(220, 230, 246, 0.72);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.finalsVoteCard__headlineWrap {
+  display: grid;
+  gap: 4px;
+}
+
+.finalsVoteCard__headline {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.05;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: rgba(248, 250, 255, 0.98);
+}
+
+.finalsVoteCard__subline {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: rgba(213, 224, 242, 0.68);
+}
+
+.finalsVoteCard__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.finalsVoteCard__teamButton {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  min-height: 98px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+    rgba(9, 13, 20, 0.78);
+  color: inherit;
+  text-align: left;
+  box-shadow:
+    0 10px 20px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition:
+    transform 0.16s ease,
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.finalsVoteCard__teamButton:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.finalsVoteCard__teamButton:disabled {
+  opacity: 0.58;
+}
+
+.finalsVoteCard__teamButton.is-selected {
+  border-color: rgba(255, 215, 0, 0.56);
+  background:
+    linear-gradient(180deg, rgba(255, 215, 0, 0.12), rgba(255, 215, 0, 0.04)),
+    rgba(11, 15, 22, 0.82);
+  box-shadow:
+    0 0 0 1px rgba(255, 215, 0, 0.08),
+    0 14px 28px rgba(0, 0, 0, 0.22),
+    inset 0 0 18px rgba(255, 215, 0, 0.08);
+}
+
+.finalsVoteCard__teamButtonLogo {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+    rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.finalsVoteCard__teamLogo {
+  width: 34px;
+  height: 34px;
+}
+
+.finalsVoteCard__teamButtonText {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.finalsVoteCard__teamLabel {
+  font-size: 0.86rem;
+  font-weight: 850;
+  line-height: 1.14;
+  color: rgba(248, 250, 255, 0.96);
+  word-break: break-word;
+}
+
+.finalsVoteCard__teamMeta {
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(206, 218, 239, 0.54);
+}
+
+.finalsVoteCard__teamButton.is-selected .finalsVoteCard__teamMeta {
+  color: rgba(255, 219, 102, 0.92);
+}
+
+.finalsVoteCard__barBlock {
+  display: grid;
+  gap: 10px;
+}
+
+.finalsVoteCard__percentRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.finalsVoteCard__percentStat {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.finalsVoteCard__percentStat strong {
+  font-size: 1.15rem;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: rgba(255, 221, 118, 0.96);
+}
+
+.finalsVoteCard__percentStat--away {
+  text-align: right;
+}
+
+.finalsVoteCard__percentStat--away strong {
+  color: rgba(230, 238, 252, 0.96);
+}
+
+.finalsVoteCard__percentStat.is-neutral strong {
+  color: rgba(228, 236, 250, 0.74);
+}
+
+.finalsVoteCard__percentTeam {
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(202, 215, 237, 0.56);
+}
+
+.finalsVoteCard__splitBar {
+  position: relative;
+  height: 18px;
+  overflow: hidden;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03)),
+    rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.finalsVoteCard__splitBar.is-empty {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.025)),
+    rgba(255, 255, 255, 0.018);
+}
+
+.finalsVoteCard__splitFill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  transition: width 280ms ease;
+}
+
+.finalsVoteCard__splitFill--home {
+  left: 0;
+  background: linear-gradient(90deg, rgba(255, 215, 0, 0.92), rgba(255, 215, 0, 0.62));
+}
+
+.finalsVoteCard__splitFill--away {
+  right: 0;
+  background: linear-gradient(90deg, rgba(184, 196, 218, 0.55), rgba(232, 240, 255, 0.34));
+}
+
+.finalsVoteCard__splitBar.is-empty .finalsVoteCard__splitFill--home,
+.finalsVoteCard__splitBar.is-empty .finalsVoteCard__splitFill--away {
+  opacity: 0.26;
+}
+
+.finalsVoteCard__splitDivider {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.finalsVoteCard__emptyLabel {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 0 12px;
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: rgba(224, 233, 246, 0.74);
+}
+
+.finalsVoteCard__voteMeta {
+  display: grid;
+  gap: 4px;
+}
+
+.finalsVoteCard__voteCount {
+  font-size: 0.72rem;
+  font-weight: 850;
+  color: rgba(236, 242, 252, 0.86);
+}
+
+.finalsVoteCard__voteBreakdown {
+  font-size: 0.66rem;
+  color: rgba(199, 212, 236, 0.56);
+}
+
+.finalsVoteCard__helper {
+  font-size: 0.7rem;
+  line-height: 1.45;
+  color: rgba(202, 216, 240, 0.6);
+}
+
+.finalsVoteCard__helper.is-error {
+  color: rgba(255, 202, 169, 0.82);
+}
+
+.finalsVoteCard__sk {
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(30, 36, 48, 0.64) 25%,
+    rgba(54, 64, 80, 0.82) 50%,
+    rgba(30, 36, 48, 0.64) 75%
+  );
+  background-size: 200% 100%;
+  animation: finalsVoteShimmer 1.4s linear infinite;
+}
+
+.finalsVoteCard__sk--pill {
+  width: 82px;
+  height: 24px;
+}
+
+.finalsVoteCard__sk--round {
+  width: 110px;
+  height: 22px;
+}
+
+.finalsVoteCard__sk--headline {
+  width: 66%;
+  height: 20px;
+  border-radius: 10px;
+}
+
+.finalsVoteCard__sk--teamBtn {
+  width: 100%;
+  height: 98px;
+  border-radius: 18px;
+}
+
+.finalsVoteCard__sk--bar {
+  width: 100%;
+  height: 18px;
+}
+
+.finalsVoteCard__sk--foot {
+  width: 72%;
+  height: 14px;
+  border-radius: 8px;
+}
+
+@keyframes finalsVoteShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .finalsVoteCard__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .finalsVoteCard__teamButton {
+    min-height: 90px;
+  }
+}

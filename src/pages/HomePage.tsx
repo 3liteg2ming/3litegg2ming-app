@@ -11,10 +11,14 @@ import {
 
 import { useAuth } from '../state/auth/AuthProvider';
 import { useLadder } from '../hooks/useLadder';
-import { useNextFixtures } from '../hooks/useFixtures';
+import { useNextFixtures, useSeasonFixtures } from '../hooks/useFixtures';
+import FinalsVoteCard from '../components/finals/FinalsVoteCard';
+import PremiersVoteCard from '../components/finals/PremiersVoteCard';
+import { FINALS_CONFIG, getFinalsLabel } from '../config/finals';
 import { assetUrl } from '../lib/teamAssets';
 import { resolveTeamLogoUrl } from '../lib/entityResolvers';
 import { FIXTURES_UNLOCK_LABEL, useFixtureVisibility } from '../lib/fixtureVisibility';
+import { normalizeFixtureStatus, type FixtureRow } from '../lib/fixturesRepo';
 import { TEAM_SHORT_NAMES } from '../data/teamColors';
 import { MelvinBetHomeCard, type MelvinHomeFixture } from '../components/MelvinBet';
 
@@ -58,6 +62,87 @@ function teamNamesOverlap(fixtureName: string, coachTeam: string): boolean {
   if (!cWords.length) return false;
   const matchCount = cWords.filter((w) => f.includes(w)).length;
   return matchCount >= Math.min(2, cWords.length);
+}
+
+function toText(value: unknown): string {
+  return String(value || '').trim();
+}
+
+function getFixtureTimestamp(value?: string | null): number {
+  const raw = toText(value);
+  if (!raw) return Number.POSITIVE_INFINITY;
+
+  const timestamp = new Date(raw).getTime();
+  return Number.isFinite(timestamp) ? timestamp : Number.POSITIVE_INFINITY;
+}
+
+function isFinalsFixtureCandidate(fixture: FixtureRow): boolean {
+  const source = [fixture.stage_name, fixture.bracket_slot, fixture.round_label].join(' ').toLowerCase();
+  return (
+    source.includes('qualifying') ||
+    source.includes('elimination') ||
+    source.includes('semi') ||
+    source.includes('prelim') ||
+    source.includes('preliminary') ||
+    source.includes('grand') ||
+    source.includes('finals week') ||
+    source.includes('finals') ||
+    source.includes('final')
+  );
+}
+
+function getFixtureFinalsRoundLabel(fixture: FixtureRow) {
+  const source = [fixture.stage_name, fixture.bracket_slot, fixture.round_label].join(' ').toLowerCase();
+
+  if (source.includes('qualifying')) return 'Qualifying Final';
+  if (source.includes('elimination')) return 'Elimination Final';
+  if (source.includes('semi')) return 'Semi Final';
+  if (source.includes('prelim')) return 'Preliminary Final';
+  if (source.includes('grand')) return 'Grand Final';
+
+  return getFinalsLabel(FINALS_CONFIG.week) || fixture.round_label || 'Finals';
+}
+
+function pickFeaturedFinalsFixture(fixtures: FixtureRow[]): FixtureRow | null {
+  if (!fixtures.length) return null;
+
+  const finalsFixtures = fixtures.filter(isFinalsFixtureCandidate);
+  if (!finalsFixtures.length) return null;
+
+  const now = Date.now();
+  const statusPriority = (fixture: FixtureRow) => {
+    const status = normalizeFixtureStatus(fixture.status, fixture);
+    const timestamp = getFixtureTimestamp(fixture.start_time);
+
+    if (status === 'LIVE') return { priority: 0, order: Math.abs(now - timestamp) };
+    if (status === 'PENDING_RESULTS') return { priority: 1, order: Math.abs(now - timestamp) };
+    if (status === 'SCHEDULED' && timestamp >= now) return { priority: 2, order: timestamp };
+    return { priority: 3, order: timestamp };
+  };
+
+  return [...finalsFixtures].sort((a, b) => {
+    const aRank = statusPriority(a);
+    const bRank = statusPriority(b);
+
+    if (aRank.priority !== bRank.priority) return aRank.priority - bRank.priority;
+    if (aRank.order !== bRank.order) return aRank.order - bRank.order;
+
+    return getFixtureTimestamp(a.start_time) - getFixtureTimestamp(b.start_time);
+  })[0] || null;
+}
+
+function hasFinalsStarted(fixtures: FixtureRow[]): boolean {
+  return fixtures.some((fixture) => {
+    if (!isFinalsFixtureCandidate(fixture)) return false;
+
+    const normalizedStatus = normalizeFixtureStatus(fixture.status, fixture);
+    if (normalizedStatus === 'LIVE' || normalizedStatus === 'PENDING_RESULTS' || normalizedStatus === 'FINAL') {
+      return true;
+    }
+
+    const timestamp = getFixtureTimestamp(fixture.start_time);
+    return Number.isFinite(timestamp) && timestamp <= Date.now();
+  });
 }
 
 function useHomepageStats() {
@@ -721,6 +806,100 @@ function CoachHubBanner() {
   );
 }
 
+function FinalsHubSection({ fixturesVisible }: { fixturesVisible: boolean }) {
+  const finalsFixturesQuery = useSeasonFixtures('afl26-season-two', {
+    limit: 1000,
+    enabled: fixturesVisible && FINALS_CONFIG.enabled,
+  });
+  const ladderQuery = useLadder('afl26-season-two');
+
+  const allFinalsFixtures = React.useMemo(
+    () => (Array.isArray(finalsFixturesQuery.data?.fixtures) ? finalsFixturesQuery.data?.fixtures || [] : []),
+    [finalsFixturesQuery.data?.fixtures],
+  );
+  const finalsStarted = React.useMemo(() => hasFinalsStarted(allFinalsFixtures), [allFinalsFixtures]);
+  const featuredFinalsFixture = React.useMemo(
+    () => pickFeaturedFinalsFixture(allFinalsFixtures),
+    [allFinalsFixtures],
+  );
+  const finalsVoteRoundLabel = featuredFinalsFixture ? getFixtureFinalsRoundLabel(featuredFinalsFixture) : undefined;
+  const finalsVoteStatus = featuredFinalsFixture
+    ? normalizeFixtureStatus(featuredFinalsFixture.status, featuredFinalsFixture)
+    : undefined;
+  const premiersOptions = React.useMemo(
+    () =>
+      (ladderQuery.data || []).slice(0, 8).map((team, index) => ({
+        key: team.team_slug,
+        label: team.team_name,
+        logoUrl: team.team_logo_url,
+        rank: index + 1,
+        points: team.points,
+        percentage: team.percentage,
+      })),
+    [ladderQuery.data],
+  );
+
+  const showPremiersVote = FINALS_CONFIG.enabled && !finalsStarted && premiersOptions.length >= 2;
+  const showFixtureVote = FINALS_CONFIG.enabled && finalsStarted && Boolean(featuredFinalsFixture);
+
+  if (!FINALS_CONFIG.enabled || (!showPremiersVote && !showFixtureVote)) return null;
+
+  const headingTitle = showPremiersVote ? 'Premiers vote is open' : 'Finals fan vote is live';
+  const headingCopy = showPremiersVote
+    ? 'The ladder is taking shape. Lock your flag favourite in before the first finals bounce.'
+    : 'Follow the road to the Grand Final and tip the next finals result live with the community.';
+
+  return (
+    <section className="home-finalsHub">
+      <div className="home-finalsHub__header">
+        <div className="home-finalsHub__eyebrow">Finals Centre</div>
+        <div className="home-finalsHub__headingRow">
+          <div className="home-finalsHub__copy">
+            <h2 className="home-finalsHub__title">{headingTitle}</h2>
+            <p className="home-finalsHub__body">{headingCopy}</p>
+          </div>
+          <div className="home-finalsHub__meta">
+            <span className="home-finalsHub__metaPill">
+              {showPremiersVote ? 'Pre-finals tip-off' : finalsVoteRoundLabel || 'Live finals'}
+            </span>
+            <span className="home-finalsHub__metaPill home-finalsHub__metaPill--accent">
+              {showPremiersVote ? `${premiersOptions.length} contenders` : 'Voting open'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {showPremiersVote ? (
+        <PremiersVoteCard
+          pollKey="afl26-season-two-premiers"
+          options={premiersOptions}
+        />
+      ) : featuredFinalsFixture ? (
+        <FinalsVoteCard
+          fixtureId={featuredFinalsFixture.id}
+          homeTeamName={
+            featuredFinalsFixture.home_team_name ||
+            featuredFinalsFixture.home_team_short_name ||
+            featuredFinalsFixture.home_team_slug?.replace(/-/g, ' ') ||
+            'TBC'
+          }
+          awayTeamName={
+            featuredFinalsFixture.away_team_name ||
+            featuredFinalsFixture.away_team_short_name ||
+            featuredFinalsFixture.away_team_slug?.replace(/-/g, ' ') ||
+            'TBC'
+          }
+          homeTeamSlug={featuredFinalsFixture.home_team_slug || undefined}
+          awayTeamSlug={featuredFinalsFixture.away_team_slug || undefined}
+          roundLabel={finalsVoteRoundLabel}
+          startTime={featuredFinalsFixture.start_time || undefined}
+          status={finalsVoteStatus}
+        />
+      ) : null}
+    </section>
+  );
+}
+
 export default function HomePage() {
   const { user } = useAuth();
   const fixturesVisible = useFixtureVisibility(user?.role);
@@ -728,6 +907,7 @@ export default function HomePage() {
   return (
     <div className="home-page">
       <main className="home-main">
+        <FinalsHubSection fixturesVisible={fixturesVisible} />
         <HeroMasterCard />
         <CoachHubBanner />
         <EgNewsSection />

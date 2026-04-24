@@ -1,0 +1,296 @@
+.premiersVoteCard {
+  position: relative;
+  overflow: hidden;
+  border-radius: 26px;
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+  color: rgba(244, 248, 255, 0.96);
+  background:
+    radial-gradient(380px 200px at -8% -6%, rgba(255, 215, 0, 0.12), transparent 56%),
+    radial-gradient(360px 220px at 110% 100%, rgba(56, 109, 236, 0.16), transparent 62%),
+    linear-gradient(180deg, rgba(11, 16, 26, 0.98), rgba(6, 10, 18, 0.98));
+  border: 1px solid rgba(255, 215, 0, 0.18);
+  box-shadow:
+    0 22px 44px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 24px rgba(255, 215, 0, 0.05);
+}
+
+.premiersVoteCard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(120deg, transparent 10%, rgba(255, 215, 0, 0.06) 46%, transparent 82%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 42%);
+}
+
+.premiersVoteCard > * {
+  position: relative;
+  z-index: 1;
+}
+
+.premiersVoteCard__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.premiersVoteCard__badge,
+.premiersVoteCard__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  font-size: 0.64rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.premiersVoteCard__badge {
+  color: #12161f;
+  background: linear-gradient(135deg, #ffd95b, #cda21f);
+  box-shadow: 0 10px 24px rgba(255, 215, 0, 0.16);
+}
+
+.premiersVoteCard__meta {
+  color: rgba(216, 227, 244, 0.74);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.premiersVoteCard__headlineWrap {
+  display: grid;
+  gap: 5px;
+}
+
+.premiersVoteCard__headline {
+  margin: 0;
+  font-size: 1.22rem;
+  line-height: 1.04;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.premiersVoteCard__subline {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: rgba(212, 223, 241, 0.68);
+}
+
+.premiersVoteCard__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.premiersVoteCard__option {
+  appearance: none;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+    rgba(8, 12, 20, 0.88);
+  display: grid;
+  gap: 10px;
+  color: inherit;
+  text-align: left;
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition:
+    transform 140ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease;
+}
+
+.premiersVoteCard__option:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.premiersVoteCard__option:disabled {
+  opacity: 0.7;
+}
+
+.premiersVoteCard__option.is-selected {
+  border-color: rgba(255, 215, 0, 0.52);
+  background:
+    linear-gradient(180deg, rgba(255, 215, 0, 0.13), rgba(255, 215, 0, 0.04)),
+    rgba(10, 14, 22, 0.92);
+  box-shadow:
+    0 16px 30px rgba(0, 0, 0, 0.24),
+    inset 0 0 18px rgba(255, 215, 0, 0.08),
+    0 0 0 1px rgba(255, 215, 0, 0.08);
+}
+
+.premiersVoteCard__optionTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.premiersVoteCard__seed,
+.premiersVoteCard__share {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 0.63rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.premiersVoteCard__seed {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(220, 231, 246, 0.72);
+}
+
+.premiersVoteCard__share {
+  background: rgba(255, 215, 0, 0.12);
+  color: rgba(255, 223, 123, 0.94);
+}
+
+.premiersVoteCard__share.is-muted {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(207, 219, 239, 0.56);
+}
+
+.premiersVoteCard__optionBody {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.premiersVoteCard__logoWrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+    rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.premiersVoteCard__logo {
+  width: 34px;
+  height: 34px;
+}
+
+.premiersVoteCard__copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.premiersVoteCard__teamName {
+  font-size: 0.85rem;
+  font-weight: 850;
+  line-height: 1.12;
+  color: rgba(248, 250, 255, 0.97);
+  word-break: break-word;
+}
+
+.premiersVoteCard__teamMeta {
+  font-size: 0.66rem;
+  line-height: 1.35;
+  color: rgba(201, 213, 235, 0.58);
+}
+
+.premiersVoteCard__footer {
+  display: grid;
+  gap: 5px;
+}
+
+.premiersVoteCard__voteSummary {
+  font-size: 0.74rem;
+  font-weight: 850;
+  color: rgba(238, 243, 252, 0.87);
+}
+
+.premiersVoteCard__leaderCallout {
+  font-size: 0.67rem;
+  color: rgba(255, 222, 123, 0.88);
+}
+
+.premiersVoteCard__helper {
+  font-size: 0.69rem;
+  line-height: 1.45;
+  color: rgba(205, 218, 240, 0.62);
+}
+
+.premiersVoteCard__helper.is-error {
+  color: rgba(255, 202, 168, 0.84);
+}
+
+.premiersVoteCard__sk {
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(28, 34, 46, 0.64) 25%,
+    rgba(52, 62, 80, 0.84) 50%,
+    rgba(28, 34, 46, 0.64) 75%
+  );
+  background-size: 200% 100%;
+  animation: premiersVoteShimmer 1.4s linear infinite;
+}
+
+.premiersVoteCard__sk--badge {
+  width: 120px;
+  height: 28px;
+}
+
+.premiersVoteCard__sk--meta {
+  width: 118px;
+  height: 26px;
+}
+
+.premiersVoteCard__sk--headline {
+  width: 70%;
+  height: 20px;
+  border-radius: 10px;
+}
+
+.premiersVoteCard__sk--option {
+  width: 100%;
+  height: 106px;
+  border-radius: 18px;
+}
+
+.premiersVoteCard__sk--footer {
+  width: 78%;
+  height: 14px;
+  border-radius: 8px;
+}
+
+@keyframes premiersVoteShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .premiersVoteCard__grid {
+    grid-template-columns: 1fr;
+  }
+}

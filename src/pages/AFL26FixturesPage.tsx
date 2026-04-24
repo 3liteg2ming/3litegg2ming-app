@@ -7,6 +7,7 @@ import FixturePosterCard, { type FixturePosterMatch } from '../components/Fixtur
 import { FixtureSkeletons } from '../components/FixtureSkeleton';
 import FixturesCompetitionSheet from '../components/fixtures/FixturesCompetitionSheet';
 import FixturesFilterSheet from '../components/fixtures/FixturesFilterSheet';
+import { FINALS_CONFIG, getFinalsLabel } from '../config/finals';
 import { useSeasonFixtures } from '../hooks/useFixtures';
 import { useTeamOptions } from '../hooks/useTeams';
 import {
@@ -21,7 +22,7 @@ import { deriveFixtureRound, normalizeFixtureStatus, type FixtureRow } from '../
 import { fetchMatchCentre } from '../lib/matchCentreRepo';
 import { fetchCurrentCoaches, type HomeCoach } from '../lib/homeRepo';
 import { FIXTURES_UNLOCK_LABEL, useFixtureVisibility } from '../lib/fixtureVisibility';
-import { useDeadlineCountdown, DEADLINE_R11_MS } from '../hooks/useDeadlineCountdown';
+import { useDeadlineCountdown, SUBMISSION_DEADLINE_LABEL, SUBMISSION_DEADLINE_MS } from '../hooks/useDeadlineCountdown';
 import { isRoundVisible } from '../lib/visibleRounds';
 import { useMelvinOdds } from '../hooks/useMelvinOdds';
 import { useLadder } from '../hooks/useLadder';
@@ -98,6 +99,30 @@ function formatDateText(startTime?: string | null): string {
   }).format(d);
 }
 
+function getFixtureFinalsLabel(fixture: FixtureRow) {
+  const source = [fixture.stage_name, fixture.bracket_slot, fixture.round_label].join(' ').toLowerCase();
+
+  if (source.includes('qualifying')) return 'Qualifying Final';
+  if (source.includes('elimination')) return 'Elimination Final';
+  if (source.includes('semi')) return 'Semi Final';
+  if (source.includes('prelim')) return 'Preliminary Final';
+  if (source.includes('grand')) return 'Grand Final';
+
+  return getFinalsLabel(FINALS_CONFIG.week);
+}
+
+function isFixtureFinals(fixture: FixtureRow) {
+  const source = [fixture.stage_name, fixture.bracket_slot, fixture.round_label].join(' ').toLowerCase();
+  return (
+    source.includes('qualifying') ||
+    source.includes('elimination') ||
+    source.includes('semi') ||
+    source.includes('prelim') ||
+    source.includes('grand') ||
+    source.includes('final')
+  );
+}
+
 function mapToPosterMatch(
   fixture: FixtureRow,
   navigate: ReturnType<typeof useNavigate>,
@@ -106,6 +131,8 @@ function mapToPosterMatch(
   oddsMap?: Record<string, { home: number; away: number }> | null,
 ): FixturePosterMatch {
   const roundNumber = deriveFixtureRound(fixture);
+  const homeHasIdentity = stageHasIdentity(fixture, 'home');
+  const awayHasIdentity = stageHasIdentity(fixture, 'away');
   const home = resolveTeamKey({
     slug: fixture.home_team_slug,
     teamKey: fixture.home_team_key,
@@ -140,6 +167,8 @@ function mapToPosterMatch(
         }
       : undefined;
 
+  const homeDisplayName = homeHasIdentity ? fixture.home_team_name || fixture.home_team_short_name || home : 'TBC';
+  const awayDisplayName = awayHasIdentity ? fixture.away_team_name || fixture.away_team_short_name || away : 'TBC';
   const homeCoach = String(fixture.home_team_id || '').trim()
     ? coachesByTeamId.get(String(fixture.home_team_id || '').trim()) || null
     : null;
@@ -153,6 +182,23 @@ function mapToPosterMatch(
   const isGoldCoastGame = home === 'goldcoast' || away === 'goldcoast';
   const isNotFinal = posterStatus !== 'FINAL';
   const showAsTba = isGoldCoastGame && isNotFinal;
+  const hasMissingTeams = !homeHasIdentity || !awayHasIdentity;
+  const fixtureIsFinals = isFixtureFinals(fixture);
+
+  let headerTag: string | undefined;
+  let matchupLabel: string | undefined;
+
+  try {
+    if (hasMissingTeams) {
+      headerTag = 'Matchup TBC';
+      matchupLabel = `${homeDisplayName} vs ${awayDisplayName}`;
+    } else if (fixtureIsFinals) {
+      headerTag = getFixtureFinalsLabel(fixture) || undefined;
+    }
+  } catch {
+    headerTag = undefined;
+    matchupLabel = undefined;
+  }
 
   const previewState = {
     matchCentrePreview: {
@@ -163,12 +209,12 @@ function mapToPosterMatch(
       statusLabel: posterStatus,
       home: {
         id: fixture.home_team_id || undefined,
-        slug: fixture.home_team_slug || home,
-        key: home,
-        name: fixture.home_team_name || fixture.home_team_short_name || home,
-        fullName: fixture.home_team_name || fixture.home_team_short_name || home,
-        shortName: fixture.home_team_short_name || fixture.home_team_name || home,
-        abbreviation: fixture.home_team_short_name || fixture.home_team_name || home,
+        slug: fixture.home_team_slug || (homeHasIdentity ? home : 'tbc'),
+        key: homeHasIdentity ? home : 'tbc',
+        name: homeDisplayName,
+        fullName: homeDisplayName,
+        shortName: homeHasIdentity ? fixture.home_team_short_name || fixture.home_team_name || home : 'TBC',
+        abbreviation: homeHasIdentity ? fixture.home_team_short_name || fixture.home_team_name || home : 'TBC',
         colour: fixture.home_team_colour || '#1e4ed8',
         color: fixture.home_team_colour || '#1e4ed8',
         logoUrl: fixture.home_team_logo_url || '',
@@ -178,12 +224,12 @@ function mapToPosterMatch(
       },
       away: {
         id: fixture.away_team_id || undefined,
-        slug: fixture.away_team_slug || away,
-        key: away,
-        name: fixture.away_team_name || fixture.away_team_short_name || away,
-        fullName: fixture.away_team_name || fixture.away_team_short_name || away,
-        shortName: fixture.away_team_short_name || fixture.away_team_name || away,
-        abbreviation: fixture.away_team_short_name || fixture.away_team_name || away,
+        slug: fixture.away_team_slug || (awayHasIdentity ? away : 'tbc'),
+        key: awayHasIdentity ? away : 'tbc',
+        name: awayDisplayName,
+        fullName: awayDisplayName,
+        shortName: awayHasIdentity ? fixture.away_team_short_name || fixture.away_team_name || away : 'TBC',
+        abbreviation: awayHasIdentity ? fixture.away_team_short_name || fixture.away_team_name || away : 'TBC',
         colour: fixture.away_team_colour || '#c71f2d',
         color: fixture.away_team_colour || '#c71f2d',
         logoUrl: fixture.away_team_logo_url || '',
@@ -201,8 +247,11 @@ function mapToPosterMatch(
     venue: fixture.venue || 'TBA',
     status: showAsTba ? 'SCHEDULED' as FixturePosterMatch['status'] : posterStatus,
     statusTextOverride: showAsTba ? 'DELAYED' : undefined,
-    home: stageHasIdentity(fixture, 'home') ? home : 'unknown',
-    away: stageHasIdentity(fixture, 'away') ? away : 'unknown',
+    headerTag,
+    roundType: fixtureIsFinals ? 'finals' : 'regular',
+    matchupLabel,
+    home: homeHasIdentity ? home : 'TBC',
+    away: awayHasIdentity ? away : 'TBC',
     homeCoachName: homeCoach?.display_name || undefined,
     awayCoachName: awayCoach?.display_name || undefined,
     homePsn: homeCoach?.psn || undefined,
@@ -275,7 +324,7 @@ export default function AFL26FixturesPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const fixturesPubliclyVisible = useFixtureVisibility(user?.role);
-  const deadlineR11 = useDeadlineCountdown(DEADLINE_R11_MS);
+  const submissionDeadline = useDeadlineCountdown(SUBMISSION_DEADLINE_MS);
   const { data: adminOddsMap } = useMelvinOdds();
 
   let competitionKey = getStoredCompetitionKey();
@@ -369,8 +418,7 @@ export default function AFL26FixturesPage() {
 
   useEffect(() => {
     if (!fixturesPubliclyVisible) return;
-    const defaultRound = regularStageGroups.find((s) => s.id === 'round-11')?.id
-      || regularStageGroups[regularStageGroups.length - 1]?.id || '';
+    const defaultRound = regularStageGroups[regularStageGroups.length - 1]?.id || '';
     if (!activeStageId || !regularStageGroups.some((stage) => stage.id === activeStageId)) {
       setActiveStageId(defaultRound);
     }
@@ -399,7 +447,7 @@ export default function AFL26FixturesPage() {
         const awayId = String(fixture.away_team_id || '');
         const teamMatches = homeId === selectedTeamId || awayId === selectedTeamId;
 
-        // When filtering by team, only show rounds 1 and 2
+        // When filtering by team, only show rounds that are currently visible
         const roundNumber = toPositiveInt(fixture.round) ?? toPositiveInt(fixture.stage_index) ?? 1;
         const roundValid = isRoundVisible(roundNumber);
 
@@ -560,33 +608,33 @@ export default function AFL26FixturesPage() {
 
         {fixturesPubliclyVisible && (
           <>
-            {/* Season submission deadline — Saturday 25 April midnight */}
-            <div className={`fxDeadlineNotice ${deadlineR11.expired ? 'is-expired' : ''}`}>
+            {/* Submission deadline — Sunday 26 April midnight */}
+            <div className={`fxDeadlineNotice ${submissionDeadline.expired ? 'is-expired' : ''}`}>
               <div className="fxDeadlineNotice__text">
-                ANNOUNCEMENT: All Season Two games must be submitted by Saturday night (25 April, midnight)
+                All open fixture submissions close {SUBMISSION_DEADLINE_LABEL}
               </div>
               <div className="fxDeadlineNotice__countdown">
-                {deadlineR11.expired ? (
+                {submissionDeadline.expired ? (
                   <span className="fxDeadlineNotice__expired">Deadline passed</span>
                 ) : (
                   <>
                     <div className="fxDeadlineNotice__unit">
-                      <span className="fxDeadlineNotice__num">{deadlineR11.days}</span>
+                      <span className="fxDeadlineNotice__num">{submissionDeadline.days}</span>
                       <span className="fxDeadlineNotice__lbl">days</span>
                     </div>
                     <span className="fxDeadlineNotice__sep">:</span>
                     <div className="fxDeadlineNotice__unit">
-                      <span className="fxDeadlineNotice__num">{String(deadlineR11.hours).padStart(2, '0')}</span>
+                      <span className="fxDeadlineNotice__num">{String(submissionDeadline.hours).padStart(2, '0')}</span>
                       <span className="fxDeadlineNotice__lbl">hrs</span>
                     </div>
                     <span className="fxDeadlineNotice__sep">:</span>
                     <div className="fxDeadlineNotice__unit">
-                      <span className="fxDeadlineNotice__num">{String(deadlineR11.minutes).padStart(2, '0')}</span>
+                      <span className="fxDeadlineNotice__num">{String(submissionDeadline.minutes).padStart(2, '0')}</span>
                       <span className="fxDeadlineNotice__lbl">min</span>
                     </div>
                     <span className="fxDeadlineNotice__sep">:</span>
                     <div className="fxDeadlineNotice__unit">
-                      <span className="fxDeadlineNotice__num">{String(deadlineR11.seconds).padStart(2, '0')}</span>
+                      <span className="fxDeadlineNotice__num">{String(submissionDeadline.seconds).padStart(2, '0')}</span>
                       <span className="fxDeadlineNotice__lbl">sec</span>
                     </div>
                   </>

@@ -119,6 +119,13 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.fxPosterCard__badgeGroup {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .fxPosterCard__headerBadge {
   flex: 0 0 auto;
   display: inline-flex;
@@ -137,6 +144,79 @@
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
     0 8px 14px rgba(0, 0, 0, 0.12);
+}
+
+.finals-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--statusH);
+  background: linear-gradient(135deg, #FFD700, #C9A200);
+  color: #000;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  box-shadow:
+    0 0 20px rgba(255, 200, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.fxPosterCard--finals,
+.fixture-card--finals {
+  border: 1px solid rgba(255, 215, 0, 0.6);
+  background:
+    radial-gradient(
+      ellipse 78% 96% at 12% 48%,
+      rgba(var(--homeR), var(--homeG), var(--homeB), 0.22) 0%,
+      rgba(var(--homeR), var(--homeG), var(--homeB), 0.08) 24%,
+      rgba(var(--homeR), var(--homeG), var(--homeB), 0.03) 42%,
+      rgba(0, 0, 0, 0) 72%
+    ),
+    radial-gradient(
+      ellipse 78% 96% at 88% 48%,
+      rgba(var(--awayR), var(--awayG), var(--awayB), 0.22) 0%,
+      rgba(var(--awayR), var(--awayG), var(--awayB), 0.08) 24%,
+      rgba(var(--awayR), var(--awayG), var(--awayB), 0.03) 42%,
+      rgba(0, 0, 0, 0) 72%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(30, 20, 0, 0.9),
+      rgba(10, 10, 10, 0.95)
+    );
+  box-shadow:
+    0 0 20px rgba(255, 200, 0, 0.25),
+    0 10px 28px -10px rgba(0, 0, 0, 0.38),
+    inset 0 0 20px rgba(255, 215, 0, 0.08);
+}
+
+.fxPosterCard--finals::before,
+.fixture-card--finals::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.06) 0%,
+      rgba(255, 255, 255, 0.02) 18%,
+      rgba(255, 255, 255, 0) 52%
+    ),
+    linear-gradient(
+      120deg,
+      transparent 20%,
+      rgba(255, 215, 0, 0.15),
+      transparent 80%
+    );
+  pointer-events: none;
+}
+
+.fxPosterCard--finals::after,
+.fixture-card--finals::after {
+  border-color: rgba(255, 215, 0, 0.18);
+  box-shadow: 0 1px 12px rgba(255, 215, 0, 0.12) inset;
 }
 
 .fxPosterCard__statusPill {

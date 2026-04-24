@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import SmartImg from './SmartImg';
 import { MelvinBetOddsStrip } from './MelvinBet';
+import { FINALS_CONFIG, getFinalsLabel } from '../config/finals';
 import { assetUrl, TEAM_ASSETS, type TeamKey } from '../lib/teamAssets';
 import { resolveTeamKey } from '../lib/entityResolvers';
 import '../styles/fixture-broadcast-shared.css';
@@ -29,12 +30,14 @@ export type FixturePosterMatch = {
   homeScore?: FixtureScore;
   awayScore?: FixtureScore;
   headerTag?: string;
+  roundType?: 'regular' | 'finals';
 
   adminHomeOdds?: number;
   adminAwayOdds?: number;
 
   onMatchCentreClick?: () => void;
   statusTextOverride?: string;
+  matchupLabel?: string;
 };
 
 function hexToRgb(hex: string) {
@@ -83,7 +86,14 @@ function teamShort(asset: any) {
 
 function normalizeTeamLabel(value: unknown): string {
   const normalized = String(value || '').trim();
-  return normalized || 'Unknown';
+  if (!normalized) return 'TBC';
+  const upper = normalized.toUpperCase();
+  if (upper === 'UNKNOWN' || upper === 'TBA' || upper === 'TBD' || upper === 'TBC') return 'TBC';
+  return normalized;
+}
+
+function isPlaceholderTeam(value: unknown) {
+  return normalizeTeamLabel(value) === 'TBC';
 }
 
 function resolveTeamAsset(team: unknown) {
@@ -140,8 +150,8 @@ function teamPlatformLabel(teamKey: string): string {
 function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
   const safeMatch = m || ({
     status: 'SCHEDULED',
-    home: 'Unknown',
-    away: 'Unknown',
+    home: 'TBC',
+    away: 'TBC',
   } satisfies FixturePosterMatch);
 
   const { key: homeKey, asset: resolvedHome } = resolveTeamAsset(safeMatch.home);
@@ -204,7 +214,13 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
   const statusClass = safeMatch.status === 'FINAL' ? 'final' : safeMatch.status === 'LIVE' ? 'live' : safeMatch.status === 'PENDING_RESULTS' ? 'pending' : 'upcoming';
   const homeLogoSrc = resolveLogoSrc(home);
   const awayLogoSrc = resolveLogoSrc(away);
-  const headerMeta = String(safeMatch.headerTag || (safeMatch.round ? `Round ${safeMatch.round}` : 'Fixture')).trim();
+  const hasPlaceholderMatchup = isPlaceholderTeam(home.name) || isPlaceholderTeam(away.name);
+  const matchupLabel = String(safeMatch.matchupLabel || '').trim() || (hasPlaceholderMatchup ? `${home.name} vs ${away.name}` : '');
+  const headerMeta = String(
+    safeMatch.headerTag || (hasPlaceholderMatchup ? 'Matchup TBC' : safeMatch.round ? `Round ${safeMatch.round}` : 'Fixture'),
+  ).trim();
+  const isFinal = safeMatch.roundType === 'finals';
+  const finalsBadgeLabel = isFinal ? getFinalsLabel(FINALS_CONFIG.week) : null;
   const homeCoach = displayCoach(safeMatch.homeCoachName);
   const awayCoach = displayCoach(safeMatch.awayCoachName);
   const homePsn = displayPsn(safeMatch.homePsn, safeMatch.homeCoachPsn);
@@ -214,11 +230,14 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
 
   return (
     <section
-      className={`fxPosterCard fxPosterCard--${statusClass} ${compactScore ? 'fxPosterCard--compactScore' : ''}`}
+      className={`fxPosterCard fixture-card fxPosterCard--${statusClass} ${compactScore ? 'fxPosterCard--compactScore' : ''} ${isFinal ? 'fxPosterCard--finals fixture-card--finals' : ''}`}
       style={cssVars}
     >
       <div className="fxPosterCard__topBar">
-        <div className="fxPosterCard__headerBadge">{headerMeta}</div>
+        <div className="fxPosterCard__badgeGroup">
+          {finalsBadgeLabel ? <span className="finals-badge">{finalsBadgeLabel}</span> : null}
+          <div className="fxPosterCard__headerBadge">{headerMeta}</div>
+        </div>
         <div className="fxPosterCard__statusPill">
           <span className="fxPosterCard__statusDot" />
           <span className="fxPosterCard__statusText">{safeMatch.statusTextOverride || statusText(safeMatch.status)}</span>
@@ -275,7 +294,7 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
               {isPending ? (
                 <div className="fxPosterCard__pendingState">PENDING RESULTS</div>
               ) : (
-                <div className="fxPosterCard__fixtureState">Match Day</div>
+                <div className="fxPosterCard__fixtureState">{matchupLabel || 'Match Day'}</div>
               )}
               {venueLine ? <div className="fxPosterCard__fixtureMeta">{venueLine}</div> : null}
             </>
@@ -442,6 +461,8 @@ function arePropsEqual(prev: { m: FixturePosterMatch }, next: { m: FixturePoster
     a.homeCoachPsn === b.homeCoachPsn &&
     a.awayCoachPsn === b.awayCoachPsn &&
     a.headerTag === b.headerTag &&
+    a.roundType === b.roundType &&
+    a.matchupLabel === b.matchupLabel &&
     (a.homeScore?.total ?? null) === (b.homeScore?.total ?? null) &&
     (a.homeScore?.goals ?? null) === (b.homeScore?.goals ?? null) &&
     (a.homeScore?.behinds ?? null) === (b.homeScore?.behinds ?? null) &&

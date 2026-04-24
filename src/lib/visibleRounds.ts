@@ -1,11 +1,12 @@
 /**
  * Visible rounds control layer
- * 
+ *
  * This is the single source of truth for which rounds are visible across the app.
- * Currently Round 1 and Round 2 are visible. This can be expanded later by updating this file.
+ * Season Two is currently open through Round 11.
  */
 
-const VISIBLE_ROUNDS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+const MAX_VISIBLE_ROUND = 11;
+const VISIBLE_ROUNDS = new Set(Array.from({ length: MAX_VISIBLE_ROUND }, (_, index) => index + 1));
 
 /**
  * Check if a round number should be visible to users
