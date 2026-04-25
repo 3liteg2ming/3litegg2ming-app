@@ -126,12 +126,12 @@ export default function PremiersVoteCard({ pollKey, options }: PremiersVoteCardP
         <div className="premiersVoteTrigger__body">
           <div className="premiersVoteTrigger__copy">
             <h3 className="premiersVoteTrigger__title">
-              {currentSelection ? `${currentSelection.label} is your tip` : 'Open the premiers ballot'}
+              {currentSelection ? `${currentSelection.label} tipped` : 'Premiership vote'}
             </h3>
             <p className="premiersVoteTrigger__subline">
               {leader?.result?.votes
                 ? `${leader.option.label} leads fan picks on ${leader.result.pct}%.`
-                : 'Lock in your flag favourite before finals begin.'}
+                : 'Pick your flag favourite before finals begin.'}
             </p>
           </div>
 
@@ -165,11 +165,11 @@ export default function PremiersVoteCard({ pollKey, options }: PremiersVoteCardP
                 ? `${totalVotes} total vote${totalVotes === 1 ? '' : 's'}`
                 : 'No public votes yet'
               : currentUserVote
-                ? 'Private tip saved on this device'
-                : 'Pick your premiers tip'}
+                ? 'Tip saved on this device'
+                : 'Tap to pick your premiers'}
           </span>
           <span className={`premiersVoteTrigger__helper ${activeError ? 'is-error' : ''}`}>
-            Tap to open the pop box vote
+            Tap to vote
           </span>
         </div>
       </button>

@@ -290,48 +290,54 @@ function HeroMasterCard() {
         <div className="home-hero-atmos" aria-hidden="true" />
 
         <div className="home-hero-content">
-          <span className="home-hero-pill">
-            <span className="home-hero-pillDot" />
-            Season Live
-          </span>
-
-          <div className="home-hero-lockup">
-            <div className="home-hero-lockup__glow" aria-hidden="true" />
-            <img
-              src={eliteLogo}
-              alt="Elite Gaming"
-              className="home-hero-lockup__eg"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
-            <div className="home-hero-lockup__divider" aria-hidden="true" />
-            <img
-              src={BGL_LOGO_URL}
-              alt="BGL Media"
-              className="home-hero-lockup__bgl"
-              onError={(e) => {
-                const t = e.currentTarget;
-                if (t.src !== BGL_LOGO_FALLBACK_URL) {
-                  t.src = BGL_LOGO_FALLBACK_URL;
-                  return;
-                }
-                t.style.display = 'none';
-              }}
-            />
-          </div>
-
-          <div className="home-hero-aflWrap">
-            <img src={AFL26_LOGO_URL} alt="AFL26" className="home-hero-aflLogo" />
+          <div className="home-hero-topbar">
+            <span className="home-hero-eyebrow">Elite Gaming x BGL</span>
+            <span className="home-hero-pill">
+              <span className="home-hero-pillDot" />
+              Season Live
+            </span>
           </div>
 
           <div className="home-hero-titleGroup">
-            <h1 className="home-hero-seasonTitle">Season Two</h1>
+            <h1 className="home-hero-seasonTitle">Elite Gaming BGL Season Two</h1>
             <p className="home-hero-sub">
               {user
                 ? 'Your fixtures, ladder and match centre.'
                 : 'Official hub for coaches and players.'}
             </p>
+          </div>
+
+          <div className="home-hero-brandRow">
+            <div className="home-hero-lockup">
+              <div className="home-hero-lockup__glow" aria-hidden="true" />
+              <img
+                src={eliteLogo}
+                alt="Elite Gaming"
+                className="home-hero-lockup__eg"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+              <div className="home-hero-lockup__divider" aria-hidden="true" />
+              <img
+                src={BGL_LOGO_URL}
+                alt="BGL Media"
+                className="home-hero-lockup__bgl"
+                onError={(e) => {
+                  const t = e.currentTarget;
+                  if (t.src !== BGL_LOGO_FALLBACK_URL) {
+                    t.src = BGL_LOGO_FALLBACK_URL;
+                    return;
+                  }
+                  t.style.display = 'none';
+                }}
+              />
+            </div>
+
+            <div className="home-hero-aflWrap">
+              <img src={AFL26_LOGO_URL} alt="AFL26" className="home-hero-aflLogo" />
+              <span className="home-hero-aflLabel">Official season hub</span>
+            </div>
           </div>
         </div>
       </div>
@@ -445,7 +451,7 @@ function FeaturedMatchCard() {
     return pool[0] ?? allFixtures[0];
   }, [allFixtures, user, coaches]);
 
-  const sectionLabel = user ? 'Your Next Match' : 'Featured Match';
+  const sectionLabel = user ? 'Next Game' : 'Featured Match';
 
   if (isLoading) {
     return (
@@ -844,60 +850,41 @@ function FinalsHubSection({ fixturesVisible }: { fixturesVisible: boolean }) {
 
   if (!FINALS_CONFIG.enabled || (!showPremiersVote && !showFixtureVote)) return null;
 
-  const headingTitle = showPremiersVote ? 'Premiers vote is open' : 'Finals fan vote is live';
-  const headingCopy = showPremiersVote
-    ? 'The ladder is taking shape. Lock your flag favourite in before the first finals bounce.'
-    : 'Follow the road to the Grand Final and tip the next finals result live with the community.';
-
-  return (
-    <section className="home-finalsHub">
-      <div className="home-finalsHub__header">
-        <div className="home-finalsHub__eyebrow">Finals Centre</div>
-        <div className="home-finalsHub__headingRow">
-          <div className="home-finalsHub__copy">
-            <h2 className="home-finalsHub__title">{headingTitle}</h2>
-            <p className="home-finalsHub__body">{headingCopy}</p>
-          </div>
-          <div className="home-finalsHub__meta">
-            <span className="home-finalsHub__metaPill">
-              {showPremiersVote ? 'Pre-finals tip-off' : finalsVoteRoundLabel || 'Live finals'}
-            </span>
-            <span className="home-finalsHub__metaPill home-finalsHub__metaPill--accent">
-              {showPremiersVote ? `${premiersOptions.length} contenders` : 'Voting open'}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {showPremiersVote ? (
+  if (showPremiersVote) {
+    return (
+      <section className="home-finalsHub home-finalsHub--compact">
         <PremiersVoteCard
           pollKey="afl26-season-two-premiers"
           options={premiersOptions}
         />
-      ) : featuredFinalsFixture ? (
-        <FinalsVoteCard
-          fixtureId={featuredFinalsFixture.id}
-          homeTeamName={
-            featuredFinalsFixture.home_team_name ||
-            featuredFinalsFixture.home_team_short_name ||
-            featuredFinalsFixture.home_team_slug?.replace(/-/g, ' ') ||
-            'TBC'
-          }
-          awayTeamName={
-            featuredFinalsFixture.away_team_name ||
-            featuredFinalsFixture.away_team_short_name ||
-            featuredFinalsFixture.away_team_slug?.replace(/-/g, ' ') ||
-            'TBC'
-          }
-          homeTeamSlug={featuredFinalsFixture.home_team_slug || undefined}
-          awayTeamSlug={featuredFinalsFixture.away_team_slug || undefined}
-          roundLabel={finalsVoteRoundLabel}
-          startTime={featuredFinalsFixture.start_time || undefined}
-          status={finalsVoteStatus}
-        />
-      ) : null}
+      </section>
+    );
+  }
+
+  return featuredFinalsFixture ? (
+    <section className="home-finalsHub home-finalsHub--compact">
+      <FinalsVoteCard
+        fixtureId={featuredFinalsFixture.id}
+        homeTeamName={
+          featuredFinalsFixture.home_team_name ||
+          featuredFinalsFixture.home_team_short_name ||
+          featuredFinalsFixture.home_team_slug?.replace(/-/g, ' ') ||
+          'TBC'
+        }
+        awayTeamName={
+          featuredFinalsFixture.away_team_name ||
+          featuredFinalsFixture.away_team_short_name ||
+          featuredFinalsFixture.away_team_slug?.replace(/-/g, ' ') ||
+          'TBC'
+        }
+        homeTeamSlug={featuredFinalsFixture.home_team_slug || undefined}
+        awayTeamSlug={featuredFinalsFixture.away_team_slug || undefined}
+        roundLabel={finalsVoteRoundLabel}
+        startTime={featuredFinalsFixture.start_time || undefined}
+        status={finalsVoteStatus}
+      />
     </section>
-  );
+  ) : null;
 }
 
 export default function HomePage() {
@@ -907,13 +894,15 @@ export default function HomePage() {
   return (
     <div className="home-page">
       <main className="home-main">
-        <FinalsHubSection fixturesVisible={fixturesVisible} />
-        <HeroMasterCard />
+        <div className="home-topStack">
+          <HeroMasterCard />
+          <FinalsHubSection fixturesVisible={fixturesVisible} />
+          {fixturesVisible ? <FeaturedMatchCard /> : <LaunchPromoCard />}
+        </div>
         <CoachHubBanner />
-        <EgNewsSection />
-        {fixturesVisible ? <FeaturedMatchCard /> : <LaunchPromoCard />}
         <LadderSnapshot />
         <LeadersPreview />
+        <EgNewsSection />
       </main>
     </div>
   );

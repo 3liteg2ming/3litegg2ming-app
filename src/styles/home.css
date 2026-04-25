@@ -64,13 +64,22 @@
   padding: max(calc(env(safe-area-inset-top) + 10px), 18px) 12px
            calc(96px + env(safe-area-inset-bottom));
   display: grid;
-  gap: 14px;
+  gap: 12px;
   box-sizing: border-box;
+}
+
+.home-topStack {
+  display: grid;
+  gap: 10px;
 }
 
 .home-finalsHub {
   display: grid;
   gap: 12px;
+}
+
+.home-finalsHub--compact {
+  gap: 0;
 }
 
 .home-finalsHub__header {
@@ -178,7 +187,7 @@
 
 .home-hero-wrap {
   width: 100%;
-  margin-bottom: 4px;
+  margin-bottom: 0;
 }
 
 @media (max-width: 420px) {
@@ -207,7 +216,7 @@
     rgba(2,5,14,0.97) 100%
   );
   box-shadow:
-    0 28px 64px rgba(0,0,0,0.70),
+    0 24px 54px rgba(0,0,0,0.60),
     0 4px 12px rgba(0,0,0,0.38),
     inset 0 1px 0 rgba(255,255,255,0.10),
     inset 0 -1px 0 rgba(255,255,255,0.02);
@@ -239,31 +248,50 @@
 .home-hero-content {
   position: relative;
   z-index: 1;
-  padding: 14px 16px 18px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  align-items: start;
+  text-align: left;
 }
 
-/* ① Pill — compact status badge, top-right */
+.home-hero-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.home-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  min-height: 25px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(210, 225, 252, 0.72);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/* ① Pill — compact status badge */
 .home-hero-pill {
-  position: absolute;
-  top: 12px;
-  right: 14px;
-  z-index: 2;
   display: inline-flex;
   align-items: center;
   gap: 5px;
   padding: 0 9px;
-  height: 22px;
+  min-height: 24px;
   border-radius: 999px;
   border: 1px solid rgba(245,196,0,0.30);
   background: rgba(245,196,0,0.09);
   color: rgba(255,224,130,0.88);
-  font-size: 0.48rem;
-  font-weight: 800;
-  letter-spacing: 0.17em;
+  font-size: 0.52rem;
+  font-weight: 900;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -283,26 +311,33 @@
 }
 
 /* ② Partnership lockup — polished inline glass bar */
+.home-hero-brandRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(108px, 0.8fr);
+  gap: 10px;
+  align-items: stretch;
+}
+
 .home-hero-lockup {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 4px 9px;
-  border-radius: 12px;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 16px;
   background: rgba(6,10,22,0.55);
   border: 1px solid rgba(255,255,255,0.09);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
-  margin-top: 2px;
-  margin-bottom: 8px;
+  margin: 0;
   overflow: visible;
   box-shadow:
     0 6px 22px rgba(0,0,0,0.30),
     inset 0 1px 0 rgba(255,255,255,0.08),
     inset 0 0 0 0.5px rgba(255,255,255,0.04);
-  min-height: 56px;
+  min-height: 84px;
 }
 
 /* dual-colour glow — gold under EG, blue under BGL */
@@ -326,17 +361,17 @@
 }
 
 .home-hero-lockup__eg {
-  height: 82px;
+  height: 60px;
   width: auto;
   filter: drop-shadow(0 0 18px rgba(245,196,0,0.38)) drop-shadow(0 4px 10px rgba(245,196,0,0.22));
   position: relative;
   z-index: 1;
   flex-shrink: 0;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .home-hero-lockup__bgl {
-  height: 44px;
+  height: 32px;
   width: auto;
   filter: drop-shadow(0 0 16px rgba(63,126,240,0.38)) drop-shadow(0 4px 10px rgba(63,126,240,0.22));
   position: relative;
@@ -347,7 +382,7 @@
 /* Thin gradient divider between EG and BGL */
 .home-hero-lockup__divider {
   width: 1px;
-  height: 36px;
+  height: 28px;
   flex-shrink: 0;
   position: relative;
   z-index: 1;
@@ -362,51 +397,75 @@
   );
 }
 
-/* ③ AFL26 — centred with full-width flex wrapper */
+/* ③ AFL26 badge */
 .home-hero-aflWrap {
-  width: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-bottom: 4px;
+  gap: 6px;
+  padding: 10px 12px;
+  min-height: 84px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+    rgba(8, 12, 20, 0.66);
   filter:
     drop-shadow(0 0 22px rgba(245,196,0,0.14))
     drop-shadow(0 3px 10px rgba(0,0,0,0.45));
 }
 
 .home-hero-aflLogo {
-  width: min(100%, 150px);
+  width: min(100%, 86px);
   height: auto;
   display: block;
   object-fit: contain;
 }
 
+.home-hero-aflLabel {
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 224, 130, 0.72);
+}
+
 /* ④ Title + sub */
 .home-hero-titleGroup {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
+  display: grid;
+  gap: 6px;
   margin-bottom: 0;
 }
 
 .home-hero-seasonTitle {
   margin: 0;
-  font-size: clamp(1.8rem, 8vw, 2.6rem);
+  max-width: 13ch;
+  font-size: clamp(1.7rem, 8vw, 2.45rem);
   font-weight: 1000;
-  line-height: 0.92;
-  letter-spacing: -0.04em;
-  text-transform: uppercase;
+  line-height: 0.94;
+  letter-spacing: -0.05em;
   color: #ffffff;
   text-shadow: 0 2px 28px rgba(0,0,0,0.50), 0 1px 3px rgba(0,0,0,0.30);
 }
 
 .home-hero-sub {
   margin: 0;
+  max-width: 28ch;
   color: var(--home-muted);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   line-height: 1.5;
   font-weight: 450;
+}
+
+@media (max-width: 420px) {
+  .home-hero-brandRow {
+    grid-template-columns: 1fr;
+  }
+
+  .home-hero-aflWrap {
+    min-height: 74px;
+  }
 }
 
 /* ⑤ CTA buttons */

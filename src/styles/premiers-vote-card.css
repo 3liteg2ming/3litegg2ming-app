@@ -4,9 +4,9 @@
   width: 100%;
   border: 0;
   border-radius: 22px;
-  padding: 14px 15px;
+  padding: 12px 14px;
   display: grid;
-  gap: 12px;
+  gap: 10px;
   color: rgba(244, 248, 255, 0.96);
   text-align: left;
   background:
@@ -42,7 +42,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -50,7 +50,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 10px;
 }
 
 .premiersVoteTrigger__copy {
@@ -61,7 +61,7 @@
 
 .premiersVoteTrigger__title {
   margin: 0;
-  font-size: 0.98rem;
+  font-size: 0.92rem;
   line-height: 1.06;
   font-weight: 900;
   letter-spacing: -0.02em;
@@ -70,7 +70,7 @@
 
 .premiersVoteTrigger__subline {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   line-height: 1.45;
   color: rgba(212, 223, 241, 0.68);
 }
@@ -79,7 +79,7 @@
   flex-shrink: 0;
   display: grid;
   justify-items: end;
-  gap: 9px;
+  gap: 7px;
 }
 
 .premiersVoteTrigger__logos {
@@ -89,9 +89,9 @@
 }
 
 .premiersVoteTrigger__logoChip {
-  width: 32px;
-  height: 32px;
-  margin-left: -8px;
+  width: 28px;
+  height: 28px;
+  margin-left: -7px;
   border-radius: 999px;
   display: grid;
   place-items: center;
@@ -106,19 +106,19 @@
 }
 
 .premiersVoteTrigger__logo {
-  width: 22px;
-  height: 22px;
+  width: 19px;
+  height: 19px;
 }
 
 .premiersVoteTrigger__cta {
   display: inline-flex;
   align-items: center;
-  min-height: 28px;
-  padding: 0 10px;
+  min-height: 24px;
+  padding: 0 9px;
   border-radius: 999px;
   background: rgba(255, 215, 0, 0.14);
   color: rgba(255, 223, 123, 0.94);
-  font-size: 0.64rem;
+  font-size: 0.58rem;
   font-weight: 900;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -128,12 +128,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .premiersVoteTrigger__helper {
-  font-size: 0.67rem;
+  font-size: 0.63rem;
   color: rgba(205, 218, 240, 0.58);
 }
 
@@ -222,10 +222,10 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 28px;
-  padding: 0 11px;
+  min-height: 24px;
+  padding: 0 10px;
   border-radius: 999px;
-  font-size: 0.64rem;
+  font-size: 0.58rem;
   font-weight: 900;
   letter-spacing: 0.1em;
   text-transform: uppercase;
