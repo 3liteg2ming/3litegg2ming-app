@@ -38,6 +38,7 @@ function PremiersVoteCardSkeleton() {
 
 export default function PremiersVoteCard({ pollKey, options }: PremiersVoteCardProps) {
   const [isOpen, setIsOpen] = React.useState(false);
+  const [optimisticVote, setOptimisticVote] = React.useState<string | null>(null);
   const normalizedPollKey = String(pollKey || '').trim();
   const normalizedOptions = options.map((option) => ({
     ...option,
@@ -61,28 +62,41 @@ export default function PremiersVoteCard({ pollKey, options }: PremiersVoteCardP
 
   const activeError = submitError || error;
   const voteMap = new Map(voteOptions.map((option) => [option.key, option]));
+  const selectedVoteKey = optimisticVote || currentUserVote || null;
   const leader = normalizedOptions
     .map((option) => ({ option, result: voteMap.get(option.key) }))
     .sort((a, b) => (b.result?.votes || 0) - (a.result?.votes || 0))[0];
-  const currentSelection = normalizedOptions.find((option) => option.key === currentUserVote) || null;
+  const currentSelection = normalizedOptions.find((option) => option.key === selectedVoteKey) || null;
   const featuredOptions = normalizedOptions.slice(0, 3);
 
   const helperCopy = activeError
     ? 'We could not refresh the public totals just now, but you can still lock in your premiers tip.'
     : mode === 'local'
-      ? currentUserVote
+      ? selectedVoteKey
         ? 'Your premiers tip is saved on this device. Public totals will appear once the shared poll is available.'
         : 'Pick your premiers now. Your tip will stay saved on this device until the live poll backend is available.'
       : 'You can change your premiers tip any time before finals bounce.';
 
   const handleVote = async (optionKey: string) => {
-    if (!normalizedPollKey || !optionKey || isSubmitting || currentUserVote === optionKey) return;
+    if (!normalizedPollKey || !optionKey || isSubmitting || selectedVoteKey === optionKey) return;
+    setOptimisticVote(optionKey);
     try {
       await submitVote(normalizedPollKey, optionKey);
     } catch {
+      setOptimisticVote(currentUserVote || null);
       // Surface via hook error state without breaking the card.
     }
   };
+
+  React.useEffect(() => {
+    if (!optimisticVote || optimisticVote !== currentUserVote) return;
+    setOptimisticVote(null);
+  }, [currentUserVote, optimisticVote]);
+
+  React.useEffect(() => {
+    if (!activeError) return;
+    setOptimisticVote(currentUserVote || null);
+  }, [activeError, currentUserVote]);
 
   React.useEffect(() => {
     if (!isOpen) return;
@@ -108,7 +122,7 @@ export default function PremiersVoteCard({ pollKey, options }: PremiersVoteCardP
     <>
       <button
         type="button"
-        className={`premiersVoteTrigger ${currentUserVote ? 'has-selection' : ''}`}
+        className={`premiersVoteTrigger ${selectedVoteKey ? 'has-selection' : ''}`}
         aria-label="Open premiers vote"
         onClick={() => setIsOpen(true)}
       >
@@ -164,7 +178,7 @@ export default function PremiersVoteCard({ pollKey, options }: PremiersVoteCardP
               ? totalVotes > 0
                 ? `${totalVotes} total vote${totalVotes === 1 ? '' : 's'}`
                 : 'No public votes yet'
-              : currentUserVote
+              : selectedVoteKey
                 ? 'Tip saved on this device'
                 : 'Tap to pick your premiers'}
           </span>
@@ -186,7 +200,7 @@ export default function PremiersVoteCard({ pollKey, options }: PremiersVoteCardP
               <X size={18} strokeWidth={2.2} />
             </button>
 
-            <section className={`premiersVoteCard ${currentUserVote ? 'has-selection' : ''}`} aria-label="Premiers fan vote">
+            <section className={`premiersVoteCard ${selectedVoteKey ? 'has-selection' : ''}`} aria-label="Premiers fan vote">
               <div className="premiersVoteCard__header">
                 <span className="premiersVoteCard__badge">
                   <Trophy size={13} strokeWidth={2.2} />
@@ -203,10 +217,24 @@ export default function PremiersVoteCard({ pollKey, options }: PremiersVoteCardP
                 <p className="premiersVoteCard__subline">Lock in your flag favourite before finals begin.</p>
               </div>
 
+              <div className="premiersVoteCard__statusRow">
+                <span
+                  className={`premiersVoteCard__status ${
+                    isSubmitting ? 'is-saving' : selectedVoteKey ? 'is-selected' : ''
+                  }`}
+                >
+                  {isSubmitting
+                    ? 'Saving your tip...'
+                    : currentSelection
+                      ? `${currentSelection.label} locked in`
+                      : 'Tap a club to save instantly'}
+                </span>
+              </div>
+
               <div className="premiersVoteCard__grid">
                 {normalizedOptions.map((option) => {
                   const result = voteMap.get(option.key);
-                  const isSelected = currentUserVote === option.key;
+                  const isSelected = selectedVoteKey === option.key;
                   const livePct = result?.pct || 0;
                   const statLine = [`#${option.rank}`, option.points != null ? `${option.points} pts` : null, formatPercentage(option.percentage)]
                     .filter(Boolean)
@@ -257,7 +285,7 @@ export default function PremiersVoteCard({ pollKey, options }: PremiersVoteCardP
                     ? totalVotes > 0
                       ? `${totalVotes} total vote${totalVotes === 1 ? '' : 's'}`
                       : 'No public votes yet'
-                    : currentUserVote
+                    : selectedVoteKey
                       ? 'Private tip saved on this device'
                       : 'Choose your premiers tip'}
                 </div>
