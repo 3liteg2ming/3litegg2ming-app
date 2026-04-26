@@ -59,6 +59,40 @@ export type BuildPlayerStatsImportPreviewResult = {
   skippedCount: number;
 };
 
+export function previewRowsToPlayerStatUpserts(preview: BulkPreviewRow[]) {
+  const rowsByPlayerId = new Map<
+    string,
+    {
+      player_id: string;
+      team_id: string;
+      disposals?: number | null;
+      kicks?: number | null;
+      handballs?: number | null;
+      marks?: number | null;
+      tackles?: number | null;
+      clearances?: number | null;
+      fantasy_points?: number | null;
+    }
+  >();
+
+  for (const row of preview) {
+    if (!row.matched || !row.playerId || !row.teamId) continue;
+    rowsByPlayerId.set(row.playerId, {
+      player_id: row.playerId,
+      team_id: row.teamId,
+      disposals: row.disposals ?? null,
+      kicks: row.kicks ?? null,
+      handballs: row.handballs ?? null,
+      marks: row.marks ?? null,
+      tackles: row.tackles ?? null,
+      clearances: null,
+      fantasy_points: row.fantasyPoints ?? null,
+    });
+  }
+
+  return [...rowsByPlayerId.values()];
+}
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type ParsedRow = {

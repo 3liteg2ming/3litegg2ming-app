@@ -7,7 +7,6 @@ import {
   fetchLatestSuccessfulFixtureOcrDraft,
   fetchFixtureOcrData,
   fetchFixtureSubmissionData,
-  invokeAdminPlayerStatsOcr,
   listFixtures,
   listFixturePlayerStats,
   listPlayersForTeam,
@@ -26,6 +25,7 @@ import {
   buildPlayerStatsImportPreview,
   type BulkPreviewRow,
 } from '@/lib/adminPlayerStatsImport';
+import { runFixturePlayerStatsOcrWorkflow } from '@/lib/adminPlayerStatsOcrWorkflow';
 import WormGraph from '@/components/match-centre/broadcast/WormGraph';
 import type { EgJobStatus } from '@/lib/adminTypes';
 import { useAdminLayoutContext } from '../AdminLayout';
@@ -100,6 +100,7 @@ export default function AdminFixtureDetail() {
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
   const [ocrHelperOpen, setOcrHelperOpen] = useState(false);
+  const [ocrRunStatus, setOcrRunStatus] = useState('');
   const [isDownloadingPhotos, setIsDownloadingPhotos] = useState(false);
   const [wormDraft, setWormDraft] = useState<WormDraft[] | null>(null);
   const [wormDirty, setWormDirty] = useState(false);
@@ -398,20 +399,52 @@ export default function AdminFixtureDetail() {
 
   const runOcrMutation = useMutation({
     mutationFn: async () => {
+      setOcrRunStatus('Preparing OCR…');
       if (!fixtureId) throw new Error('No fixture');
-      const token = adminToken();
-      if (!token) throw new Error('Admin session missing or expired');
-      return invokeAdminPlayerStatsOcr({ token, fixtureId });
+      if (!fixture?.home_team_id || !fixture?.away_team_id) {
+        throw new Error('Fixture teams are missing.');
+      }
+      if (!homeSlug || !awaySlug) {
+        throw new Error('Fixture team slugs are missing.');
+      }
+      return runFixturePlayerStatsOcrWorkflow({
+        fixtureId,
+        homeTeamId: fixture.home_team_id,
+        awayTeamId: fixture.away_team_id,
+        homeTeamSlug: homeSlug,
+        awayTeamSlug: awaySlug,
+        homeTeamName: homeName,
+        awayTeamName: awayName,
+        token: adminToken(),
+        autoApply: true,
+        onProgress: (message) => setOcrRunStatus(message),
+      });
     },
     onSuccess: async (result) => {
+      setOcrRunStatus('');
       const extractedRows = Number(result.summary.playerStatRows || 0) || 0;
-      pushToast(`OCR complete. ${extractedRows} player row(s) extracted.`, 'success');
+      const importedRows = Number(result.importedRows || 0) || 0;
+      if (result.unmatchedRows > 0) {
+        const rawDraft = JSON.stringify(result.draft, null, 2);
+        setBulkJsonInput(rawDraft);
+        await previewBulkJson(rawDraft);
+      }
+      pushToast(
+        result.unmatchedRows > 0
+          ? `OCR imported ${importedRows} row(s). ${result.unmatchedRows} still need review.`
+          : `OCR imported ${importedRows} player row(s) from ${extractedRows} extracted row(s).`,
+        result.unmatchedRows > 0 ? 'info' : 'success',
+      );
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['admin', 'fixture-ocr', fixtureId] }),
         queryClient.invalidateQueries({ queryKey: ['admin', 'fixture-ocr-draft', fixtureId] }),
+        queryClient.invalidateQueries({ queryKey: ['admin', 'fixture-player-stats', fixtureId] }),
+        queryClient.invalidateQueries({ queryKey: ['admin', 'fixtures', 'playerStatsIds'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin', 'missing-player-stats'] }),
       ]);
     },
     onError: (error) => {
+      setOcrRunStatus('');
       pushToast(error instanceof Error ? error.message : 'Failed to run OCR for this fixture', 'error');
     },
   });
@@ -1026,8 +1059,8 @@ export default function AdminFixtureDetail() {
               <div>
                 <h4 className="eg-fd-import-title">Import Player Stats</h4>
                 <p className="eg-fd-import-desc">
-                  Paste JSON with <code>playerStats</code> array. Each row: <code>teamSlug</code>, <code>playerRef</code> (playerId, aflPlayerId, playerName), stats.
-                  Matching priority: playerId &rarr; aflPlayerId &rarr; playerName.
+                  Paste JSON with <code>playerStats</code> array, or run the one-click OCR save. Each row uses <code>teamSlug</code>, <code>playerRef</code> (playerId, aflPlayerId, playerName), and stats.
+                  Matching priority stays playerId &rarr; aflPlayerId &rarr; playerName.
                 </p>
               </div>
               <div className="eg-admin-inline-buttons">
@@ -1042,7 +1075,7 @@ export default function AdminFixtureDetail() {
                       : undefined
                   }
                 >
-                  {runOcrMutation.isPending ? 'Running OCR...' : 'Run OCR From Submitted Photos'}
+                  {runOcrMutation.isPending ? 'Running OCR + Saving...' : 'Auto OCR + Save Stats'}
                 </button>
                 <button
                   type="button"
@@ -1076,6 +1109,14 @@ export default function AdminFixtureDetail() {
               <div className="eg-admin-highlight-block eg-fd-ocr-note">
                 <p className="eg-admin-muted" style={{ margin: 0 }}>
                   This fixture submission does not currently expose any uploaded <code>player_stat</code> screenshots, so OCR cannot run yet.
+                </p>
+              </div>
+            ) : null}
+
+            {ocrRunStatus ? (
+              <div className="eg-admin-highlight-block eg-fd-ocr-note">
+                <p className="eg-admin-muted" style={{ margin: 0 }}>
+                  {ocrRunStatus}
                 </p>
               </div>
             ) : null}

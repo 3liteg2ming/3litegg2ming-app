@@ -3,14 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AdminPermissionError,
-  invokeAdminPlayerStatsOcr,
   listCompetitions,
+  listTeams,
   listMissingPlayerStatsFixtures,
   listSeasons,
   listFixtureSubmissions,
   listOcrQueue,
   setOcrQueueStatus,
 } from '@/lib/adminApi';
+import { runFixturePlayerStatsOcrWorkflow } from '@/lib/adminPlayerStatsOcrWorkflow';
 import type { AdminMissingPlayerStatsFixture, AdminOcrQueueItem, EgJobStatus } from '@/lib/adminTypes';
 import { useAdminLayoutContext } from '../AdminLayout';
 import { formatDateTime, useDebouncedValue, usePagination } from '../useAdminTools';
@@ -60,6 +61,12 @@ export default function AdminSubmissions() {
     staleTime: 10 * 60_000,
   });
 
+  const teamsQuery = useQuery({
+    queryKey: ['admin', 'teams', 'lookup'],
+    queryFn: () => listTeams('', 250),
+    staleTime: 10 * 60_000,
+  });
+
   const defaultSeasonId = useMemo(() => {
     const activeCompetition = (competitionsQuery.data || []).find((competition) => competition.active && competition.season_id);
     if (activeCompetition?.season_id) return activeCompetition.season_id;
@@ -106,6 +113,17 @@ export default function AdminSubmissions() {
   }, [ocrQuery.data?.rows]);
 
   const missingFixtures = missingFixturesQuery.data || [];
+  const teamMetaById = useMemo(() => {
+    const map = new Map<string, { slug: string; label: string }>();
+    for (const team of teamsQuery.data || []) {
+      map.set(team.id, {
+        slug: String(team.slug || team.team_key || '').trim(),
+        label: team.short_name || team.name,
+      });
+    }
+    return map;
+  }, [teamsQuery.data]);
+
   const runnableMissingFixtures = useMemo(
     () => missingFixtures.filter((fixture) => fixture.can_run_ocr),
     [missingFixtures],
@@ -114,23 +132,38 @@ export default function AdminSubmissions() {
   const [expandedOcrId, setExpandedOcrId] = useState<string>('');
 
   async function runFixtureOcr(fixture: AdminMissingPlayerStatsFixture) {
-    const token = adminToken();
-    if (!token) {
-      pushToast('Admin session missing or expired.', 'error');
+    const homeTeam = fixture.home_team_id ? teamMetaById.get(fixture.home_team_id) : null;
+    const awayTeam = fixture.away_team_id ? teamMetaById.get(fixture.away_team_id) : null;
+    if (!fixture.home_team_id || !fixture.away_team_id || !homeTeam?.slug || !awayTeam?.slug) {
+      pushToast('Fixture teams or slugs are missing, so OCR cannot run yet.', 'error');
       return false;
     }
 
     setRunningFixtureIds((prev) => (prev.includes(fixture.fixture_id) ? prev : [...prev, fixture.fixture_id]));
     try {
-      const result = await invokeAdminPlayerStatsOcr({ token, fixtureId: fixture.fixture_id });
+      const result = await runFixturePlayerStatsOcrWorkflow({
+        fixtureId: fixture.fixture_id,
+        homeTeamId: fixture.home_team_id,
+        awayTeamId: fixture.away_team_id,
+        homeTeamSlug: homeTeam.slug,
+        awayTeamSlug: awayTeam.slug,
+        homeTeamName: fixture.home_team_name || homeTeam.label || 'Home',
+        awayTeamName: fixture.away_team_name || awayTeam.label || 'Away',
+        token: adminToken(),
+        autoApply: true,
+      });
       const extractedRows = Number(result.summary.playerStatRows || 0) || 0;
+      const importedRows = Number(result.importedRows || 0) || 0;
       pushToast(
-        `${fixture.home_team_name || 'Home'} vs ${fixture.away_team_name || 'Away'} OCR complete (${extractedRows} row(s)).`,
-        'success',
+        result.unmatchedRows > 0
+          ? `${fixture.home_team_name || 'Home'} vs ${fixture.away_team_name || 'Away'} imported ${importedRows}/${extractedRows} row(s); ${result.unmatchedRows} need review.`
+          : `${fixture.home_team_name || 'Home'} vs ${fixture.away_team_name || 'Away'} imported ${importedRows} row(s).`,
+        result.unmatchedRows > 0 ? 'info' : 'success',
       );
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['admin', 'ocr-queue'] }),
         queryClient.invalidateQueries({ queryKey: ['admin', 'missing-player-stats', missingSeasonId] }),
+        queryClient.invalidateQueries({ queryKey: ['admin', 'fixtures', 'playerStatsIds'] }),
       ]);
       return true;
     } catch (error) {
@@ -164,7 +197,7 @@ export default function AdminSubmissions() {
     <div className="eg-admin-stack">
       <AdminCard
         title="Missing Player Stats"
-        subtitle="Submitted fixtures without saved player stats. Run OCR from the uploaded player-stat screenshots, then review/apply in fixture detail."
+        subtitle="Submitted fixtures without saved player stats. This now reads the uploaded player-stat screenshots and saves the matched rows straight into fixture stats."
         actions={
           <div className="eg-admin-inline-buttons">
             <button
@@ -174,7 +207,7 @@ export default function AdminSubmissions() {
             >
               {batchProgress
                 ? `Running ${batchProgress.done}/${batchProgress.total}`
-                : `Run OCR For All Missing (${runnableMissingFixtures.length})`}
+                : `Auto OCR + Save All Missing (${runnableMissingFixtures.length})`}
             </button>
           </div>
         }
@@ -250,7 +283,7 @@ export default function AdminSubmissions() {
                       onClick={() => void runFixtureOcr(fixture)}
                       disabled={isRunning || !fixture.can_run_ocr || Boolean(batchProgress)}
                     >
-                      {isRunning ? 'Running OCR…' : 'Run OCR'}
+                      {isRunning ? 'Running OCR…' : 'Auto OCR + Save'}
                     </button>
                     <button
                       type="button"

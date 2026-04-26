@@ -6,6 +6,7 @@ import type {
   AdminContentBlock,
   AdminFeatureFlag,
   AdminFixture,
+  AdminFixtureSubmissionImage,
   AdminFixtureSubmission,
   AdminJob,
   AdminMissingPlayerStatsFixture,
@@ -945,6 +946,51 @@ export async function fetchFixtureOcrData(fixtureId: string): Promise<AdminOcrQu
   }));
 }
 
+export async function createOcrQueueItem(args: {
+  fixtureId: string;
+  sourceImages: unknown[];
+}): Promise<AdminOcrQueueItem> {
+  const { data, error } = await supabase
+    .from('eg_ocr_queue')
+    .insert({
+      fixture_id: args.fixtureId,
+      status: 'running',
+      source_images: Array.isArray(args.sourceImages) ? args.sourceImages : [],
+      result: {},
+      error: null,
+    })
+    .select('*')
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  return {
+    ...(data as AdminOcrQueueItem),
+    source_images: Array.isArray((data as AdminOcrQueueItem).source_images)
+      ? (data as AdminOcrQueueItem).source_images
+      : [],
+    result: normalizeJsonObject((data as AdminOcrQueueItem).result),
+  };
+}
+
+export async function updateFixtureSubmissionImageOcrStatus(
+  imageIds: string[],
+  status: 'pending' | 'processing' | 'done' | 'failed',
+) {
+  const ids = imageIds.map((value) => String(value || '').trim()).filter(Boolean);
+  if (!ids.length) return;
+
+  const { error } = await supabase
+    .from('eg_fixture_submission_images')
+    .update({
+      ocr_status: status,
+      ocr_confidence: null,
+    })
+    .in('id', ids);
+
+  if (error) throw new Error(error.message);
+}
+
 export async function invokeAdminPlayerStatsOcr(args: {
   token: string;
   fixtureId: string;
@@ -970,6 +1016,42 @@ export async function invokeAdminPlayerStatsOcr(args: {
     status: String(payload.status || '').trim() || 'unknown',
     summary: normalizeJsonObject(payload.summary),
   };
+}
+
+export async function listFixturePlayerStatImages(fixtureId: string): Promise<AdminFixtureSubmissionImage[]> {
+  const { data, error } = await supabase
+    .from('eg_fixture_submission_images')
+    .select('id,fixture_id,submission_id,image_type,page_number,storage_bucket,storage_path,mime_type,ocr_status')
+    .eq('fixture_id', fixtureId)
+    .eq('image_type', 'player_stat')
+    .order('page_number', { ascending: true })
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    if (error.message.includes('does not exist')) return [];
+    throw new Error(error.message);
+  }
+
+  return ((data || []) as Array<Record<string, unknown>>).map((row) => {
+    const storageBucket = String(row.storage_bucket || 'Assets').trim() || 'Assets';
+    const storagePath = String(row.storage_path || '').trim();
+    const publicUrl = storagePath
+      ? supabase.storage.from(storageBucket).getPublicUrl(storagePath).data.publicUrl
+      : '';
+
+    return {
+      id: String(row.id || '').trim(),
+      fixture_id: String(row.fixture_id || '').trim(),
+      submission_id: String(row.submission_id || '').trim(),
+      image_type: String(row.image_type || '').trim(),
+      page_number: normalizeNullableInteger(row.page_number),
+      storage_bucket: storageBucket,
+      storage_path: storagePath,
+      mime_type: row.mime_type ? String(row.mime_type) : null,
+      ocr_status: row.ocr_status ? String(row.ocr_status) : null,
+      public_url: publicUrl || '',
+    };
+  });
 }
 
 export async function fetchLatestSuccessfulFixtureOcrDraft(fixtureId: string): Promise<{

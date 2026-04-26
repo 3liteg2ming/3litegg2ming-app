@@ -203,6 +203,19 @@ export type AdminMissingPlayerStatsFixture = {
   blocked_reason: string | null;
 };
 
+export type AdminFixtureSubmissionImage = {
+  id: string;
+  fixture_id: string;
+  submission_id: string;
+  image_type: string;
+  page_number: number | null;
+  storage_bucket: string;
+  storage_path: string;
+  mime_type: string | null;
+  ocr_status: string | null;
+  public_url: string;
+};
+
 export type AdminPageParams = {
   page: number;
   pageSize: number;
