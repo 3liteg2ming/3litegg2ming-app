@@ -333,11 +333,11 @@ function HeroMasterCard() {
                 }}
               />
             </div>
+          </div>
 
-            <div className="home-hero-aflWrap">
-              <img src={AFL26_LOGO_URL} alt="AFL26" className="home-hero-aflLogo" />
-              <span className="home-hero-aflLabel">Official season hub</span>
-            </div>
+          <div className="home-hero-aflWrap">
+            <img src={AFL26_LOGO_URL} alt="AFL26" className="home-hero-aflLogo" />
+            <span className="home-hero-aflLabel">Official season hub</span>
           </div>
         </div>
       </div>

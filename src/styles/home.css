@@ -312,10 +312,10 @@
 
 /* ② Partnership lockup — polished inline glass bar */
 .home-hero-brandRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(108px, 0.8fr);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 10px;
-  align-items: stretch;
 }
 
 .home-hero-lockup {
@@ -324,7 +324,6 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 100%;
   padding: 8px 12px;
   border-radius: 16px;
   background: rgba(6,10,22,0.55);
