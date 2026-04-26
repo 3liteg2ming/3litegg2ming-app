@@ -4,8 +4,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AdminPermissionError,
   fetchFixtureDetail,
+  fetchLatestSuccessfulFixtureOcrDraft,
   fetchFixtureOcrData,
   fetchFixtureSubmissionData,
+  invokeAdminPlayerStatsOcr,
   listFixtures,
   listFixturePlayerStats,
   listPlayersForTeam,
@@ -20,6 +22,10 @@ import {
   type AdminFixturePlayerStat,
   type WormQuarterPoint,
 } from '@/lib/adminApi';
+import {
+  buildPlayerStatsImportPreview,
+  type BulkPreviewRow,
+} from '@/lib/adminPlayerStatsImport';
 import WormGraph from '@/components/match-centre/broadcast/WormGraph';
 import type { EgJobStatus } from '@/lib/adminTypes';
 import { useAdminLayoutContext } from '../AdminLayout';
@@ -35,33 +41,6 @@ type ScoreDraft = {
 };
 
 type PlayerStatDraft = AdminFixturePlayerStat & { dirty?: boolean; _unmatched?: boolean };
-
-type MatchConfidence = 'exact' | 'partial' | 'none';
-
-type BulkPreviewRow = {
-  playerName: string;
-  teamSlug: string;
-  matched: boolean;
-  matchConfidence: MatchConfidence;
-  matchReason: string;
-  playerId: string | null;
-  teamId: string | null;
-  teamLabel: string;
-  kicks: number;
-  handballs: number;
-  disposals: number;
-  marks: number;
-  tackles: number;
-  fantasyPoints: number;
-  // playerRef tracking
-  refPlayerId?: string | null;   // playerRef.playerId from JSON
-  refAflPlayerId?: number | null; // playerRef.aflPlayerId from JSON
-  refPlayerName?: string | null;  // playerRef.playerName from JSON
-  matchSource?: 'playerId' | 'aflPlayerId' | 'playerName'; // which ref field resolved this
-  // For manual resolution
-  manualPlayerId?: string;
-  availablePlayers?: Array<{ id: string; label: string }>;
-};
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -155,6 +134,12 @@ export default function AdminFixtureDetail() {
     enabled: Boolean(fixtureId),
   });
 
+  const latestOcrDraftQuery = useQuery({
+    queryKey: ['admin', 'fixture-ocr-draft', fixtureId],
+    queryFn: () => fetchLatestSuccessfulFixtureOcrDraft(fixtureId!),
+    enabled: Boolean(fixtureId),
+  });
+
   const teamsQuery = useQuery({
     queryKey: ['admin', 'teams', 'lookup'],
     queryFn: () => listTeams('', 250),
@@ -238,12 +223,12 @@ export default function AdminFixtureDetail() {
           ...(p.afl_player_id ? { aflPlayerId: p.afl_player_id } : {}),
           playerName: p.display_name || p.name || '',
         },
-        kicks: 0,
-        handballs: 0,
-        disposals: 0,
-        marks: 0,
-        tackles: 0,
-        fantasyPoints: 0,
+        kicks: null,
+        handballs: null,
+        disposals: null,
+        marks: null,
+        tackles: null,
+        fantasyPoints: null,
       }));
     }
 
@@ -272,12 +257,12 @@ export default function AdminFixtureDetail() {
           {
             teamSlug: 'team-slug',
             playerRef: { playerId: 'UUID', aflPlayerId: 0, playerName: 'Player Name' },
-            kicks: 0,
-            handballs: 0,
-            disposals: 0,
-            marks: 0,
-            tackles: 0,
-            fantasyPoints: 0,
+            kicks: null,
+            handballs: null,
+            disposals: null,
+            marks: null,
+            tackles: null,
+            fantasyPoints: null,
           },
         ],
       },
@@ -404,9 +389,30 @@ export default function AdminFixtureDetail() {
     onSuccess: () => {
       pushToast('OCR item updated.', 'success');
       queryClient.invalidateQueries({ queryKey: ['admin', 'fixture-ocr', fixtureId] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'fixture-ocr-draft', fixtureId] });
     },
     onError: (error) => {
       pushToast(error instanceof Error ? error.message : 'Failed to update OCR item', 'error');
+    },
+  });
+
+  const runOcrMutation = useMutation({
+    mutationFn: async () => {
+      if (!fixtureId) throw new Error('No fixture');
+      const token = adminToken();
+      if (!token) throw new Error('Admin session missing or expired');
+      return invokeAdminPlayerStatsOcr({ token, fixtureId });
+    },
+    onSuccess: async (result) => {
+      const extractedRows = Number(result.summary.playerStatRows || 0) || 0;
+      pushToast(`OCR complete. ${extractedRows} player row(s) extracted.`, 'success');
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin', 'fixture-ocr', fixtureId] }),
+        queryClient.invalidateQueries({ queryKey: ['admin', 'fixture-ocr-draft', fixtureId] }),
+      ]);
+    },
+    onError: (error) => {
+      pushToast(error instanceof Error ? error.message : 'Failed to run OCR for this fixture', 'error');
     },
   });
 
@@ -497,299 +503,49 @@ export default function AdminFixtureDetail() {
   }
 
   // ─── BULK JSON PREVIEW — supports playerRef contract ───────────────────────
-  // Matching priority: playerRef.playerId (UUID) → playerRef.aflPlayerId → playerRef.playerName → flat playerName
-  async function previewBulkJson() {
+  async function previewBulkJson(rawInput = bulkJsonInput) {
     setBulkError(null);
     setBulkPreview(null);
-    if (!bulkJsonInput.trim()) { setBulkError('Paste JSON first.'); return; }
+    if (!rawInput.trim()) {
+      setBulkError('Paste JSON first.');
+      return;
+    }
 
     setIsPreviewLoading(true);
     try {
-      const parsed = JSON.parse(bulkJsonInput.trim());
-
-      // Validate fixtureId if present in top-level JSON
-      if (parsed.fixtureId && parsed.fixtureId !== fixtureId) {
-        setBulkError(`JSON fixtureId "${parsed.fixtureId}" does not match current fixture "${fixtureId}".`);
-        setIsPreviewLoading(false);
-        return;
-      }
-
-      const rows: Array<Record<string, unknown>> = Array.isArray(parsed)
-        ? parsed
-        : Array.isArray(parsed.playerStats)
-          ? parsed.playerStats
-          : Array.isArray(parsed.players)
-            ? parsed.players
-            : Array.isArray(parsed.stats)
-              ? parsed.stats
-              : [parsed];
-
-      if (!rows.length) { setBulkError('No player stat rows found in JSON.'); setIsPreviewLoading(false); return; }
-
-      // Extract playerRef or fall back to flat fields
-      type ParsedRow = {
-        playerName: string;
-        rawSlug: string;
-        refPlayerId: string | null;
-        refAflPlayerId: number | null;
-        refPlayerName: string | null;
-        kicks: number; handballs: number; disposals: number; marks: number; tackles: number; fantasyPoints: number;
-      };
-
-      const parsedRows: ParsedRow[] = [];
-      let skippedCount = 0;
-      for (const row of rows) {
-        const ref = (row.playerRef || row.player_ref || null) as Record<string, unknown> | null;
-        const refPlayerId = ref ? String(ref.playerId || ref.player_id || '').trim() || null : null;
-        const refAflPlayerId = ref ? (Number(ref.aflPlayerId || ref.afl_player_id || 0) || null) : null;
-        const refPlayerName = ref ? String(ref.playerName || ref.player_name || '').trim() || null : null;
-        // Fall back to flat fields for backward compat
-        const playerName = refPlayerName || String(row.playerName || row.player_name || row.name || '').trim();
-        const rawSlug = String(row.teamSlug || row.team_slug || row.team || '').trim();
-
-        if (!playerName && !refPlayerId && !refAflPlayerId) { skippedCount++; continue; }
-
-        parsedRows.push({
-          playerName: playerName || '(unknown)',
-          rawSlug,
-          refPlayerId: refPlayerId && UUID_RE.test(refPlayerId) ? refPlayerId : null,
-          refAflPlayerId,
-          refPlayerName,
-          kicks: Number(row.kicks ?? 0),
-          handballs: Number(row.handballs ?? 0),
-          disposals: Number(row.disposals ?? 0),
-          marks: Number(row.marks ?? 0),
-          tackles: Number(row.tackles ?? 0),
-          fantasyPoints: Number(row.fantasyPoints || row.fantasy_points || 0),
-        });
-      }
-
-      if (!parsedRows.length) {
-        setBulkError('No valid rows found. Each row needs a playerRef or playerName.');
-        setIsPreviewLoading(false);
-        return;
-      }
-      if (skippedCount > 0) {
-        pushToast(`Skipped ${skippedCount} row(s) with no player identifier.`, 'info');
-      }
-
-      // Phase 1: Match teams via slug
-      const fixtureTeamIds = new Set([fixture?.home_team_id, fixture?.away_team_id].filter(Boolean));
-      const teamMatchedRows = parsedRows.map((row) => {
-        const normalizedSlug = row.rawSlug.toLowerCase().replace(/[^a-z0-9-]/g, '');
-        const compactSlug = row.rawSlug.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const teamMatch = teamSlugMap.get(normalizedSlug) || teamSlugMap.get(compactSlug) || null;
-        return { ...row, teamMatch };
+      const result = await buildPlayerStatsImportPreview({
+        rawInput,
+        fixtureId: fixtureId!,
+        fixtureTeamIds: [fixture?.home_team_id, fixture?.away_team_id],
+        teamSlugMap,
+        loadPlayersForTeam: listPlayersForTeam,
+        lookupPlayersByAflId,
       });
 
-      // Phase 2: Fetch players for matched teams + batch lookup aflPlayerIds
-      const matchedTeamIds = Array.from(new Set(
-        teamMatchedRows.filter((r) => r.teamMatch).map((r) => r.teamMatch!.id)
-      ));
-
-      const playersByTeam = new Map<string, Array<{ id: string; name: string | null; display_name: string | null; team_id: string; afl_player_id: number | null }>>();
-      for (const tid of matchedTeamIds) {
-        try {
-          const players = await listPlayersForTeam(tid);
-          playersByTeam.set(tid, players);
-        } catch { /* continue */ }
+      setBulkPreview(result.preview);
+      for (const warning of result.warnings) {
+        pushToast(warning, 'info');
       }
-
-      // Batch lookup AFL player IDs for rows that have them
-      const aflIdsToLookup = teamMatchedRows.map((r) => r.refAflPlayerId).filter((id): id is number => id != null && id > 0);
-      const aflIdMap = aflIdsToLookup.length > 0 ? await lookupPlayersByAflId(aflIdsToLookup) : new Map<number, { id: string; name: string | null; display_name: string | null; team_id: string | null; afl_player_id: number }>();
-
-      // Phase 3: Match players using priority: playerId → aflPlayerId → playerName
-      const preview: BulkPreviewRow[] = teamMatchedRows.map((row) => {
-        const teamPlayers = row.teamMatch ? (playersByTeam.get(row.teamMatch.id) || []) : [];
-        const availablePlayers = teamPlayers.map((p) => ({
-          id: p.id,
-          label: p.display_name || p.name || p.id,
-        }));
-        const baseRow = {
-          playerName: row.playerName,
-          teamSlug: row.rawSlug,
-          teamId: row.teamMatch?.id || null,
-          teamLabel: row.teamMatch?.label || row.rawSlug || '(empty)',
-          kicks: row.kicks,
-          handballs: row.handballs,
-          disposals: row.disposals,
-          marks: row.marks,
-          tackles: row.tackles,
-          fantasyPoints: row.fantasyPoints,
-          refPlayerId: row.refPlayerId,
-          refAflPlayerId: row.refAflPlayerId,
-          refPlayerName: row.refPlayerName,
-          availablePlayers,
-        };
-
-        // No team match — can't resolve
-        if (!row.teamMatch) {
-          return {
-            ...baseRow,
-            matched: false,
-            matchConfidence: 'none' as MatchConfidence,
-            matchReason: `No team found for "${row.rawSlug}"`,
-            playerId: null,
-            matchSource: undefined,
-          };
-        }
-
-        // Priority 1: playerRef.playerId (UUID direct lookup)
-        if (row.refPlayerId) {
-          const directMatch = teamPlayers.find((p) => p.id === row.refPlayerId);
-          if (directMatch) {
-            // Check if playerName disagrees
-            let reason = `Direct ID match: ${directMatch.display_name || directMatch.name}`;
-            if (row.refPlayerName) {
-              const refNorm = normalizeForMatch(row.refPlayerName);
-              const dbNorm = normalizeForMatch(directMatch.display_name || directMatch.name || '');
-              if (refNorm !== dbNorm) {
-                reason += ` (warning: name "${row.refPlayerName}" differs from "${directMatch.display_name || directMatch.name}")`;
-              }
-            }
-            return {
-              ...baseRow,
-              matched: true,
-              matchConfidence: 'exact' as MatchConfidence,
-              matchReason: reason,
-              playerId: directMatch.id,
-              matchSource: 'playerId' as const,
-            };
-          }
-          // playerId provided but not found on this team — still try lower priorities but warn
-        }
-
-        // Priority 2: playerRef.aflPlayerId
-        if (row.refAflPlayerId) {
-          const aflMatch = aflIdMap.get(row.refAflPlayerId);
-          if (aflMatch) {
-            // Verify the AFL-matched player is on the correct team
-            const onTeam = aflMatch.team_id === row.teamMatch.id;
-            let reason = `AFL ID ${row.refAflPlayerId} → ${aflMatch.display_name || aflMatch.name}`;
-            if (!onTeam) {
-              reason += ` (warning: player team_id doesn't match ${row.teamMatch.label})`;
-            }
-            if (row.refPlayerName) {
-              const refNorm = normalizeForMatch(row.refPlayerName);
-              const dbNorm = normalizeForMatch(aflMatch.display_name || aflMatch.name || '');
-              if (refNorm !== dbNorm) {
-                reason += ` (name "${row.refPlayerName}" differs from "${aflMatch.display_name || aflMatch.name}")`;
-              }
-            }
-            return {
-              ...baseRow,
-              matched: true,
-              matchConfidence: onTeam ? 'exact' as MatchConfidence : 'partial' as MatchConfidence,
-              matchReason: reason,
-              playerId: aflMatch.id,
-              teamId: aflMatch.team_id || row.teamMatch.id,
-              matchSource: 'aflPlayerId' as const,
-            };
-          }
-        }
-
-        // Priority 3: playerName matching (exact → last name → first name)
-        const normalizedName = normalizeForMatch(row.playerName);
-
-        // Exact name match
-        const exactMatch = teamPlayers.find((p) => {
-          const pName = normalizeForMatch(p.display_name || p.name || '');
-          return pName === normalizedName;
-        });
-        if (exactMatch) {
-          return {
-            ...baseRow,
-            matched: true,
-            matchConfidence: 'exact' as MatchConfidence,
-            matchReason: `Exact name match: ${exactMatch.display_name || exactMatch.name}`,
-            playerId: exactMatch.id,
-            matchSource: 'playerName' as const,
-          };
-        }
-
-        // Partial match (last name)
-        const nameParts = row.playerName.toLowerCase().split(/\s+/);
-        const lastName = nameParts[nameParts.length - 1]?.replace(/[^a-z]/g, '');
-        if (lastName && lastName.length > 2) {
-          const candidates = teamPlayers.filter((p) => {
-            const pName = (p.display_name || p.name || '').toLowerCase();
-            return pName.endsWith(lastName) || pName.includes(lastName);
-          });
-          if (candidates.length === 1) {
-            return {
-              ...baseRow,
-              matched: true,
-              matchConfidence: 'partial' as MatchConfidence,
-              matchReason: `Partial match (last name): ${candidates[0].display_name || candidates[0].name}`,
-              playerId: candidates[0].id,
-              matchSource: 'playerName' as const,
-            };
-          }
-        }
-
-        // Partial match (first name)
-        const firstName = nameParts[0]?.replace(/[^a-z]/g, '');
-        if (firstName && firstName.length > 2) {
-          const candidates = teamPlayers.filter((p) => {
-            const pName = (p.display_name || p.name || '').toLowerCase();
-            return pName.startsWith(firstName);
-          });
-          if (candidates.length === 1) {
-            return {
-              ...baseRow,
-              matched: true,
-              matchConfidence: 'partial' as MatchConfidence,
-              matchReason: `Partial match (first name): ${candidates[0].display_name || candidates[0].name}`,
-              playerId: candidates[0].id,
-              matchSource: 'playerName' as const,
-            };
-          }
-        }
-
-        // No match
-        return {
-          ...baseRow,
-          matched: false,
-          matchConfidence: 'none' as MatchConfidence,
-          matchReason: row.refPlayerId
-            ? `playerId "${row.refPlayerId}" not found on ${row.teamMatch.label}; name fallback also failed`
-            : `No player "${row.playerName}" found on ${row.teamMatch.label} (${teamPlayers.length} players checked)`,
-          playerId: null,
-          matchSource: undefined,
-        };
-      });
-
-      // Phase 4: Safety checks
-      const nonFixtureTeams = preview.filter((r) => r.teamId && !fixtureTeamIds.has(r.teamId));
-      if (nonFixtureTeams.length > 0) {
-        const teamNames = [...new Set(nonFixtureTeams.map((r) => r.teamLabel))];
-        pushToast(`Warning: ${nonFixtureTeams.length} row(s) matched to teams not in this fixture: ${teamNames.join(', ')}`, 'info');
-      }
-
-      const seenPlayerIds = new Map<string, number>();
-      for (const row of preview) {
-        if (row.playerId) {
-          seenPlayerIds.set(row.playerId, (seenPlayerIds.get(row.playerId) || 0) + 1);
-        }
-      }
-      const duplicates = [...seenPlayerIds.entries()].filter(([, count]) => count > 1);
-      if (duplicates.length > 0) {
-        pushToast(`Warning: ${duplicates.length} player(s) appear multiple times. Last occurrence will be used.`, 'info');
-      }
-
-      // Warn about playerId/playerName disagreements
-      const nameDisagreements = preview.filter((r) => r.matchReason.includes('differs from'));
-      if (nameDisagreements.length > 0) {
-        pushToast(`Note: ${nameDisagreements.length} row(s) have playerRef name that differs from database — matched by ID (ID wins).`, 'info');
-      }
-
-      setBulkPreview(preview);
-    } catch {
-      setBulkError('Invalid JSON. Check format and try again.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Invalid JSON. Check format and try again.';
+      setBulkError(message);
     } finally {
       setIsPreviewLoading(false);
     }
+  }
+
+  async function loadLatestOcrDraft() {
+    if (!fixtureId) return;
+
+    const latestDraft = latestOcrDraftQuery.data || (await latestOcrDraftQuery.refetch()).data;
+    if (!latestDraft?.draft) {
+      pushToast('No successful OCR draft is available for this fixture yet.', 'info');
+      return;
+    }
+
+    const rawDraft = JSON.stringify(latestDraft.draft, null, 2);
+    setBulkJsonInput(rawDraft);
+    await previewBulkJson(rawDraft);
   }
 
   function updatePreviewManualPlayer(index: number, playerId: string) {
@@ -997,6 +753,43 @@ export default function AdminFixtureDetail() {
     () => Array.from(playerDrafts.values()).filter((d) => d.dirty && UUID_RE.test(d.player_id)).length,
     [playerDrafts],
   );
+
+  const submissionScreenshotMeta = useMemo(() => {
+    const rows: Array<Record<string, unknown>> = [];
+    for (const submission of submissionsQuery.data || []) {
+      let rawScreenshots = submission.screenshots;
+      if (typeof rawScreenshots === 'string') {
+        try {
+          rawScreenshots = JSON.parse(rawScreenshots);
+        } catch {
+          rawScreenshots = [];
+        }
+      }
+      if (Array.isArray(rawScreenshots)) {
+        rows.push(...(rawScreenshots as Array<Record<string, unknown>>));
+      }
+    }
+    return rows;
+  }, [submissionsQuery.data]);
+
+  const playerStatScreenshotCount = useMemo(
+    () =>
+      submissionScreenshotMeta.filter((row) => {
+        const imageType = String(row.imageType || row.image_type || '').trim().toLowerCase();
+        return imageType === 'player_stat';
+      }).length,
+    [submissionScreenshotMeta],
+  );
+
+  const latestOcrItem = useMemo(() => (ocrQuery.data || [])[0] || null, [ocrQuery.data]);
+  const latestOcrSummary = latestOcrDraftQuery.data?.summary || {};
+  const latestOcrDraft = latestOcrDraftQuery.data?.draft || null;
+  const latestOcrExtractedRows =
+    Number(latestOcrSummary.playerStatRows || latestOcrDraft?.playerStats.length || 0) || 0;
+  const latestOcrWarningCount =
+    latestOcrDraftQuery.data?.warnings.length ||
+    latestOcrDraft?.warnings?.length ||
+    0;
 
   if (!fixtureId) {
     return <EmptyState title="No fixture" description="Fixture ID is missing from the URL." />;
@@ -1237,13 +1030,82 @@ export default function AdminFixtureDetail() {
                   Matching priority: playerId &rarr; aflPlayerId &rarr; playerName.
                 </p>
               </div>
+              <div className="eg-admin-inline-buttons">
+                <button
+                  type="button"
+                  className="eg-fd-btn eg-fd-btn-primary"
+                  onClick={() => runOcrMutation.mutate()}
+                  disabled={runOcrMutation.isPending || playerStatScreenshotCount === 0}
+                  title={
+                    playerStatScreenshotCount === 0
+                      ? 'No uploaded player-stat screenshots found on this submitted result.'
+                      : undefined
+                  }
+                >
+                  {runOcrMutation.isPending ? 'Running OCR...' : 'Run OCR From Submitted Photos'}
+                </button>
+                <button
+                  type="button"
+                  className="eg-fd-btn"
+                  onClick={() => void loadLatestOcrDraft()}
+                  disabled={latestOcrDraftQuery.isFetching || !latestOcrDraft}
+                >
+                  {latestOcrDraftQuery.isFetching ? 'Loading Draft...' : 'Load Latest OCR Draft'}
+                </button>
+              </div>
             </div>
+
+            <div className="eg-fd-ocr-status-strip">
+              <div className="eg-fd-ocr-status-chip">
+                <span className="eg-fd-ocr-status-label">Latest OCR</span>
+                <strong>{latestOcrItem?.status || (latestOcrDraft ? 'succeeded' : 'idle')}</strong>
+              </div>
+              <div className="eg-fd-ocr-status-meta">
+                <span>{playerStatScreenshotCount} player-stat screenshot(s)</span>
+                <span>{latestOcrExtractedRows} extracted row(s)</span>
+                <span>{latestOcrWarningCount} warning(s)</span>
+                <span>
+                  {latestOcrItem?.updated_at
+                    ? `Updated ${formatDateTime(latestOcrItem.updated_at)}`
+                    : 'No OCR run yet'}
+                </span>
+              </div>
+            </div>
+
+            {playerStatScreenshotCount === 0 ? (
+              <div className="eg-admin-highlight-block eg-fd-ocr-note">
+                <p className="eg-admin-muted" style={{ margin: 0 }}>
+                  This fixture submission does not currently expose any uploaded <code>player_stat</code> screenshots, so OCR cannot run yet.
+                </p>
+              </div>
+            ) : null}
+
+            {latestOcrItem?.error ? (
+              <div className="eg-admin-highlight-block eg-fd-ocr-note eg-fd-ocr-note--error">
+                <p className="eg-admin-error" style={{ margin: 0 }}>
+                  Latest OCR error: {latestOcrItem.error}
+                </p>
+              </div>
+            ) : null}
+
+            {latestOcrWarningCount > 0 ? (
+              <div className="eg-admin-highlight-block eg-fd-ocr-note">
+                <p style={{ margin: '0 0 6px', fontSize: '0.8rem', fontWeight: 700, color: '#fef08a' }}>
+                  Latest OCR warnings
+                </p>
+                <div className="eg-fd-ocr-warning-list">
+                  {(latestOcrDraftQuery.data?.warnings || latestOcrDraft?.warnings || []).map((warning, index) => (
+                    <span key={`${warning}-${index}`}>{warning}</span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             <textarea
               className="eg-fd-json-input"
               value={bulkJsonInput}
               onChange={(e) => { setBulkJsonInput(e.target.value); setBulkPreview(null); setBulkError(null); }}
-              placeholder={'{\n  "fixtureId": "CURRENT_FIXTURE_ID",\n  "playerStats": [\n    {\n      "teamSlug": "sydney-swans",\n      "playerRef": { "playerId": "uuid...", "aflPlayerId": 12345, "playerName": "Isaac Heeney" },\n      "kicks": 14, "handballs": 10, "disposals": 24, "marks": 6, "fantasyPoints": 126\n    }\n  ]\n}'}
+              placeholder={'{\n  "fixtureId": "CURRENT_FIXTURE_ID",\n  "playerStats": [\n    {\n      "teamSlug": "sydney-swans",\n      "playerRef": { "playerId": "uuid...", "aflPlayerId": 12345, "playerName": "Isaac Heeney" },\n      "kicks": 14, "handballs": 10, "disposals": 24, "marks": 6, "fantasyPoints": 126,\n      "tackles": null\n    }\n  ],\n  "warnings": []\n}'}
               rows={5}
             />
 
@@ -1255,7 +1117,7 @@ export default function AdminFixtureDetail() {
               <button
                 type="button"
                 className="eg-fd-btn eg-fd-btn-primary"
-                onClick={previewBulkJson}
+                onClick={() => void previewBulkJson()}
                 disabled={!bulkJsonInput.trim() || isPreviewLoading}
               >
                 {isPreviewLoading ? 'Matching Players...' : 'Preview & Match'}
@@ -1320,11 +1182,11 @@ export default function AdminFixtureDetail() {
                           <span className="eg-fd-preview-team">{row.teamLabel}</span>
                         </div>
                         <div className="eg-fd-preview-stats-mini">
-                          <span title="Disposals">D:{row.disposals}</span>
-                          <span title="Kicks">K:{row.kicks}</span>
-                          <span title="Handballs">H:{row.handballs}</span>
-                          <span title="Marks">M:{row.marks}</span>
-                          {row.fantasyPoints ? <span title="Fantasy Points">FP:{row.fantasyPoints}</span> : null}
+                          <span title="Disposals">D:{row.disposals ?? '-'}</span>
+                          <span title="Kicks">K:{row.kicks ?? '-'}</span>
+                          <span title="Handballs">H:{row.handballs ?? '-'}</span>
+                          <span title="Marks">M:{row.marks ?? '-'}</span>
+                          <span title="Fantasy Points">FP:{row.fantasyPoints ?? '-'}</span>
                         </div>
                       </div>
                       <div className="eg-fd-preview-match-info">

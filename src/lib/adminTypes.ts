@@ -69,6 +69,8 @@ export type AdminFixture = {
   start_time: string | null;
   home_team_id: string | null;
   away_team_id: string | null;
+  home_team_name?: string | null;
+  away_team_name?: string | null;
   home_total: number | null;
   away_total: number | null;
   home_goals: number | null;
@@ -127,6 +129,38 @@ export type AdminOcrQueueItem = {
   error: string | null;
 };
 
+export type AdminPlayerStatsOcrDraftRow = {
+  teamSlug: string;
+  playerRef: {
+    playerId: string | null;
+    aflPlayerId: number | null;
+    playerName: string | null;
+  };
+  kicks: number | null;
+  handballs: number | null;
+  disposals: number | null;
+  marks: number | null;
+  tackles: number | null;
+  fantasyPoints: number | null;
+};
+
+export type AdminPlayerStatsOcrDraft = {
+  fixtureId: string;
+  homeTeamSlug: string;
+  awayTeamSlug: string;
+  playerStats: AdminPlayerStatsOcrDraftRow[];
+  warnings?: string[];
+};
+
+export type AdminPlayerStatsOcrResult = {
+  draft: AdminPlayerStatsOcrDraft;
+  warnings: string[];
+  summary?: Record<string, unknown>;
+  rawText?: string | null;
+  rawResponseId?: string | null;
+  model?: string | null;
+};
+
 export type AdminAuditLog = {
   id: string;
   created_at: string;
@@ -150,6 +184,23 @@ export type AdminFixtureSubmission = {
   notes: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type AdminMissingPlayerStatsFixture = {
+  fixture_id: string;
+  season_id: string | null;
+  round: number | null;
+  home_team_id: string | null;
+  away_team_id: string | null;
+  home_team_name: string | null;
+  away_team_name: string | null;
+  submitted_at: string | null;
+  screenshot_count: number;
+  latest_ocr_status: EgJobStatus | null;
+  latest_ocr_queue_id: string | null;
+  latest_ocr_updated_at: string | null;
+  can_run_ocr: boolean;
+  blocked_reason: string | null;
 };
 
 export type AdminPageParams = {

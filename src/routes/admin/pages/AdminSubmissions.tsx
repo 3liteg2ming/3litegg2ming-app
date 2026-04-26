@@ -1,12 +1,17 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AdminPermissionError,
+  invokeAdminPlayerStatsOcr,
+  listCompetitions,
+  listMissingPlayerStatsFixtures,
+  listSeasons,
   listFixtureSubmissions,
   listOcrQueue,
   setOcrQueueStatus,
 } from '@/lib/adminApi';
-import type { AdminOcrQueueItem, EgJobStatus } from '@/lib/adminTypes';
+import type { AdminMissingPlayerStatsFixture, AdminOcrQueueItem, EgJobStatus } from '@/lib/adminTypes';
 import { useAdminLayoutContext } from '../AdminLayout';
 import { formatDateTime, useDebouncedValue, usePagination } from '../useAdminTools';
 import { AdminCard, EmptyState, Pager } from './AdminUi';
@@ -14,14 +19,18 @@ import { AdminCard, EmptyState, Pager } from './AdminUi';
 const PAGE_SIZE = 15;
 
 export default function AdminSubmissions() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { globalSearch, pushToast } = useAdminLayoutContext();
+  const { globalSearch, pushToast, adminToken } = useAdminLayoutContext();
 
   const [submissionPage, setSubmissionPage] = useState(1);
   const [ocrPage, setOcrPage] = useState(1);
   const [status, setStatus] = useState<'all' | string>('all');
   const [ocrStatus, setOcrStatus] = useState<EgJobStatus | 'all'>('all');
   const [searchInput, setSearchInput] = useState('');
+  const [missingSeasonId, setMissingSeasonId] = useState('');
+  const [runningFixtureIds, setRunningFixtureIds] = useState<string[]>([]);
+  const [batchProgress, setBatchProgress] = useState<{ done: number; total: number } | null>(null);
 
   const search = useDebouncedValue((searchInput || globalSearch).trim(), 300);
 
@@ -37,6 +46,38 @@ export default function AdminSubmissions() {
     queryFn: () => listOcrQueue({ page: ocrPage, pageSize: PAGE_SIZE, status: ocrStatus, search }),
     placeholderData: keepPreviousData,
     refetchInterval: 10_000,
+  });
+
+  const seasonsQuery = useQuery({
+    queryKey: ['admin', 'seasons', 'lookup'],
+    queryFn: () => listSeasons(''),
+    staleTime: 10 * 60_000,
+  });
+
+  const competitionsQuery = useQuery({
+    queryKey: ['admin', 'competitions', 'lookup'],
+    queryFn: () => listCompetitions(''),
+    staleTime: 10 * 60_000,
+  });
+
+  const defaultSeasonId = useMemo(() => {
+    const activeCompetition = (competitionsQuery.data || []).find((competition) => competition.active && competition.season_id);
+    if (activeCompetition?.season_id) return activeCompetition.season_id;
+    return seasonsQuery.data?.[0]?.id || '';
+  }, [competitionsQuery.data, seasonsQuery.data]);
+
+  useEffect(() => {
+    if (!missingSeasonId && defaultSeasonId) {
+      setMissingSeasonId(defaultSeasonId);
+    }
+  }, [defaultSeasonId, missingSeasonId]);
+
+  const missingFixturesQuery = useQuery({
+    queryKey: ['admin', 'missing-player-stats', missingSeasonId],
+    queryFn: () => listMissingPlayerStatsFixtures(missingSeasonId),
+    enabled: Boolean(missingSeasonId),
+    placeholderData: keepPreviousData,
+    refetchInterval: 15_000,
   });
 
   const ocrMutation = useMutation({
@@ -64,11 +105,169 @@ export default function AdminSubmissions() {
     return map;
   }, [ocrQuery.data?.rows]);
 
+  const missingFixtures = missingFixturesQuery.data || [];
+  const runnableMissingFixtures = useMemo(
+    () => missingFixtures.filter((fixture) => fixture.can_run_ocr),
+    [missingFixtures],
+  );
+
   const [expandedOcrId, setExpandedOcrId] = useState<string>('');
 
+  async function runFixtureOcr(fixture: AdminMissingPlayerStatsFixture) {
+    const token = adminToken();
+    if (!token) {
+      pushToast('Admin session missing or expired.', 'error');
+      return false;
+    }
+
+    setRunningFixtureIds((prev) => (prev.includes(fixture.fixture_id) ? prev : [...prev, fixture.fixture_id]));
+    try {
+      const result = await invokeAdminPlayerStatsOcr({ token, fixtureId: fixture.fixture_id });
+      const extractedRows = Number(result.summary.playerStatRows || 0) || 0;
+      pushToast(
+        `${fixture.home_team_name || 'Home'} vs ${fixture.away_team_name || 'Away'} OCR complete (${extractedRows} row(s)).`,
+        'success',
+      );
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin', 'ocr-queue'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin', 'missing-player-stats', missingSeasonId] }),
+      ]);
+      return true;
+    } catch (error) {
+      pushToast(error instanceof Error ? error.message : `Failed to run OCR for fixture ${fixture.fixture_id}`, 'error');
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin', 'ocr-queue'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin', 'missing-player-stats', missingSeasonId] }),
+      ]);
+      return false;
+    } finally {
+      setRunningFixtureIds((prev) => prev.filter((fixtureId) => fixtureId !== fixture.fixture_id));
+    }
+  }
+
+  async function runAllMissingOcr() {
+    if (!runnableMissingFixtures.length) return;
+
+    setBatchProgress({ done: 0, total: runnableMissingFixtures.length });
+    try {
+      for (let index = 0; index < runnableMissingFixtures.length; index += 1) {
+        await runFixtureOcr(runnableMissingFixtures[index]);
+        setBatchProgress({ done: index + 1, total: runnableMissingFixtures.length });
+      }
+      pushToast(`Finished OCR batch for ${runnableMissingFixtures.length} fixture(s).`, 'success');
+    } finally {
+      setBatchProgress(null);
+    }
+  }
+
   return (
-    <div className="eg-admin-grid two">
-      <AdminCard title="Fixture Submissions" subtitle="Incoming match submissions from coaches">
+    <div className="eg-admin-stack">
+      <AdminCard
+        title="Missing Player Stats"
+        subtitle="Submitted fixtures without saved player stats. Run OCR from the uploaded player-stat screenshots, then review/apply in fixture detail."
+        actions={
+          <div className="eg-admin-inline-buttons">
+            <button
+              type="button"
+              onClick={() => void runAllMissingOcr()}
+              disabled={Boolean(batchProgress) || runnableMissingFixtures.length === 0}
+            >
+              {batchProgress
+                ? `Running ${batchProgress.done}/${batchProgress.total}`
+                : `Run OCR For All Missing (${runnableMissingFixtures.length})`}
+            </button>
+          </div>
+        }
+      >
+        <div className="eg-admin-toolbar wrap">
+          <label className="eg-admin-inline-field">
+            <span>Season</span>
+            <select value={missingSeasonId} onChange={(event) => setMissingSeasonId(event.target.value)}>
+              <option value="">Select season</option>
+              {(seasonsQuery.data || []).map((season) => (
+                <option key={season.id} value={season.id}>
+                  {season.name || season.slug || season.id}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="eg-admin-stat-grid">
+          <article>
+            <h4>{missingFixtures.length}</h4>
+            <p>Submitted Missing Stats</p>
+          </article>
+          <article>
+            <h4>{runnableMissingFixtures.length}</h4>
+            <p>Ready For OCR</p>
+          </article>
+          <article>
+            <h4>{missingFixtures.filter((fixture) => !fixture.can_run_ocr).length}</h4>
+            <p>Blocked</p>
+          </article>
+          <article>
+            <h4>{missingFixtures.filter((fixture) => fixture.latest_ocr_status === 'failed').length}</h4>
+            <p>Latest OCR Failed</p>
+          </article>
+        </div>
+
+        {missingFixturesQuery.isLoading ? <p className="eg-admin-muted">Loading missing player stats…</p> : null}
+        {missingFixturesQuery.error ? (
+          <p className="eg-admin-error">
+            {missingFixturesQuery.error instanceof Error ? missingFixturesQuery.error.message : 'Failed to load missing player stats'}
+          </p>
+        ) : null}
+
+        {!missingFixturesQuery.isLoading && !missingFixtures.length ? (
+          <EmptyState title="No missing player stats" description="Every submitted fixture in the selected season already has player stats, or no submissions exist yet." />
+        ) : (
+          <div className="eg-admin-list">
+            {missingFixtures.map((fixture) => {
+              const isRunning = runningFixtureIds.includes(fixture.fixture_id);
+              return (
+                <article key={fixture.fixture_id}>
+                  <div>
+                    <strong>
+                      {fixture.home_team_name || 'Home'} vs {fixture.away_team_name || 'Away'}
+                    </strong>
+                    <span>Round {fixture.round ?? '?'}</span>
+                  </div>
+                  <p>
+                    Submitted: {fixture.submitted_at ? formatDateTime(fixture.submitted_at) : 'Unknown'}
+                    {' · '}
+                    Screenshots: {fixture.screenshot_count}
+                    {' · '}
+                    Latest OCR: {fixture.latest_ocr_status || 'none'}
+                  </p>
+                  {fixture.latest_ocr_updated_at ? (
+                    <p>Last OCR update: {formatDateTime(fixture.latest_ocr_updated_at)}</p>
+                  ) : null}
+                  {!fixture.can_run_ocr && fixture.blocked_reason ? <p>{fixture.blocked_reason}</p> : null}
+                  <div className="eg-admin-inline-buttons">
+                    <button
+                      type="button"
+                      onClick={() => void runFixtureOcr(fixture)}
+                      disabled={isRunning || !fixture.can_run_ocr || Boolean(batchProgress)}
+                    >
+                      {isRunning ? 'Running OCR…' : 'Run OCR'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/admin/fixtures/${fixture.fixture_id}`)}
+                    >
+                      Open Fixture
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </AdminCard>
+
+      <div className="eg-admin-grid two">
+        <AdminCard title="Fixture Submissions" subtitle="Incoming match submissions from coaches">
         <div className="eg-admin-toolbar">
           <label className="eg-admin-inline-field">
             <span>Search</span>
@@ -119,9 +318,9 @@ export default function AdminSubmissions() {
             />
           </>
         )}
-      </AdminCard>
+        </AdminCard>
 
-      <AdminCard title="OCR Queue" subtitle="Retry, mark failed, and inspect JSON results">
+        <AdminCard title="OCR Queue" subtitle="Retry, mark failed, and inspect JSON results">
         <div className="eg-admin-toolbar">
           <label className="eg-admin-inline-field">
             <span>Status</span>
@@ -191,7 +390,8 @@ export default function AdminSubmissions() {
             <Pager page={ocrPage} pages={ocrPager.pages} onPage={setOcrPage} totalLabel={ocrPager.label} />
           </>
         )}
-      </AdminCard>
+        </AdminCard>
+      </div>
     </div>
   );
 }

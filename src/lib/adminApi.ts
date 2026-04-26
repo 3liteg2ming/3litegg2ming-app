@@ -8,7 +8,10 @@ import type {
   AdminFixture,
   AdminFixtureSubmission,
   AdminJob,
+  AdminMissingPlayerStatsFixture,
   AdminOcrQueueItem,
+  AdminPlayerStatsOcrDraft,
+  AdminPlayerStatsOcrResult,
   AdminPageParams,
   AdminPagedResult,
   AdminPlayer,
@@ -51,10 +54,89 @@ function normalizeJsonObject(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
+function normalizeNullableInteger(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return null;
+  const rounded = Math.trunc(numeric);
+  return rounded >= 0 ? rounded : null;
+}
+
+function normalizePlayerStatsOcrDraft(value: unknown): AdminPlayerStatsOcrDraft | null {
+  const row = normalizeJsonObject(value);
+  const fixtureId = String(row.fixtureId || '').trim();
+  const homeTeamSlug = String(row.homeTeamSlug || '').trim();
+  const awayTeamSlug = String(row.awayTeamSlug || '').trim();
+  const playerStats = Array.isArray(row.playerStats) ? row.playerStats : [];
+
+  if (!fixtureId || !homeTeamSlug || !awayTeamSlug || !playerStats.length) {
+    return null;
+  }
+
+  return {
+    fixtureId,
+    homeTeamSlug,
+    awayTeamSlug,
+    playerStats: playerStats
+      .map((item) => {
+        const raw = normalizeJsonObject(item);
+        const playerRef = normalizeJsonObject(raw.playerRef);
+        const teamSlug = String(raw.teamSlug || '').trim();
+        if (!teamSlug) return null;
+        return {
+          teamSlug,
+          playerRef: {
+            playerId: String(playerRef.playerId || '').trim() || null,
+            aflPlayerId: normalizeNullableInteger(playerRef.aflPlayerId),
+            playerName: String(playerRef.playerName || '').trim() || null,
+          },
+          kicks: normalizeNullableInteger(raw.kicks),
+          handballs: normalizeNullableInteger(raw.handballs),
+          disposals: normalizeNullableInteger(raw.disposals),
+          marks: normalizeNullableInteger(raw.marks),
+          tackles: normalizeNullableInteger(raw.tackles),
+          fantasyPoints: normalizeNullableInteger(raw.fantasyPoints ?? raw.fantasy_points),
+        };
+      })
+      .filter(Boolean) as AdminPlayerStatsOcrDraft['playerStats'],
+    warnings: Array.isArray(row.warnings)
+      ? row.warnings.map((warning) => String(warning || '').trim()).filter(Boolean)
+      : [],
+  };
+}
+
+function normalizePlayerStatsOcrResult(value: unknown): AdminPlayerStatsOcrResult | null {
+  const row = normalizeJsonObject(value);
+  const draft =
+    normalizePlayerStatsOcrDraft(row.draft) ||
+    normalizePlayerStatsOcrDraft(value);
+
+  if (!draft) return null;
+
+  return {
+    draft,
+    warnings: Array.isArray(row.warnings)
+      ? row.warnings.map((warning) => String(warning || '').trim()).filter(Boolean)
+      : draft.warnings || [],
+    summary: normalizeJsonObject(row.summary),
+    rawText: typeof row.rawText === 'string' ? row.rawText : null,
+    rawResponseId: typeof row.rawResponseId === 'string' ? row.rawResponseId : null,
+    model: typeof row.model === 'string' ? row.model : null,
+  };
+}
+
 function isLikelyUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     value.trim(),
   );
+}
+
+function chunkValues<T>(values: T[], chunkSize: number): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < values.length; index += chunkSize) {
+    chunks.push(values.slice(index, index + chunkSize));
+  }
+  return chunks;
 }
 
 async function safeSelect<T>(table: string, selectSql: string, limit = 100): Promise<T[]> {
@@ -241,6 +323,8 @@ export async function listFixtures(
       start_time: fixture.start_time,
       home_team_id: fixture.home_team_id,
       away_team_id: fixture.away_team_id,
+      home_team_name: fixture.home_team_name,
+      away_team_name: fixture.away_team_name,
       home_total: fixture.home_total,
       away_total: fixture.away_total,
       home_goals: fixture.home_goals,
@@ -859,6 +943,191 @@ export async function fetchFixtureOcrData(fixtureId: string): Promise<AdminOcrQu
     source_images: Array.isArray(row.source_images) ? row.source_images : [],
     result: normalizeJsonObject(row.result),
   }));
+}
+
+export async function invokeAdminPlayerStatsOcr(args: {
+  token: string;
+  fixtureId: string;
+}): Promise<{ queueId: string; status: string; summary: Record<string, unknown> }> {
+  const { data, error } = await supabase.functions.invoke('admin-ocr-player-stats', {
+    body: {
+      adminToken: args.token,
+      fixtureId: args.fixtureId,
+    },
+  });
+
+  if (error) {
+    throw new Error(error.message || 'Failed to invoke OCR function');
+  }
+
+  const payload = normalizeJsonObject(data);
+  if (!payload.ok) {
+    throw new Error(String(payload.error || 'OCR request failed'));
+  }
+
+  return {
+    queueId: String(payload.queueId || '').trim(),
+    status: String(payload.status || '').trim() || 'unknown',
+    summary: normalizeJsonObject(payload.summary),
+  };
+}
+
+export async function fetchLatestSuccessfulFixtureOcrDraft(fixtureId: string): Promise<{
+  queueId: string;
+  updatedAt: string;
+  draft: AdminPlayerStatsOcrDraft;
+  warnings: string[];
+  summary: Record<string, unknown>;
+  rawText: string | null;
+  model: string | null;
+} | null> {
+  const { data, error } = await supabase
+    .from('eg_ocr_queue')
+    .select('*')
+    .eq('fixture_id', fixtureId)
+    .eq('status', 'succeeded')
+    .order('updated_at', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    if (error.message.includes('does not exist')) return null;
+    throw new Error(error.message);
+  }
+
+  if (!data) return null;
+
+  const normalized = normalizePlayerStatsOcrResult(data.result);
+  if (!normalized) return null;
+
+  return {
+    queueId: String(data.id || '').trim(),
+    updatedAt: String(data.updated_at || data.created_at || ''),
+    draft: normalized.draft,
+    warnings: normalized.warnings,
+    summary: normalized.summary || {},
+    rawText: normalized.rawText || null,
+    model: normalized.model || null,
+  };
+}
+
+export async function listMissingPlayerStatsFixtures(seasonId: string): Promise<AdminMissingPlayerStatsFixture[]> {
+  const normalizedSeasonId = String(seasonId || '').trim();
+  if (!normalizedSeasonId) return [];
+
+  const fixturesRes = await listFixtures({
+    page: 1,
+    pageSize: 500,
+    seasonId: normalizedSeasonId,
+    status: 'all',
+    round: null,
+    search: '',
+    teamId: 'all',
+  });
+
+  const fixtures = fixturesRes.rows || [];
+  if (!fixtures.length) return [];
+
+  const fixtureIds = fixtures.map((fixture) => fixture.id);
+  const fixtureIdsWithStats = await listFixtureIdsWithPlayerStats(fixtureIds);
+
+  const fixturesMissingStats = fixtures.filter((fixture) => !fixtureIdsWithStats.has(fixture.id));
+  if (!fixturesMissingStats.length) return [];
+
+  const missingFixtureIds = fixturesMissingStats.map((fixture) => fixture.id);
+  const submissionByFixture = new Map<string, string>();
+  const screenshotCountByFixture = new Map<string, number>();
+  const latestQueueByFixture = new Map<string, { id: string; status: EgJobStatus | null; updated_at: string | null }>();
+
+  for (const chunk of chunkValues(missingFixtureIds, 200)) {
+    const [submissionsRes, imagesRes, queueRes] = await Promise.all([
+      supabase
+        .from('submissions')
+        .select('fixture_id,submitted_at')
+        .in('fixture_id', chunk)
+        .order('submitted_at', { ascending: false }),
+      supabase
+        .from('eg_fixture_submission_images')
+        .select('fixture_id')
+        .eq('image_type', 'player_stat')
+        .in('fixture_id', chunk),
+      supabase
+        .from('eg_ocr_queue')
+        .select('id,fixture_id,status,updated_at,created_at')
+        .in('fixture_id', chunk)
+        .order('updated_at', { ascending: false })
+        .order('created_at', { ascending: false }),
+    ]);
+
+    if (submissionsRes.error && !submissionsRes.error.message.includes('does not exist')) {
+      throw new Error(submissionsRes.error.message);
+    }
+    if (imagesRes.error && !imagesRes.error.message.includes('does not exist')) {
+      throw new Error(imagesRes.error.message);
+    }
+    if (queueRes.error && !queueRes.error.message.includes('does not exist')) {
+      throw new Error(queueRes.error.message);
+    }
+
+    for (const row of ((submissionsRes.data || []) as Array<Record<string, unknown>>)) {
+      const fixtureId = String(row.fixture_id || '').trim();
+      const submittedAt = String(row.submitted_at || '').trim();
+      if (!fixtureId || !submittedAt || submissionByFixture.has(fixtureId)) continue;
+      submissionByFixture.set(fixtureId, submittedAt);
+    }
+
+    for (const row of ((imagesRes.data || []) as Array<Record<string, unknown>>)) {
+      const fixtureId = String(row.fixture_id || '').trim();
+      if (!fixtureId) continue;
+      screenshotCountByFixture.set(fixtureId, (screenshotCountByFixture.get(fixtureId) || 0) + 1);
+    }
+
+    for (const row of ((queueRes.data || []) as Array<Record<string, unknown>>)) {
+      const fixtureId = String(row.fixture_id || '').trim();
+      if (!fixtureId || latestQueueByFixture.has(fixtureId)) continue;
+      latestQueueByFixture.set(fixtureId, {
+        id: String(row.id || '').trim(),
+        status: (String(row.status || '').trim() || null) as EgJobStatus | null,
+        updated_at: String(row.updated_at || row.created_at || '').trim() || null,
+      });
+    }
+  }
+
+  return fixturesMissingStats
+    .filter((fixture) => submissionByFixture.has(fixture.id))
+    .map((fixture) => {
+      const screenshotCount = screenshotCountByFixture.get(fixture.id) || 0;
+      const latestQueue = latestQueueByFixture.get(fixture.id) || null;
+      const blockedReason =
+        screenshotCount > 0
+          ? null
+          : 'No uploaded player-stat screenshots found on the submitted result.';
+
+      return {
+        fixture_id: fixture.id,
+        season_id: fixture.season_id,
+        round: fixture.round,
+        home_team_id: fixture.home_team_id,
+        away_team_id: fixture.away_team_id,
+        home_team_name: fixture.home_team_name || null,
+        away_team_name: fixture.away_team_name || null,
+        submitted_at: submissionByFixture.get(fixture.id) || null,
+        screenshot_count: screenshotCount,
+        latest_ocr_status: latestQueue?.status || null,
+        latest_ocr_queue_id: latestQueue?.id || null,
+        latest_ocr_updated_at: latestQueue?.updated_at || null,
+        can_run_ocr: blockedReason == null,
+        blocked_reason: blockedReason,
+      };
+    })
+    .sort((a, b) => {
+      const roundDiff = (a.round || 0) - (b.round || 0);
+      if (roundDiff !== 0) return roundDiff;
+      const aTime = a.submitted_at ? new Date(a.submitted_at).getTime() : 0;
+      const bTime = b.submitted_at ? new Date(b.submitted_at).getTime() : 0;
+      return aTime - bTime;
+    });
 }
 
 export async function fetchFixtureSubmissionData(fixtureId: string) {
