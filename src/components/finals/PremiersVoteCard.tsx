@@ -13,9 +13,19 @@ export type PremiersVoteCardOption = PredictionVoteOption & {
   percentage?: number;
 };
 
+export type Coach = {
+  user_id?: string;
+  first_name?: string;
+  last_name?: string;
+  team_name?: string;
+  team_id?: string;
+  avatar_url?: string | null;
+};
+
 type PremiersVoteCardProps = {
   pollKey: string;
   options: PremiersVoteCardOption[];
+  coaches?: Coach[];
 };
 
 function formatPercentage(value?: number) {
@@ -36,7 +46,7 @@ function PremiersVoteCardSkeleton() {
   );
 }
 
-export default function PremiersVoteCard({ pollKey, options }: PremiersVoteCardProps) {
+export default function PremiersVoteCard({ pollKey, options, coaches = [] }: PremiersVoteCardProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [optimisticVote, setOptimisticVote] = React.useState<string | null>(null);
   const normalizedPollKey = String(pollKey || '').trim();
@@ -278,6 +288,35 @@ export default function PremiersVoteCard({ pollKey, options }: PremiersVoteCardP
                   );
                 })}
               </div>
+
+              {coaches.length > 0 && hasVotes && (
+                <div className="premiersVoteCard__coachesSection">
+                  <h4 className="premiersVoteCard__coachesTitle">Coaches Participating</h4>
+                  <div className="premiersVoteCard__coachesList">
+                    {coaches.map((coach) => (
+                      <div key={coach.user_id || coach.team_id} className="premiersVoteCard__coachChip">
+                        {coach.avatar_url ? (
+                          <img
+                            src={coach.avatar_url}
+                            alt={`${coach.first_name} ${coach.last_name}`}
+                            className="premiersVoteCard__coachAvatar"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <span className="premiersVoteCard__coachInitial">
+                            {(coach.first_name?.charAt(0) || '') + (coach.last_name?.charAt(0) || '')}
+                          </span>
+                        )}
+                        <span className="premiersVoteCard__coachName">
+                          {coach.first_name} {coach.last_name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="premiersVoteCard__footer">
                 <div className="premiersVoteCard__voteSummary">

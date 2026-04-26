@@ -812,7 +812,7 @@ function CoachHubBanner() {
   );
 }
 
-function FinalsHubSection({ fixturesVisible }: { fixturesVisible: boolean }) {
+function FinalsHubSection({ fixturesVisible, coaches = [] }: { fixturesVisible: boolean; coaches?: HomeCoach[] }) {
   const finalsFixturesQuery = useSeasonFixtures('afl26-season-two', {
     limit: 1000,
     enabled: fixturesVisible && FINALS_CONFIG.enabled,
@@ -856,6 +856,7 @@ function FinalsHubSection({ fixturesVisible }: { fixturesVisible: boolean }) {
         <PremiersVoteCard
           pollKey="afl26-season-two-premiers"
           options={premiersOptions}
+          coaches={coaches}
         />
       </section>
     );
@@ -890,13 +891,14 @@ function FinalsHubSection({ fixturesVisible }: { fixturesVisible: boolean }) {
 export default function HomePage() {
   const { user } = useAuth();
   const fixturesVisible = useFixtureVisibility(user?.role);
+  const { data: coaches } = useHomeCoaches();
 
   return (
     <div className="home-page">
       <main className="home-main">
         <div className="home-topStack">
           <HeroMasterCard />
-          <FinalsHubSection fixturesVisible={fixturesVisible} />
+          <FinalsHubSection fixturesVisible={fixturesVisible} coaches={coaches} />
           {fixturesVisible ? <FeaturedMatchCard /> : <LaunchPromoCard />}
         </div>
         <CoachHubBanner />
