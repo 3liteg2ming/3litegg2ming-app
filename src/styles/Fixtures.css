@@ -196,6 +196,20 @@
   padding: 4px 0;
 }
 
+.fxDeadlineNotice__expiredWrap {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+
+.fxDeadlineNotice__subtext {
+  max-width: 460px;
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+  color: rgba(255, 212, 212, 0.82);
+}
+
 @media (max-width: 520px) {
   .fxDeadlineNotice {
     width: calc(100% - 12px);
@@ -738,4 +752,3 @@
   color: rgba(245, 196, 0, 0.6);
   font-weight: 700;
 }
-

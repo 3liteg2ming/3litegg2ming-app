@@ -75,12 +75,16 @@ export default function AdminFixtures() {
         | { mode: 'status'; fixtureId: string; status: string }
         | { mode: 'startTime'; fixtureId: string; startTime: string }
         | { mode: 'venue'; fixtureId: string; venue: string }
+        | { mode: 'lateApproval'; fixtureId: string; allowLateSubmission: boolean }
         | { mode: 'swap'; fixtureId: string }
         | { mode: 'clear'; fixtureId: string },
     ) => {
       if (args.mode === 'status') return updateFixture({ fixtureId: args.fixtureId, status: args.status });
       if (args.mode === 'startTime') return updateFixture({ fixtureId: args.fixtureId, startTime: args.startTime });
       if (args.mode === 'venue') return updateFixture({ fixtureId: args.fixtureId, venue: args.venue });
+      if (args.mode === 'lateApproval') {
+        return updateFixture({ fixtureId: args.fixtureId, allowLateSubmission: args.allowLateSubmission });
+      }
       if (args.mode === 'swap') return swapFixtureTeams(args.fixtureId);
       return clearFixtureScores(args.fixtureId);
     },
@@ -301,6 +305,15 @@ export default function AdminFixtures() {
                                   ✓ Stats
                                 </span>
                               ) : null}
+                              {f.allow_late_submission ? (
+                                <span
+                                  className="eg-fx-stats-tick"
+                                  title="Late submit approved"
+                                  aria-label="Late submit approved"
+                                >
+                                  Late OK
+                                </span>
+                              ) : null}
                             </div>
                           </div>
                           <div className="eg-fx-card-bottom">
@@ -329,6 +342,7 @@ export default function AdminFixtures() {
                 <tr>
                   <th>Fixture</th>
                   <th>Status</th>
+                  <th>Late Submit</th>
                   <th>Start Time</th>
                   <th>Venue</th>
                   <th>Score</th>
@@ -377,6 +391,22 @@ export default function AdminFixtures() {
                           <option value="LIVE">Live</option>
                           <option value="FINAL">Final</option>
                         </select>
+                      </td>
+                      <td data-label="Late Submit">
+                        <label className="eg-admin-inline-toggle">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(fixture.allow_late_submission)}
+                            onChange={(event) =>
+                              fixtureMutation.mutate({
+                                mode: 'lateApproval',
+                                fixtureId: fixture.id,
+                                allowLateSubmission: event.target.checked,
+                              })
+                            }
+                          />
+                          <span>{fixture.allow_late_submission ? 'Approved' : 'Locked'}</span>
+                        </label>
                       </td>
                       <td data-label="Start Time">
                         <div className="eg-admin-inline-action">

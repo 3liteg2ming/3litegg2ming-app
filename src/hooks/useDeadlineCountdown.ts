@@ -6,9 +6,14 @@ import { useEffect, useState } from 'react';
  * All open fixture submissions — Sunday 26 April 2026, 23:59:59 AEST
  */
 export const SUBMISSION_DEADLINE_ISO = '2026-04-26T23:59:59+10:00';
-export const SUBMISSION_DEADLINE_LABEL = 'Sunday 26 April midnight';
+export const SUBMISSION_DEADLINE_LABEL = 'Sunday 26 April at 11:59 PM';
+export const SUBMISSION_CLOSED_LABEL = 'Season closed. Games cannot be submitted without admin approval.';
 
 export const SUBMISSION_DEADLINE_MS = new Date(SUBMISSION_DEADLINE_ISO).getTime();
+
+export function isSubmissionDeadlineClosed(nowMs: number = Date.now()) {
+  return nowMs >= SUBMISSION_DEADLINE_MS;
+}
 
 export type CountdownResult = {
   days: number;

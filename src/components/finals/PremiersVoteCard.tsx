@@ -296,6 +296,16 @@ export default function PremiersVoteCard({ pollKey, options }: PremiersVoteCardP
                 ) : null}
                 <div className={`premiersVoteCard__helper ${activeError ? 'is-error' : ''}`}>{helperCopy}</div>
               </div>
+
+              <div className="premiersVoteCard__modalActions">
+                <button
+                  type="button"
+                  className="premiersVoteCard__closeBtn"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Close vote
+                </button>
+              </div>
             </section>
           </div>
         </div>

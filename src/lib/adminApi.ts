@@ -336,6 +336,9 @@ export async function listFixtures(
       verified_at: fixture.verified_at,
       disputed_at: fixture.disputed_at,
       corrected_at: fixture.corrected_at,
+      allow_late_submission: fixture.allow_late_submission,
+      late_submission_approved_at: fixture.late_submission_approved_at,
+      late_submission_approved_by: fixture.late_submission_approved_by,
     })),
     total: rows.length,
   };
@@ -617,13 +620,19 @@ export async function updateFixture(args: {
   status?: string | null;
   startTime?: string | null;
   venue?: string | null;
+  allowLateSubmission?: boolean | null;
 }) {
-  const { data, error } = await supabase.rpc('eg_admin_update_fixture', {
+  const rpcArgs: Record<string, unknown> = {
     p_fixture_id: args.fixtureId,
     p_status: args.status ?? null,
     p_start_time: args.startTime ?? null,
     p_venue: args.venue ?? null,
-  });
+  };
+  if (args.allowLateSubmission !== undefined) {
+    rpcArgs.p_allow_late_submission = args.allowLateSubmission;
+  }
+
+  const { data, error } = await supabase.rpc('eg_admin_update_fixture', rpcArgs);
   if (!error) return data as AdminFixture;
 
   // Fallback: direct DB update when RPC is unavailable
@@ -631,6 +640,10 @@ export async function updateFixture(args: {
   if (args.status !== undefined) patch.status = args.status;
   if (args.startTime !== undefined) patch.start_time = args.startTime;
   if (args.venue !== undefined) patch.venue = args.venue;
+  if (args.allowLateSubmission !== undefined) {
+    patch.allow_late_submission = args.allowLateSubmission;
+    patch.late_submission_approved_at = args.allowLateSubmission ? new Date().toISOString() : null;
+  }
 
   const { error: updateErr } = await supabase.from('eg_fixtures').update(patch).eq('id', args.fixtureId);
   if (updateErr) unwrapRpcError(updateErr);

@@ -342,6 +342,21 @@ export default function AdminFixtureDetail() {
     },
   });
 
+  const lateApprovalMutation = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      if (!fixtureId) throw new Error('No fixture');
+      return updateFixture({ fixtureId, allowLateSubmission: enabled });
+    },
+    onSuccess: (_, enabled) => {
+      pushToast(enabled ? 'Late submit approved for this fixture.' : 'Late submit approval removed.', 'success');
+      queryClient.invalidateQueries({ queryKey: ['admin', 'fixture-detail', fixtureId] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'fixtures'] });
+    },
+    onError: (error) => {
+      pushToast(error instanceof Error ? error.message : 'Failed to update late submit approval', 'error');
+    },
+  });
+
   const playerStatsMutation = useMutation({
     mutationFn: async () => {
       if (!fixtureId) throw new Error('No fixture');
@@ -921,6 +936,44 @@ export default function AdminFixtureDetail() {
             </div>
           ) : null}
         </div>
+      </div>
+
+      <div className="eg-admin-highlight-block" style={{ display: 'grid', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div>
+            <strong style={{ display: 'block', marginBottom: 4 }}>Late Submit Approval</strong>
+            <p className="eg-admin-muted" style={{ margin: 0 }}>
+              After Sunday 26 April at 11:59 PM, this fixture stays locked unless admin approval is turned on.
+            </p>
+          </div>
+          <div className="eg-admin-inline-buttons">
+            <span
+              className="eg-admin-status-chip"
+              style={{
+                background: fixture.allow_late_submission ? 'rgba(245, 196, 0, 0.16)' : 'rgba(148, 163, 184, 0.12)',
+                color: fixture.allow_late_submission ? '#fde68a' : '#94a3b8',
+              }}
+            >
+              {fixture.allow_late_submission ? 'Approved' : 'Locked'}
+            </span>
+            <button
+              type="button"
+              onClick={() => lateApprovalMutation.mutate(!fixture.allow_late_submission)}
+              disabled={lateApprovalMutation.isPending}
+            >
+              {lateApprovalMutation.isPending
+                ? 'Saving...'
+                : fixture.allow_late_submission
+                  ? 'Remove Approval'
+                  : 'Approve Late Submit'}
+            </button>
+          </div>
+        </div>
+        {fixture.late_submission_approved_at ? (
+          <p className="eg-admin-muted" style={{ margin: 0 }}>
+            Approved {formatDateTime(fixture.late_submission_approved_at)}
+          </p>
+        ) : null}
       </div>
 
       {/* ─── PREV/NEXT NAV ──────────────────────────── */}

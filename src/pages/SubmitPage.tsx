@@ -29,6 +29,12 @@ import { resolveTeamLogoUrl } from '@/lib/entityResolvers';
 import { GoalKickerPicker } from '../components/submit/GoalKickerPicker';
 import { fetchAflPlayers, type AflPlayer } from '../data/aflPlayers';
 import { FIXTURES_UNLOCK_LABEL, useFixtureVisibility } from '../lib/fixtureVisibility';
+import {
+  SUBMISSION_CLOSED_LABEL,
+  SUBMISSION_DEADLINE_LABEL,
+  SUBMISSION_DEADLINE_MS,
+  useDeadlineCountdown,
+} from '../hooks/useDeadlineCountdown';
 import { getVisibleRounds } from '../lib/visibleRounds';
 import '../styles/submitPage.css';
 
@@ -50,6 +56,8 @@ type NextFixturePayload = {
     status: string;
     seasonId?: string;
     startTime?: string;
+    allowLateSubmission?: boolean;
+    lateSubmissionApprovedAt?: string;
   };
   homeTeam: { id: string; name: string; shortName?: string; logo?: string; teamKey?: string };
   awayTeam: { id: string; name: string; shortName?: string; logo?: string; teamKey?: string };
@@ -294,6 +302,8 @@ function buildPayloadFromFixture(f: FixtureRow): NonNullable<NextFixturePayload>
       status: String(f.status || 'SCHEDULED'),
       seasonId: f.season_id ? String(f.season_id) : undefined,
       startTime: f.start_time ? String(f.start_time) : undefined,
+      allowLateSubmission: Boolean(f.allow_late_submission),
+      lateSubmissionApprovedAt: f.late_submission_approved_at ? String(f.late_submission_approved_at) : undefined,
     },
     homeTeam: {
       id: String(f.home_team_id || ''),
@@ -442,6 +452,7 @@ export default function SubmitPage() {
   const [draftSavedAt, setDraftSavedAt] = useState<number | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const fixturesVisible = useFixtureVisibility(myRole);
+  const submissionDeadline = useDeadlineCountdown(SUBMISSION_DEADLINE_MS);
 
   const fixture = payload?.fixture || null;
   const homeTeam = payload?.homeTeam || null;
@@ -458,6 +469,8 @@ export default function SubmitPage() {
   const awayScore = awayGoalsN * 6 + awayBehindsN;
   const kickoffLabel = useMemo(() => formatKickoff(fixture?.startTime), [fixture?.startTime]);
   const competitionLabel = getCompetitionLabel();
+  const lateSubmissionApproved = Boolean(fixture?.allowLateSubmission);
+  const requiresAdminApproval = submissionDeadline.expired && !lateSubmissionApproved;
 
   const mappedPlayers = useMemo(
     () => allAflPlayers.map((player) => ({
@@ -565,16 +578,18 @@ export default function SubmitPage() {
     if (!goalKickersValid) messages.push('Assign goal kickers (Step 5) so tagged goals match the final score for both teams');
     if (!resultScreenshotsFilled) messages.push(`Upload the 3 required match screenshots (${resultScreenshotsCount} of 3 uploaded)`);
     if (!playerScreenshotsValid) messages.push('Upload all player stats screenshots for all players, including behinds, disposals, kicks, handballs, marks, and fantasy points.');
+    if (requiresAdminApproval) messages.push(`${SUBMISSION_CLOSED_LABEL} Admin approval must be switched on for this fixture first.`);
     return messages;
-  }, [scoreValid, quartersFilled, quartersMatchFinal, quartersProgressive, allTeamStatsFilled, resultScreenshotsFilled, resultScreenshotsCount, playerScreenshotsValid, playerScreenshotCount]);
+  }, [scoreValid, quartersFilled, quartersMatchFinal, quartersProgressive, allTeamStatsFilled, resultScreenshotsFilled, resultScreenshotsCount, playerScreenshotsValid, playerScreenshotCount, requiresAdminApproval]);
 
   const isSuperAdmin = myRole === 'super_admin';
 
   const canSubmit = useMemo(() => {
     if (!fixture || !myTeamId || isSubmitting) return false;
+    if (requiresAdminApproval) return false;
     if (isSuperAdmin) return scoreValid;
     return scoreValid && quartersValid && allTeamStatsFilled && goalKickersValid && allScreenshotsValid;
-  }, [fixture, myTeamId, isSubmitting, isSuperAdmin, scoreValid, quartersValid, allTeamStatsFilled, goalKickersValid, allScreenshotsValid]);
+  }, [fixture, myTeamId, isSubmitting, requiresAdminApproval, isSuperAdmin, scoreValid, quartersValid, allTeamStatsFilled, goalKickersValid, allScreenshotsValid]);
 
   const stepComplete = useMemo(
     () => ({
@@ -936,6 +951,13 @@ export default function SubmitPage() {
 
   const submit = async () => {
     if (!fixture || !myTeamId || !canSubmit || !sessionUserId) return;
+    if (requiresAdminApproval) {
+      setConflict({
+        message: SUBMISSION_CLOSED_LABEL,
+        detail: `Admin approval is required for Round ${fixture.round} before this result can be submitted.`,
+      });
+      return;
+    }
     setIsSubmitting(true);
     setConflict(null);
     let uploadedAssets: UploadedEvidenceAsset[] = [];
@@ -1228,7 +1250,16 @@ export default function SubmitPage() {
             <div className="mdcHero__bottom">
               <div className="mdcHero__bottomMeta">
                 <div className="mdcProgressMeta">{totalUploadsCount} uploads</div>
-                <div className="mdcHero__bottomSub">Round {fixture.round}{eligibleFixtures.length > 1 ? ` — ${eligibleFixtures.length} rounds available` : ' — Fixture locked in'}</div>
+                <div className="mdcHero__bottomSub">
+                  Round {fixture.round}
+                  {submissionDeadline.expired
+                    ? lateSubmissionApproved
+                      ? ' — Admin late-submit approval active'
+                      : ' — Season closed'
+                    : eligibleFixtures.length > 1
+                      ? ` — ${eligibleFixtures.length} rounds available`
+                      : ' — Fixture locked in'}
+                </div>
               </div>
               <button type="button" className="mdcHeroCta" onClick={() => navigate(`/match-centre/${fixture.id}`)}>
                 Match Centre <ChevronRight size={14} />
@@ -1245,6 +1276,24 @@ export default function SubmitPage() {
               </div>
             </div>
           )}
+
+          {submissionDeadline.expired ? (
+            <div className={`mdcStatus ${lateSubmissionApproved ? '' : 'mdcStatus--danger'}`}>
+              {lateSubmissionApproved ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}
+              <div style={{ minWidth: 0 }}>
+                <div>
+                  {lateSubmissionApproved
+                    ? `Admin approval active. This fixture can still be submitted after ${SUBMISSION_DEADLINE_LABEL}.`
+                    : SUBMISSION_CLOSED_LABEL}
+                </div>
+                {!lateSubmissionApproved ? (
+                  <div style={{ marginTop: 4, color: 'rgba(255, 220, 220, 0.9)' }}>
+                    Ask admin to approve this fixture before uploading and submitting the result.
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
 
           {renderStepper()}
 
@@ -1270,7 +1319,15 @@ export default function SubmitPage() {
 
                     <div className="mdcIntegrity" style={{ marginTop: 8 }}>
                       <Shield size={13} />
-                      <span>Submitting for Round {fixture.round}.{eligibleFixtures.length > 1 ? ' Use the round selector above to change.' : ''} All submissions are reviewed by admin and AI.</span>
+                      <span>
+                        Submitting for Round {fixture.round}.
+                        {eligibleFixtures.length > 1 ? ' Use the round selector above to change.' : ''}
+                        {submissionDeadline.expired
+                          ? lateSubmissionApproved
+                            ? ' This fixture has admin late-submit approval.'
+                            : ' Submission is locked until admin approval is switched on for this fixture.'
+                          : ' All submissions are reviewed by admin and AI.'}
+                      </span>
                     </div>
 
                     {renderStepNav()}

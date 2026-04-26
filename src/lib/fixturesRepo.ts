@@ -68,6 +68,9 @@ export type FixtureRow = {
   corrected_at: string | null;
   created_at: string | null;
   updated_at: string | null;
+  allow_late_submission: boolean;
+  late_submission_approved_at: string | null;
+  late_submission_approved_by: string | null;
   has_scores: boolean;
   is_final: boolean;
   is_scheduled: boolean;
@@ -321,6 +324,9 @@ function normalizeFixtureRow(raw: RawFixtureRow, teamsById: Map<string, TeamRow>
     corrected_at: nullableText(raw.corrected_at),
     created_at: nullableText(raw.created_at),
     updated_at: nullableText(raw.updated_at),
+    allow_late_submission: Boolean(raw.allow_late_submission),
+    late_submission_approved_at: nullableText((raw as Record<string, unknown>).late_submission_approved_at),
+    late_submission_approved_by: nullableText((raw as Record<string, unknown>).late_submission_approved_by),
     has_scores: homeTotal != null && awayTotal != null,
     is_final: normalizedStatus === 'FINAL',
     is_scheduled: normalizedStatus === 'SCHEDULED',

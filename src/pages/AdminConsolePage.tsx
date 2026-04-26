@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   clearAdminPreseasonFixtures,
   deleteAdminFixture,
   exchangeAdminPasscode,
   fetchAdminConsoleBootstrap,
   fetchCurrentAuthUserId,
+  invalidateAdminConsoleCache,
   pingAdminSession,
   regenerateAdminPreseason,
   saveAdminFixture,
@@ -12,6 +14,7 @@ import {
   setAdminProfileFlag,
   updateAdminRegistration,
   type AdminConsoleCompetition,
+  type AdminConsoleFixtureSubmission,
   type AdminConsoleHealth,
   type AdminConsoleMetric,
   type AdminConsoleProfile,
@@ -68,6 +71,9 @@ type FixtureRow = {
   away_total: number | null;
   home_team_name?: string | null;
   away_team_name?: string | null;
+  allow_late_submission?: boolean;
+  late_submission_approved_at?: string | null;
+  late_submission_approved_by?: string | null;
 };
 
 type ProfileRow = {
@@ -92,6 +98,16 @@ type HealthItem = {
   label: string;
   value: number;
   hint: string;
+};
+
+type WaitingFixtureRow = {
+  id: string;
+  roundLabel: string;
+  matchupLabel: string;
+  venueLabel: string;
+  startLabel: string;
+  statusLabel: 'Delayed' | 'Scheduled';
+  rawStatus: 'PENDING_RESULTS' | 'SCHEDULED';
 };
 
 const ADMIN_TOKEN_KEY = 'eg_admin_token';
@@ -140,7 +156,21 @@ function seasonLabelForKey(key: CompetitionKey) {
   return competitions.find((c) => c.key === key)?.label || 'Competition';
 }
 
+function formatFixtureDateTime(value: string | null) {
+  if (!value) return 'Start time TBA';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Start time TBA';
+  return date.toLocaleString('en-AU', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 export default function AdminConsolePage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [token, setToken] = useState<string>('');
   const [tokenExpiresAt, setTokenExpiresAt] = useState<number | null>(null);
@@ -163,6 +193,7 @@ export default function AdminConsolePage() {
 
   const [teams, setTeams] = useState<TeamRow[]>([]);
   const [fixtures, setFixtures] = useState<FixtureRow[]>([]);
+  const [fixtureSubmissions, setFixtureSubmissions] = useState<AdminConsoleFixtureSubmission[]>([]);
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [registrations, setRegistrations] = useState<RegistrationRow[]>([]);
   const [regTable, setRegTable] = useState<string | null>(null);
@@ -296,6 +327,7 @@ export default function AdminConsolePage() {
     if (!hasToken) return;
     await withRpcGuard(async () => {
       setLoading(true);
+      invalidateAdminConsoleCache();
       const bootstrap = await fetchAdminConsoleBootstrap({
         competitionKey,
         competitions,
@@ -307,6 +339,7 @@ export default function AdminConsolePage() {
       setRegistrations(bootstrap.registrations as RegistrationRow[]);
       setRegTable(bootstrap.regTable);
       setFixtures(bootstrap.fixtures as FixtureRow[]);
+      setFixtureSubmissions(bootstrap.fixtureSubmissions as AdminConsoleFixtureSubmission[]);
       setMetrics(bootstrap.metrics as MetricCard[]);
       setHealth(bootstrap.health as HealthItem[]);
       setFixtureDrafts({});
@@ -438,6 +471,74 @@ export default function AdminConsolePage() {
     return counts;
   }, [fixtures]);
 
+  const submissionCountByFixtureId = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const row of fixtureSubmissions) {
+      const fixtureId = text(row.fixture_id);
+      if (!fixtureId) continue;
+      map.set(fixtureId, (map.get(fixtureId) || 0) + 1);
+    }
+    return map;
+  }, [fixtureSubmissions]);
+
+  const waitingResultFixtures = useMemo<WaitingFixtureRow[]>(() => {
+    return fixtures
+      .filter((fixture) => {
+        const fixtureId = text(fixture.id);
+        if (!fixtureId) return false;
+        if (fixture.status !== 'SCHEDULED' && fixture.status !== 'PENDING_RESULTS') return false;
+        const roundValue = competitionKey === 'preseason' ? fixture.week_index : fixture.round;
+        if (typeof roundValue === 'number' && !isRoundVisible(roundValue)) return false;
+        return !submissionCountByFixtureId.has(fixtureId);
+      })
+      .map((fixture) => {
+        const roundValue = competitionKey === 'preseason' ? fixture.week_index : fixture.round;
+        const rawStatus: WaitingFixtureRow['rawStatus'] =
+          fixture.status === 'PENDING_RESULTS' ? 'PENDING_RESULTS' : 'SCHEDULED';
+        const statusLabel: WaitingFixtureRow['statusLabel'] =
+          rawStatus === 'PENDING_RESULTS' ? 'Delayed' : 'Scheduled';
+        return {
+          id: text(fixture.id),
+          roundLabel: competitionKey === 'preseason' ? `Week ${roundValue || '—'}` : `Round ${roundValue || '—'}`,
+          matchupLabel: `${text(fixture.home_team_name) || 'TBD'} vs ${text(fixture.away_team_name) || 'TBD'}`,
+          venueLabel: text(fixture.venue) || 'Venue TBA',
+          startLabel: formatFixtureDateTime(fixture.start_time),
+          statusLabel,
+          rawStatus,
+        };
+      })
+      .sort((a, b) => {
+        if (a.rawStatus !== b.rawStatus) return a.rawStatus === 'PENDING_RESULTS' ? -1 : 1;
+        const aFixture = fixtures.find((fixture) => text(fixture.id) === a.id);
+        const bFixture = fixtures.find((fixture) => text(fixture.id) === b.id);
+        const aTime = aFixture?.start_time ? new Date(aFixture.start_time).getTime() : Number.MAX_SAFE_INTEGER;
+        const bTime = bFixture?.start_time ? new Date(bFixture.start_time).getTime() : Number.MAX_SAFE_INTEGER;
+        return aTime - bTime;
+      });
+  }, [competitionKey, fixtures, submissionCountByFixtureId]);
+
+  const waitingResultsSummary = useMemo(() => {
+    const delayed = waitingResultFixtures.filter((fixture) => fixture.rawStatus === 'PENDING_RESULTS').length;
+    const scheduled = waitingResultFixtures.filter((fixture) => fixture.rawStatus === 'SCHEDULED').length;
+    return {
+      total: waitingResultFixtures.length,
+      delayed,
+      scheduled,
+    };
+  }, [waitingResultFixtures]);
+
+  const overviewMetrics = useMemo(
+    () => [
+      ...metrics,
+      {
+        label: 'Waiting results',
+        value: waitingResultsSummary.total,
+        hint: 'Scheduled + delayed fixtures with no submission',
+      },
+    ],
+    [metrics, waitingResultsSummary.total],
+  );
+
   const filteredProfiles = useMemo(() => {
     const q = userSearch.trim().toLowerCase();
     const filtered = !q
@@ -551,6 +652,7 @@ export default function AdminConsolePage() {
   function logout() {
     clearSession();
     setFixtureDrafts({});
+    setFixtureSubmissions([]);
     setProfileDrafts({});
     setRegistrations([]);
     setPasscode('');
@@ -592,6 +694,9 @@ export default function AdminConsolePage() {
         away_goals: null,
         away_behinds: null,
         away_total: null,
+        allow_late_submission: false,
+        late_submission_approved_at: null,
+        late_submission_approved_by: null,
       },
     }));
   }
@@ -624,6 +729,7 @@ export default function AdminConsolePage() {
         away_goals: draft.away_goals,
         away_behinds: draft.away_behinds,
         away_total: draft.away_total,
+        allow_late_submission: Boolean(draft.allow_late_submission),
       };
 
       if (draft.id) payload.id = draft.id;
@@ -939,7 +1045,7 @@ export default function AdminConsolePage() {
                   </li>
                 </ul>
               </article>
-              {metrics.map((card) => (
+              {overviewMetrics.map((card) => (
                 <article className="egAdminStat" key={card.label}>
                   <h3>{card.label}</h3>
                   <strong>{card.value}</strong>
@@ -963,6 +1069,51 @@ export default function AdminConsolePage() {
                 <h3>Why fixtures empty?</h3>
                 <strong>{emptyFixtureReason || 'Fixtures loaded.'}</strong>
                 <p>Check competition mapping, selected filters, and eg_fixtures team assignments.</p>
+              </article>
+              <article className="egAdminStat wide">
+                <div className="egAdminWaitHead">
+                  <div>
+                    <h3>Awaiting Submitted Results</h3>
+                    <p>Delayed fixtures and scheduled matches that still have no submission logged.</p>
+                  </div>
+                  <div className="egAdminWaitMeta">
+                    <span className="egAdminWaitPill">{waitingResultsSummary.total} waiting</span>
+                    <span className="egAdminWaitPill is-delayed">{waitingResultsSummary.delayed} delayed</span>
+                    <span className="egAdminWaitPill is-scheduled">{waitingResultsSummary.scheduled} scheduled</span>
+                  </div>
+                </div>
+                {waitingResultFixtures.length ? (
+                  <>
+                    <ul className="egAdminWaitList">
+                      {waitingResultFixtures.slice(0, 12).map((fixture) => (
+                        <li key={fixture.id} className="egAdminWaitItem">
+                          <div className="egAdminWaitItem__top">
+                            <div>
+                              <strong>{fixture.matchupLabel}</strong>
+                              <span>{fixture.roundLabel}</span>
+                            </div>
+                            <span
+                              className={`egAdminWaitPill ${fixture.rawStatus === 'PENDING_RESULTS' ? 'is-delayed' : 'is-scheduled'}`}
+                            >
+                              {fixture.statusLabel}
+                            </span>
+                          </div>
+                          <div className="egAdminWaitItem__meta">
+                            <span>{fixture.startLabel}</span>
+                            <span>{fixture.venueLabel}</span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                    {waitingResultFixtures.length > 12 ? (
+                      <p className="egAdminWaitMore">
+                        +{waitingResultFixtures.length - 12} more fixtures still waiting for a submission.
+                      </p>
+                    ) : null}
+                  </>
+                ) : (
+                  <strong>All delayed and scheduled fixtures currently have a result submission logged.</strong>
+                )}
               </article>
             </section>
           ) : null}
@@ -1073,6 +1224,7 @@ export default function AdminConsolePage() {
                       <th>Start time</th>
                       <th>Venue</th>
                       <th>Status</th>
+                      <th>Late Submit</th>
                       <th>Score</th>
                       <th>Actions</th>
                     </tr>
@@ -1080,13 +1232,13 @@ export default function AdminConsolePage() {
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan={8} className="egAdminEmptyRow">
+                        <td colSpan={9} className="egAdminEmptyRow">
                           <span className="egAdminInlineSkeleton" />
                         </td>
                       </tr>
                     ) : fixtureRowsForTable.length === 0 ? (
                       <tr>
-                        <td colSpan={8} className="egAdminEmptyRow">
+                        <td colSpan={9} className="egAdminEmptyRow">
                           {emptyFixtureReason || 'No fixtures'}
                         </td>
                       </tr>
@@ -1167,6 +1319,31 @@ export default function AdminConsolePage() {
                               </select>
                             </td>
                             <td>
+                              <label className="egAdminTickField">
+                                <input
+                                  type="checkbox"
+                                  checked={Boolean(row.allow_late_submission)}
+                                  onChange={(e) =>
+                                    updateFixtureDraft(rowId, {
+                                      allow_late_submission: e.target.checked,
+                                      late_submission_approved_at: e.target.checked
+                                        ? row.late_submission_approved_at || new Date().toISOString()
+                                        : null,
+                                      late_submission_approved_by: e.target.checked
+                                        ? row.late_submission_approved_by || authUserId || null
+                                        : null,
+                                    })
+                                  }
+                                />
+                                <span>{row.allow_late_submission ? 'Approved' : 'Locked'}</span>
+                              </label>
+                              {row.late_submission_approved_at ? (
+                                <div className="egAdminTickField__meta">
+                                  {formatFixtureDateTime(row.late_submission_approved_at)}
+                                </div>
+                              ) : null}
+                            </td>
+                            <td>
                               <div className="scoreGrid">
                                 <input
                                   type="number"
@@ -1184,6 +1361,16 @@ export default function AdminConsolePage() {
                             </td>
                             <td>
                               <div className="rowActions">
+                                {!rowId.startsWith('new-') ? (
+                                  <button
+                                    type="button"
+                                    className="egAdminBtn tiny ghost"
+                                    onClick={() => navigate(`/admin/fixtures/${rowId}`)}
+                                    disabled={isBusy}
+                                  >
+                                    Open OCR
+                                  </button>
+                                ) : null}
                                 <button type="button" className="egAdminBtn tiny" onClick={() => saveFixture(rowId)} disabled={isBusy}>
                                   {actioning === `fx:${rowId}` ? 'Saving…' : 'Save'}
                                 </button>

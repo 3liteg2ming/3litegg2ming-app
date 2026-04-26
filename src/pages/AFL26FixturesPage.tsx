@@ -22,7 +22,12 @@ import { deriveFixtureRound, normalizeFixtureStatus, type FixtureRow } from '../
 import { fetchMatchCentre } from '../lib/matchCentreRepo';
 import { fetchCurrentCoaches, type HomeCoach } from '../lib/homeRepo';
 import { FIXTURES_UNLOCK_LABEL, useFixtureVisibility } from '../lib/fixtureVisibility';
-import { useDeadlineCountdown, SUBMISSION_DEADLINE_LABEL, SUBMISSION_DEADLINE_MS } from '../hooks/useDeadlineCountdown';
+import {
+  SUBMISSION_CLOSED_LABEL,
+  SUBMISSION_DEADLINE_LABEL,
+  SUBMISSION_DEADLINE_MS,
+  useDeadlineCountdown,
+} from '../hooks/useDeadlineCountdown';
 import { isRoundVisible } from '../lib/visibleRounds';
 import { useMelvinOdds } from '../hooks/useMelvinOdds';
 import { useLadder } from '../hooks/useLadder';
@@ -608,14 +613,19 @@ export default function AFL26FixturesPage() {
 
         {fixturesPubliclyVisible && (
           <>
-            {/* Submission deadline — Sunday 26 April midnight */}
+            {/* Submission deadline — Sunday 26 April 11:59 PM */}
             <div className={`fxDeadlineNotice ${submissionDeadline.expired ? 'is-expired' : ''}`}>
               <div className="fxDeadlineNotice__text">
-                All open fixture submissions close {SUBMISSION_DEADLINE_LABEL}
+                {submissionDeadline.expired
+                  ? SUBMISSION_CLOSED_LABEL
+                  : `All open fixture submissions close ${SUBMISSION_DEADLINE_LABEL}`}
               </div>
               <div className="fxDeadlineNotice__countdown">
                 {submissionDeadline.expired ? (
-                  <span className="fxDeadlineNotice__expired">Deadline passed</span>
+                  <div className="fxDeadlineNotice__expiredWrap">
+                    <span className="fxDeadlineNotice__expired">Season Closed</span>
+                    <span className="fxDeadlineNotice__subtext">Games cannot be submitted unless admin approval is switched on for that fixture.</span>
+                  </div>
                 ) : (
                   <>
                     <div className="fxDeadlineNotice__unit">

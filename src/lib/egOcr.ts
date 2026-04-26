@@ -39,26 +39,32 @@ export async function egRunOcrOnImage(
 ): Promise<EgOcrResult> {
   const workerFactory = createWorker as any;
   let worker: any = null;
+  const logger = (message: any) => {
+    if (!onProgress) return;
+    const progress = typeof message?.progress === 'number' ? message.progress : 0;
+    onProgress({
+      status: String(message?.status || 'working'),
+      progress: Math.max(0, Math.min(1, progress)),
+    });
+  };
 
   try {
     if (onProgress) onProgress({ status: 'initializing', progress: 0.1 });
-    worker = await withTimeout(
-      workerFactory('eng', 1, {
-        workerPath: WORKER_PATH,
-        corePath: CORE_PATH,
-        langPath: LANG_PATH,
-        logger: (message: any) => {
-          if (!onProgress) return;
-          const progress = typeof message?.progress === 'number' ? message.progress : 0;
-          onProgress({
-            status: String(message?.status || 'working'),
-            progress: Math.max(0, Math.min(1, progress)),
-          });
-        },
-      }),
-      timeoutMs,
-      'createWorker',
-    );
+    try {
+      worker = await withTimeout(
+        workerFactory('eng', 1, {
+          workerPath: WORKER_PATH,
+          corePath: CORE_PATH,
+          langPath: LANG_PATH,
+          logger,
+        }),
+        timeoutMs,
+        'createWorker',
+      );
+    } catch {
+      // Fall back to the package defaults if the CDN worker paths fail.
+      worker = await withTimeout(workerFactory('eng', 1, { logger }), timeoutMs, 'createWorker');
+    }
     if (onProgress) onProgress({ status: 'recognizing', progress: 0.2 });
 
     const res = (await withTimeout(worker.recognize(image), timeoutMs, 'recognize')) as any;

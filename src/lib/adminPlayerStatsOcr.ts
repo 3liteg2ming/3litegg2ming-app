@@ -1,5 +1,8 @@
 import type { AdminPlayerStatsOcrDraftRow, AdminPlayerStatsOcrResult } from './adminTypes';
 import { egRunOcrOnImage } from './egOcr';
+import { requireSupabaseClient } from './supabaseClient';
+
+const supabase = requireSupabaseClient();
 
 type SupportedStatKey =
   | 'kicks'
@@ -28,6 +31,8 @@ export type LocalPlayerStatsOcrScreenshot = {
   url: string;
   pageNumber?: number | null;
   label?: string | null;
+  bucket?: string | null;
+  path?: string | null;
 };
 
 export type LocalPlayerStatsOcrPage = {
@@ -598,13 +603,29 @@ export async function runLocalPlayerStatsOcr(args: {
     args.onProgress?.({ phase: 'fetching', pageIndex: index + 1, pageCount: total, label });
 
     try {
-      const response = await fetch(screenshot.url);
-      if (!response.ok) {
-        warnings.push(`${label} failed to download (${response.status}).`);
+      let originalBlob: Blob | null = null;
+
+      if (screenshot.bucket && screenshot.path) {
+        const download = await supabase.storage.from(screenshot.bucket).download(screenshot.path);
+        if (!download.error && download.data) {
+          originalBlob = download.data;
+        }
+      }
+
+      if (!originalBlob) {
+        const response = await fetch(screenshot.url);
+        if (!response.ok) {
+          warnings.push(`${label} failed to download (${response.status}).`);
+          continue;
+        }
+        originalBlob = await response.blob();
+      }
+
+      if (!originalBlob) {
+        warnings.push(`${label} could not be downloaded.`);
         continue;
       }
 
-      const originalBlob = await response.blob();
       const processedBlob = await preprocessOcrImage(originalBlob);
       args.onProgress?.({ phase: 'ocr', pageIndex: index + 1, pageCount: total, label });
 

@@ -81,6 +81,9 @@ export type AdminFixture = {
   verified_at?: string | null;
   disputed_at?: string | null;
   corrected_at?: string | null;
+  allow_late_submission?: boolean;
+  late_submission_approved_at?: string | null;
+  late_submission_approved_by?: string | null;
   quarter_scores_json?: unknown;
 };
 

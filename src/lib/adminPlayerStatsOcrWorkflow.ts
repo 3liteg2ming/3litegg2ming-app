@@ -96,6 +96,8 @@ export async function runFixturePlayerStatsOcrWorkflow(args: {
         url: image.public_url,
         pageNumber: image.page_number,
         label: `Page ${image.page_number || screenshots.indexOf(image) + 1}`,
+        bucket: image.storage_bucket,
+        path: image.storage_path,
       })),
       onProgress: (progress) => {
         if (progress.phase === 'parsing') {

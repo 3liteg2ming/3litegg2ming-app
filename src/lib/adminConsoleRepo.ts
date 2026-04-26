@@ -49,6 +49,16 @@ export type AdminConsoleFixture = {
   away_total: number | null;
   home_team_name?: string | null;
   away_team_name?: string | null;
+  allow_late_submission?: boolean;
+  late_submission_approved_at?: string | null;
+  late_submission_approved_by?: string | null;
+};
+
+export type AdminConsoleFixtureSubmission = {
+  id: string;
+  fixture_id: string;
+  team_id: string | null;
+  submitted_at: string | null;
 };
 
 export type AdminConsoleMetric = {
@@ -301,8 +311,57 @@ async function loadFixtures(competitionKey: AdminConsoleCompetitionKey, seasonMa
     away_goals: numberOrNull(f.away_goals),
     away_behinds: numberOrNull(f.away_behinds),
     away_total: numberOrNull(f.away_total),
+    allow_late_submission: Boolean(f.allow_late_submission),
+    late_submission_approved_at: text(f.late_submission_approved_at) || null,
+    late_submission_approved_by: text(f.late_submission_approved_by) || null,
   }));
   return setCached(cacheKey, mapped);
+}
+
+async function loadFixtureSubmissions(
+  competitionKey: AdminConsoleCompetitionKey,
+  seasonMap: AdminConsoleSeasonMap,
+  fixtures: AdminConsoleFixture[],
+): Promise<AdminConsoleFixtureSubmission[]> {
+  const seasonId = seasonMap[competitionKey];
+  const fixtureIds = Array.from(
+    new Set(fixtures.map((fixture) => text(fixture.id)).filter(Boolean)),
+  );
+
+  if (!seasonId || !fixtureIds.length) return [];
+
+  const cacheKey = `fixture-submissions:${competitionKey}:${seasonId}:${fixtureIds.join(',')}`;
+  const cached = getCached<AdminConsoleFixtureSubmission[]>(cacheKey);
+  if (cached) return cached;
+
+  const rows: AdminConsoleFixtureSubmission[] = [];
+  const chunkSize = 200;
+
+  for (let index = 0; index < fixtureIds.length; index += chunkSize) {
+    const chunk = fixtureIds.slice(index, index + chunkSize);
+    const { data, error } = await supabase
+      .from('submissions')
+      .select('id,fixture_id,team_id,submitted_at')
+      .in('fixture_id', chunk);
+
+    if (error) {
+      if (error.message.includes('does not exist')) {
+        return [];
+      }
+      throw new Error(error.message || 'Unable to load fixture submissions');
+    }
+
+    rows.push(
+      ...((data || []) as Array<Record<string, unknown>>).map((row) => ({
+        id: text(row.id),
+        fixture_id: text(row.fixture_id),
+        team_id: text(row.team_id) || null,
+        submitted_at: text(row.submitted_at) || null,
+      })),
+    );
+  }
+
+  return setCached(cacheKey, rows);
 }
 
 type RegistrationRow = Record<string, any>;
@@ -374,6 +433,7 @@ export async function fetchAdminConsoleBootstrap(args: {
   registrations: RegistrationRow[];
   regTable: string | null;
   fixtures: AdminConsoleFixture[];
+  fixtureSubmissions: AdminConsoleFixtureSubmission[];
   metrics: AdminConsoleMetric[];
   health: AdminConsoleHealth[];
 }> {
@@ -386,6 +446,7 @@ export async function fetchAdminConsoleBootstrap(args: {
     loadRegistrations(registrationTable),
     loadFixtures(args.competitionKey, seasonMap),
   ]);
+  const fixtureSubmissions = await loadFixtureSubmissions(args.competitionKey, seasonMap, fixtures);
   const diagnostics = await loadDiagnostics(seasonMap, registrations);
 
   return {
@@ -395,6 +456,7 @@ export async function fetchAdminConsoleBootstrap(args: {
     registrations,
     regTable: registrationTable,
     fixtures,
+    fixtureSubmissions,
     metrics: diagnostics.metrics,
     health: diagnostics.health,
   };
