@@ -434,6 +434,94 @@
   color: rgba(201, 213, 235, 0.58);
 }
 
+.premiersVoteCard__leaderCoachesSection {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(255, 215, 0, 0.08), rgba(255, 215, 0, 0.04));
+  border: 1px solid rgba(255, 215, 0, 0.24);
+  box-shadow: inset 0 0 16px rgba(255, 215, 0, 0.06);
+}
+
+.premiersVoteCard__leaderCoachesHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.premiersVoteCard__leaderCoachesLabel {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 223, 123, 0.94);
+}
+
+.premiersVoteCard__leaderCoachesPct {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(255, 215, 0, 0.16);
+  color: rgba(255, 223, 123, 0.98);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.premiersVoteCard__leaderCoachesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.premiersVoteCard__leaderCoachChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  font-size: 0.65rem;
+  font-weight: 750;
+  color: rgba(255, 223, 123, 0.92);
+}
+
+.premiersVoteCard__leaderCoachAvatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.premiersVoteCard__leaderCoachInitial {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 215, 0, 0.2);
+  color: rgba(255, 223, 123, 0.98);
+  font-size: 0.55rem;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.premiersVoteCard__leaderCoachName {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .premiersVoteCard__coachesSection {
   display: grid;
   gap: 8px;

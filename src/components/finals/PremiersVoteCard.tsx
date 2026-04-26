@@ -79,6 +79,15 @@ export default function PremiersVoteCard({ pollKey, options, coaches = [] }: Pre
   const currentSelection = normalizedOptions.find((option) => option.key === selectedVoteKey) || null;
   const featuredOptions = normalizedOptions.slice(0, 3);
 
+  // Find coaches backing the leading team
+  const leadingTeamCoaches = React.useMemo(() => {
+    if (!leader?.option || !coaches.length) return [];
+    const leadingTeamName = leader.option.label.toLowerCase();
+    return coaches.filter((coach) =>
+      coach.team_name && coach.team_name.toLowerCase() === leadingTeamName,
+    );
+  }, [leader, coaches]);
+
   const helperCopy = activeError
     ? 'We could not refresh the public totals just now, but you can still lock in your premiers tip.'
     : mode === 'local'
@@ -288,6 +297,42 @@ export default function PremiersVoteCard({ pollKey, options, coaches = [] }: Pre
                   );
                 })}
               </div>
+
+              {leadingTeamCoaches.length > 0 && leader?.result?.votes && (
+                <div className="premiersVoteCard__leaderCoachesSection">
+                  <div className="premiersVoteCard__leaderCoachesHeader">
+                    <span className="premiersVoteCard__leaderCoachesLabel">
+                      Coaches backing {leader.option.label}
+                    </span>
+                    <span className="premiersVoteCard__leaderCoachesPct">
+                      {leader.result.pct}%
+                    </span>
+                  </div>
+                  <div className="premiersVoteCard__leaderCoachesList">
+                    {leadingTeamCoaches.map((coach) => (
+                      <div key={coach.user_id || coach.team_id} className="premiersVoteCard__leaderCoachChip">
+                        {coach.avatar_url ? (
+                          <img
+                            src={coach.avatar_url}
+                            alt={`${coach.first_name} ${coach.last_name}`}
+                            className="premiersVoteCard__leaderCoachAvatar"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <span className="premiersVoteCard__leaderCoachInitial">
+                            {(coach.first_name?.charAt(0) || '') + (coach.last_name?.charAt(0) || '')}
+                          </span>
+                        )}
+                        <span className="premiersVoteCard__leaderCoachName">
+                          {coach.first_name} {coach.last_name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {coaches.length > 0 && hasVotes && (
                 <div className="premiersVoteCard__coachesSection">
