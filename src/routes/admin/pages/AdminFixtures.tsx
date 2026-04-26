@@ -6,11 +6,13 @@ import {
   clearFixtureScores,
   listFixtureIdsWithPlayerStats,
   listFixtures,
+  listMissingPlayerStatsFixtures,
   listSeasons,
   listTeams,
   swapFixtureTeams,
   updateFixture,
 } from '@/lib/adminApi';
+import { runFixturePlayerStatsOcrWorkflow } from '@/lib/adminPlayerStatsOcrWorkflow';
 import { isRoundVisible } from '@/lib/visibleRounds';
 import { useAdminLayoutContext } from '../AdminLayout';
 import { formatDateTime, useDebouncedValue } from '../useAdminTools';
@@ -20,7 +22,7 @@ type ViewMode = 'rounds' | 'table';
 
 export default function AdminFixtures() {
   const queryClient = useQueryClient();
-  const { globalSearch, pushToast } = useAdminLayoutContext();
+  const { globalSearch, pushToast, adminToken } = useAdminLayoutContext();
 
   const [seasonId, setSeasonId] = useState<'all' | string>('all');
   const [teamId, setTeamId] = useState<'all' | string>('all');
@@ -29,6 +31,8 @@ export default function AdminFixtures() {
   const [searchInput, setSearchInput] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('rounds');
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [runningRound, setRunningRound] = useState<number | null>(null);
+  const [runningFixtureIds, setRunningFixtureIds] = useState<string[]>([]);
 
   const search = useDebouncedValue((searchInput || globalSearch).trim(), 300);
   const roundFilter = roundInput ? Number(roundInput) : null;
@@ -61,10 +65,30 @@ export default function AdminFixtures() {
     staleTime: 10 * 60_000,
   });
 
+  const missingPlayerStatsQuery = useQuery({
+    queryKey: ['admin', 'missing-player-stats', seasonId],
+    queryFn: () => listMissingPlayerStatsFixtures(seasonId),
+    enabled: seasonId !== 'all' && Boolean(seasonId),
+    placeholderData: keepPreviousData,
+    refetchInterval: 15_000,
+  });
+
   const teamById = useMemo(() => {
     const map = new Map<string, string>();
     for (const team of teamsQuery.data || []) {
       map.set(team.id, team.short_name || team.name);
+    }
+    return map;
+  }, [teamsQuery.data]);
+
+  const teamMetaById = useMemo(() => {
+    const map = new Map<string, { slug: string; label: string }>();
+    for (const team of teamsQuery.data || []) {
+      const slug = String(team.slug || team.team_key || '').trim();
+      map.set(team.id, {
+        slug,
+        label: team.short_name || team.name,
+      });
     }
     return map;
   }, [teamsQuery.data]);
@@ -114,6 +138,13 @@ export default function AdminFixtures() {
     refetchInterval: 5_000,
   });
   const fixtureIdsWithStats: Set<string> = playerStatsQuery.data ?? new Set();
+  const missingPlayerStatsByFixtureId = useMemo(() => {
+    const map = new Map<string, NonNullable<(typeof missingPlayerStatsQuery.data)>[number]>();
+    for (const fixture of missingPlayerStatsQuery.data || []) {
+      map.set(fixture.fixture_id, fixture);
+    }
+    return map;
+  }, [missingPlayerStatsQuery.data]);
 
   const roundsGrouped = useMemo(() => {
     const map = new Map<number, typeof allFixtures>();
@@ -144,6 +175,93 @@ export default function AdminFixtures() {
 
   function hasStats(f: typeof allFixtures[0]) {
     return f.home_total != null || f.away_total != null;
+  }
+
+  async function runRoundPlayerStatsOcr(round: number, fixturesInRound: typeof allFixtures) {
+    if (seasonId === 'all') {
+      pushToast('Select a season first so round OCR only targets one season.', 'info');
+      return;
+    }
+
+    const fixtureIdsInRound = new Set(fixturesInRound.map((fixture) => fixture.id));
+    const targets = (missingPlayerStatsQuery.data || []).filter(
+      (fixture) =>
+        fixture.round === round &&
+        fixture.can_run_ocr &&
+        fixtureIdsInRound.has(fixture.fixture_id),
+    );
+
+    if (!targets.length) {
+      pushToast(`No submitted fixtures in Round ${round} are ready for OCR.`, 'info');
+      return;
+    }
+
+    setRunningRound(round);
+    let successCount = 0;
+    let unmatchedFixtures = 0;
+
+    try {
+      for (const fixture of targets) {
+        const homeTeam = fixture.home_team_id ? teamMetaById.get(fixture.home_team_id) : null;
+        const awayTeam = fixture.away_team_id ? teamMetaById.get(fixture.away_team_id) : null;
+
+        if (!fixture.home_team_id || !fixture.away_team_id || !homeTeam?.slug || !awayTeam?.slug) {
+          unmatchedFixtures += 1;
+          pushToast(
+            `${fixture.home_team_name || 'Home'} vs ${fixture.away_team_name || 'Away'} is missing team slugs, so OCR was skipped.`,
+            'error',
+          );
+          continue;
+        }
+
+        setRunningFixtureIds((prev) =>
+          prev.includes(fixture.fixture_id) ? prev : [...prev, fixture.fixture_id],
+        );
+
+        try {
+          const result = await runFixturePlayerStatsOcrWorkflow({
+            fixtureId: fixture.fixture_id,
+            homeTeamId: fixture.home_team_id,
+            awayTeamId: fixture.away_team_id,
+            homeTeamSlug: homeTeam.slug,
+            awayTeamSlug: awayTeam.slug,
+            homeTeamName: fixture.home_team_name || homeTeam.label || 'Home',
+            awayTeamName: fixture.away_team_name || awayTeam.label || 'Away',
+            token: adminToken(),
+            autoApply: true,
+          });
+
+          successCount += 1;
+          if (result.unmatchedRows > 0) unmatchedFixtures += 1;
+        } catch (error) {
+          unmatchedFixtures += 1;
+          pushToast(
+            error instanceof Error
+              ? error.message
+              : `Failed OCR for ${fixture.home_team_name || 'Home'} vs ${fixture.away_team_name || 'Away'}`,
+            'error',
+          );
+        } finally {
+          setRunningFixtureIds((prev) => prev.filter((fixtureId) => fixtureId !== fixture.fixture_id));
+        }
+      }
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin', 'fixtures'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin', 'fixtures', 'playerStatsIds'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin', 'missing-player-stats', seasonId] }),
+        queryClient.invalidateQueries({ queryKey: ['admin', 'ocr-queue'] }),
+      ]);
+
+      pushToast(
+        unmatchedFixtures > 0
+          ? `Round ${round} OCR finished for ${successCount}/${targets.length} fixture(s). Some still need review.`
+          : `Round ${round} OCR saved player stats for ${successCount} fixture(s).`,
+        unmatchedFixtures > 0 ? 'info' : 'success',
+      );
+    } finally {
+      setRunningRound(null);
+    }
   }
 
   return (
@@ -258,13 +376,44 @@ export default function AdminFixtures() {
               const finalCount = fixtures.filter((f) => f.status === 'FINAL').length;
               const totalCount = fixtures.length;
               const allFinal = finalCount === totalCount;
+              const roundMissingFixtures = (missingPlayerStatsQuery.data || []).filter((fixture) =>
+                fixtures.some((row) => row.id === fixture.fixture_id),
+              );
+              const roundRunnableFixtures = roundMissingFixtures.filter((fixture) => fixture.can_run_ocr);
+              const roundHasRunningFixture = fixtures.some((fixture) => runningFixtureIds.includes(fixture.id));
               return (
                 <div key={round} className="eg-fx-round">
                   <div className={`eg-fx-round-header${allFinal ? ' eg-fx-round-header--done' : ''}`}>
-                    <strong>Round {round || '?'}</strong>
-                    <span className={allFinal ? 'eg-fx-round-complete' : ''}>
-                      {finalCount}/{totalCount} final
-                    </span>
+                    <div className="eg-fx-round-headerMain">
+                      <strong>Round {round || '?'}</strong>
+                      <span className={allFinal ? 'eg-fx-round-complete' : ''}>
+                        {finalCount}/{totalCount} final
+                      </span>
+                    </div>
+                    <div className="eg-fx-round-headerActions">
+                      {seasonId === 'all' ? (
+                        <span className="eg-fx-round-ocrMeta">Pick a season to run round OCR</span>
+                      ) : roundMissingFixtures.length > 0 ? (
+                        <span className="eg-fx-round-ocrMeta">
+                          {roundRunnableFixtures.length}/{roundMissingFixtures.length} OCR ready
+                        </span>
+                      ) : null}
+                      <button
+                        type="button"
+                        className="eg-fx-round-ocrBtn"
+                        disabled={
+                          seasonId === 'all' ||
+                          runningRound === round ||
+                          roundRunnableFixtures.length === 0 ||
+                          missingPlayerStatsQuery.isLoading
+                        }
+                        onClick={() => void runRoundPlayerStatsOcr(round, fixtures)}
+                      >
+                        {runningRound === round || roundHasRunningFixture
+                          ? `Running OCR${roundRunnableFixtures.length ? ` (${runningFixtureIds.filter((id) => fixtures.some((fixture) => fixture.id === id)).length}/${roundRunnableFixtures.length})` : ''}`
+                          : `OCR Player Stats Round${roundRunnableFixtures.length ? ` (${roundRunnableFixtures.length})` : ''}`}
+                      </button>
+                    </div>
                   </div>
                   <div className="eg-fx-round-fixtures">
                     {fixtures.map((f) => {
