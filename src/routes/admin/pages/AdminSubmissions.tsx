@@ -30,6 +30,7 @@ export default function AdminSubmissions() {
   const [ocrStatus, setOcrStatus] = useState<EgJobStatus | 'all'>('all');
   const [searchInput, setSearchInput] = useState('');
   const [missingSeasonId, setMissingSeasonId] = useState('');
+  const [missingRound, setMissingRound] = useState<'all' | string>('all');
   const [runningFixtureIds, setRunningFixtureIds] = useState<string[]>([]);
   const [batchProgress, setBatchProgress] = useState<{ done: number; total: number } | null>(null);
 
@@ -124,9 +125,23 @@ export default function AdminSubmissions() {
     return map;
   }, [teamsQuery.data]);
 
-  const runnableMissingFixtures = useMemo(
-    () => missingFixtures.filter((fixture) => fixture.can_run_ocr),
+  const missingRoundOptions = useMemo(
+    () =>
+      [...new Set(missingFixtures.map((fixture) => fixture.round).filter((round): round is number => round != null))]
+        .sort((left, right) => left - right),
     [missingFixtures],
+  );
+
+  const filteredMissingFixtures = useMemo(() => {
+    if (missingRound === 'all') return missingFixtures;
+    const round = Number(missingRound);
+    if (!Number.isFinite(round)) return missingFixtures;
+    return missingFixtures.filter((fixture) => fixture.round === round);
+  }, [missingFixtures, missingRound]);
+
+  const runnableMissingFixtures = useMemo(
+    () => filteredMissingFixtures.filter((fixture) => fixture.can_run_ocr),
+    [filteredMissingFixtures],
   );
 
   const [expandedOcrId, setExpandedOcrId] = useState<string>('');
@@ -215,7 +230,13 @@ export default function AdminSubmissions() {
         <div className="eg-admin-toolbar wrap">
           <label className="eg-admin-inline-field">
             <span>Season</span>
-            <select value={missingSeasonId} onChange={(event) => setMissingSeasonId(event.target.value)}>
+            <select
+              value={missingSeasonId}
+              onChange={(event) => {
+                setMissingSeasonId(event.target.value);
+                setMissingRound('all');
+              }}
+            >
               <option value="">Select season</option>
               {(seasonsQuery.data || []).map((season) => (
                 <option key={season.id} value={season.id}>
@@ -224,11 +245,22 @@ export default function AdminSubmissions() {
               ))}
             </select>
           </label>
+          <label className="eg-admin-inline-field">
+            <span>Round</span>
+            <select value={missingRound} onChange={(event) => setMissingRound(event.target.value)}>
+              <option value="all">All rounds</option>
+              {missingRoundOptions.map((round) => (
+                <option key={round} value={String(round)}>
+                  Round {round}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
         <div className="eg-admin-stat-grid">
           <article>
-            <h4>{missingFixtures.length}</h4>
+            <h4>{filteredMissingFixtures.length}</h4>
             <p>Submitted Missing Stats</p>
           </article>
           <article>
@@ -236,11 +268,11 @@ export default function AdminSubmissions() {
             <p>Ready For OCR</p>
           </article>
           <article>
-            <h4>{missingFixtures.filter((fixture) => !fixture.can_run_ocr).length}</h4>
+            <h4>{filteredMissingFixtures.filter((fixture) => !fixture.can_run_ocr).length}</h4>
             <p>Blocked</p>
           </article>
           <article>
-            <h4>{missingFixtures.filter((fixture) => fixture.latest_ocr_status === 'failed').length}</h4>
+            <h4>{filteredMissingFixtures.filter((fixture) => fixture.latest_ocr_status === 'failed').length}</h4>
             <p>Latest OCR Failed</p>
           </article>
         </div>
@@ -252,11 +284,11 @@ export default function AdminSubmissions() {
           </p>
         ) : null}
 
-        {!missingFixturesQuery.isLoading && !missingFixtures.length ? (
+        {!missingFixturesQuery.isLoading && !filteredMissingFixtures.length ? (
           <EmptyState title="No missing player stats" description="Every submitted fixture in the selected season already has player stats, or no submissions exist yet." />
         ) : (
           <div className="eg-admin-list">
-            {missingFixtures.map((fixture) => {
+            {filteredMissingFixtures.map((fixture) => {
               const isRunning = runningFixtureIds.includes(fixture.fixture_id);
               return (
                 <article key={fixture.fixture_id}>
