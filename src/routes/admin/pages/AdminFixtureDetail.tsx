@@ -817,12 +817,14 @@ export default function AdminFixtureDetail() {
   const latestOcrItem = useMemo(() => (ocrQuery.data || [])[0] || null, [ocrQuery.data]);
   const latestOcrSummary = latestOcrDraftQuery.data?.summary || {};
   const latestOcrDraft = latestOcrDraftQuery.data?.draft || null;
+  const latestOcrWarnings = useMemo(() => {
+    if (Array.isArray(latestOcrDraftQuery.data?.warnings)) return latestOcrDraftQuery.data.warnings;
+    if (Array.isArray(latestOcrDraft?.warnings)) return latestOcrDraft.warnings;
+    return [];
+  }, [latestOcrDraftQuery.data?.warnings, latestOcrDraft?.warnings]);
   const latestOcrExtractedRows =
     Number(latestOcrSummary.playerStatRows || latestOcrDraft?.playerStats.length || 0) || 0;
-  const latestOcrWarningCount =
-    latestOcrDraftQuery.data?.warnings.length ||
-    latestOcrDraft?.warnings?.length ||
-    0;
+  const latestOcrWarningCount = latestOcrWarnings.length;
 
   if (!fixtureId) {
     return <EmptyState title="No fixture" description="Fixture ID is missing from the URL." />;
@@ -1135,7 +1137,7 @@ export default function AdminFixtureDetail() {
                   Latest OCR warnings
                 </p>
                 <div className="eg-fd-ocr-warning-list">
-                  {(latestOcrDraftQuery.data?.warnings || latestOcrDraft?.warnings || []).map((warning, index) => (
+                  {latestOcrWarnings.map((warning, index) => (
                     <span key={`${warning}-${index}`}>{warning}</span>
                   ))}
                 </div>

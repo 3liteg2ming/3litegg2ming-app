@@ -38,24 +38,36 @@ export async function egRunOcrOnImage(
   timeoutMs = 90_000,
 ): Promise<EgOcrResult> {
   const workerFactory = createWorker as any;
-  const worker = await workerFactory({
-    workerPath: WORKER_PATH,
-    corePath: CORE_PATH,
-    langPath: LANG_PATH,
-  });
+  let worker: any = null;
 
   try {
     if (onProgress) onProgress({ status: 'initializing', progress: 0.1 });
-    await withTimeout(worker.reinitialize('eng'), timeoutMs, 'reinitialize');
+    worker = await withTimeout(
+      workerFactory('eng', 1, {
+        workerPath: WORKER_PATH,
+        corePath: CORE_PATH,
+        langPath: LANG_PATH,
+        logger: (message: any) => {
+          if (!onProgress) return;
+          const progress = typeof message?.progress === 'number' ? message.progress : 0;
+          onProgress({
+            status: String(message?.status || 'working'),
+            progress: Math.max(0, Math.min(1, progress)),
+          });
+        },
+      }),
+      timeoutMs,
+      'createWorker',
+    );
     if (onProgress) onProgress({ status: 'recognizing', progress: 0.2 });
 
     const res = (await withTimeout(worker.recognize(image), timeoutMs, 'recognize')) as any;
-const data = res?.data;
+    const data = res?.data;
     return { text: String(data?.text || '') };
   } finally {
     // Always terminate, otherwise future runs can hang / leak workers
     try {
-      await worker.terminate();
+      await worker?.terminate?.();
     } catch {
       // ignore
     }

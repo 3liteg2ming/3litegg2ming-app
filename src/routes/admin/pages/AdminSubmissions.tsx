@@ -144,6 +144,14 @@ export default function AdminSubmissions() {
     [filteredMissingFixtures],
   );
 
+  const batchRunLabel = useMemo(() => {
+    if (batchProgress) return `Running ${batchProgress.done}/${batchProgress.total}`;
+    if (missingRound !== 'all') {
+      return `Auto OCR + Save Round ${missingRound} (${runnableMissingFixtures.length})`;
+    }
+    return `Auto OCR + Save All Missing (${runnableMissingFixtures.length})`;
+  }, [batchProgress, missingRound, runnableMissingFixtures.length]);
+
   const [expandedOcrId, setExpandedOcrId] = useState<string>('');
 
   async function runFixtureOcr(fixture: AdminMissingPlayerStatsFixture) {
@@ -220,9 +228,7 @@ export default function AdminSubmissions() {
               onClick={() => void runAllMissingOcr()}
               disabled={Boolean(batchProgress) || runnableMissingFixtures.length === 0}
             >
-              {batchProgress
-                ? `Running ${batchProgress.done}/${batchProgress.total}`
-                : `Auto OCR + Save All Missing (${runnableMissingFixtures.length})`}
+              {batchRunLabel}
             </button>
           </div>
         }
