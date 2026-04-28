@@ -326,6 +326,15 @@ export async function fetchHomepageNews(limit = 2): Promise<HomeNewsItem[]> {
   return setCached(cacheKey, rows);
 }
 
+export async function fetchPollVoterBreakdown(pollKey: string): Promise<Array<{ voter_key: string; option_key: string }>> {
+  const { data, error } = await supabase
+    .from('eg_prediction_votes')
+    .select('voter_key, option_key')
+    .eq('poll_key', pollKey);
+  if (error || !Array.isArray(data)) return [];
+  return data as Array<{ voter_key: string; option_key: string }>;
+}
+
 export async function fetchAllHomepageNews(): Promise<HomeNewsItem[]> {
   const { data, error } = await supabase
     .from('eg_homepage_news')

@@ -913,3 +913,60 @@
   min-height: 26px;
   font-size: 0.6rem;
 }
+
+/* ── Per-coach breakdown rows ── */
+.premiersVoteTrigger__breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.premiersVoteTrigger__bdRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 120ms ease;
+}
+
+.premiersVoteTrigger__bdRow.is-mine {
+  background: rgba(245, 196, 0, 0.07);
+  border-color: rgba(245, 196, 0, 0.18);
+}
+
+.premiersVoteTrigger__bdLogo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+
+.premiersVoteTrigger__bdTeam {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(244, 248, 255, 0.90);
+  white-space: nowrap;
+  min-width: 80px;
+}
+
+.premiersVoteTrigger__bdCoaches {
+  flex: 1;
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: rgba(210, 225, 252, 0.55);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.premiersVoteTrigger__bdPct {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: rgba(245, 196, 0, 0.80);
+  flex-shrink: 0;
+}

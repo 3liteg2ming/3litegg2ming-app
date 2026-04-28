@@ -3535,3 +3535,31 @@
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+
+/* ── Hero partner logos (EG × BGL) ── */
+.home-hero-eyebrow--logos {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 6px;
+}
+
+.home-hero-partnerLogo {
+  height: 20px;
+  width: auto;
+  object-fit: contain;
+  opacity: 0.90;
+  filter: brightness(1.1);
+}
+
+.home-hero-partnerLogo--bgl {
+  height: 16px;
+  filter: brightness(1.2) invert(0);
+}
+
+.home-hero-eyebrow-x {
+  font-size: 0.70rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.40);
+  line-height: 1;
+}

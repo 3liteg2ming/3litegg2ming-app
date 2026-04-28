@@ -283,7 +283,16 @@ function HeroMasterCard() {
 
         <div className="home-hero-content">
           <div className="home-hero-topbar">
-            <span className="home-hero-eyebrow">Elite Gaming x BGL</span>
+            <span className="home-hero-eyebrow home-hero-eyebrow--logos">
+              <img src={AFL26_LOGO_URL} alt="Elite Gaming" className="home-hero-partnerLogo" />
+              <span className="home-hero-eyebrow-x">×</span>
+              <img
+                src={BGL_LOGO_URL}
+                alt="BGL"
+                className="home-hero-partnerLogo home-hero-partnerLogo--bgl"
+                onError={(e) => { e.currentTarget.src = BGL_LOGO_FALLBACK_URL; }}
+              />
+            </span>
             <span className="home-hero-pill">
               <span className="home-hero-pillDot" />
               {finalsLabel}
@@ -736,14 +745,30 @@ function FinalsHubSection({ fixturesVisible, coaches = [] }: { fixturesVisible: 
   const showPremiersVote = FINALS_CONFIG.enabled && !finalsStarted && premiersOptions.length >= 2;
   const showFixtureVote = FINALS_CONFIG.enabled && finalsStarted && Boolean(featuredFinalsFixture);
 
-  if (!FINALS_CONFIG.enabled || (!showPremiersVote && !showFixtureVote)) return null;
+  const breakdownQuery = useQuery({
+    queryKey: ['home', 'poll-breakdown', 'afl26-season-two-premiers-coaches'],
+    queryFn: async () => {
+      const repo = await import('../lib/homeRepo');
+      return repo.fetchPollVoterBreakdown('afl26-season-two-premiers-coaches');
+    },
+    staleTime: 30_000,
+    enabled: FINALS_CONFIG.enabled,
+  });
 
-  const headerTitle = showPremiersVote
-    ? 'Back the premiers before finals bounce'
-    : `${finalsVoteRoundLabel || 'Finals'} fan vote`;
-  const headerBody = showPremiersVote
-    ? 'The top eight are set. Lock in your flag pick before the bracket starts moving.'
-    : 'Cast your tip, back your club and watch the vote split before first bounce.';
+  const coachVotes = React.useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const vote of breakdownQuery.data || []) {
+      const userId = String(vote.voter_key || '').replace(/^coach:/, '');
+      const coach = coaches.find((c) => c.user_id === userId);
+      const name = coach?.display_name || null;
+      if (!name) continue;
+      const existing = map.get(vote.option_key) || [];
+      map.set(vote.option_key, [...existing, name]);
+    }
+    return map;
+  }, [breakdownQuery.data, coaches]);
+
+  if (!FINALS_CONFIG.enabled || (!showPremiersVote && !showFixtureVote)) return null;
 
   if (showPremiersVote) {
     return (
@@ -751,6 +776,7 @@ function FinalsHubSection({ fixturesVisible, coaches = [] }: { fixturesVisible: 
         <PremiersVoteCard
           pollKey="afl26-season-two-premiers-coaches"
           options={premiersOptions}
+          coachVotes={coachVotes}
         />
       </section>
     );
