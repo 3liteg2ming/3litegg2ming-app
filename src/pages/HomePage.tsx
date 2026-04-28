@@ -620,11 +620,6 @@ function CoachHubBanner({ coaches = [] }: { coaches?: Coach[] }) {
           <ArrowRight size={13} className="home-quickLink__arrow" />
         </Link>
 
-        <Link to="/best-team" className="home-quickLink home-quickLink--bestTeam">
-          <Trophy size={15} className="home-quickLink__icon" />
-          <span className="home-quickLink__label">Best 23</span>
-          <ArrowRight size={13} className="home-quickLink__arrow" />
-        </Link>
       </div>
     </section>
   );
