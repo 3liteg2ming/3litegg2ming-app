@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { NavLink } from 'react-router-dom';
-import { BarChart3, CalendarDays, Home, Trophy, Upload, Users } from 'lucide-react';
+import { BarChart3, CalendarDays, Home, Upload } from 'lucide-react';
 import { useAuth } from '../state/auth/AuthProvider';
 import '../styles/bottomNavPremium.css';
 
@@ -13,8 +13,6 @@ type NavItem = {
 const NAV_BASE: NavItem[] = [
   { label: 'Home', href: '/', Icon: Home },
   { label: 'Fixtures', href: '/fixtures', Icon: CalendarDays },
-  { label: 'Teams', href: '/teams', Icon: Users },
-  { label: 'Ladder', href: '/ladder', Icon: Trophy },
   { label: 'Stats', href: '/stats3', Icon: BarChart3 },
 ];
 
@@ -23,8 +21,6 @@ const NAV_SUBMIT: NavItem = { label: 'Submit', href: '/submit', Icon: Upload };
 const routePrefetchers: Record<string, () => Promise<any>> = {
   '/': () => import('../pages/HomePage'),
   '/fixtures': () => import('../pages/AFL26FixturesPage'),
-  '/ladder': () => import('../pages/LadderPage'),
-  '/teams': () => import('../pages/TeamsPage'),
   '/stats3': () => import('../pages/AFL2026StatsPage'),
   '/submit': () => import('../pages/SubmitPage'),
 };
@@ -72,7 +68,6 @@ export default function BottomNav({ hidden = false }: { hidden?: boolean }) {
   useEffect(() => {
     const id = window.setTimeout(() => {
       void prefetchRouteAndData('/fixtures');
-      void prefetchRouteAndData('/ladder');
       void prefetchRouteAndData('/stats3');
     }, 120);
     return () => window.clearTimeout(id);
