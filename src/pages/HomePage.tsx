@@ -862,7 +862,6 @@ export default function HomePage() {
           {fixturesVisible ? <FeaturedMatchCard coaches={coaches} /> : <LaunchPromoCard />}
         </div>
         <CoachHubBanner coaches={coaches} />
-        <FinalsShowcaseSection fixturesVisible={fixturesVisible} coaches={coaches} />
         <EgNewsSection />
       </main>
     </div>

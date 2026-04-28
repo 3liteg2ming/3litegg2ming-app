@@ -563,6 +563,16 @@ export async function setUserRoleAndTeam(userId: string, role: EgRole, teamId: s
     p_team_id: teamId,
   });
   if (error) unwrapRpcError(error);
+
+  // RPC returns null when 0 rows matched (user has no eg_profiles row).
+  // Fall back to a direct upsert so the change is never silently lost.
+  if (!data) {
+    const { error: upsertError } = await supabase
+      .from('eg_profiles')
+      .upsert({ user_id: userId, role, team_id: teamId, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    if (upsertError) throw new Error(upsertError.message);
+  }
+
   return data as AdminProfile;
 }
 
