@@ -284,7 +284,7 @@ function HeroMasterCard() {
         <div className="home-hero-content">
           <div className="home-hero-topbar">
             <span className="home-hero-eyebrow home-hero-eyebrow--logos">
-              <img src={AFL26_LOGO_URL} alt="Elite Gaming" className="home-hero-partnerLogo" />
+              <img src={assetUrl('elite-gaming-logo.png')} alt="Elite Gaming" className="home-hero-partnerLogo" />
               <span className="home-hero-eyebrow-x">×</span>
               <img
                 src={BGL_LOGO_URL}
