@@ -14,7 +14,6 @@ import { useLadder } from '../hooks/useLadder';
 import { useSeasonFixtures } from '../hooks/useFixtures';
 import FinalsVoteCard from '../components/finals/FinalsVoteCard';
 import PremiersVoteCard from '../components/finals/PremiersVoteCard';
-import FinalsBracket from '../components/finals/FinalsBracket';
 import { FINALS_CONFIG, getFinalsLabel } from '../config/finals';
 import { assetUrl } from '../lib/teamAssets';
 import { resolveTeamLogoUrl } from '../lib/entityResolvers';
@@ -267,7 +266,6 @@ const Skeleton = ({ className, style }: { className?: string; style?: React.CSSP
 
 function HeroMasterCard() {
   const { user } = useAuth();
-  const eliteLogo = assetUrl('elite-gaming-logo.png');
   const finalsLabel = getFinalsLabel(FINALS_CONFIG.week) || 'Season Live';
   const secondaryHref = user ? '/members' : '/teams';
   const secondaryLabel = user ? 'Coach Hub' : 'Explore Teams';
@@ -293,46 +291,24 @@ function HeroMasterCard() {
           </div>
 
           <div className="home-hero-titleGroup">
-            <h1 className="home-hero-seasonTitle">AFL26 Finals Hub</h1>
+            <h1 className="home-hero-seasonTitle">AFL26<br />Finals Hub</h1>
             <p className="home-hero-sub">
               {user
-                ? 'Bracket, match centre and every finals storyline in one live home.'
-                : 'Bracket, fan voting and every finals storyline in one live home.'}
+                ? 'Every finals result, match centre and standings — live.'
+                : 'Fan voting, every finals result and standings — live.'}
             </p>
           </div>
 
-          <div className="home-hero-brandStrip">
-            <span className="home-hero-brandStrip__label">Official Finals Partners</span>
-            <div className="home-hero-brandStrip__logos">
-              <img
-                src={eliteLogo}
-                alt="Elite Gaming"
-                className="home-hero-brandStrip__eg"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-              <span className="home-hero-brandStrip__divider" aria-hidden="true" />
-              <img
-                src={BGL_LOGO_URL}
-                alt="BGL Media"
-                className="home-hero-brandStrip__bgl"
-                onError={(e) => {
-                  const t = e.currentTarget;
-                  if (t.src !== BGL_LOGO_FALLBACK_URL) {
-                    t.src = BGL_LOGO_FALLBACK_URL;
-                    return;
-                  }
-                  t.style.display = 'none';
-                }}
-              />
-              <span className="home-hero-brandStrip__divider" aria-hidden="true" />
-              <img src={AFL26_LOGO_URL} alt="AFL26" className="home-hero-brandStrip__afl" />
-            </div>
+          <div className="home-hero-statsRow">
+            <span className="home-hero-stat"><strong>8</strong> Clubs</span>
+            <span className="home-hero-statDiv" />
+            <span className="home-hero-stat"><strong>4</strong> Rounds</span>
+            <span className="home-hero-statDiv" />
+            <span className="home-hero-stat"><strong>9</strong> Games</span>
           </div>
 
-          <div className="home-hero-actions">
-            <Link to="/fixtures" className="home-hero-btn home-hero-btn--primary">
+          <div className="home-hero-actions home-hero-actions--stack">
+            <Link to="/fixtures" className="home-hero-btn home-hero-btn--primary home-hero-btn--full">
               <span className="home-hero-btn__icon">
                 <ArrowRight size={14} />
               </span>
@@ -809,9 +785,9 @@ function FinalsShowcaseSection({ fixturesVisible, coaches = [] }: { fixturesVisi
       <div className="home-finalsShowcase__header">
         <div className="home-finalsShowcase__copy">
           <span className="home-finalsShowcase__eyebrow">{getFinalsLabel(FINALS_CONFIG.week) || 'Finals Central'}</span>
-          <h2 className="home-finalsShowcase__title">Finals bracket</h2>
+          <h2 className="home-finalsShowcase__title">Finals Series</h2>
           <p className="home-finalsShowcase__body">
-            Follow the path to the cup from one clean finals desk.
+            Every finals result, coach and standings in one place.
           </p>
         </div>
         <Link to="/fixtures" className="home-finalsShowcase__inlineLink">
@@ -831,10 +807,6 @@ function FinalsShowcaseSection({ fixturesVisible, coaches = [] }: { fixturesVisi
             {getFixturePrimaryLabel(featuredFinalsFixture)}
           </span>
         ) : null}
-      </div>
-
-      <div className="home-finalsShowcase__bracket">
-        <FinalsBracket fixtures={allFinalsFixtures} seasonId="afl26-season-two" />
       </div>
 
       {featuredFinalsFixture ? (
