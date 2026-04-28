@@ -181,8 +181,8 @@ function useHomeCoaches() {
       const result = await repo.fetchCurrentCoaches();
       return Array.isArray(result) ? result : [];
     },
-    staleTime: 300_000,
-    gcTime: 600_000,
+    staleTime: 60_000,
+    gcTime: 120_000,
   });
 
   return { data: query.data ?? [], isLoading: query.isLoading };
@@ -564,7 +564,7 @@ function FeaturedMatchCard({ coaches = [] }: { coaches?: Coach[] }) {
   const label = getFixturePrimaryLabel(fixture);
   const dateText = getFixtureStatusLabel(fixture);
   const displayHeading = isFinalsMatch
-    ? user
+    ? isMyMatchup
       ? 'Your Finals Matchup'
       : 'Finals Spotlight'
     : sectionLabel;
@@ -622,11 +622,14 @@ function FeaturedMatchCard({ coaches = [] }: { coaches?: Coach[] }) {
   );
 }
 
-function CoachHubBanner() {
+function CoachHubBanner({ coaches = [] }: { coaches?: Coach[] }) {
   const { user } = useAuth();
 
-  const name = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Coach';
-  const coachClubLabel = user?.teamName ? TEAM_SHORT_NAMES[user.teamName] || user.teamName : `${name}'s season`;
+  const myCoach = user ? coaches.find((c) => c.user_id === user.id) : null;
+  const liveTeamName = myCoach?.team_name || undefined;
+  const coachClubLabel = liveTeamName
+    ? TEAM_SHORT_NAMES[liveTeamName] || liveTeamName
+    : user ? 'Hub' : 'Finalists';
   const primaryHref = user ? '/members' : '/teams';
   const primaryLabel = user ? 'Coach Hub' : 'Club Tracker';
   const primaryMeta = user ? coachClubLabel : 'Finalists';
@@ -886,7 +889,7 @@ export default function HomePage() {
           <FinalsHubSection fixturesVisible={fixturesVisible} coaches={coaches} />
           {fixturesVisible ? <FeaturedMatchCard coaches={coaches} /> : <LaunchPromoCard />}
         </div>
-        <CoachHubBanner />
+        <CoachHubBanner coaches={coaches} />
         <FinalsShowcaseSection fixturesVisible={fixturesVisible} coaches={coaches} />
         <EgNewsSection />
       </main>

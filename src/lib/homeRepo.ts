@@ -4,7 +4,7 @@ import { resolveSeasonId as resolveAppSeasonId } from './seasonResolver';
 import { requireSupabaseClient } from './supabaseClient';
 
 const supabase = requireSupabaseClient();
-const TTL_MS = 300_000;
+const TTL_MS = 60_000;
 
 export type HomeAnnouncement = {
   id: string;
@@ -57,6 +57,10 @@ export type HomeNewsItem = {
 };
 
 const cache = new Map<string, { at: number; value: unknown }>();
+
+export function invalidateCurrentCoachesCache() {
+  cache.delete('current-coaches');
+}
 
 function text(value: unknown): string {
   return String(value || '').trim();

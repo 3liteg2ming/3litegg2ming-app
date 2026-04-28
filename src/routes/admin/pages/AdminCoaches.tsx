@@ -7,6 +7,7 @@ import {
   setUserBan,
   setUserRoleAndTeam,
 } from '@/lib/adminApi';
+import { invalidateCurrentCoachesCache } from '@/lib/homeRepo';
 import type { EgRole } from '@/lib/adminTypes';
 import { useAdminLayoutContext } from '../AdminLayout';
 import { useDebouncedValue, usePagination } from '../useAdminTools';
@@ -100,6 +101,8 @@ export default function AdminCoaches() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['home', 'current-coaches'] });
+      invalidateCurrentCoachesCache();
     },
   });
 
