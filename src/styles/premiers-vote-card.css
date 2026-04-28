@@ -717,3 +717,199 @@
     flex-direction: column;
   }
 }
+
+/* ------------------------------------------------------------------
+   Broadcast finals refinement
+------------------------------------------------------------------- */
+
+.premiersVoteTrigger {
+  border-radius: 18px;
+  padding: 11px 12px;
+  gap: 9px;
+  background:
+    linear-gradient(180deg, rgba(13, 18, 29, 0.985), rgba(8, 12, 20, 0.99)),
+    rgba(8, 12, 20, 0.99);
+  border-color: rgba(212, 175, 55, 0.18);
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.premiersVoteTrigger.has-selection {
+  border-color: rgba(212, 175, 55, 0.26);
+  box-shadow:
+    0 16px 30px rgba(0, 0, 0, 0.26),
+    inset 0 0 14px rgba(212, 175, 55, 0.04);
+}
+
+.premiersVoteTrigger__title {
+  font-size: 0.88rem;
+}
+
+.premiersVoteTrigger__subline {
+  font-size: 0.66rem;
+  color: rgba(205, 217, 237, 0.66);
+}
+
+.premiersVoteTrigger__logoChip {
+  width: 26px;
+  height: 26px;
+  margin-left: -5px;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: none;
+}
+
+.premiersVoteTrigger__logo {
+  width: 17px;
+  height: 17px;
+}
+
+.premiersVoteTrigger__cta,
+.premiersVoteCard__badge,
+.premiersVoteCard__meta,
+.premiersVoteCard__status,
+.premiersVoteCard__seed,
+.premiersVoteCard__share,
+.premiersVoteCard__leaderCoachesPct {
+  letter-spacing: 0.13em;
+}
+
+.premiersVoteTrigger__cta {
+  min-height: 22px;
+  padding: 0 8px;
+  font-size: 0.52rem;
+  background: rgba(212, 175, 55, 0.12);
+  color: rgba(247, 216, 118, 0.94);
+}
+
+.premiersVoteTrigger__footer {
+  padding-top: 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.premiersVoteCard__voteSummary,
+.premiersVoteTrigger__helper {
+  font-size: 0.6rem;
+}
+
+.premiersVoteModal {
+  background: rgba(4, 7, 12, 0.82);
+}
+
+.premiersVoteCard {
+  border-radius: 22px;
+  padding: 16px;
+  gap: 12px;
+  background:
+    linear-gradient(180deg, rgba(13, 18, 29, 0.99), rgba(8, 12, 20, 0.995)),
+    rgba(8, 12, 20, 0.995);
+  border-color: rgba(212, 175, 55, 0.18);
+  box-shadow:
+    0 20px 34px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.premiersVoteCard::before {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 38%),
+    linear-gradient(120deg, transparent 16%, rgba(212, 175, 55, 0.04) 50%, transparent 82%);
+}
+
+.premiersVoteCard__badge {
+  min-height: 22px;
+  padding: 0 9px;
+  font-size: 0.5rem;
+  background: linear-gradient(180deg, #f3c83e 0%, #d7aa24 100%);
+  box-shadow: none;
+}
+
+.premiersVoteCard__meta {
+  min-height: 22px;
+  padding: 0 9px;
+  font-size: 0.5rem;
+}
+
+.premiersVoteCard__headline {
+  font-size: 1.08rem;
+}
+
+.premiersVoteCard__subline {
+  font-size: 0.72rem;
+}
+
+.premiersVoteCard__status {
+  min-height: 26px;
+  padding: 0 10px;
+  font-size: 0.56rem;
+}
+
+.premiersVoteCard__grid {
+  gap: 8px;
+}
+
+.premiersVoteCard__option {
+  padding: 11px;
+  border-radius: 14px;
+  gap: 9px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015)),
+    rgba(9, 13, 20, 0.9);
+  box-shadow: none;
+}
+
+.premiersVoteCard__option.is-selected {
+  background:
+    linear-gradient(180deg, rgba(212, 175, 55, 0.12), rgba(212, 175, 55, 0.03)),
+    rgba(10, 14, 22, 0.94);
+  box-shadow:
+    inset 0 0 0 1px rgba(212, 175, 55, 0.08),
+    inset 0 0 16px rgba(212, 175, 55, 0.04);
+}
+
+.premiersVoteCard__seed,
+.premiersVoteCard__share {
+  min-height: 20px;
+  padding: 0 7px;
+  font-size: 0.55rem;
+}
+
+.premiersVoteCard__share {
+  background: rgba(212, 175, 55, 0.12);
+}
+
+.premiersVoteCard__logoWrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+}
+
+.premiersVoteCard__logo {
+  width: 28px;
+  height: 28px;
+}
+
+.premiersVoteCard__teamName {
+  font-size: 0.8rem;
+}
+
+.premiersVoteCard__teamMeta {
+  font-size: 0.62rem;
+}
+
+.premiersVoteCard__leaderCoachesSection {
+  border-radius: 14px;
+  padding: 11px;
+  background:
+    linear-gradient(180deg, rgba(212, 175, 55, 0.08), rgba(212, 175, 55, 0.03)),
+    rgba(12, 14, 20, 0.74);
+  box-shadow: none;
+}
+
+.premiersVoteCard__leaderCoachesLabel {
+  font-size: 0.64rem;
+}
+
+.premiersVoteCard__leaderCoachChip {
+  min-height: 26px;
+  font-size: 0.6rem;
+}

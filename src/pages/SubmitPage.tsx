@@ -15,8 +15,9 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+import { updateFixtureScores } from '@/lib/adminApi';
 import { requireSupabaseClient } from '../lib/supabaseClient';
-import { fetchCoachProfile } from '../lib/profileRepo';
+import { fetchCoachProfile, updateCoachProfile } from '../lib/profileRepo';
 import { TEAM_COLORS, TEAM_SHORT_NAMES } from '../data/teamColors';
 import { invalidateAfl26Cache } from '../data/afl26Supabase';
 import { getDataSeasonSlugForCompetition, getStoredCompetitionKey } from '../lib/competitionRegistry';
@@ -56,6 +57,9 @@ type NextFixturePayload = {
     status: string;
     seasonId?: string;
     startTime?: string;
+    isFinals?: boolean;
+    stageName?: string;
+    bracketSlot?: string;
     allowLateSubmission?: boolean;
     lateSubmissionApprovedAt?: string;
   };
@@ -126,6 +130,11 @@ type ManualTeamStatKey =
 
 type ManualTeamStatInputs = Record<ManualTeamStatKey, { home: string; away: string }>;
 
+type AdminTeamOption = {
+  id: string;
+  name: string;
+};
+
 const MANUAL_TEAM_STAT_FIELDS: Array<{ key: ManualTeamStatKey; label: string }> = [
   { key: 'disposals', label: 'Disposals' },
   { key: 'kicks', label: 'Kicks' },
@@ -151,6 +160,12 @@ const RESULT_SCREENSHOT_SLOTS = [
   { key: 'team_stats_1', label: 'Team Stats Page 1', imageType: 'team_stats', statKey: null as string | null, page: 1 },
   { key: 'team_stats_2', label: 'Team Stats Page 2', imageType: 'team_stats', statKey: null as string | null, page: 2 },
 ] as const;
+
+const ADMIN_QUICK_RESULT_PRESETS = {
+  homeWin: { homeGoals: '1', homeBehinds: '0', awayGoals: '0', awayBehinds: '1' },
+  awayWin: { homeGoals: '0', homeBehinds: '1', awayGoals: '1', awayBehinds: '0' },
+  draw: { homeGoals: '1', homeBehinds: '0', awayGoals: '1', awayBehinds: '0' },
+} as const;
 
 function uuid() {
   try {
@@ -291,6 +306,25 @@ function isFixtureFinal(status: unknown): boolean {
   return FINAL_STATUSES.has(String(status || '').trim().toUpperCase());
 }
 
+function isFinalsFixtureMeta(value: {
+  isFinals?: boolean;
+  stageName?: string | null;
+  bracketSlot?: string | null;
+  roundLabel?: string | null;
+} | null | undefined) {
+  if (!value) return false;
+  if (value.isFinals) return true;
+  const source = [value.stageName, value.bracketSlot, value.roundLabel].join(' ').toLowerCase();
+  return (
+    source.includes('qualifying') ||
+    source.includes('elimination') ||
+    source.includes('semi') ||
+    source.includes('prelim') ||
+    source.includes('grand') ||
+    source.includes('final')
+  );
+}
+
 function buildPayloadFromFixture(f: FixtureRow): NonNullable<NextFixturePayload> {
   const homeName = String(f.home_team_name || 'unknown');
   const awayName = String(f.away_team_name || 'unknown');
@@ -302,6 +336,9 @@ function buildPayloadFromFixture(f: FixtureRow): NonNullable<NextFixturePayload>
       status: String(f.status || 'SCHEDULED'),
       seasonId: f.season_id ? String(f.season_id) : undefined,
       startTime: f.start_time ? String(f.start_time) : undefined,
+      isFinals: Boolean(f.is_finals),
+      stageName: f.stage_name ? String(f.stage_name) : undefined,
+      bracketSlot: f.bracket_slot ? String(f.bracket_slot) : undefined,
       allowLateSubmission: Boolean(f.allow_late_submission),
       lateSubmissionApprovedAt: f.late_submission_approved_at ? String(f.late_submission_approved_at) : undefined,
     },
@@ -355,6 +392,17 @@ function formatSubmitError(error: any): SubmitConflict {
   return details.length ? { message, detail: details.join('\n') } : { message };
 }
 
+function shouldTrySuperAdminSubmitFallback(error: unknown): boolean {
+  const message = String((error as { message?: string } | null | undefined)?.message || '').toLowerCase();
+  return (
+    message.includes('admin write access is locked') ||
+    message.includes('admin privileges required') ||
+    message.includes('schema cache') ||
+    message.includes('does not exist') ||
+    message.includes('undefined function')
+  );
+}
+
 async function resolveSeasonIdForSlug(slug: string): Promise<string> {
   return resolveAppSeasonId(supabase, slug, { preferFixtureRows: true });
 }
@@ -362,6 +410,21 @@ async function resolveSeasonIdForSlug(slug: string): Promise<string> {
 function buildDraftKey(userId?: string | null, fixtureId?: string | null) {
   const comp = getStoredCompetitionKey();
   return `eg_submit_draft:${comp}:${userId || 'guest'}:${fixtureId || 'none'}`;
+}
+
+function collectAdminTeamOptions(fixtures: FixtureRow[]): AdminTeamOption[] {
+  const map = new Map<string, string>();
+  for (const fixture of fixtures) {
+    const homeId = String(fixture.home_team_id || '').trim();
+    const awayId = String(fixture.away_team_id || '').trim();
+    const homeName = String(fixture.home_team_name || '').trim();
+    const awayName = String(fixture.away_team_name || '').trim();
+    if (homeId && homeName && !map.has(homeId)) map.set(homeId, homeName);
+    if (awayId && awayName && !map.has(awayId)) map.set(awayId, awayName);
+  }
+  return Array.from(map.entries())
+    .map(([id, name]) => ({ id, name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 function getCompetitionLabel() {
@@ -423,6 +486,9 @@ export default function SubmitPage() {
 
   const [eligibleFixtures, setEligibleFixtures] = useState<Array<{ round: number; fixture: FixtureRow }>>([]);
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
+  const [adminCandidateFixtures, setAdminCandidateFixtures] = useState<Array<{ round: number; fixture: FixtureRow }>>([]);
+  const [adminSelectedTeamId, setAdminSelectedTeamId] = useState('');
+  const [adminSelectedFixtureId, setAdminSelectedFixtureId] = useState('');
 
   const [payload, setPayload] = useState<NextFixturePayload>(null);
   const [venue, setVenue] = useState('');
@@ -457,6 +523,29 @@ export default function SubmitPage() {
   const fixture = payload?.fixture || null;
   const homeTeam = payload?.homeTeam || null;
   const awayTeam = payload?.awayTeam || null;
+  const isSuperAdmin = myRole === 'super_admin';
+  const isAdminQuickMode = isSuperAdmin;
+  const adminTeamOptions = useMemo(
+    () => collectAdminTeamOptions(adminCandidateFixtures.map((entry) => entry.fixture)),
+    [adminCandidateFixtures],
+  );
+  const adminFixturesForSelectedTeam = useMemo(() => {
+    if (!adminSelectedTeamId) return adminCandidateFixtures;
+    return adminCandidateFixtures.filter(({ fixture: candidate }) => (
+      String(candidate.home_team_id || '') === adminSelectedTeamId ||
+      String(candidate.away_team_id || '') === adminSelectedTeamId
+    ));
+  }, [adminCandidateFixtures, adminSelectedTeamId]);
+  const actingTeamName = useMemo(
+    () => adminTeamOptions.find((team) => team.id === adminSelectedTeamId)?.name || 'Selected team',
+    [adminSelectedTeamId, adminTeamOptions],
+  );
+  const adminSelectedSide = useMemo(() => {
+    if (!fixture || !adminSelectedTeamId) return '';
+    if (homeTeam?.id === adminSelectedTeamId) return 'home team';
+    if (awayTeam?.id === adminSelectedTeamId) return 'away team';
+    return 'selected team';
+  }, [fixture, adminSelectedTeamId, homeTeam?.id, awayTeam?.id]);
   const homeDisplayName = useMemo(() => deriveShortName(homeTeam?.name || '', homeTeam?.shortName), [homeTeam?.name, homeTeam?.shortName]);
   const awayDisplayName = useMemo(() => deriveShortName(awayTeam?.name || '', awayTeam?.shortName), [awayTeam?.name, awayTeam?.shortName]);
   const homeStatsGuideLabel = homeTeam?.name || homeDisplayName || 'home team';
@@ -470,7 +559,12 @@ export default function SubmitPage() {
   const kickoffLabel = useMemo(() => formatKickoff(fixture?.startTime), [fixture?.startTime]);
   const competitionLabel = getCompetitionLabel();
   const lateSubmissionApproved = Boolean(fixture?.allowLateSubmission);
-  const requiresAdminApproval = submissionDeadline.expired && !lateSubmissionApproved;
+  const finalsSubmissionOpen = isFinalsFixtureMeta({
+    isFinals: fixture?.isFinals,
+    stageName: fixture?.stageName,
+    bracketSlot: fixture?.bracketSlot,
+  });
+  const requiresAdminApproval = submissionDeadline.expired && !finalsSubmissionOpen && !lateSubmissionApproved;
 
   const mappedPlayers = useMemo(
     () => allAflPlayers.map((player) => ({
@@ -582,8 +676,6 @@ export default function SubmitPage() {
     return messages;
   }, [scoreValid, quartersFilled, quartersMatchFinal, quartersProgressive, allTeamStatsFilled, resultScreenshotsFilled, resultScreenshotsCount, playerScreenshotsValid, playerScreenshotCount, requiresAdminApproval]);
 
-  const isSuperAdmin = myRole === 'super_admin';
-
   const canSubmit = useMemo(() => {
     if (!fixture || !myTeamId || isSubmitting) return false;
     if (requiresAdminApproval) return false;
@@ -620,7 +712,9 @@ export default function SubmitPage() {
         setSessionEmail(email);
 
         const profile = await fetchCoachProfile(uid);
-        if (!profile?.team_id) throw new Error('No team is linked to this account. Contact an admin.');
+        if (!profile) throw new Error('Profile not found. Contact an admin.');
+        const superAdminAccount = String(profile.role || '').trim().toLowerCase() === 'super_admin';
+        if (!superAdminAccount && !profile.team_id) throw new Error('No team is linked to this account. Contact an admin.');
         if (!alive) return;
         setMyTeamId(profile.team_id);
         setMyCoachName(profile.display_name || profile.psn || 'Coach');
@@ -631,24 +725,65 @@ export default function SubmitPage() {
 
         const { fixtures: allFixtures } = await fetchSeasonFixturesBySeasonId(activeSeasonId, { limit: 1000, offset: 0 });
 
-        const teamId = String(profile.team_id || '');
-
-        // Collect ALL eligible fixtures across visible rounds (not just the first).
         const visibleRounds = getVisibleRounds(allFixtures.map((f) => f.round));
         const sortedVisible = Array.from(new Set(visibleRounds)).sort((a, b) => a - b);
 
+        if (superAdminAccount) {
+          const adminEligible = sortedVisible.flatMap((round) =>
+            allFixtures
+              .filter((fixture) => fixture.round === round && !isFixtureFinal(fixture.status))
+              .map((fixture) => ({ round, fixture })),
+          );
+
+          if (!alive) return;
+          setAdminCandidateFixtures(adminEligible);
+          setEligibleFixtures([]);
+          setSelectedRound(null);
+
+          if (!adminEligible.length) {
+            setPayload(null);
+            setLoadError('No non-final fixtures are available for admin quick submit right now.');
+            return;
+          }
+
+          const teamOptions = collectAdminTeamOptions(adminEligible.map((entry) => entry.fixture));
+          const preferredTeamId = teamOptions.some((team) => team.id === profile.team_id)
+            ? String(profile.team_id || '')
+            : teamOptions[0]?.id || '';
+          const firstFixture = adminEligible.find(({ fixture }) =>
+            String(fixture.home_team_id || '') === preferredTeamId ||
+            String(fixture.away_team_id || '') === preferredTeamId,
+          ) || adminEligible[0];
+
+          setAdminSelectedTeamId(preferredTeamId || '');
+          setAdminSelectedFixtureId(String(firstFixture.fixture.id));
+          setPayload(buildPayloadFromFixture(firstFixture.fixture));
+          setVenue(String(firstFixture.fixture.venue || ''));
+          return;
+        }
+
+        const teamId = String(profile.team_id || '');
         const eligible: Array<{ round: number; fixture: typeof allFixtures[number] }> = [];
 
         for (const round of sortedVisible) {
           const candidate = allFixtures.find(
-            (f) =>
-              f.round === round &&
-              (String(f.home_team_id || '') === teamId || String(f.away_team_id || '') === teamId) &&
-              !isFixtureFinal(f.status),
+            (f) => {
+              if (f.round !== round || isFixtureFinal(f.status)) return false;
+              const isFinalsFixture = isFinalsFixtureMeta({
+                isFinals: f.is_finals,
+                stageName: f.stage_name,
+                bracketSlot: f.bracket_slot,
+                roundLabel: f.round_label,
+              });
+              const homeTeamId = String(f.home_team_id || '');
+              const awayTeamId = String(f.away_team_id || '');
+              return isFinalsFixture
+                ? homeTeamId === teamId
+                : homeTeamId === teamId || awayTeamId === teamId;
+            },
           );
           if (!candidate) continue;
 
-          // Check if another coach already submitted for this fixture
           const { data: existingSubs } = await supabase
             .from('submissions')
             .select('id, team_id')
@@ -662,13 +797,34 @@ export default function SubmitPage() {
 
         if (!alive) return;
         setEligibleFixtures(eligible);
+        setAdminCandidateFixtures([]);
 
         if (!eligible.length) {
+          const hasAwayFinalOnly = allFixtures.some((f) => {
+            const isFinalsFixture = isFinalsFixtureMeta({
+              isFinals: f.is_finals,
+              stageName: f.stage_name,
+              bracketSlot: f.bracket_slot,
+              roundLabel: f.round_label,
+            });
+            return isFinalsFixture && String(f.away_team_id || '') === teamId && String(f.home_team_id || '') !== teamId;
+          });
           const allFixturesFinal = sortedVisible.every((round) => {
             const teamFixture = allFixtures.find(
-              (f) =>
-                f.round === round &&
-                (String(f.home_team_id || '') === teamId || String(f.away_team_id || '') === teamId),
+              (f) => {
+                if (f.round !== round) return false;
+                const isFinalsFixture = isFinalsFixtureMeta({
+                  isFinals: f.is_finals,
+                  stageName: f.stage_name,
+                  bracketSlot: f.bracket_slot,
+                  roundLabel: f.round_label,
+                });
+                const homeTeamId = String(f.home_team_id || '');
+                const awayTeamId = String(f.away_team_id || '');
+                return isFinalsFixture
+                  ? homeTeamId === teamId
+                  : homeTeamId === teamId || awayTeamId === teamId;
+              },
             );
             return !teamFixture || isFixtureFinal(teamFixture.status);
           });
@@ -676,13 +832,14 @@ export default function SubmitPage() {
           setPayload(null);
           if (allFixturesFinal) {
             setLoadError('All your fixtures in the current rounds are already finalised. Nothing to submit.');
+          } else if (hasAwayFinalOnly) {
+            setLoadError('Your finals fixture is locked to the home coach. Only the home side can submit finals results.');
           } else {
             setLoadError('No eligible fixture found for your team in the current rounds.');
           }
           return;
         }
 
-        // Default to the earliest eligible round
         const first = eligible[0];
         setSelectedRound(first.round);
         setPayload(buildPayloadFromFixture(first.fixture));
@@ -705,6 +862,36 @@ export default function SubmitPage() {
     setSelectedRound(round);
     setPayload(buildPayloadFromFixture(match.fixture));
     setVenue(String(match.fixture.venue || ''));
+  };
+
+  const handleAdminTeamChange = (teamId: string) => {
+    setAdminSelectedTeamId(teamId);
+    const nextFixture = adminCandidateFixtures.find(({ fixture: candidate }) => (
+      String(candidate.home_team_id || '') === teamId || String(candidate.away_team_id || '') === teamId
+    ));
+    if (!nextFixture) {
+      setAdminSelectedFixtureId('');
+      setPayload(null);
+      return;
+    }
+    setAdminSelectedFixtureId(String(nextFixture.fixture.id));
+    setPayload(buildPayloadFromFixture(nextFixture.fixture));
+    setVenue(String(nextFixture.fixture.venue || ''));
+  };
+
+  const handleAdminFixtureChange = (fixtureId: string) => {
+    setAdminSelectedFixtureId(fixtureId);
+    const nextFixture = adminFixturesForSelectedTeam.find(({ fixture: candidate }) => String(candidate.id) === fixtureId);
+    if (!nextFixture) return;
+    setPayload(buildPayloadFromFixture(nextFixture.fixture));
+    setVenue(String(nextFixture.fixture.venue || ''));
+  };
+
+  const applyAdminScorePreset = (preset: (typeof ADMIN_QUICK_RESULT_PRESETS)[keyof typeof ADMIN_QUICK_RESULT_PRESETS]) => {
+    setHomeGoals(preset.homeGoals);
+    setHomeBehinds(preset.homeBehinds);
+    setAwayGoals(preset.awayGoals);
+    setAwayBehinds(preset.awayBehinds);
   };
 
   useEffect(() => {
@@ -949,6 +1136,157 @@ export default function SubmitPage() {
   const goBack = () => { setCurrentStep((step) => Math.max(step - 1, 1)); scrollToTop(); };
   const goToStep = (step: number) => { setCurrentStep(step); scrollToTop(); };
 
+  const submitAdminQuickResult = async () => {
+    if (!fixture?.id || !adminSelectedTeamId || !scoreValid) return;
+
+    setIsSubmitting(true);
+    setConflict(null);
+
+    try {
+      await updateFixtureScores({
+        fixtureId: fixture.id,
+        homeGoals: homeGoalsN,
+        homeBehinds: homeBehindsN,
+        awayGoals: awayGoalsN,
+        awayBehinds: awayBehindsN,
+        status: 'FINAL',
+      });
+
+      const activeSeasonSlug = getDataSeasonSlugForCompetition(activeCompetitionKey);
+      invalidateAfl26Cache();
+      invalidateFixturesCache({ fixtureId: fixture.id, seasonId: fixture.seasonId || null });
+      invalidateLadderCache({ seasonSlug: activeSeasonSlug, seasonId: fixture.seasonId || null });
+      clearStatsCategoriesCache();
+      clearStatLeadersCache();
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['fixtures'] }),
+        queryClient.invalidateQueries({ queryKey: ['fixtures', 'season', activeSeasonSlug] }),
+        queryClient.invalidateQueries({ queryKey: ['fixture', fixture.id] }),
+        queryClient.invalidateQueries({ queryKey: ['submissions', fixture.id] }),
+        queryClient.invalidateQueries({ queryKey: ['match-centre'] }),
+        queryClient.invalidateQueries({ queryKey: ['match-centre', fixture.id] }),
+        queryClient.invalidateQueries({ queryKey: ['eg_ladder'] }),
+        queryClient.invalidateQueries({ queryKey: ['eg_ladder', activeSeasonSlug] }),
+        queryClient.invalidateQueries({ queryKey: ['stats'] }),
+      ]);
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent(DATA_SYNC_EVENT, {
+          detail: { fixtureId: fixture.id, seasonId: fixture.seasonId || null, adminQuickSubmit: true },
+        }));
+      }
+
+      setSubmitSuccess(true);
+    } catch (error: any) {
+      if (!shouldTrySuperAdminSubmitFallback(error) || !sessionUserId) {
+        setConflict(formatSubmitError(error));
+        return;
+      }
+
+      const originalTeamId = myTeamId;
+      let restoreError: unknown = null;
+      let fallbackSucceeded = false;
+
+      try {
+        if (originalTeamId !== adminSelectedTeamId) {
+          await updateCoachProfile(sessionUserId, { team_id: adminSelectedTeamId });
+        }
+
+        const fallbackPayload = {
+          screenshots: [{ imageType: 'match_summary', note: 'super_admin_manual_submit' }],
+          teamStats: {},
+          quarterScores: null,
+        };
+
+        const { data: fallbackData, error: fallbackError } = await supabase.rpc('eg_submit_result_v2', {
+          p_fixture_id: fixture.id,
+          p_home_goals: homeGoalsN,
+          p_home_behinds: homeBehindsN,
+          p_away_goals: awayGoalsN,
+          p_away_behinds: awayBehindsN,
+          p_venue: venue || null,
+          p_goal_kickers_home: [],
+          p_goal_kickers_away: [],
+          p_ocr: fallbackPayload,
+          p_notes: 'Super admin manual result submitted from /submit fallback',
+        });
+
+        if (fallbackError) throw fallbackError;
+
+        const activeSeasonSlug = getDataSeasonSlugForCompetition(activeCompetitionKey);
+        invalidateAfl26Cache();
+        invalidateFixturesCache({ fixtureId: fixture.id, seasonId: fixture.seasonId || null });
+        invalidateLadderCache({ seasonSlug: activeSeasonSlug, seasonId: fixture.seasonId || null });
+        clearStatsCategoriesCache();
+        clearStatLeadersCache();
+
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['fixtures'] }),
+          queryClient.invalidateQueries({ queryKey: ['fixtures', 'season', activeSeasonSlug] }),
+          queryClient.invalidateQueries({ queryKey: ['fixture', fixture.id] }),
+          queryClient.invalidateQueries({ queryKey: ['submissions', fixture.id] }),
+          queryClient.invalidateQueries({ queryKey: ['match-centre'] }),
+          queryClient.invalidateQueries({ queryKey: ['match-centre', fixture.id] }),
+          queryClient.invalidateQueries({ queryKey: ['eg_ladder'] }),
+          queryClient.invalidateQueries({ queryKey: ['eg_ladder', activeSeasonSlug] }),
+          queryClient.invalidateQueries({ queryKey: ['stats'] }),
+        ]);
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent(DATA_SYNC_EVENT, {
+            detail: {
+              fixtureId: fixture.id,
+              seasonId: fixture.seasonId || null,
+              adminQuickSubmit: true,
+              fallbackSubmission: fallbackData || null,
+            },
+          }));
+        }
+
+        fallbackSucceeded = true;
+        setSubmitSuccess(true);
+      } catch (fallbackError: any) {
+        const primaryMessage = String(error?.message || 'Admin save failed.');
+        const secondaryMessage = String(fallbackError?.message || 'Fallback submit failed.');
+        const detail = restoreError
+          ? `${primaryMessage}\nFallback: ${secondaryMessage}\nProfile restore: ${String((restoreError as any)?.message || restoreError)}`
+          : `${primaryMessage}\nFallback: ${secondaryMessage}`;
+        setConflict({
+          message: 'Super admin save failed.',
+          detail,
+        });
+      } finally {
+        if (originalTeamId !== adminSelectedTeamId) {
+          try {
+            await updateCoachProfile(sessionUserId, { team_id: originalTeamId ?? null });
+          } catch (nextRestoreError) {
+            restoreError = nextRestoreError;
+            if (fallbackSucceeded) {
+              setSubmitSuccess(false);
+            }
+            if (!fallbackSucceeded) {
+              setConflict((prev) => prev ? {
+                ...prev,
+                detail: `${prev.detail ? `${prev.detail}\n` : ''}Profile restore: ${String((nextRestoreError as any)?.message || nextRestoreError)}`,
+              } : {
+                message: 'Super admin save failed.',
+                detail: `Profile restore: ${String((nextRestoreError as any)?.message || nextRestoreError)}`,
+              });
+            } else {
+              setConflict({
+                message: 'Result saved, but profile restore failed.',
+                detail: `Your super admin account team assignment could not be restored automatically: ${String((nextRestoreError as any)?.message || nextRestoreError)}`,
+              });
+            }
+          }
+        }
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const submit = async () => {
     if (!fixture || !myTeamId || !canSubmit || !sessionUserId) return;
     if (requiresAdminApproval) {
@@ -1166,7 +1504,22 @@ export default function SubmitPage() {
     );
   }
 
-  if (loadError || !fixture || !homeTeam || !awayTeam) {
+  if (isAdminQuickMode && (loadError || !fixture || !homeTeam || !awayTeam)) {
+    return (
+      <div className="egSubmitPage">
+        <main className="egSubmitPage__main">
+          <div className="egSubmitPage__wrap">
+            <div className="mdcLoading">
+              <div className="mdcLoading__title">Super admin quick submit unavailable</div>
+              <div className="mdcLoading__sub">{loadError || 'No fixture is ready for super admin quick submit.'}</div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!isAdminQuickMode && (loadError || !fixture || !homeTeam || !awayTeam)) {
     return (
       <div className="egSubmitPage">
         <main className="egSubmitPage__main">
@@ -1180,6 +1533,186 @@ export default function SubmitPage() {
       </div>
     );
   }
+
+  // Both early returns above cover every null case; this guard narrows the
+  // types for the JSX below so it type-checks cleanly.
+  if (!fixture || !homeTeam || !awayTeam) return null;
+
+  if (isAdminQuickMode && fixture && homeTeam && awayTeam) {
+    return (
+      <div className="egSubmitPage">
+        <main className="egSubmitPage__main">
+          <div className="egSubmitPage__wrap">
+            <section
+              className="mdcHero"
+              style={{
+                '--homeR': homeTeamColors.r,
+                '--homeG': homeTeamColors.g,
+                '--homeB': homeTeamColors.b,
+                '--awayR': awayTeamColors.r,
+                '--awayG': awayTeamColors.g,
+                '--awayB': awayTeamColors.b,
+              } as React.CSSProperties}
+            >
+              <div className="mdcHero__top">
+                <div className="mdcHero__titleWrap">
+                  <div className="mdcHero__eyebrow">Super Admin Quick Submit</div>
+                  <div className="mdcHero__titleRow">
+                    <div className="mdcHero__title">Round {fixture.round}</div>
+                    <span className={`mdcChip ${submitSuccess ? 'mdcChip--success' : 'mdcChip--warning'}`}>
+                      {submitSuccess ? 'Saved' : 'Score only'}
+                    </span>
+                  </div>
+                </div>
+                <div className="mdcCoachPill">
+                  <Shield size={13} />
+                  <span>{heroCoachLabel}</span>
+                </div>
+              </div>
+
+              <div className="mdcHero__match">
+                <div className="mdcTeamBlock">
+                  <div className="mdcTeamBlock__logo">{homeTeam.logo ? <img src={homeTeam.logo} alt={homeTeam.name} /> : <span>{homeTeam.name.slice(0, 1)}</span>}</div>
+                  <div className="mdcTeamBlock__name" title={homeTeam.name}>{homeDisplayName}</div>
+                </div>
+                <div className="mdcHero__center"><div className="mdcHero__divider" aria-hidden="true" /></div>
+                <div className="mdcTeamBlock">
+                  <div className="mdcTeamBlock__logo">{awayTeam.logo ? <img src={awayTeam.logo} alt={awayTeam.name} /> : <span>{awayTeam.name.slice(0, 1)}</span>}</div>
+                  <div className="mdcTeamBlock__name" title={awayTeam.name}>{awayDisplayName}</div>
+                </div>
+              </div>
+
+              {scoreValid ? (
+                <div className="mdcHero__scoreBanner">
+                  <span>{homeDisplayName} <strong>{homeScore}</strong></span>
+                  <span className="mdcHero__scoreDash">—</span>
+                  <span><strong>{awayScore}</strong> {awayDisplayName}</span>
+                </div>
+              ) : null}
+
+              <div className="mdcHero__bottom">
+                <div className="mdcHero__bottomMeta">
+                  <div className="mdcProgressMeta">Super admin override</div>
+                  <div className="mdcHero__bottomSub">Select a team, choose the fixture, enter only the final score, and save as FINAL.</div>
+                </div>
+                <button type="button" className="mdcHeroCta" onClick={() => navigate(`/match-centre/${fixture.id}`)}>
+                  Match Centre <ChevronRight size={14} />
+                </button>
+              </div>
+            </section>
+
+            {conflict?.message && (
+              <div className="mdcStatus mdcStatus--danger">
+                <AlertTriangle size={14} />
+                <div style={{ minWidth: 0 }}>
+                  <div>{conflict.message}</div>
+                  {conflict.detail && <pre style={{ margin: '6px 0 0', whiteSpace: 'pre-wrap', fontSize: 11, lineHeight: 1.45, color: 'rgba(255, 220, 220, 0.9)' }}>{conflict.detail}</pre>}
+                </div>
+              </div>
+            )}
+
+            <section className="mdcCard">
+              <div className="mdcCard__head">Score-Only Super Admin Submit</div>
+              <div className="mdcCard__body">
+                <div className="mdcStatus">
+                  <CheckCircle2 size={14} />
+                  <div>This super admin path saves the result directly. No photos, quarter scores, team stats, or goal kickers are required.</div>
+                </div>
+
+                <div className="mdcAdminQuickGrid">
+                  <label className="mdcAdminQuickField">
+                    <span>Team</span>
+                    <select value={adminSelectedTeamId} onChange={(event) => handleAdminTeamChange(event.target.value)}>
+                      {adminTeamOptions.map((team) => (
+                        <option key={team.id} value={team.id}>{team.name}</option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="mdcAdminQuickField">
+                    <span>Fixture</span>
+                    <select value={adminSelectedFixtureId} onChange={(event) => handleAdminFixtureChange(event.target.value)}>
+                      {adminFixturesForSelectedTeam.map(({ fixture: candidate }) => (
+                        <option key={candidate.id} value={candidate.id}>
+                          {`Round ${candidate.round} · ${candidate.home_team_name || 'Home'} vs ${candidate.away_team_name || 'Away'}`}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                <div className="mdcAdminQuickMeta">
+                  <span>Acting as <strong>{actingTeamName}</strong></span>
+                  <span>{adminSelectedSide ? `Selected side: ${adminSelectedSide}` : 'Select a team to continue'}</span>
+                  <span>{hasMeaningfulMeta(venue) ? venue : 'Venue TBC'}</span>
+                </div>
+
+                <div className="mdcAdminQuickPresetRow">
+                  <button type="button" className="mdcBtn" onClick={() => applyAdminScorePreset(ADMIN_QUICK_RESULT_PRESETS.homeWin)}>
+                    Award {homeDisplayName} Win
+                  </button>
+                  <button type="button" className="mdcBtn" onClick={() => applyAdminScorePreset(ADMIN_QUICK_RESULT_PRESETS.awayWin)}>
+                    Award {awayDisplayName} Win
+                  </button>
+                  <button type="button" className="mdcBtn" onClick={() => applyAdminScorePreset(ADMIN_QUICK_RESULT_PRESETS.draw)}>
+                    Set Draw
+                  </button>
+                </div>
+
+                <div className="mdcScorePanel">
+                  {[{ label: homeDisplayName, goals: homeGoals, behinds: homeBehinds, setGoals: setHomeGoals, setBehinds: setHomeBehinds, total: homeScore, goalsNum: homeGoalsN, behindsNum: homeBehindsN }, { label: awayDisplayName, goals: awayGoals, behinds: awayBehinds, setGoals: setAwayGoals, setBehinds: setAwayBehinds, total: awayScore, goalsNum: awayGoalsN, behindsNum: awayBehindsN }].map((team) => (
+                    <div className="mdcScoreTeam" key={team.label}>
+                      <div className="mdcScoreTeam__head">{team.label}</div>
+                      <div className="mdcScoreInputs">
+                        <label>Goals<input inputMode="numeric" autoComplete="off" autoCorrect="off" onFocus={selectOnFocus} value={team.goals} onChange={(e) => team.setGoals(sanitizeNumericInput(e.target.value))} placeholder="0" /></label>
+                        <label>Behinds<input inputMode="numeric" autoComplete="off" autoCorrect="off" onFocus={selectOnFocus} value={team.behinds} onChange={(e) => team.setBehinds(sanitizeNumericInput(e.target.value))} placeholder="0" /></label>
+                      </div>
+                      <div className="mdcScoreTotal">{team.goalsNum}.{team.behindsNum} <span>({team.total})</span></div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mdcAdminQuickActions">
+                  <button type="button" className="mdcBtn" onClick={() => navigate('/fixtures')}>
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="mdcBtn mdcBtn--primary"
+                    disabled={!fixture?.id || !adminSelectedTeamId || !scoreValid || isSubmitting}
+                    onClick={submitAdminQuickResult}
+                  >
+                    {isSubmitting ? 'Saving…' : 'Save Final Result'}
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+        </main>
+
+        <AnimatePresence>
+          {submitSuccess && (
+            <motion.div className="mdcSuccessOverlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <motion.div className="mdcSuccessCard" initial={{ y: 10, scale: 0.97 }} animate={{ y: 0, scale: 1 }}>
+                <div className="mdcSuccessCard__icon"><Check size={24} /></div>
+                <div className="mdcSuccessCard__title">Super Admin Result Saved</div>
+                <div className="mdcSuccessCard__sub">The fixture is now marked final from the submit page without photos, quarter scores, team stats, or goal kicker uploads.</div>
+                <div className="mdcSuccessCard__score">{homeScore} — {awayScore}</div>
+                <div className="mdcSuccessCard__actions">
+                  <button type="button" className="mdcBtn mdcBtn--primary" onClick={() => navigate(`/match-centre/${fixture.id}`)}>Open Match Centre</button>
+                  <button type="button" className="mdcBtn" onClick={() => navigate('/fixtures')}>Back to Fixtures</button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  const activeFixture = fixture!;
+  const activeHomeTeam = homeTeam!;
+  const activeAwayTeam = awayTeam!;
 
   return (
     <div className="egSubmitPage">
@@ -1203,7 +1736,7 @@ export default function SubmitPage() {
                   {eligibleFixtures.length > 1 ? (
                     <div className="mdcRoundSelect">
                       <select
-                        value={selectedRound ?? fixture.round}
+                        value={selectedRound ?? activeFixture.round}
                         onChange={(e) => handleRoundChange(Number(e.target.value))}
                         className="mdcRoundSelect__dropdown"
                       >
@@ -1214,7 +1747,7 @@ export default function SubmitPage() {
                       <ChevronRight size={14} className="mdcRoundSelect__chevron" />
                     </div>
                   ) : (
-                    <div className="mdcHero__title">Round {fixture.round}</div>
+                    <div className="mdcHero__title">Round {activeFixture.round}</div>
                   )}
                   <span className={`mdcChip ${submitSuccess ? 'mdcChip--success' : draftSavedAt ? 'mdcChip--muted' : 'mdcChip--warning'}`}>
                     {submitSuccess ? 'Submitted' : draftSavedAt ? 'Draft saved' : 'In progress'}
@@ -1229,13 +1762,13 @@ export default function SubmitPage() {
 
             <div className="mdcHero__match">
               <div className="mdcTeamBlock">
-                <div className="mdcTeamBlock__logo">{homeTeam.logo ? <img src={homeTeam.logo} alt={homeTeam.name} /> : <span>{homeTeam.name.slice(0, 1)}</span>}</div>
-                <div className="mdcTeamBlock__name" title={homeTeam.name}>{homeDisplayName}</div>
+                <div className="mdcTeamBlock__logo">{activeHomeTeam.logo ? <img src={activeHomeTeam.logo} alt={activeHomeTeam.name} /> : <span>{activeHomeTeam.name.slice(0, 1)}</span>}</div>
+                <div className="mdcTeamBlock__name" title={activeHomeTeam.name}>{homeDisplayName}</div>
               </div>
               <div className="mdcHero__center"><div className="mdcHero__divider" aria-hidden="true" /></div>
               <div className="mdcTeamBlock">
-                <div className="mdcTeamBlock__logo">{awayTeam.logo ? <img src={awayTeam.logo} alt={awayTeam.name} /> : <span>{awayTeam.name.slice(0, 1)}</span>}</div>
-                <div className="mdcTeamBlock__name" title={awayTeam.name}>{awayDisplayName}</div>
+                <div className="mdcTeamBlock__logo">{activeAwayTeam.logo ? <img src={activeAwayTeam.logo} alt={activeAwayTeam.name} /> : <span>{activeAwayTeam.name.slice(0, 1)}</span>}</div>
+                <div className="mdcTeamBlock__name" title={activeAwayTeam.name}>{awayDisplayName}</div>
               </div>
             </div>
 
@@ -1251,17 +1784,19 @@ export default function SubmitPage() {
               <div className="mdcHero__bottomMeta">
                 <div className="mdcProgressMeta">{totalUploadsCount} uploads</div>
                 <div className="mdcHero__bottomSub">
-                  Round {fixture.round}
-                  {submissionDeadline.expired
+                  Round {activeFixture.round}
+                  {submissionDeadline.expired && !finalsSubmissionOpen
                     ? lateSubmissionApproved
                       ? ' — Admin late-submit approval active'
                       : ' — Season closed'
+                    : finalsSubmissionOpen
+                      ? ' — Finals submission open for home team'
                     : eligibleFixtures.length > 1
                       ? ` — ${eligibleFixtures.length} rounds available`
                       : ' — Fixture locked in'}
                 </div>
               </div>
-              <button type="button" className="mdcHeroCta" onClick={() => navigate(`/match-centre/${fixture.id}`)}>
+              <button type="button" className="mdcHeroCta" onClick={() => navigate(`/match-centre/${activeFixture.id}`)}>
                 Match Centre <ChevronRight size={14} />
               </button>
             </div>
@@ -1279,14 +1814,16 @@ export default function SubmitPage() {
 
           {submissionDeadline.expired ? (
             <div className={`mdcStatus ${lateSubmissionApproved ? '' : 'mdcStatus--danger'}`}>
-              {lateSubmissionApproved ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}
+              {lateSubmissionApproved || finalsSubmissionOpen ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}
               <div style={{ minWidth: 0 }}>
                 <div>
-                  {lateSubmissionApproved
+                  {finalsSubmissionOpen
+                    ? 'Finals are still open. The home team coach can submit this result once the match is complete.'
+                    : lateSubmissionApproved
                     ? `Admin approval active. This fixture can still be submitted after ${SUBMISSION_DEADLINE_LABEL}.`
                     : SUBMISSION_CLOSED_LABEL}
                 </div>
-                {!lateSubmissionApproved ? (
+                {!lateSubmissionApproved && !finalsSubmissionOpen ? (
                   <div style={{ marginTop: 4, color: 'rgba(255, 220, 220, 0.9)' }}>
                     Ask admin to approve this fixture before uploading and submitting the result.
                   </div>
@@ -1320,12 +1857,14 @@ export default function SubmitPage() {
                     <div className="mdcIntegrity" style={{ marginTop: 8 }}>
                       <Shield size={13} />
                       <span>
-                        Submitting for Round {fixture.round}.
+                        Submitting for Round {activeFixture.round}.
                         {eligibleFixtures.length > 1 ? ' Use the round selector above to change.' : ''}
-                        {submissionDeadline.expired
+                        {submissionDeadline.expired && !finalsSubmissionOpen
                           ? lateSubmissionApproved
                             ? ' This fixture has admin late-submit approval.'
                             : ' Submission is locked until admin approval is switched on for this fixture.'
+                          : finalsSubmissionOpen
+                            ? ' Finals submissions stay open for the home coach.'
                           : ' All submissions are reviewed by admin and AI.'}
                       </span>
                     </div>
@@ -1606,7 +2145,7 @@ export default function SubmitPage() {
               <div className="mdcSuccessCard__sub">Score, quarter-by-quarter, and team stats are now live across Fixtures, Match Centre, and Ladder. Player stat screenshots have been attached for admin processing.</div>
               <div className="mdcSuccessCard__score">{homeScore} — {awayScore}</div>
               <div className="mdcSuccessCard__actions">
-                <button type="button" className="mdcBtn mdcBtn--primary" onClick={() => navigate(`/match-centre/${fixture.id}`)}>Open Match Centre</button>
+                <button type="button" className="mdcBtn mdcBtn--primary" onClick={() => navigate(`/match-centre/${activeFixture.id}`)}>Open Match Centre</button>
                 <button type="button" className="mdcBtn" onClick={() => navigate('/fixtures')}>Back to Fixtures</button>
               </div>
             </motion.div>

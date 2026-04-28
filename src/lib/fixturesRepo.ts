@@ -3,7 +3,51 @@ import { getCanonicalSeasonSlug, resolveSeasonRecord } from './seasonResolver';
 import { requireSupabaseClient } from './supabaseClient';
 
 const supabase = requireSupabaseClient();
-const FIXTURE_CACHE_TTL_MS = 15_000;
+const FIXTURE_CACHE_TTL_MS = 60_000;
+
+// Explicit fixture columns. Avoid select('*') so we don't ship JSONB blobs
+// (team_stats_json, quarter_scores_json) on list pages — those are only needed
+// in the match centre, where they are loaded by matchCentreRepo directly.
+const FIXTURE_LIST_COLUMNS = [
+  'id',
+  'season_id',
+  'round',
+  'round_label',
+  'stage_name',
+  'stage_index',
+  'bracket_slot',
+  'week_index',
+  'is_preseason',
+  'is_finals',
+  'home_seed',
+  'away_seed',
+  'next_fixture_id',
+  'status',
+  'start_time',
+  'venue',
+  'home_team_id',
+  'away_team_id',
+  'home_total',
+  'away_total',
+  'home_goals',
+  'home_behinds',
+  'away_goals',
+  'away_behinds',
+  'submitted_at',
+  'verified_at',
+  'disputed_at',
+  'corrected_at',
+  'created_at',
+  'updated_at',
+  'allow_late_submission',
+  'late_submission_approved_at',
+  'late_submission_approved_by',
+].join(',');
+
+const FIXTURE_DETAIL_COLUMNS = `${FIXTURE_LIST_COLUMNS},team_stats_json,quarter_scores_json`;
+
+const TEAM_HYDRATION_COLUMNS =
+  'id,name,short_name,abbreviation,slug,team_key,logo_url,logo_path,primary_color,colour';
 
 export type FixtureStatus = 'SCHEDULED' | 'LIVE' | 'FINAL' | 'PENDING_RESULTS';
 
@@ -37,6 +81,9 @@ export type FixtureRow = {
   bracket_slot: string | null;
   week_index: number | null;
   is_preseason: boolean;
+  is_finals: boolean;
+  home_seed: number | null;
+  away_seed: number | null;
   next_fixture_id: string | null;
   status: FixtureStatus;
   raw_status: string | null;
@@ -86,6 +133,13 @@ const teamCache = new Map<string, TeamRow>();
 const seasonFixturesCache = new Map<string, { at: number; season: SeasonRecord; fixtures: FixtureRow[] }>();
 const seasonFixtureCountCache = new Map<string, { at: number; count: number }>();
 const fixtureByIdCache = new Map<string, { at: number; fixture: FixtureRow | null }>();
+
+// Deduplicate concurrent identical fetches so a homepage that calls fixtures
+// from three sections in the same render tick only fires one HTTP request.
+const seasonFixturesInFlight = new Map<
+  string,
+  Promise<{ season: SeasonRecord; fixtures: FixtureRow[] }>
+>();
 
 function text(value: unknown): string {
   return String(value || '').trim();
@@ -293,6 +347,9 @@ function normalizeFixtureRow(raw: RawFixtureRow, teamsById: Map<string, TeamRow>
     bracket_slot: nullableText(raw.bracket_slot),
     week_index: toPositiveInt(raw.week_index),
     is_preseason: Boolean(raw.is_preseason),
+    is_finals: Boolean(raw.is_finals),
+    home_seed: toPositiveInt(raw.home_seed),
+    away_seed: toPositiveInt(raw.away_seed),
     next_fixture_id: nullableText(raw.next_fixture_id),
     status: normalizedStatus,
     raw_status: nullableText(raw.status),
@@ -419,7 +476,7 @@ export async function fetchAllFixtures(
 
   if (error) throw new Error(error.message);
 
-  const fixtures = await normalizeFixtures((data || []) as RawFixtureRow[]);
+  const fixtures = await normalizeFixtures((data || []) as unknown as RawFixtureRow[]);
   seasonFixturesCache.set(cacheKey, { at: Date.now(), season: { id: 'all', slug: 'all' }, fixtures });
   return fixtures;
 }
@@ -461,8 +518,26 @@ async function fetchSeasonFixturesByRecord(
     return { season: cached.season, fixtures: cached.fixtures };
   }
 
+  const inFlight = seasonFixturesInFlight.get(cacheKey);
+  if (inFlight) return inFlight;
+
+  const promise = (async () => {
+    try {
+      return await runFetch();
+    } finally {
+      seasonFixturesInFlight.delete(cacheKey);
+    }
+  })();
+  seasonFixturesInFlight.set(cacheKey, promise);
+  return promise;
+
+  async function runFetch(): Promise<{ season: SeasonRecord; fixtures: FixtureRow[] }> {
   const to = from + limit - 1;
-  const rowCountPromise = getFixtureRowCountForSeason(season.id);
+  // Skip the count(*) HEAD round-trip in production — it doubled the latency on
+  // every fixtures fetch and only feeds dev-only diagnostic logs.
+  const rowCountPromise = import.meta.env.DEV
+    ? getFixtureRowCountForSeason(season.id)
+    : Promise.resolve(-1);
 
   const { data, error } = await supabase
     .from('eg_fixtures')
@@ -474,7 +549,7 @@ async function fetchSeasonFixturesByRecord(
 
   if (error) throw new Error(error.message);
 
-  const sourceRows = (data || []) as RawFixtureRow[];
+  const sourceRows = (data || []) as unknown as RawFixtureRow[];
   let fixtures = await normalizeFixtures(sourceRows);
   const rowCount = await rowCountPromise;
 
@@ -511,6 +586,7 @@ async function fetchSeasonFixturesByRecord(
 
   seasonFixturesCache.set(cacheKey, { at: Date.now(), season, fixtures });
   return { season, fixtures };
+  }
 }
 
 export async function fetchSeasonFixtures(
@@ -559,7 +635,7 @@ export async function fetchFixtureById(fixtureId: string): Promise<FixtureRow | 
     return null;
   }
 
-  const fixtures = await normalizeFixtures([data as RawFixtureRow]);
+  const fixtures = await normalizeFixtures([data as unknown as RawFixtureRow]);
   const fixture = fixtures[0] || null;
   fixtureByIdCache.set(fixtureId, { at: Date.now(), fixture });
   return fixture;

@@ -2,7 +2,9 @@ import { resolveTeamKey, resolveTeamLogoUrl, resolveTeamName } from './entityRes
 import { requireSupabaseClient } from './supabaseClient';
 
 const supabase = requireSupabaseClient();
-const TTL_MS = 60_000;
+// Teams change rarely; cache aggressively in memory so repeated calls across
+// pages reuse the response instead of re-hitting Supabase.
+const TTL_MS = 300_000;
 
 type CachedValue<T> = {
   at: number;

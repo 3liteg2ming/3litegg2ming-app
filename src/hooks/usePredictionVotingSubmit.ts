@@ -3,15 +3,16 @@ import { getPredictionVotingQueryBase, submitPredictionVote } from '../lib/predi
 import type { PredictionVoteSubmitInput } from '../types/predictionVoting';
 import { getPersistentVoterKey } from '../utils/voterKey';
 
-export function usePredictionVotingSubmit() {
+export function usePredictionVotingSubmit(voterKeyOverride?: string | null) {
   const queryClient = useQueryClient();
+  const normalizedOverride = voterKeyOverride == null ? '' : String(voterKeyOverride).trim();
 
   const mutation = useMutation<void, Error, PredictionVoteSubmitInput>({
     mutationFn: async ({ pollKey, selectedOptionKey }) => {
       await submitPredictionVote({
         pollKey,
         selectedOptionKey,
-        voterKey: getPersistentVoterKey(),
+        voterKey: voterKeyOverride === undefined ? getPersistentVoterKey() : normalizedOverride,
       });
     },
     onSuccess: async (_data, variables) => {

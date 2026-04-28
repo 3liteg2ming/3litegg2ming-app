@@ -243,12 +243,18 @@ export default function AdminCoaches() {
 
       {profilesQuery.isLoading ? <p className="eg-admin-muted">Loading profiles…</p> : null}
       {profilesQuery.error ? (
-        <p className="eg-admin-error">
-          {profilesQuery.error instanceof Error ? profilesQuery.error.message : 'Failed to load profiles'}
-        </p>
+        <div className="eg-admin-error" style={{ padding: '12px 16px', borderRadius: 8, marginBottom: 12 }}>
+          <strong>Failed to load profiles.</strong> This is usually caused by a recursive RLS policy on the{' '}
+          <code>eg_profiles</code> table ("stack depth limit exceeded"). Run{' '}
+          <code>supabase/fix_profiles_coaches_rls_recursion.sql</code> in the Supabase SQL Editor to fix it.
+          <br />
+          <span style={{ opacity: 0.7, fontSize: 12 }}>
+            Error: {profilesQuery.error instanceof Error ? profilesQuery.error.message : String(profilesQuery.error)}
+          </span>
+        </div>
       ) : null}
 
-      {!profilesQuery.isLoading && !(profilesQuery.data?.rows.length || 0) ? (
+      {!profilesQuery.isLoading && !profilesQuery.error && !(profilesQuery.data?.rows.length || 0) ? (
         <EmptyState title="No users found" description="Adjust filters or search to find profiles." />
       ) : (
         <>

@@ -7,6 +7,8 @@ import FixturePosterCard, { type FixturePosterMatch } from '../components/Fixtur
 import { FixtureSkeletons } from '../components/FixtureSkeleton';
 import FixturesCompetitionSheet from '../components/fixtures/FixturesCompetitionSheet';
 import FixturesFilterSheet from '../components/fixtures/FixturesFilterSheet';
+import FinalsBracket from '../components/finals/FinalsBracket';
+import { bracketSlotForStage, type BracketSlot } from '../lib/finalsBracket';
 import { FINALS_CONFIG, getFinalsLabel } from '../config/finals';
 import { useSeasonFixtures } from '../hooks/useFixtures';
 import { useTeamOptions } from '../hooks/useTeams';
@@ -20,10 +22,9 @@ import {
 import { resolveTeamKey } from '../lib/entityResolvers';
 import { deriveFixtureRound, normalizeFixtureStatus, type FixtureRow } from '../lib/fixturesRepo';
 import { fetchMatchCentre } from '../lib/matchCentreRepo';
-import { fetchCurrentCoaches, type HomeCoach } from '../lib/homeRepo';
+import { fetchCurrentCoaches, type Coach } from '../lib/homeRepo';
 import { FIXTURES_UNLOCK_LABEL, useFixtureVisibility } from '../lib/fixtureVisibility';
 import {
-  SUBMISSION_CLOSED_LABEL,
   SUBMISSION_DEADLINE_LABEL,
   SUBMISSION_DEADLINE_MS,
   useDeadlineCountdown,
@@ -36,6 +37,16 @@ import { useAuth } from '../state/auth/AuthProvider';
 import '../styles/Fixtures.css';
 
 type StatusFilter = 'ALL' | 'SCHEDULED' | 'FINAL' | 'PENDING_RESULTS';
+type ViewMode = 'HOME_AND_AWAY' | 'FINALS';
+type FinalsWeek = 'WEEK_1' | 'SF' | 'PF' | 'GF';
+
+const FINALS_WEEK_TABS: Array<{ id: FinalsWeek; label: string; slots: BracketSlot[] }> = [
+  { id: 'WEEK_1', label: 'Week 1', slots: ['QF1', 'QF2', 'EF1', 'EF2'] },
+  { id: 'SF', label: 'Semis', slots: ['SF1', 'SF2'] },
+  { id: 'PF', label: 'Prelims', slots: ['PF1', 'PF2'] },
+  { id: 'GF', label: 'Grand Final', slots: ['GF'] },
+];
+const FINALS_SUBMISSION_OPEN_LABEL = 'Finals are live. Home coaches can submit results for open finals fixtures.';
 
 type StageGroup = {
   id: string;
@@ -132,7 +143,7 @@ function mapToPosterMatch(
   fixture: FixtureRow,
   navigate: ReturnType<typeof useNavigate>,
   queryClient: ReturnType<typeof useQueryClient>,
-  coachesByTeamId: Map<string, HomeCoach>,
+  coachesByTeamId: Map<string, Coach>,
   oddsMap?: Record<string, { home: number; away: number }> | null,
 ): FixturePosterMatch {
   const roundNumber = deriveFixtureRound(fixture);
@@ -343,6 +354,8 @@ export default function AFL26FixturesPage() {
   const seasonSlug = getDataSeasonSlugForCompetition(competitionKey);
 
   const [activeStageId, setActiveStageId] = useState<string>('');
+  const [viewMode, setViewMode] = useState<ViewMode>(FINALS_CONFIG.enabled ? 'FINALS' : 'HOME_AND_AWAY');
+  const [activeFinalsWeek, setActiveFinalsWeek] = useState<FinalsWeek>('WEEK_1');
   const [activeStatus, setActiveStatus] = useState<StatusFilter>('ALL');
   const [visibleCount, setVisibleCount] = useState(INITIAL_RENDER_COUNT);
   const [isDockCompact, setIsDockCompact] = useState(false);
@@ -364,12 +377,11 @@ export default function AFL26FixturesPage() {
     queryFn: fetchCurrentCoaches,
     staleTime: 60_000,
     gcTime: 1_200_000,
-    enabled: fixturesPubliclyVisible,
   });
   const teamOptionsQuery = useTeamOptions();
   const teamOptions = (teamOptionsQuery.data || []) as TeamOption[];
   const coachesByTeamId = useMemo(() => {
-    const map = new Map<string, HomeCoach>();
+    const map = new Map<string, Coach>();
     for (const coach of coachesQuery.data || []) {
       const teamId = String(coach.team_id || '').trim();
       if (!teamId) continue;
@@ -417,9 +429,23 @@ export default function AFL26FixturesPage() {
   }, [competitionKey]);
 
   const regularStageGroups = useMemo(() => {
-    const allGroups = buildRegularStageGroups(allFixtures);
+    const regularOnly = allFixtures.filter((fixture) => !fixture.is_finals);
+    const allGroups = buildRegularStageGroups(regularOnly);
     return allGroups.filter((stage) => isRoundVisible(stage.index));
   }, [allFixtures]);
+
+  const finalsFixtures = useMemo(
+    () => allFixtures.filter((fixture) => Boolean(fixture.is_finals)),
+    [allFixtures],
+  );
+
+  const hasFinals = finalsFixtures.length > 0;
+
+  useEffect(() => {
+    if (!hasFinals && viewMode === 'FINALS') {
+      setViewMode('HOME_AND_AWAY');
+    }
+  }, [hasFinals, viewMode]);
 
   useEffect(() => {
     if (!fixturesPubliclyVisible) return;
@@ -442,12 +468,36 @@ export default function AFL26FixturesPage() {
   }, [activeStageId]);
 
   const isTeamView = selectedTeamId !== 'ALL';
+  const isFinalsView = viewMode === 'FINALS';
+
+  const finalsWeekMatches = useMemo(() => {
+    if (!isFinalsView) return [] as FixtureRow[];
+    const slots = new Set<string>(bracketSlotForStage(
+      activeFinalsWeek === 'WEEK_1' ? 'QF' : activeFinalsWeek,
+    ));
+    if (activeFinalsWeek === 'WEEK_1') {
+      bracketSlotForStage('EF').forEach((slot) => slots.add(slot));
+    }
+    return finalsFixtures.filter((f) => f.bracket_slot && slots.has(f.bracket_slot));
+  }, [activeFinalsWeek, finalsFixtures, isFinalsView]);
 
   const scopeMatches = useMemo(() => {
     if (!allFixtures.length) return [];
 
+    if (isFinalsView) {
+      if (isTeamView) {
+        return finalsFixtures.filter((fixture) => {
+          const homeId = String(fixture.home_team_id || '');
+          const awayId = String(fixture.away_team_id || '');
+          return homeId === selectedTeamId || awayId === selectedTeamId;
+        });
+      }
+      return finalsWeekMatches;
+    }
+
     if (isTeamView) {
       return allFixtures.filter((fixture) => {
+        if (fixture.is_finals) return false;
         const homeId = String(fixture.home_team_id || '');
         const awayId = String(fixture.away_team_id || '');
         const teamMatches = homeId === selectedTeamId || awayId === selectedTeamId;
@@ -464,8 +514,8 @@ export default function AFL26FixturesPage() {
     const stageMatches = stage?.matches || [];
     if (stageMatches.length) return stageMatches;
 
-    return allFixtures;
-  }, [activeStageId, allFixtures, regularStageGroups, selectedTeamId, isTeamView]);
+    return allFixtures.filter((f) => !f.is_finals);
+  }, [activeStageId, allFixtures, regularStageGroups, selectedTeamId, isTeamView, isFinalsView, finalsFixtures, finalsWeekMatches]);
 
   const venueOptions = useMemo(() => {
     return Array.from(new Set(allFixtures.map((fixture) => String(fixture.venue || '').trim()).filter(Boolean))).sort((a, b) =>
@@ -584,7 +634,30 @@ export default function AFL26FixturesPage() {
           </button>
         </section>
 
-        {fixturesPubliclyVisible ? (
+        {fixturesPubliclyVisible && (hasFinals || FINALS_CONFIG.enabled) ? (
+          <div className="fxViewModeBar" role="tablist" aria-label="Season view">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={viewMode === 'HOME_AND_AWAY'}
+              className={`fxViewModeBar__tab ${viewMode === 'HOME_AND_AWAY' ? 'is-active' : ''}`}
+              onClick={() => setViewMode('HOME_AND_AWAY')}
+            >
+              Home &amp; Away
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={viewMode === 'FINALS'}
+              className={`fxViewModeBar__tab ${viewMode === 'FINALS' ? 'is-active' : ''}`}
+              onClick={() => setViewMode('FINALS')}
+            >
+              Finals
+            </button>
+          </div>
+        ) : null}
+
+        {fixturesPubliclyVisible && !isFinalsView ? (
           <div className={`fxRoundBar ${isDockCompact ? 'is-compact' : ''}`} aria-label="Round selector">
             <div className="fxRoundBar__inner" ref={roundBarRef}>
               {regularStageGroups.map((stage) => (
@@ -611,48 +684,77 @@ export default function AFL26FixturesPage() {
           </div>
         ) : null}
 
-        {fixturesPubliclyVisible && (
-          <>
-            {/* Submission deadline — Sunday 26 April 11:59 PM */}
-            <div className={`fxDeadlineNotice ${submissionDeadline.expired ? 'is-expired' : ''}`}>
-              <div className="fxDeadlineNotice__text">
-                {submissionDeadline.expired
-                  ? SUBMISSION_CLOSED_LABEL
-                  : `All open fixture submissions close ${SUBMISSION_DEADLINE_LABEL}`}
-              </div>
-              <div className="fxDeadlineNotice__countdown">
-                {submissionDeadline.expired ? (
-                  <div className="fxDeadlineNotice__expiredWrap">
-                    <span className="fxDeadlineNotice__expired">Season Closed</span>
-                    <span className="fxDeadlineNotice__subtext">Games cannot be submitted unless admin approval is switched on for that fixture.</span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="fxDeadlineNotice__unit">
-                      <span className="fxDeadlineNotice__num">{submissionDeadline.days}</span>
-                      <span className="fxDeadlineNotice__lbl">days</span>
-                    </div>
-                    <span className="fxDeadlineNotice__sep">:</span>
-                    <div className="fxDeadlineNotice__unit">
-                      <span className="fxDeadlineNotice__num">{String(submissionDeadline.hours).padStart(2, '0')}</span>
-                      <span className="fxDeadlineNotice__lbl">hrs</span>
-                    </div>
-                    <span className="fxDeadlineNotice__sep">:</span>
-                    <div className="fxDeadlineNotice__unit">
-                      <span className="fxDeadlineNotice__num">{String(submissionDeadline.minutes).padStart(2, '0')}</span>
-                      <span className="fxDeadlineNotice__lbl">min</span>
-                    </div>
-                    <span className="fxDeadlineNotice__sep">:</span>
-                    <div className="fxDeadlineNotice__unit">
-                      <span className="fxDeadlineNotice__num">{String(submissionDeadline.seconds).padStart(2, '0')}</span>
-                      <span className="fxDeadlineNotice__lbl">sec</span>
-                    </div>
-                  </>
-                )}
+        {fixturesPubliclyVisible && FINALS_CONFIG.enabled ? (
+          <div className="fxDeadlineNotice fxDeadlineNotice--open">
+            <div className="fxDeadlineNotice__text">{FINALS_SUBMISSION_OPEN_LABEL}</div>
+            <div className="fxDeadlineNotice__countdown">
+              <div className="fxDeadlineNotice__expiredWrap">
+                <span className="fxDeadlineNotice__expired">Finals Open</span>
+                <span className="fxDeadlineNotice__subtext">
+                  Season Two home-and-away is closed, but finals submissions stay open for the home side.
+                </span>
               </div>
             </div>
-          </>
-        )}
+          </div>
+        ) : fixturesPubliclyVisible && !submissionDeadline.expired ? (
+          <div className="fxDeadlineNotice">
+            <div className="fxDeadlineNotice__text">
+              {`All open fixture submissions close ${SUBMISSION_DEADLINE_LABEL}`}
+            </div>
+            <div className="fxDeadlineNotice__countdown">
+              <div className="fxDeadlineNotice__unit">
+                <span className="fxDeadlineNotice__num">{submissionDeadline.days}</span>
+                <span className="fxDeadlineNotice__lbl">days</span>
+              </div>
+              <span className="fxDeadlineNotice__sep">:</span>
+              <div className="fxDeadlineNotice__unit">
+                <span className="fxDeadlineNotice__num">{String(submissionDeadline.hours).padStart(2, '0')}</span>
+                <span className="fxDeadlineNotice__lbl">hrs</span>
+              </div>
+              <span className="fxDeadlineNotice__sep">:</span>
+              <div className="fxDeadlineNotice__unit">
+                <span className="fxDeadlineNotice__num">{String(submissionDeadline.minutes).padStart(2, '0')}</span>
+                <span className="fxDeadlineNotice__lbl">min</span>
+              </div>
+              <span className="fxDeadlineNotice__sep">:</span>
+              <div className="fxDeadlineNotice__unit">
+                <span className="fxDeadlineNotice__num">{String(submissionDeadline.seconds).padStart(2, '0')}</span>
+                <span className="fxDeadlineNotice__lbl">sec</span>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {fixturesPubliclyVisible && isFinalsView && hasFinals ? (
+          <FinalsBracket fixtures={finalsFixtures} seasonId={seasonSlug} />
+        ) : null}
+
+        {fixturesPubliclyVisible && isFinalsView ? (
+          <div className={`fxRoundBar fxRoundBar--belowBracket ${isDockCompact ? 'is-compact' : ''}`} aria-label="Finals round selector">
+            <div className="fxRoundBar__inner" ref={roundBarRef}>
+              {FINALS_WEEK_TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  disabled={isTeamView}
+                  className={`fxRoundBar__pill ${!isTeamView && activeFinalsWeek === tab.id ? 'is-active' : ''} ${isTeamView ? 'is-disabled' : ''}`}
+                  onClick={() => { if (!isTeamView) setActiveFinalsWeek(tab.id); }}
+                  aria-disabled={isTeamView ? 'true' : undefined}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="fxRoundBar__filterBtn"
+              onClick={() => setFilterSheetOpen(true)}
+              aria-label="Open fixtures filters"
+            >
+              <Filter size={14} />
+            </button>
+          </div>
+        ) : null}
 
         <div className="fxAflPanel">
           {!fixturesPubliclyVisible ? (

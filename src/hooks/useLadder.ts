@@ -26,7 +26,7 @@ export function useLadder(seasonSlug: string) {
   return useQuery({
     queryKey: ['eg_ladder', seasonSlug],
     queryFn: () => fetchLadder(seasonSlug),
-    staleTime: 45_000,
-    gcTime: 1_200_000,
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
   });
 }

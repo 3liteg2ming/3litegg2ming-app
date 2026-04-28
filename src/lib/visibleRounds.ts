@@ -2,10 +2,10 @@
  * Visible rounds control layer
  *
  * This is the single source of truth for which rounds are visible across the app.
- * Season Two is currently open through Round 11.
+ * Season Two is currently open through Finals Week 1, which is stored as Round 12.
  */
 
-const MAX_VISIBLE_ROUND = 11;
+const MAX_VISIBLE_ROUND = 12;
 const VISIBLE_ROUNDS = new Set(Array.from({ length: MAX_VISIBLE_ROUND }, (_, index) => index + 1));
 
 /**

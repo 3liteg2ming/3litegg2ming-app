@@ -2411,7 +2411,67 @@ button.mdcChecklist__row {
   color: rgba(255,255,255,0.92);
 }
 
+.mdcAdminQuickGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.mdcAdminQuickField {
+  display: grid;
+  gap: 6px;
+}
+
+.mdcAdminQuickField span {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: rgba(255,255,255,0.66);
+}
+
+.mdcAdminQuickMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.mdcAdminQuickMeta span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  font-size: 12px;
+  color: rgba(255,255,255,0.82);
+}
+
+.mdcAdminQuickPresetRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.mdcAdminQuickActions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 18px;
+}
+
 @media (max-width: 740px) {
+  .mdcAdminQuickGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .mdcAdminQuickActions {
+    flex-direction: column;
+  }
+
   .mdcGoalKickerSection__head {
     flex-direction: column;
     align-items: stretch;

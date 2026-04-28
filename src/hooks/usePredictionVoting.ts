@@ -12,9 +12,12 @@ import { getPersistentVoterKey } from '../utils/voterKey';
 export function usePredictionVoting(
   pollKey?: string | null,
   options?: PredictionVoteOption[],
+  voterKeyOverride?: string | null,
 ): PredictionVotingResult {
   const queryClient = useQueryClient();
-  const [voterKey] = useState(() => getPersistentVoterKey());
+  const [persistentVoterKey] = useState(() => getPersistentVoterKey());
+  const normalizedOverride = voterKeyOverride == null ? '' : String(voterKeyOverride).trim();
+  const voterKey = voterKeyOverride === undefined ? persistentVoterKey : normalizedOverride;
   const normalizedOptions = useMemo(
     () => (options || []).map((option) => ({ key: String(option.key || '').trim().toLowerCase(), label: String(option.label || '').trim() })),
     [options],

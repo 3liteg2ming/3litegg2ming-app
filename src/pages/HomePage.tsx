@@ -1,32 +1,37 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   ChevronRight,
   LayoutDashboard,
   Trophy,
-  User,
   ShieldCheck,
 } from 'lucide-react';
 
 import { useAuth } from '../state/auth/AuthProvider';
 import { useLadder } from '../hooks/useLadder';
-import { useNextFixtures, useSeasonFixtures } from '../hooks/useFixtures';
+import { useSeasonFixtures } from '../hooks/useFixtures';
 import FinalsVoteCard from '../components/finals/FinalsVoteCard';
 import PremiersVoteCard from '../components/finals/PremiersVoteCard';
+import FinalsBracket from '../components/finals/FinalsBracket';
 import { FINALS_CONFIG, getFinalsLabel } from '../config/finals';
 import { assetUrl } from '../lib/teamAssets';
 import { resolveTeamLogoUrl } from '../lib/entityResolvers';
 import { FIXTURES_UNLOCK_LABEL, useFixtureVisibility } from '../lib/fixtureVisibility';
 import { normalizeFixtureStatus, type FixtureRow } from '../lib/fixturesRepo';
 import { TEAM_SHORT_NAMES } from '../data/teamColors';
-import { MelvinBetHomeCard, type MelvinHomeFixture } from '../components/MelvinBet';
 
 import '../styles/home.css';
 
-type StatLeaderCategory = import('../lib/stats-leaders-cache').StatLeaderCategory;
+type Coach = import('../lib/homeRepo').Coach;
 type HomeNewsItem = import('../lib/homeRepo').HomeNewsItem;
-type HomeCoach = import('../lib/homeRepo').HomeCoach;
+type FinalsTeamCard = {
+  key: string;
+  teamId?: string;
+  name: string;
+  logoUrl: string;
+};
 
 const AFL26_LOGO_URL =
   'https://zohtixrgskbzosgfluni.supabase.co/storage/v1/object/public/Assets/afl26-logo.png';
@@ -44,14 +49,6 @@ const teamLogoFallbackUrl = (slug?: string, name?: string, explicitLogo?: string
     name: name || null,
     fallbackPath: 'elite-gaming-logo.png',
   });
-
-const STAT_THEME: Record<string, string> = {
-  goals: 'goals',
-  fantasyPoints: 'fantasy',
-  disposals: 'disposals',
-  marks: 'marks',
-  teamDisposals: 'disposals',
-};
 
 function teamNamesOverlap(fixtureName: string, coachTeam: string): boolean {
   if (!fixtureName || !coachTeam) return false;
@@ -74,6 +71,22 @@ function getFixtureTimestamp(value?: string | null): number {
 
   const timestamp = new Date(raw).getTime();
   return Number.isFinite(timestamp) ? timestamp : Number.POSITIVE_INFINITY;
+}
+
+function formatFixtureDateTime(value?: string | null): string {
+  const raw = toText(value);
+  if (!raw) return 'Time TBA';
+
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return 'Time TBA';
+
+  return date.toLocaleDateString('en-AU', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 function isFinalsFixtureCandidate(fixture: FixtureRow): boolean {
@@ -145,130 +158,107 @@ function hasFinalsStarted(fixtures: FixtureRow[]): boolean {
   });
 }
 
-function useHomepageStats() {
-  const [playerData, setPlayerData] = useState<StatLeaderCategory[] | null>(null);
-  const [teamData, setTeamData] = useState<StatLeaderCategory[] | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const load = async (forceFresh: boolean, showCached = false) => {
-      try {
-        const { clearStatLeadersCache, fetchLeaderCategories, peekLeaderCategoriesCache } = await import(
-          '../lib/stats-leaders-cache'
-        );
-
-        if (showCached) {
-          const cp = peekLeaderCategoriesCache('players');
-          const ct = peekLeaderCategoriesCache('teams');
-          if (mounted && cp) setPlayerData(cp);
-          if (mounted && ct) setTeamData(ct);
-          if (mounted && (cp || ct)) setIsLoading(false);
-        }
-
-        if (forceFresh) clearStatLeadersCache();
-
-        const [fp, ft] = await Promise.all([
-          fetchLeaderCategories('players'),
-          fetchLeaderCategories('teams'),
-        ]);
-        if (!mounted) return;
-        setPlayerData(fp || []);
-        setTeamData(ft || []);
-      } catch (err) {
-        console.warn('Failed to fetch homepage stats:', err);
-        if (mounted) {
-          setPlayerData([]);
-          setTeamData([]);
-        }
-      } finally {
-        if (mounted) setIsLoading(false);
-      }
-    };
-
-    void load(true, true);
-
-    const refresh = () => {
-      if (document.visibilityState === 'hidden') return;
-      void load(true);
-    };
-
-    window.addEventListener('focus', refresh);
-    document.addEventListener('visibilitychange', refresh);
-
-    return () => {
-      mounted = false;
-      window.removeEventListener('focus', refresh);
-      document.removeEventListener('visibilitychange', refresh);
-    };
-  }, []);
-
-  const playerLeaders = useMemo(() => {
-    const keys = ['goals', 'fantasyPoints', 'disposals', 'marks'];
-    return keys
-      .map((k) => playerData?.find((c) => c.statKey === k))
-      .filter(Boolean) as StatLeaderCategory[];
-  }, [playerData]);
-
-  const teamLeaders = useMemo(() => {
-    if (!teamData?.length) return [] as StatLeaderCategory[];
-    const preferred = ['goals', 'disposals', 'marks', 'fantasyPoints', 'teamDisposals'];
-    const found = preferred
-      .map((k) => teamData.find((c) => c.statKey === k))
-      .filter(Boolean) as StatLeaderCategory[];
-    return found.length ? found.slice(0, 3) : teamData.slice(0, 3);
-  }, [teamData]);
-
-  return { playerLeaders, teamLeaders, isLoading };
-}
-
 function useHomepageNews() {
-  const [items, setItems] = useState<HomeNewsItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const query = useQuery<HomeNewsItem[]>({
+    queryKey: ['home', 'news', 2],
+    queryFn: async () => {
+      const repo = await import('../lib/homeRepo');
+      const result = await repo.fetchHomepageNews(2);
+      return Array.isArray(result) ? result : [];
+    },
+    staleTime: 120_000,
+    gcTime: 600_000,
+  });
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const repo = await import('../lib/homeRepo');
-        const result = await repo.fetchHomepageNews(2);
-        if (mounted) setItems(result);
-      } catch (err) {
-        console.warn('Failed to fetch homepage news:', err);
-      } finally {
-        if (mounted) setIsLoading(false);
-      }
-    })();
-    return () => { mounted = false; };
-  }, []);
-
-  return { items, isLoading };
+  return { items: query.data ?? [], isLoading: query.isLoading };
 }
 
 function useHomeCoaches() {
-  const [data, setData] = useState<HomeCoach[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const query = useQuery<Coach[]>({
+    queryKey: ['home', 'current-coaches'],
+    queryFn: async () => {
+      const repo = await import('../lib/homeRepo');
+      const result = await repo.fetchCurrentCoaches();
+      return Array.isArray(result) ? result : [];
+    },
+    staleTime: 300_000,
+    gcTime: 600_000,
+  });
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const repo = await import('../lib/homeRepo');
-        const result = (await (repo as any).fetchCurrentCoaches?.()) || [];
-        if (mounted && Array.isArray(result)) setData(result);
-      } catch (err) {
-        console.warn('Failed to fetch coaches:', err);
-      } finally {
-        if (mounted) setIsLoading(false);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  return { data: query.data ?? [], isLoading: query.isLoading };
+}
 
-  return { data, isLoading };
+function getFixtureTeamName(fixture: FixtureRow, side: 'home' | 'away') {
+  if (side === 'home') {
+    return (
+      fixture.home_team_name ||
+      fixture.home_team_short_name ||
+      fixture.home_team_slug?.replace(/-/g, ' ') ||
+      'TBD'
+    );
+  }
+
+  return (
+    fixture.away_team_name ||
+    fixture.away_team_short_name ||
+    fixture.away_team_slug?.replace(/-/g, ' ') ||
+    'TBD'
+  );
+}
+
+function getFixturePrimaryLabel(fixture: FixtureRow) {
+  if (isFinalsFixtureCandidate(fixture)) return getFixtureFinalsRoundLabel(fixture);
+  return fixture.round_label || `Round ${fixture.round || '-'}`;
+}
+
+function getFixtureStatusLabel(fixture: FixtureRow) {
+  const status = normalizeFixtureStatus(fixture.status, fixture);
+  if (status === 'LIVE') return 'Live now';
+  if (status === 'PENDING_RESULTS') return 'Awaiting result';
+  if (status === 'FINAL') return 'Full Time';
+  return formatFixtureDateTime(fixture.start_time);
+}
+
+function collectFinalsTeams(fixtures: FixtureRow[]): FinalsTeamCard[] {
+  const teams = new Map<string, FinalsTeamCard>();
+
+  for (const fixture of fixtures) {
+    (['home', 'away'] as const).forEach((side) => {
+      const teamId = toText(side === 'home' ? fixture.home_team_id : fixture.away_team_id);
+      const teamName = getFixtureTeamName(fixture, side);
+      const teamSlug = toText(side === 'home' ? fixture.home_team_slug : fixture.away_team_slug);
+      const explicitLogo = side === 'home' ? fixture.home_team_logo_url : fixture.away_team_logo_url;
+      const key = teamId || teamSlug || teamName.toLowerCase();
+      if (!key || teams.has(key)) return;
+
+      teams.set(key, {
+        key,
+        teamId: teamId || undefined,
+        name: teamName,
+        logoUrl: teamLogoFallbackUrl(teamSlug || undefined, teamName, explicitLogo),
+      });
+    });
+  }
+
+  return Array.from(teams.values());
+}
+
+function filterFinalsCoaches(coaches: Coach[], finalists: FinalsTeamCard[]) {
+  if (!coaches.length) return [] as Coach[];
+  if (!finalists.length) return coaches.slice(0, 8);
+
+  const finalistIds = new Set(finalists.map((team) => toText(team.teamId)).filter(Boolean));
+  const finalistNames = finalists.map((team) => team.name);
+
+  return coaches
+    .filter((coach) => {
+      const teamId = toText(coach.team_id);
+      if (teamId && finalistIds.has(teamId)) return true;
+
+      const teamName = toText(coach.team_name);
+      return finalistNames.some((finalistName) => teamNamesOverlap(finalistName, teamName));
+    })
+    .slice(0, 8);
 }
 
 const Skeleton = ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
@@ -278,6 +268,10 @@ const Skeleton = ({ className, style }: { className?: string; style?: React.CSSP
 function HeroMasterCard() {
   const { user } = useAuth();
   const eliteLogo = assetUrl('elite-gaming-logo.png');
+  const finalsLabel = getFinalsLabel(FINALS_CONFIG.week) || 'Season Live';
+  const secondaryHref = user ? '/members' : '/teams';
+  const secondaryLabel = user ? 'Coach Hub' : 'Explore Teams';
+  const SecondaryIcon = user ? LayoutDashboard : ShieldCheck;
 
   return (
     <section className="home-hero-wrap">
@@ -294,35 +288,35 @@ function HeroMasterCard() {
             <span className="home-hero-eyebrow">Elite Gaming x BGL</span>
             <span className="home-hero-pill">
               <span className="home-hero-pillDot" />
-              Season Live
+              {finalsLabel}
             </span>
           </div>
 
           <div className="home-hero-titleGroup">
-            <h1 className="home-hero-seasonTitle">Elite Gaming BGL Season Two</h1>
+            <h1 className="home-hero-seasonTitle">AFL26 Finals Hub</h1>
             <p className="home-hero-sub">
               {user
-                ? 'Your fixtures, ladder and match centre.'
-                : 'Official hub for coaches and players.'}
+                ? 'Bracket, match centre and every finals storyline in one live home.'
+                : 'Bracket, fan voting and every finals storyline in one live home.'}
             </p>
           </div>
 
-          <div className="home-hero-brandRow">
-            <div className="home-hero-lockup">
-              <div className="home-hero-lockup__glow" aria-hidden="true" />
+          <div className="home-hero-brandStrip">
+            <span className="home-hero-brandStrip__label">Official Finals Partners</span>
+            <div className="home-hero-brandStrip__logos">
               <img
                 src={eliteLogo}
                 alt="Elite Gaming"
-                className="home-hero-lockup__eg"
+                className="home-hero-brandStrip__eg"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                 }}
               />
-              <div className="home-hero-lockup__divider" aria-hidden="true" />
+              <span className="home-hero-brandStrip__divider" aria-hidden="true" />
               <img
                 src={BGL_LOGO_URL}
                 alt="BGL Media"
-                className="home-hero-lockup__bgl"
+                className="home-hero-brandStrip__bgl"
                 onError={(e) => {
                   const t = e.currentTarget;
                   if (t.src !== BGL_LOGO_FALLBACK_URL) {
@@ -332,12 +326,24 @@ function HeroMasterCard() {
                   t.style.display = 'none';
                 }}
               />
+              <span className="home-hero-brandStrip__divider" aria-hidden="true" />
+              <img src={AFL26_LOGO_URL} alt="AFL26" className="home-hero-brandStrip__afl" />
             </div>
           </div>
 
-          <div className="home-hero-aflWrap">
-            <img src={AFL26_LOGO_URL} alt="AFL26" className="home-hero-aflLogo" />
-            <span className="home-hero-aflLabel">Official season hub</span>
+          <div className="home-hero-actions">
+            <Link to="/fixtures" className="home-hero-btn home-hero-btn--primary">
+              <span className="home-hero-btn__icon">
+                <ArrowRight size={14} />
+              </span>
+              Open Finals Draw
+            </Link>
+            <Link to={secondaryHref} className="home-hero-btn home-hero-btn--secondary">
+              <span className="home-hero-btn__icon">
+                <SecondaryIcon size={14} />
+              </span>
+              {secondaryLabel}
+            </Link>
           </div>
         </div>
       </div>
@@ -358,7 +364,7 @@ function EgNewsSection() {
         <span className="home-news-badge">Latest</span>
       </header>
       <div className="home-news-grid">
-        {items.map((item) => (
+        {items.map((item: HomeNewsItem) => (
           <article key={item.id} className="home-news-card">
             <div className="home-news-card__img">
               <img
@@ -404,31 +410,84 @@ function LaunchPromoCard() {
           <p className="home-promo-card__body">
             Fixtures and matchups will appear here once the season reveal goes live.
           </p>
+          <div className="home-promo-card__actions">
+            <Link to="/teams" className="home-promo-card__btn home-promo-card__btn--secondary">
+              Club Tracker
+            </Link>
+            <Link to="/best-team" className="home-promo-card__btn home-promo-card__btn--primary">
+              Build Best 23
+            </Link>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-function FeaturedMatchCard() {
+function FeaturedMatchCard({ coaches = [] }: { coaches?: Coach[] }) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { data, isLoading } = useNextFixtures('afl26-season-two', user ? 20 : 1);
-  const { data: coaches } = useHomeCoaches();
+  // Reuse the same season fixtures query the rest of the page already loads —
+  // identical query key dedupes the request inside React Query.
+  const seasonFixturesQuery = useSeasonFixtures('afl26-season-two', { limit: 1000 });
+  const isLoading = seasonFixturesQuery.isLoading;
 
-  const allFixtures: any[] = useMemo(
-    () => (Array.isArray(data) ? data : (data as any)?.fixtures ?? []),
-    [data],
+  const allFixtures = useMemo<FixtureRow[]>(
+    () => (Array.isArray(seasonFixturesQuery.data?.fixtures) ? seasonFixturesQuery.data?.fixtures || [] : []),
+    [seasonFixturesQuery.data?.fixtures],
   );
 
+  const featuredFinalsFixture = useMemo(() => {
+    if (!FINALS_CONFIG.enabled || !allFixtures.length) return null;
+
+    const finalsFixtures = allFixtures.filter(isFinalsFixtureCandidate);
+    if (!finalsFixtures.length) return null;
+
+    if (!user) return pickFeaturedFinalsFixture(finalsFixtures);
+
+    const myCoach = coaches.find((c) => c.user_id === user.id);
+    if (!myCoach) return pickFeaturedFinalsFixture(finalsFixtures);
+
+    const upcomingFinals = finalsFixtures.filter((candidate) => {
+      const status = normalizeFixtureStatus(candidate.status, candidate);
+      return status !== 'FINAL' && status !== 'PENDING_RESULTS';
+    });
+    const pool = upcomingFinals.length ? upcomingFinals : finalsFixtures;
+
+    if (myCoach.team_id) {
+      const byId = pool.find(
+        (f) => f.home_team_id === myCoach.team_id || f.away_team_id === myCoach.team_id,
+      );
+      if (byId) return byId;
+    }
+
+    const myTeam = myCoach.team_name;
+    if (myTeam) {
+      const byName = pool.find(
+        (f) =>
+          teamNamesOverlap(f.home_team_name || f.home_team_slug || '', myTeam) ||
+          teamNamesOverlap(f.away_team_name || f.away_team_slug || '', myTeam),
+      );
+      if (byName) return byName;
+    }
+
+    return pickFeaturedFinalsFixture(pool) || finalsFixtures[0] || null;
+  }, [allFixtures, coaches, user]);
+
   const fixture = useMemo(() => {
+    if (featuredFinalsFixture) return featuredFinalsFixture;
+    if (FINALS_CONFIG.enabled) return null;
+
     if (!allFixtures.length) return null;
     if (!user) return allFixtures[0];
 
     const myCoach = coaches.find((c) => c.user_id === user.id);
     if (!myCoach) return allFixtures[0];
 
-    const upcoming = allFixtures.filter((f) => f.status !== 'FINAL' && f.status !== 'COMPLETED');
+    const upcoming = allFixtures.filter((candidate) => {
+      const status = normalizeFixtureStatus(candidate.status, candidate);
+      return status !== 'FINAL' && status !== 'PENDING_RESULTS';
+    });
     const pool = upcoming.length ? upcoming : allFixtures;
 
     if (myCoach.team_id) {
@@ -449,10 +508,9 @@ function FeaturedMatchCard() {
     }
 
     return pool[0] ?? allFixtures[0];
-  }, [allFixtures, user, coaches]);
+  }, [allFixtures, featuredFinalsFixture, user, coaches]);
 
-  const sectionLabel = user ? 'Next Game' : 'Featured Match';
-
+  const sectionLabel = user ? 'Your Matchup' : 'Featured Match';
   if (isLoading) {
     return (
       <section className="home-module home-module--feature">
@@ -465,6 +523,10 @@ function FeaturedMatchCard() {
         <Skeleton className="home-featured-skeleton" />
       </section>
     );
+  }
+
+  if (FINALS_CONFIG.enabled && !featuredFinalsFixture) {
+    return null;
   }
 
   if (!fixture) {
@@ -481,45 +543,31 @@ function FeaturedMatchCard() {
     );
   }
 
-  const homeName =
-    fixture.home_team_name ||
-    fixture.home_team_short_name ||
-    fixture.home_team_slug?.replace(/-/g, ' ') ||
-    'TBD';
-  const awayName =
-    fixture.away_team_name ||
-    fixture.away_team_short_name ||
-    fixture.away_team_slug?.replace(/-/g, ' ') ||
-    'TBD';
+  const isFinalsMatch = isFinalsFixtureCandidate(fixture);
+  const homeName = getFixtureTeamName(fixture, 'home');
+  const awayName = getFixtureTeamName(fixture, 'away');
   const homeLogo = teamLogoFallbackUrl(
-    fixture.home_team_slug,
+    fixture.home_team_slug || undefined,
     homeName,
     fixture.home_team_logo_url,
   );
   const awayLogo = teamLogoFallbackUrl(
-    fixture.away_team_slug,
+    fixture.away_team_slug || undefined,
     awayName,
     fixture.away_team_logo_url,
   );
-
-  let dateText = 'Time TBA';
-  if (fixture.start_time) {
-    const d = new Date(fixture.start_time);
-    if (!Number.isNaN(d.getTime())) {
-      dateText = d.toLocaleDateString('en-AU', {
-        weekday: 'short',
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    }
-  }
+  const label = getFixturePrimaryLabel(fixture);
+  const dateText = getFixtureStatusLabel(fixture);
+  const displayHeading = isFinalsMatch
+    ? user
+      ? 'Your Finals Matchup'
+      : 'Finals Spotlight'
+    : sectionLabel;
 
   return (
     <section className="home-module home-module--feature">
       <header className="home-module__header">
-        <h2>{sectionLabel}</h2>
+        <h2>{displayHeading}</h2>
         <Link to="/fixtures">
           All Fixtures<ChevronRight size={13} />
         </Link>
@@ -530,10 +578,8 @@ function FeaturedMatchCard() {
         onClick={() => navigate(`/match-centre/${fixture.id}`)}
       >
         <div className="home-feature-card__meta">
-          <span className="home-feature-card__round">Round {fixture.round || '-'}</span>
-          <span className="home-feature-card__date">
-            {fixture.status === 'COMPLETED' || fixture.status === 'FINAL' ? 'Full Time' : dateText}
-          </span>
+          <span className="home-feature-card__round">{label}</span>
+          <span className="home-feature-card__date">{dateText}</span>
         </div>
         <div className="home-feature-card__main">
           <div className="home-feature-card__team">
@@ -563,223 +609,10 @@ function FeaturedMatchCard() {
           </div>
         </div>
         <div className="home-feature-card__cta">
-          <span>Enter Match Centre</span>
+          <span>{normalizeFixtureStatus(fixture.status, fixture) === 'FINAL' ? 'View Match Centre' : 'Enter Match Centre'}</span>
           <ArrowRight size={13} />
         </div>
       </button>
-    </section>
-  );
-}
-
-function MelvinBetOutlookSection() {
-  const { data } = useNextFixtures('afl26-season-two', 6);
-
-  const fixtures = useMemo<MelvinHomeFixture[]>(() => {
-    const raw: any[] = Array.isArray(data) ? data : (data as any)?.fixtures ?? [];
-    return raw.slice(0, 4).map((f: any) => ({
-      id: String(f.id || ''),
-      homeName: f.home_team_name || f.home_team_short_name || f.home_team_slug?.replace(/-/g, ' ') || 'TBD',
-      awayName: f.away_team_name || f.away_team_short_name || f.away_team_slug?.replace(/-/g, ' ') || 'TBD',
-      round: Number(f.round) || undefined,
-      venue: f.venue || undefined,
-    }));
-  }, [data]);
-
-  if (!fixtures.length) return null;
-
-  return (
-    <section className="home-module">
-      <MelvinBetHomeCard fixtures={fixtures} />
-    </section>
-  );
-}
-
-function LeadersPreview() {
-  const navigate = useNavigate();
-  const { playerLeaders, teamLeaders, isLoading } = useHomepageStats();
-  const [tab, setTab] = useState<'players' | 'teams'>('players');
-
-  const displayLeaders = tab === 'players' ? playerLeaders.slice(0, 3) : teamLeaders.slice(0, 3);
-
-  const showSkeleton = isLoading && playerLeaders.length === 0 && teamLeaders.length === 0;
-  const isTeamTab = tab === 'teams';
-
-  return (
-    <section className="home-module home-module--leaders">
-      <div className="home-leaders-header">
-        <header className="home-module__header" style={{ width: '100%' }}>
-          <h2>Season Leaders</h2>
-          <Link to="/stats3">
-            Stats Hub<ChevronRight size={13} />
-          </Link>
-        </header>
-        <div className="home-leaders-toggle" role="tablist">
-          <button
-            role="tab"
-            aria-selected={tab === 'players'}
-            className={`home-leaders-toggle__btn ${tab === 'players' ? 'is-active' : ''}`}
-            onClick={() => setTab('players')}
-          >
-            Player
-          </button>
-          <button
-            role="tab"
-            aria-selected={tab === 'teams'}
-            className={`home-leaders-toggle__btn ${tab === 'teams' ? 'is-active' : ''}`}
-            onClick={() => setTab('teams')}
-          >
-            Team
-          </button>
-        </div>
-      </div>
-
-      {showSkeleton ? (
-        <div className="home-leaders-rail">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="home-leader-card">
-              <Skeleton className="home-leader-sk__top" />
-              <Skeleton className="home-leader-sk__value" />
-              <div className="home-leader-divider" />
-              <div className="home-leader-row">
-                <Skeleton className="home-leader-sk__avatar" />
-                <div style={{ flex: 1 }}>
-                  <Skeleton className="home-leader-sk__line" />
-                  <Skeleton className="home-leader-sk__line" style={{ marginTop: 5, width: '60%' }} />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : displayLeaders.length > 0 ? (
-        <div className="home-leaders-rail" key={tab}>
-          {displayLeaders.map((category) => {
-            if (!category?.top) return null;
-            const top = category.top;
-            const theme = STAT_THEME[category.statKey] ?? 'default';
-            return (
-              <button
-                key={category.statKey}
-                type="button"
-                className={`home-leader-card home-leader-card--${theme}`}
-                onClick={() => navigate('/stats3')}
-              >
-                <div className="home-leader-top">
-                  <span className="home-leader-label">{category.label}</span>
-                  <span className={`home-leader-chip ${isTeamTab ? 'home-leader-chip--team' : ''}`}>
-                    {isTeamTab ? 'Top Team' : 'Top Player'}
-                  </span>
-                </div>
-                <div className="home-leader-value">{top.valueTotal}</div>
-                <div className="home-leader-divider" />
-                <div className="home-leader-row">
-                  <div className="home-leader-avatar">
-                    {top.photoUrl ? <img src={top.photoUrl} alt={top.name} /> : <User size={14} />}
-                  </div>
-                  <div className="home-leader-meta">
-                    <p>{isTeamTab ? (TEAM_SHORT_NAMES[top.name] || top.name) : top.name.split(' ')[0]}</p>
-                    <span>{isTeamTab ? 'Team Leader' : (top.teamName || 'Season Leader')}</span>
-                  </div>
-                  <span className="home-leader-badge">#1</span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="home-empty">
-          {isTeamTab
-            ? 'Team leaderboards will appear once stats are submitted.'
-            : 'Player leaderboards will appear once stats are submitted.'}
-        </div>
-      )}
-    </section>
-  );
-}
-
-function LadderSnapshot() {
-  const { data, isLoading } = useLadder('afl26-season-two');
-  const ladder = useMemo(() => (Array.isArray(data) ? data.slice(0, 8) : []), [data]);
-
-  return (
-    <section className="home-module home-module--ladder">
-      <header className="home-module__header">
-        <h2>Ladder Snapshot</h2>
-        <Link to="/ladder">
-          Full Ladder<ChevronRight size={13} />
-        </Link>
-      </header>
-
-      <div className="home-ladder-card">
-        {isLoading ? (
-          <div className="home-ladder-skeleton">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="home-ladder-skeleton__row" />
-            ))}
-          </div>
-        ) : ladder.length > 0 ? (
-          <div className="home-ladder-tableWrap">
-            <table className="home-ladder-table">
-              <thead>
-                <tr>
-                  <th className="home-ladder-th--pos">#</th>
-                  <th className="home-ladder-th--club">Club</th>
-                  <th>P</th>
-                  <th>W</th>
-                  <th>Pts</th>
-                  <th>%</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ladder.map((team: any, index: number) => {
-                  const logo = teamLogoFallbackUrl(team.team_slug, team.team_name, team.team_logo_url);
-                  const rank = Number(team.position || index + 1);
-                  const isFirst = rank === 1;
-                  const isTopFour = rank <= 4;
-                  return (
-                    <tr
-                      key={team.team_slug || `${team.team_name}-${index}`}
-                      className={[
-                        index === 3 ? 'is-top-four-cut' : '',
-                        isFirst ? 'is-row-first' : isTopFour ? 'is-row-top-four' : '',
-                      ]
-                        .filter(Boolean)
-                        .join(' ')}
-                    >
-                      <td className="home-ladder-td--pos">
-                        <span
-                          className={`home-ladder-rank ${
-                            isFirst ? 'is-first' : isTopFour ? 'is-top-four' : ''
-                          }`}
-                        >
-                          {rank}
-                        </span>
-                      </td>
-                      <td className="home-ladder-club">
-                        <span className="home-ladder-logoWrap">
-                          <img
-                            src={logo}
-                            alt={team.team_name || 'Team'}
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        </span>
-                        <span className="home-ladder-name">{team.team_name || 'Team'}</span>
-                      </td>
-                      <td className="home-ladder-td--num">{team.played || 0}</td>
-                      <td className="home-ladder-td--num">{team.wins || 0}</td>
-                      <td className="home-ladder-td--pts">{team.points || 0}</td>
-                      <td className="home-ladder-td--pct">{Number(team.percentage || 0).toFixed(1)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="home-empty">Ladder data will appear after Round 1.</div>
-        )}
-      </div>
     </section>
   );
 }
@@ -789,18 +622,19 @@ function CoachHubBanner() {
 
   const name = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Coach';
   const coachClubLabel = user?.teamName ? TEAM_SHORT_NAMES[user.teamName] || user.teamName : `${name}'s season`;
+  const primaryHref = user ? '/members' : '/teams';
+  const primaryLabel = user ? 'Coach Hub' : 'Club Tracker';
+  const primaryMeta = user ? coachClubLabel : 'Finalists';
 
   return (
     <section className="home-module home-module--coachhub">
       <div className="home-quickLinks">
-        {user ? (
-          <Link to="/members" className="home-quickLink home-quickLink--coach">
-            <LayoutDashboard size={15} className="home-quickLink__icon" />
-            <span className="home-quickLink__label">Coach Hub</span>
-            <span className="home-quickLink__meta">{coachClubLabel}</span>
-            <ArrowRight size={13} className="home-quickLink__arrow" />
-          </Link>
-        ) : null}
+        <Link to={primaryHref} className="home-quickLink home-quickLink--coach">
+          <LayoutDashboard size={15} className="home-quickLink__icon" />
+          <span className="home-quickLink__label">{primaryLabel}</span>
+          <span className="home-quickLink__meta">{primaryMeta}</span>
+          <ArrowRight size={13} className="home-quickLink__arrow" />
+        </Link>
 
         <Link to="/best-team" className="home-quickLink home-quickLink--bestTeam">
           <Trophy size={15} className="home-quickLink__icon" />
@@ -812,7 +646,7 @@ function CoachHubBanner() {
   );
 }
 
-function FinalsHubSection({ fixturesVisible, coaches = [] }: { fixturesVisible: boolean; coaches?: HomeCoach[] }) {
+function FinalsHubSection({ fixturesVisible, coaches = [] }: { fixturesVisible: boolean; coaches?: Coach[] }) {
   const finalsFixturesQuery = useSeasonFixtures('afl26-season-two', {
     limit: 1000,
     enabled: fixturesVisible && FINALS_CONFIG.enabled,
@@ -850,20 +684,26 @@ function FinalsHubSection({ fixturesVisible, coaches = [] }: { fixturesVisible: 
 
   if (!FINALS_CONFIG.enabled || (!showPremiersVote && !showFixtureVote)) return null;
 
+  const headerTitle = showPremiersVote
+    ? 'Back the premiers before finals bounce'
+    : `${finalsVoteRoundLabel || 'Finals'} fan vote`;
+  const headerBody = showPremiersVote
+    ? 'The top eight are set. Lock in your flag pick before the bracket starts moving.'
+    : 'Cast your tip, back your club and watch the vote split before first bounce.';
+
   if (showPremiersVote) {
     return (
-      <section className="home-finalsHub home-finalsHub--compact">
+      <section className="home-finalsHub">
         <PremiersVoteCard
-          pollKey="afl26-season-two-premiers"
+          pollKey="afl26-season-two-premiers-coaches"
           options={premiersOptions}
-          coaches={coaches}
         />
       </section>
     );
   }
 
   return featuredFinalsFixture ? (
-    <section className="home-finalsHub home-finalsHub--compact">
+    <section className="home-finalsHub">
       <FinalsVoteCard
         fixtureId={featuredFinalsFixture.id}
         homeTeamName={
@@ -888,10 +728,150 @@ function FinalsHubSection({ fixturesVisible, coaches = [] }: { fixturesVisible: 
   ) : null;
 }
 
+function FinalsShowcaseSection({ fixturesVisible, coaches = [] }: { fixturesVisible: boolean; coaches?: Coach[] }) {
+  const finalsFixturesQuery = useSeasonFixtures('afl26-season-two', {
+    limit: 1000,
+    enabled: fixturesVisible && FINALS_CONFIG.enabled,
+  });
+
+  const allFinalsFixtures = useMemo(
+    () =>
+      Array.isArray(finalsFixturesQuery.data?.fixtures)
+        ? (finalsFixturesQuery.data?.fixtures || []).filter(isFinalsFixtureCandidate)
+        : [],
+    [finalsFixturesQuery.data?.fixtures],
+  );
+  const featuredFinalsFixture = useMemo(
+    () => pickFeaturedFinalsFixture(allFinalsFixtures),
+    [allFinalsFixtures],
+  );
+  const finalists = useMemo(() => collectFinalsTeams(allFinalsFixtures), [allFinalsFixtures]);
+  const finalsCoaches = useMemo(
+    () => filterFinalsCoaches(coaches, finalists),
+    [coaches, finalists],
+  );
+  const liveCount = useMemo(
+    () =>
+      allFinalsFixtures.filter((fixture) => normalizeFixtureStatus(fixture.status, fixture) === 'LIVE').length,
+    [allFinalsFixtures],
+  );
+  const completedCount = useMemo(
+    () =>
+      allFinalsFixtures.filter((fixture) => normalizeFixtureStatus(fixture.status, fixture) === 'FINAL').length,
+    [allFinalsFixtures],
+  );
+
+  if (!fixturesVisible || !FINALS_CONFIG.enabled) return null;
+
+  if (finalsFixturesQuery.isLoading && allFinalsFixtures.length === 0) {
+    return (
+      <section className="home-module home-module--finalsShowcase">
+        <Skeleton className="home-finalsShowcase__skeleton" />
+      </section>
+    );
+  }
+
+  const spotlightHome = featuredFinalsFixture ? getFixtureTeamName(featuredFinalsFixture, 'home') : 'TBC';
+  const spotlightAway = featuredFinalsFixture ? getFixtureTeamName(featuredFinalsFixture, 'away') : 'TBC';
+  const spotlightVenue = toText(featuredFinalsFixture?.venue);
+  const totalFinalsMatches = allFinalsFixtures.length || 9;
+  const clubCount = finalists.length || 8;
+  const nextActionCount = Math.max(totalFinalsMatches - completedCount, 0);
+  const spotlightTitle = featuredFinalsFixture
+    ? `${spotlightHome} vs ${spotlightAway}`
+    : 'Top eight locked in';
+  const spotlightBody = featuredFinalsFixture
+    ? `${getFixturePrimaryLabel(featuredFinalsFixture)} • ${getFixtureStatusLabel(featuredFinalsFixture)}${
+        spotlightVenue ? ` • ${spotlightVenue}` : ''
+      }`
+    : 'The top eight is set. The bracket is locked and the first finals matchups will land here as they go live.';
+  const spotlightHref = featuredFinalsFixture ? `/match-centre/${featuredFinalsFixture.id}` : '/fixtures';
+  const spotlightCta = featuredFinalsFixture ? 'Open Match Centre' : 'Open Finals Draw';
+  const finalsCoachCount = finalsCoaches.length || coaches.length || clubCount;
+  const progressLabel = allFinalsFixtures.length
+    ? liveCount > 0
+      ? `${liveCount} live now`
+      : `${completedCount} complete`
+    : 'Bracket locked';
+  const thirdMetricValue = allFinalsFixtures.length ? (liveCount > 0 ? liveCount : nextActionCount) : 4;
+  const thirdMetricLabel = allFinalsFixtures.length ? (liveCount > 0 ? 'Live' : 'To Play') : 'Weeks';
+
+  return (
+    <section className="home-module home-module--finalsShowcase">
+      <div className="home-finalsShowcase__header">
+        <div className="home-finalsShowcase__copy">
+          <span className="home-finalsShowcase__eyebrow">{getFinalsLabel(FINALS_CONFIG.week) || 'Finals Central'}</span>
+          <h2 className="home-finalsShowcase__title">Finals bracket</h2>
+          <p className="home-finalsShowcase__body">
+            Follow the path to the cup from one clean finals desk.
+          </p>
+        </div>
+        <Link to="/fixtures" className="home-finalsShowcase__inlineLink">
+          All Fixtures<ChevronRight size={13} />
+        </Link>
+      </div>
+
+      <div className="home-finalsShowcase__pills">
+        <span className="home-finalsShowcase__pill home-finalsShowcase__pill--accent">
+          {clubCount} clubs alive
+        </span>
+        <span className="home-finalsShowcase__pill">
+          {progressLabel}
+        </span>
+        {featuredFinalsFixture ? (
+          <span className="home-finalsShowcase__pill">
+            {getFixturePrimaryLabel(featuredFinalsFixture)}
+          </span>
+        ) : null}
+      </div>
+
+      <div className="home-finalsShowcase__bracket">
+        <FinalsBracket fixtures={allFinalsFixtures} seasonId="afl26-season-two" />
+      </div>
+
+      {featuredFinalsFixture ? (
+        <>
+          <div className="home-finalsShowcase__summary">
+            <div className="home-finalsShowcase__summaryCopy">
+              <span className="home-finalsShowcase__summaryEyebrow">Spotlight</span>
+              <h3 className="home-finalsShowcase__summaryTitle">{spotlightTitle}</h3>
+              <p className="home-finalsShowcase__summaryBody">{spotlightBody}</p>
+            </div>
+            <Link to={spotlightHref} className="home-finalsShowcase__cta home-finalsShowcase__cta--ghost">
+              {spotlightCta}
+            </Link>
+          </div>
+
+          <div className="home-finalsShowcase__metricStrip">
+            <span className="home-finalsShowcase__metricItem">
+              <strong>{totalFinalsMatches}</strong>
+              Matches
+            </span>
+            <span className="home-finalsShowcase__metricItem">
+              <strong>{finalsCoachCount}</strong>
+              Coaches
+            </span>
+            <span className="home-finalsShowcase__metricItem">
+              <strong>{thirdMetricValue}</strong>
+              {thirdMetricLabel}
+            </span>
+          </div>
+        </>
+      ) : null}
+
+      <div className={`home-finalsShowcase__actionRow ${featuredFinalsFixture ? '' : 'home-finalsShowcase__actionRow--single'}`}>
+        <Link to="/fixtures" className="home-finalsShowcase__cta">
+          Open Finals Draw
+        </Link>
+      </div>
+    </section>
+  );
+}
+
 export default function HomePage() {
   const { user } = useAuth();
   const fixturesVisible = useFixtureVisibility(user?.role);
-  const { data: coaches } = useHomeCoaches();
+  const { data: coaches = [] } = useHomeCoaches();
 
   return (
     <div className="home-page">
@@ -899,11 +879,10 @@ export default function HomePage() {
         <div className="home-topStack">
           <HeroMasterCard />
           <FinalsHubSection fixturesVisible={fixturesVisible} coaches={coaches} />
-          {fixturesVisible ? <FeaturedMatchCard /> : <LaunchPromoCard />}
+          {fixturesVisible ? <FeaturedMatchCard coaches={coaches} /> : <LaunchPromoCard />}
         </div>
         <CoachHubBanner />
-        <LadderSnapshot />
-        <LeadersPreview />
+        <FinalsShowcaseSection fixturesVisible={fixturesVisible} coaches={coaches} />
         <EgNewsSection />
       </main>
     </div>

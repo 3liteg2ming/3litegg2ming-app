@@ -88,21 +88,23 @@ function enrichWinChance(
   autoPremOdds: Record<string, number>,
 ): LadderEntry[] {
   return rows.map((r) => {
+    const isTopEight = r.pos <= 8;
     const seed = hash01(r.id);
     const base = 45 + seed * 40; // 45..85
     const rankBoost = (rows.length - r.pos) * 0.6;
     const winChance = clamp(base + rankBoost, 5, 95);
-    // Priority: admin-set → auto-generated → fallback formula
-    const adminOdd = adminPremOdds[r.teamKey];
-    const autoOdd = autoPremOdds[r.teamKey];
-    let premOdds: string;
-    if (adminOdd && adminOdd > 0) {
-      premOdds = adminOdd.toFixed(2);
-    } else if (autoOdd && autoOdd > 0) {
-      premOdds = autoOdd.toFixed(2);
-    } else {
-      const premBase = Math.max(1.5, 2 + (r.pos - 1) * 2.8 + seed * 3);
-      premOdds = premBase > 80 ? '81.00' : premBase.toFixed(2);
+    let premOdds = '—';
+    if (isTopEight) {
+      const adminOdd = adminPremOdds[r.teamKey];
+      const autoOdd = autoPremOdds[r.teamKey];
+      if (adminOdd && adminOdd > 0) {
+        premOdds = adminOdd.toFixed(2);
+      } else if (autoOdd && autoOdd > 0) {
+        premOdds = autoOdd.toFixed(2);
+      } else {
+        const premBase = Math.max(1.5, 2 + (r.pos - 1) * 2.8 + seed * 3);
+        premOdds = premBase > 80 ? '81.00' : premBase.toFixed(2);
+      }
     }
     return { ...r, winChance, premOdds };
   });

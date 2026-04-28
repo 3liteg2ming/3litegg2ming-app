@@ -5,7 +5,7 @@ import { resolveSeasonRecord } from './seasonResolver';
 import { requireSupabaseClient } from './supabaseClient';
 
 const supabase = requireSupabaseClient();
-const TTL_MS = 60_000;
+const TTL_MS = 120_000;
 
 export type LadderRowRecord = {
   season_id: string;
@@ -148,7 +148,7 @@ async function fetchLadderRowsForSeason(args: { seasonId: string; seasonSlug?: s
   if (fixtures.length === 0) {
     try {
       if (text(args.seasonSlug)) {
-        const result = await fetchSeasonFixtures(text(args.seasonSlug), { limit: 2000, offset: 0 });
+        const result = await fetchSeasonFixtures(text(args.seasonSlug), { limit: 1000, offset: 0 });
         fixtures = result.fixtures;
       }
     } catch {
@@ -158,7 +158,7 @@ async function fetchLadderRowsForSeason(args: { seasonId: string; seasonSlug?: s
 
   if (fixtures.length === 0) {
     try {
-      const result = await fetchSeasonFixturesBySeasonId(seasonId, { limit: 2000, offset: 0 });
+      const result = await fetchSeasonFixturesBySeasonId(seasonId, { limit: 1000, offset: 0 });
       fixtures = result.fixtures;
     } catch {
       return Array.from(rowsByTeamId.values()).sort((a, b) => a.team_name.localeCompare(b.team_name));

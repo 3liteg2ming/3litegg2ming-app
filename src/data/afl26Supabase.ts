@@ -19,6 +19,13 @@ export type AflMatch = {
 
   homeScore?: ScoreLine;
   awayScore?: ScoreLine;
+
+  // Finals metadata (optional)
+  isFinals?: boolean;
+  stageName?: string;
+  bracketSlot?: string | null;
+  homeSeed?: number;
+  awaySeed?: number;
 };
 
 export type AflRound = {
@@ -80,6 +87,11 @@ export async function getAfl26RoundsFromSupabase(opts?: { force?: boolean; seaso
       away: fixture.away_team_key || fixture.away_team_slug || 'unknown',
       homeScore: toScoreLine(fixture.home_goals, fixture.home_behinds, fixture.home_total),
       awayScore: toScoreLine(fixture.away_goals, fixture.away_behinds, fixture.away_total),
+      isFinals: fixture.is_finals,
+      stageName: fixture.stage_name || undefined,
+      bracketSlot: fixture.bracket_slot || undefined,
+      homeSeed: fixture.home_seed ?? undefined,
+      awaySeed: fixture.away_seed ?? undefined,
     });
   }
 

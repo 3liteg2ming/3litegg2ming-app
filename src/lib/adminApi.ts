@@ -1,4 +1,5 @@
 import { requireSupabaseClient } from './supabaseClient';
+import { saveAdminFixture, startSuperadminAutoSession } from './adminConsoleRepo';
 import { fetchAllFixtures, fetchSeasonFixturesBySeasonId, normalizeFixtureStatus } from './fixturesRepo';
 import type {
   AdminAuditLog,
@@ -27,6 +28,7 @@ import type {
 const supabase = requireSupabaseClient();
 
 const ADMIN_ERROR_MESSAGE = 'Admin privileges required';
+const ADMIN_WRITE_SESSION_MESSAGE = 'Admin write access is locked. Enter the admin passcode in the header to save manual results.';
 
 export class AdminPermissionError extends Error {
   constructor(message = ADMIN_ERROR_MESSAGE) {
@@ -41,6 +43,27 @@ function unwrapRpcError(error: unknown): never {
     throw new AdminPermissionError();
   }
   throw new Error(message);
+}
+
+function isMissingRpcError(error: unknown): boolean {
+  const message = String((error as { message?: string })?.message || '').toLowerCase();
+  return (
+    message.includes('does not exist') ||
+    message.includes('undefined function') ||
+    message.includes('could not find the function') ||
+    message.includes('schema cache')
+  );
+}
+
+function isAdminSessionError(error: unknown): boolean {
+  const message = String((error as { message?: string })?.message || '').toLowerCase();
+  return (
+    message.includes('session expired') ||
+    message.includes('admin session') ||
+    message.includes('invalid token') ||
+    message.includes('token') ||
+    message.includes('passcode')
+  );
 }
 
 function rangeFromPage({ page, pageSize }: AdminPageParams): [number, number] {
@@ -669,6 +692,21 @@ export async function clearFixtureScores(fixtureId: string) {
   return data as AdminFixture;
 }
 
+export async function seedFinalsWeek1(seasonId: string): Promise<{ created: number; round: number; season_id: string }> {
+  const { data, error } = await supabase.rpc('eg_seed_finals_week1', {
+    p_season_id: seasonId,
+  });
+  if (error) unwrapRpcError(error);
+  return (data || { created: 0, round: 0, season_id: seasonId }) as { created: number; round: number; season_id: string };
+}
+
+export async function progressFinalsBracket(seasonId: string): Promise<void> {
+  const { error } = await supabase.rpc('eg_finals_progression', {
+    p_season_id: seasonId,
+  });
+  if (error) unwrapRpcError(error);
+}
+
 export async function setOcrQueueStatus(args: {
   queueId: string;
   status: EgJobStatus;
@@ -749,6 +787,108 @@ export async function fetchFixtureDetail(fixtureId: string): Promise<AdminFixtur
   return data as AdminFixture | null;
 }
 
+async function fetchFixtureWriteRow(fixtureId: string): Promise<Record<string, unknown>> {
+  const { data, error } = await supabase
+    .from('eg_fixtures')
+    .select('*')
+    .eq('id', fixtureId)
+    .single();
+
+  if (error) unwrapRpcError(error);
+  return normalizeJsonObject(data);
+}
+
+async function saveFixtureResultViaAdminSession(args: {
+  token: string;
+  fixtureId: string;
+  homeGoals: number | null;
+  homeBehinds: number | null;
+  homeTotal: number | null;
+  awayGoals: number | null;
+  awayBehinds: number | null;
+  awayTotal: number | null;
+  status?: string | null;
+}): Promise<AdminFixture> {
+  const existing = await fetchFixtureWriteRow(args.fixtureId);
+  const seasonId = String(existing.season_id || '').trim();
+  if (!seasonId) {
+    throw new Error('Fixture is missing a season_id and cannot be saved from admin tools.');
+  }
+
+  const payload: Record<string, unknown> = {
+    id: String(existing.id || args.fixtureId),
+    season_id: seasonId,
+    round: existing.round ?? null,
+    week_index: existing.week_index ?? null,
+    stage_name: existing.stage_name ?? null,
+    stage_index: existing.stage_index ?? null,
+    bracket_slot: existing.bracket_slot ?? null,
+    next_fixture_id: existing.next_fixture_id ?? null,
+    is_preseason: existing.is_preseason ?? false,
+    status: args.status ?? existing.status ?? 'SCHEDULED',
+    start_time: existing.start_time ?? null,
+    venue: existing.venue ?? null,
+    home_team_id: existing.home_team_id ?? null,
+    away_team_id: existing.away_team_id ?? null,
+    home_goals: args.homeGoals,
+    home_behinds: args.homeBehinds,
+    home_total: args.homeTotal,
+    away_goals: args.awayGoals,
+    away_behinds: args.awayBehinds,
+    away_total: args.awayTotal,
+  };
+
+  if (Object.prototype.hasOwnProperty.call(existing, 'allow_late_submission')) {
+    payload.allow_late_submission = existing.allow_late_submission ?? false;
+  }
+
+  try {
+    await saveAdminFixture(args.token, payload);
+  } catch (error) {
+    if (isAdminSessionError(error)) {
+      throw new Error('Admin write access expired. Unlock the passcode in the header and try again.');
+    }
+    throw error;
+  }
+
+  const refreshed = await fetchFixtureDetail(args.fixtureId);
+  if (!refreshed) {
+    throw new Error('Fixture saved but could not be reloaded.');
+  }
+  return refreshed;
+}
+
+async function trySaveFixtureResultViaSuperadminSession(args: {
+  fixtureId: string;
+  homeGoals: number | null;
+  homeBehinds: number | null;
+  homeTotal: number | null;
+  awayGoals: number | null;
+  awayBehinds: number | null;
+  awayTotal: number | null;
+  status?: string | null;
+}): Promise<AdminFixture | null> {
+  try {
+    const { response } = await startSuperadminAutoSession();
+    const token = String(response?.token || '').trim();
+    if (!response?.ok || !token) return null;
+
+    return await saveFixtureResultViaAdminSession({
+      token,
+      fixtureId: args.fixtureId,
+      homeGoals: args.homeGoals,
+      homeBehinds: args.homeBehinds,
+      homeTotal: args.homeTotal,
+      awayGoals: args.awayGoals,
+      awayBehinds: args.awayBehinds,
+      awayTotal: args.awayTotal,
+      status: args.status ?? null,
+    });
+  } catch {
+    return null;
+  }
+}
+
 export type WormQuarterPoint = {
   q: 'Q1' | 'Q2' | 'Q3' | 'Q4';
   home: number;
@@ -760,6 +900,13 @@ export async function updateFixtureQuarterScores(
   points: WormQuarterPoint[],
 ): Promise<void> {
   const payload = { quarterProgression: points };
+  const rpcResult = await supabase.rpc('eg_admin_update_fixture_result', {
+    p_fixture_id: fixtureId,
+    p_quarter_scores_json: payload,
+  });
+  if (!rpcResult.error) return;
+  if (!isMissingRpcError(rpcResult.error)) unwrapRpcError(rpcResult.error);
+
   const { error } = await supabase
     .from('eg_fixtures')
     .update({ quarter_scores_json: payload })
@@ -834,48 +981,44 @@ export async function updateFixtureScores(args: {
       ? args.awayGoals * 6 + args.awayBehinds
       : null;
 
-  // Try token-gated RPC if token is available
+  const roleBasedResult = await supabase.rpc('eg_admin_update_fixture_result', {
+    p_fixture_id: args.fixtureId,
+    p_home_goals: args.homeGoals,
+    p_home_behinds: args.homeBehinds,
+    p_away_goals: args.awayGoals,
+    p_away_behinds: args.awayBehinds,
+    p_status: args.status ?? null,
+  });
+  if (!roleBasedResult.error) return roleBasedResult.data as AdminFixture;
+  if (!isMissingRpcError(roleBasedResult.error)) unwrapRpcError(roleBasedResult.error);
+
   if (args.token) {
-    const tokenResult = await supabase.rpc('eg_admin_update_fixture_scores', {
-      p_token: args.token,
-      p_fixture_id: args.fixtureId,
-      p_home_goals: args.homeGoals,
-      p_home_behinds: args.homeBehinds,
-      p_home_total: homeTotal,
-      p_away_goals: args.awayGoals,
-      p_away_behinds: args.awayBehinds,
-      p_away_total: awayTotal,
-      p_status: args.status ?? null,
+    return saveFixtureResultViaAdminSession({
+      token: args.token,
+      fixtureId: args.fixtureId,
+      homeGoals: args.homeGoals,
+      homeBehinds: args.homeBehinds,
+      homeTotal,
+      awayGoals: args.awayGoals,
+      awayBehinds: args.awayBehinds,
+      awayTotal,
+      status: args.status ?? null,
     });
-    if (!tokenResult.error) return tokenResult.data as AdminFixture;
   }
 
-  // Fallback: direct update via eg_admin_update_fixture (role-based)
-  // plus a separate score update
-  const { error: statusErr } = await supabase
-    .from('eg_fixtures')
-    .update({
-      home_goals: args.homeGoals,
-      home_behinds: args.homeBehinds,
-      home_total: homeTotal,
-      away_goals: args.awayGoals,
-      away_behinds: args.awayBehinds,
-      away_total: awayTotal,
-      ...(args.status ? { status: args.status } : {}),
-      corrected_at: new Date().toISOString(),
-    })
-    .eq('id', args.fixtureId);
+  const superadminFallback = await trySaveFixtureResultViaSuperadminSession({
+    fixtureId: args.fixtureId,
+    homeGoals: args.homeGoals,
+    homeBehinds: args.homeBehinds,
+    homeTotal,
+    awayGoals: args.awayGoals,
+    awayBehinds: args.awayBehinds,
+    awayTotal,
+    status: args.status ?? null,
+  });
+  if (superadminFallback) return superadminFallback;
 
-  if (statusErr) unwrapRpcError(statusErr);
-
-  const { data, error } = await supabase
-    .from('eg_fixtures')
-    .select('*')
-    .eq('id', args.fixtureId)
-    .single();
-
-  if (error) unwrapRpcError(error);
-  return data as AdminFixture;
+  throw new Error(ADMIN_WRITE_SESSION_MESSAGE);
 }
 
 export async function upsertFixturePlayerStats(

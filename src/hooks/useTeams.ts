@@ -5,7 +5,7 @@ export function useTeamOptions() {
   return useQuery<TeamOption[]>({
     queryKey: ['teams', 'options'],
     queryFn: () => fetchTeamOptions(),
-    staleTime: 45_000,
-    gcTime: 1_200_000,
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
   });
 }

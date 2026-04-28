@@ -38,7 +38,6 @@ import {
 } from 'lucide-react';
 
 import { fetchSeasonFixturesBySeasonId } from '../lib/fixturesRepo';
-import { isRoundVisible } from '../lib/visibleRounds';
 import '../styles/admin-console.css';
 
 type AdminTab = 'overview' | 'fixtures' | 'users' | 'registrations' | 'diagnostics';
@@ -428,8 +427,7 @@ export default function AdminConsolePage() {
     const values = fixtures
       .map((f) => (competitionKey === 'preseason' ? f.week_index : f.round))
       .filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
-    const unique = Array.from(new Set(values)).sort((a, b) => a - b);
-    return unique.filter((r) => isRoundVisible(r));
+    return Array.from(new Set(values)).sort((a, b) => a - b);
   }, [competitionKey, fixtures]);
 
   const filteredFixtures = useMemo(() => {
@@ -487,8 +485,6 @@ export default function AdminConsolePage() {
         const fixtureId = text(fixture.id);
         if (!fixtureId) return false;
         if (fixture.status !== 'SCHEDULED' && fixture.status !== 'PENDING_RESULTS') return false;
-        const roundValue = competitionKey === 'preseason' ? fixture.week_index : fixture.round;
-        if (typeof roundValue === 'number' && !isRoundVisible(roundValue)) return false;
         return !submissionCountByFixtureId.has(fixtureId);
       })
       .map((fixture) => {
@@ -637,7 +633,7 @@ export default function AdminConsolePage() {
       } else if (/function error \(404\)|not found/i.test(raw)) {
         setGateError('Edge Function `admin-passcode` is not deployed.');
       } else if (/eg_admin_exchange_passcode|does not exist/i.test(raw)) {
-        setGateError('Admin RPC is missing. Run migration: 20260303_admin_passcode_rpc_fallback.sql');
+        setGateError('Admin RPC is missing. Run migration: 20260303000100_admin_passcode_rpc_fallback.sql');
       } else if (/server config missing/i.test(raw)) {
         setGateError('Function is deployed but missing env vars (ADMIN_PASSCODE or service role envs).');
       } else {

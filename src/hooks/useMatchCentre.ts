@@ -5,7 +5,7 @@ export function useMatchCentre(fixtureId?: string) {
   return useQuery<MatchCentreModel>({
     queryKey: ['match-centre', fixtureId || 'latest'],
     queryFn: () => (fixtureId ? fetchMatchCentre(fixtureId) : fetchLatestMatchCentre()),
-    staleTime: 45_000,
-    gcTime: 1_200_000,
+    staleTime: 2 * 60_000,
+    gcTime: 30 * 60_000,
   });
 }

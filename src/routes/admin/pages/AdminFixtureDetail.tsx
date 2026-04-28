@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AdminPermissionError,
+  clearFixtureScores,
   fetchFixtureDetail,
   fetchLatestSuccessfulFixtureOcrDraft,
   fetchFixtureOcrData,
@@ -40,6 +41,13 @@ type ScoreDraft = {
   status: string;
 };
 
+type ManualResultPreset = {
+  key: string;
+  label: string;
+  description: string;
+  draft: ScoreDraft;
+};
+
 type PlayerStatDraft = AdminFixturePlayerStat & { dirty?: boolean; _unmatched?: boolean };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -47,6 +55,26 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 type WormDraft = WormQuarterPoint;
 
 const QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4'] as const;
+const MANUAL_RESULT_PRESETS: ManualResultPreset[] = [
+  {
+    key: 'home-awarded',
+    label: 'Award Home Win',
+    description: 'Marks the home side as winner with a lightweight walkover scoreline.',
+    draft: { homeGoals: '1', homeBehinds: '0', awayGoals: '0', awayBehinds: '1', status: 'FINAL' },
+  },
+  {
+    key: 'away-awarded',
+    label: 'Award Away Win',
+    description: 'Marks the away side as winner with a lightweight walkover scoreline.',
+    draft: { homeGoals: '0', homeBehinds: '1', awayGoals: '1', awayBehinds: '0', status: 'FINAL' },
+  },
+  {
+    key: 'draw-awarded',
+    label: 'Set Final Draw',
+    description: 'Useful when the game is being recorded as a final draw without a submission.',
+    draft: { homeGoals: '1', homeBehinds: '0', awayGoals: '1', awayBehinds: '0', status: 'FINAL' },
+  },
+];
 
 function readExistingWormPoints(quarterScoresJson: unknown): WormDraft[] | null {
   if (!quarterScoresJson) return null;
@@ -314,7 +342,7 @@ export default function AdminFixtureDetail() {
       });
     },
     onSuccess: () => {
-      pushToast('Fixture scores saved.', 'success');
+      pushToast('Fixture result saved.', 'success');
       queryClient.invalidateQueries({ queryKey: ['admin', 'fixture-detail', fixtureId] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'fixtures'] });
     },
@@ -322,7 +350,29 @@ export default function AdminFixtureDetail() {
       if (error instanceof AdminPermissionError) {
         pushToast('Admin privileges required.', 'error');
       } else {
-        pushToast(error instanceof Error ? error.message : 'Failed to save scores', 'error');
+        pushToast(error instanceof Error ? error.message : 'Failed to save result', 'error');
+      }
+    },
+  });
+
+  const clearScoresMutation = useMutation({
+    mutationFn: async () => {
+      if (!fixtureId) throw new Error('No fixture');
+      return clearFixtureScores(fixtureId);
+    },
+    onSuccess: () => {
+      setScoreDraft(null);
+      setWormDraft(null);
+      setWormDirty(false);
+      pushToast('Fixture result cleared.', 'success');
+      queryClient.invalidateQueries({ queryKey: ['admin', 'fixture-detail', fixtureId] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'fixtures'] });
+    },
+    onError: (error) => {
+      if (error instanceof AdminPermissionError) {
+        pushToast('Admin privileges required.', 'error');
+      } else {
+        pushToast(error instanceof Error ? error.message : 'Failed to clear result', 'error');
       }
     },
   });
@@ -514,6 +564,13 @@ export default function AdminFixtureDetail() {
       return next;
     });
     setWormDirty(true);
+  }
+
+  function applyScorePreset(preset: ManualResultPreset) {
+    setScoreDraft({ ...preset.draft });
+    setWormDraft(null);
+    setWormDirty(false);
+    pushToast(`${preset.label} loaded. Review the scoreline, then save the result.`, 'info');
   }
 
   function updatePlayerDraft(playerId: string, field: keyof AdminFixturePlayerStat, value: string) {
@@ -1567,18 +1624,63 @@ export default function AdminFixtureDetail() {
       {activeSection === 'scores' ? (
         <AdminCard
           title="Fixture Scores"
-          subtitle="Edit team scores and status"
+          subtitle="Save a manual final result without coach submissions or screenshots"
           actions={
-            <button
-              type="button"
-              className="eg-fd-btn eg-fd-btn-save"
-              disabled={scoreMutation.isPending}
-              onClick={() => scoreMutation.mutate()}
-            >
-              {scoreMutation.isPending ? 'Saving...' : 'Save Scores'}
-            </button>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="eg-fd-btn eg-fd-btn-danger"
+                disabled={clearScoresMutation.isPending}
+                onClick={() => {
+                  if (!window.confirm('Clear the saved result, worm, and team stats for this fixture?')) return;
+                  clearScoresMutation.mutate();
+                }}
+              >
+                {clearScoresMutation.isPending ? 'Clearing...' : 'Clear Result'}
+              </button>
+              <button
+                type="button"
+                className="eg-fd-btn eg-fd-btn-save"
+                disabled={scoreMutation.isPending}
+                onClick={() => scoreMutation.mutate()}
+              >
+                {scoreMutation.isPending ? 'Saving...' : 'Save Result'}
+              </button>
+            </div>
           }
         >
+          <div className="eg-admin-highlight-block" style={{ marginBottom: 12 }}>
+            <p className="eg-admin-muted" style={{ margin: 0 }}>
+              Admin overrides here write straight to the fixture result. They do not need a submission, photos, or OCR.
+              If the match was never played, use an awarded-result preset below, then save.
+            </p>
+            {!adminToken() ? (
+              <p className="eg-admin-muted" style={{ margin: '8px 0 0' }}>
+                If save is locked, unlock <strong>Admin Write Access</strong> in the header once, then try again.
+              </p>
+            ) : null}
+          </div>
+
+          <div className="eg-admin-section-block" style={{ marginBottom: 12 }}>
+            <p style={{ margin: '0 0 8px', fontSize: '0.82rem', fontWeight: 700 }}>Awarded Result Presets</p>
+            <div className="eg-admin-inline-buttons" style={{ flexWrap: 'wrap' }}>
+              {MANUAL_RESULT_PRESETS.map((preset) => (
+                <button
+                  key={preset.key}
+                  type="button"
+                  className="eg-fd-btn"
+                  onClick={() => applyScorePreset(preset)}
+                  title={preset.description}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+            <p className="eg-admin-muted" style={{ margin: '8px 0 0', fontSize: '0.78rem' }}>
+              Presets use small non-zero losing scores so the ladder percentage stays valid. You can still edit the goals and behinds before saving.
+            </p>
+          </div>
+
           <div className="eg-admin-score-grid">
             <fieldset className="eg-admin-score-card">
               <legend>{homeName} (Home)</legend>

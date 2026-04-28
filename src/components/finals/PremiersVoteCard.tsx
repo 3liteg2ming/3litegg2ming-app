@@ -3,6 +3,7 @@ import { Shield, Trophy, X } from 'lucide-react';
 import SmartImg from '../SmartImg';
 import { usePredictionVoting } from '../../hooks/usePredictionVoting';
 import { usePredictionVotingSubmit } from '../../hooks/usePredictionVotingSubmit';
+import { useAuth } from '../../state/auth/AuthProvider';
 import type { PredictionVoteOption } from '../../types/predictionVoting';
 import '../../styles/premiers-vote-card.css';
 
@@ -13,19 +14,9 @@ export type PremiersVoteCardOption = PredictionVoteOption & {
   percentage?: number;
 };
 
-export type Coach = {
-  user_id?: string;
-  first_name?: string;
-  last_name?: string;
-  team_name?: string;
-  team_id?: string;
-  avatar_url?: string | null;
-};
-
 type PremiersVoteCardProps = {
   pollKey: string;
   options: PremiersVoteCardOption[];
-  coaches?: Coach[];
 };
 
 function formatPercentage(value?: number) {
@@ -46,10 +37,18 @@ function PremiersVoteCardSkeleton() {
   );
 }
 
-export default function PremiersVoteCard({ pollKey, options, coaches = [] }: PremiersVoteCardProps) {
+export default function PremiersVoteCard({ pollKey, options }: PremiersVoteCardProps) {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = React.useState(false);
   const [optimisticVote, setOptimisticVote] = React.useState<string | null>(null);
   const normalizedPollKey = String(pollKey || '').trim();
+  const coachVoterKey = React.useMemo(() => {
+    const userId = String(user?.id || '').trim();
+    const teamId = String(user?.teamId || '').trim();
+    if (!userId || !teamId) return '';
+    return `coach:${userId}`;
+  }, [user?.id, user?.teamId]);
+  const canVoteAsCoach = Boolean(coachVoterKey);
   const normalizedOptions = options.map((option) => ({
     ...option,
     key: String(option.key || '').trim().toLowerCase(),
@@ -67,8 +66,9 @@ export default function PremiersVoteCard({ pollKey, options, coaches = [] }: Pre
   } = usePredictionVoting(
     normalizedPollKey,
     normalizedOptions.map((option) => ({ key: option.key, label: option.label })),
+    coachVoterKey || null,
   );
-  const { submitVote, isSubmitting, error: submitError } = usePredictionVotingSubmit();
+  const { submitVote, isSubmitting, error: submitError } = usePredictionVotingSubmit(coachVoterKey || null);
 
   const activeError = submitError || error;
   const voteMap = new Map(voteOptions.map((option) => [option.key, option]));
@@ -79,25 +79,18 @@ export default function PremiersVoteCard({ pollKey, options, coaches = [] }: Pre
   const currentSelection = normalizedOptions.find((option) => option.key === selectedVoteKey) || null;
   const featuredOptions = normalizedOptions.slice(0, 3);
 
-  // Find coaches backing the leading team
-  const leadingTeamCoaches = React.useMemo(() => {
-    if (!leader?.option || !coaches.length) return [];
-    const leadingTeamName = leader.option.label.toLowerCase();
-    return coaches.filter((coach) =>
-      coach.team_name && coach.team_name.toLowerCase() === leadingTeamName,
-    );
-  }, [leader, coaches]);
-
   const helperCopy = activeError
     ? 'We could not refresh the public totals just now, but you can still lock in your premiers tip.'
+    : !canVoteAsCoach
+      ? 'Sign in as your assigned coach account to cast the single live premiers vote for your club.'
     : mode === 'local'
       ? selectedVoteKey
-        ? 'Your premiers tip is saved on this device. Public totals will appear once the shared poll is available.'
-        : 'Pick your premiers now. Your tip will stay saved on this device until the live poll backend is available.'
-      : 'You can change your premiers tip any time before finals bounce.';
+        ? 'Your coach vote is saved. Public totals will appear once the shared poll is available.'
+        : 'Every coach gets one live vote. Lock in your premiers tip before finals bounce.'
+      : 'One live vote per coach. You can change your tip before first bounce.';
 
   const handleVote = async (optionKey: string) => {
-    if (!normalizedPollKey || !optionKey || isSubmitting || selectedVoteKey === optionKey) return;
+    if (!canVoteAsCoach || !normalizedPollKey || !optionKey || isSubmitting || selectedVoteKey === optionKey) return;
     setOptimisticVote(optionKey);
     try {
       await submitVote(normalizedPollKey, optionKey);
@@ -163,7 +156,7 @@ export default function PremiersVoteCard({ pollKey, options, coaches = [] }: Pre
             </h3>
             <p className="premiersVoteTrigger__subline">
               {leader?.result?.votes
-                ? `${leader.option.label} leads fan picks on ${leader.result.pct}%.`
+                ? `${leader.option.label} leads with ${leader.result.votes} vote${leader.result.votes === 1 ? '' : 's'}.`
                 : 'Pick your flag favourite before finals begin.'}
             </p>
           </div>
@@ -195,14 +188,16 @@ export default function PremiersVoteCard({ pollKey, options, coaches = [] }: Pre
           <span className="premiersVoteCard__voteSummary">
             {mode === 'live'
               ? totalVotes > 0
-                ? `${totalVotes} total vote${totalVotes === 1 ? '' : 's'}`
+                ? `${totalVotes} coach vote${totalVotes === 1 ? '' : 's'}`
                 : 'No public votes yet'
               : selectedVoteKey
-                ? 'Tip saved on this device'
-                : 'Tap to pick your premiers'}
+                ? 'Coach vote saved'
+                : canVoteAsCoach
+                  ? 'Tap to lock your club vote'
+                  : 'Coach sign-in required'}
           </span>
           <span className={`premiersVoteTrigger__helper ${activeError ? 'is-error' : ''}`}>
-            Tap to vote
+            {canVoteAsCoach ? 'Tap to vote' : 'View totals'}
           </span>
         </div>
       </button>
@@ -246,7 +241,9 @@ export default function PremiersVoteCard({ pollKey, options, coaches = [] }: Pre
                     ? 'Saving your tip...'
                     : currentSelection
                       ? `${currentSelection.label} locked in`
-                      : 'Tap a club to save instantly'}
+                      : canVoteAsCoach
+                        ? 'Tap a club to save instantly'
+                        : 'Coach sign-in required to vote'}
                 </span>
               </div>
 
@@ -265,7 +262,7 @@ export default function PremiersVoteCard({ pollKey, options, coaches = [] }: Pre
                       type="button"
                       className={`premiersVoteCard__option ${isSelected ? 'is-selected' : ''}`}
                       aria-pressed={isSelected}
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || !canVoteAsCoach}
                       onClick={() => void handleVote(option.key)}
                     >
                       <div className="premiersVoteCard__optionTop">
@@ -298,84 +295,21 @@ export default function PremiersVoteCard({ pollKey, options, coaches = [] }: Pre
                 })}
               </div>
 
-              {leadingTeamCoaches.length > 0 && leader?.result?.votes && (
-                <div className="premiersVoteCard__leaderCoachesSection">
-                  <div className="premiersVoteCard__leaderCoachesHeader">
-                    <span className="premiersVoteCard__leaderCoachesLabel">
-                      Coaches backing {leader.option.label}
-                    </span>
-                    <span className="premiersVoteCard__leaderCoachesPct">
-                      {leader.result.pct}%
-                    </span>
-                  </div>
-                  <div className="premiersVoteCard__leaderCoachesList">
-                    {leadingTeamCoaches.map((coach) => (
-                      <div key={coach.user_id || coach.team_id} className="premiersVoteCard__leaderCoachChip">
-                        {coach.avatar_url ? (
-                          <img
-                            src={coach.avatar_url}
-                            alt={`${coach.first_name} ${coach.last_name}`}
-                            className="premiersVoteCard__leaderCoachAvatar"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <span className="premiersVoteCard__leaderCoachInitial">
-                            {(coach.first_name?.charAt(0) || '') + (coach.last_name?.charAt(0) || '')}
-                          </span>
-                        )}
-                        <span className="premiersVoteCard__leaderCoachName">
-                          {coach.first_name} {coach.last_name}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {coaches.length > 0 && hasVotes && (
-                <div className="premiersVoteCard__coachesSection">
-                  <h4 className="premiersVoteCard__coachesTitle">Coaches Participating</h4>
-                  <div className="premiersVoteCard__coachesList">
-                    {coaches.map((coach) => (
-                      <div key={coach.user_id || coach.team_id} className="premiersVoteCard__coachChip">
-                        {coach.avatar_url ? (
-                          <img
-                            src={coach.avatar_url}
-                            alt={`${coach.first_name} ${coach.last_name}`}
-                            className="premiersVoteCard__coachAvatar"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <span className="premiersVoteCard__coachInitial">
-                            {(coach.first_name?.charAt(0) || '') + (coach.last_name?.charAt(0) || '')}
-                          </span>
-                        )}
-                        <span className="premiersVoteCard__coachName">
-                          {coach.first_name} {coach.last_name}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               <div className="premiersVoteCard__footer">
                 <div className="premiersVoteCard__voteSummary">
                   {mode === 'live'
                     ? totalVotes > 0
-                      ? `${totalVotes} total vote${totalVotes === 1 ? '' : 's'}`
+                      ? `${totalVotes} coach vote${totalVotes === 1 ? '' : 's'}`
                       : 'No public votes yet'
                     : selectedVoteKey
-                      ? 'Private tip saved on this device'
-                      : 'Choose your premiers tip'}
+                      ? 'Coach vote saved'
+                      : canVoteAsCoach
+                        ? 'Choose your premiers tip'
+                        : 'Coach sign-in required to vote'}
                 </div>
                 {leader?.result?.votes ? (
                   <div className="premiersVoteCard__leaderCallout">
-                    Leader: {leader.option.label} on {leader.result.pct}%
+                    Leader: {leader.option.label} with {leader.result.votes} vote{leader.result.votes === 1 ? '' : 's'}
                   </div>
                 ) : null}
                 <div className={`premiersVoteCard__helper ${activeError ? 'is-error' : ''}`}>{helperCopy}</div>

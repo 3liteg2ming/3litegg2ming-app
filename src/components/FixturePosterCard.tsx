@@ -54,7 +54,7 @@ function hexToRgb(hex: string) {
 }
 
 const TINT_OVERRIDES: Record<string, string> = {
-  collingwood: '#C4A942',
+  collingwood: '#2a2d30',
   carlton: '#1E4ED8',
   brisbane: '#7A1933',
   sydney: '#C71F2D',

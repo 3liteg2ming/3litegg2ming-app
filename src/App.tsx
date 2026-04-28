@@ -2,6 +2,8 @@ import { Suspense, lazy, useEffect, useRef, useState, type CSSProperties } from 
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+import { attachQueryPersister, hydrateQueryClient, prefetchPublicPageData } from './lib/queryPersist';
+
 import ComingSoonPage from './pages/ComingSoonPage';
 import MatchCentrePage from './pages/MatchCentrePage';
 import MembersPage from './pages/MembersPage';
@@ -26,13 +28,31 @@ import './styles/error-boundary.css';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 45_000,
-      gcTime: 1_200_000,
+      // Aggressive caching for the finals window: data within a session never
+      // refetches automatically, second visits hydrate instantly from
+      // localStorage, and a manual reload forces fresh data.
+      staleTime: 5 * 60_000,
+      gcTime: 30 * 60_000,
       refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      refetchOnMount: true,
       retry: 1,
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
+    },
+    mutations: {
+      retry: 0,
     },
   },
 });
+
+// Restore previously-cached query results from localStorage so the public
+// pages render instantly on the next visit — the network refresh runs in the
+// background and updates the UI when ready.
+hydrateQueryClient(queryClient);
+attachQueryPersister(queryClient);
+// Warm the cache for every public page the moment the app boots so navigating
+// between Home / Fixtures / Ladder / Teams feels instant.
+prefetchPublicPageData(queryClient);
 
 const HomePage = lazy(() => import('./pages/HomePage'));
 const AFL26FixturesPage = lazy(() => import('./pages/AFL26FixturesPage'));

@@ -9,11 +9,11 @@ import {
   listMissingPlayerStatsFixtures,
   listSeasons,
   listTeams,
+  seedFinalsWeek1,
   swapFixtureTeams,
   updateFixture,
 } from '@/lib/adminApi';
 import { runFixturePlayerStatsOcrWorkflow } from '@/lib/adminPlayerStatsOcrWorkflow';
-import { isRoundVisible } from '@/lib/visibleRounds';
 import { useAdminLayoutContext } from '../AdminLayout';
 import { formatDateTime, useDebouncedValue } from '../useAdminTools';
 import { AdminCard, EmptyState } from './AdminUi';
@@ -33,6 +33,49 @@ export default function AdminFixtures() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [runningRound, setRunningRound] = useState<number | null>(null);
   const [runningFixtureIds, setRunningFixtureIds] = useState<string[]>([]);
+  const [seedingFinals, setSeedingFinals] = useState(false);
+  const [seedNotice, setSeedNotice] = useState<{ type: 'info' | 'success' | 'error'; message: string } | null>(null);
+
+  async function handleSeedFinalsWeek1() {
+    if (seasonId === 'all') {
+      setSeedNotice({ type: 'error', message: 'Select a season first, then seed finals from the locked top eight.' });
+      pushToast('Select a season to seed finals from.', 'error');
+      return;
+    }
+    setSeedingFinals(true);
+    setSeedNotice({
+      type: 'info',
+      message: 'Refreshing Finals Week 1 from the current ladder. Existing finals slots will be updated if they already exist.',
+    });
+    try {
+      const result = await seedFinalsWeek1(seasonId);
+      setSeedNotice({
+        type: 'success',
+        message: `Finals Week 1 refreshed successfully. ${result.created || 4} fixture slots are now seeded in Round ${result.round}.`,
+      });
+      pushToast(`Seeded or refreshed ${result.created || 4} finals fixtures (Round ${result.round}).`, 'success');
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin', 'fixtures'] }),
+        queryClient.invalidateQueries({ queryKey: ['fixtures'] }),
+      ]);
+    } catch (error) {
+      setSeedNotice({
+        type: 'error',
+        message:
+          error instanceof AdminPermissionError
+            ? error.message
+            : `Failed to seed finals: ${error instanceof Error ? error.message : String(error)}`,
+      });
+      pushToast(
+        error instanceof AdminPermissionError
+          ? error.message
+          : `Failed to seed finals: ${error instanceof Error ? error.message : String(error)}`,
+        'error',
+      );
+    } finally {
+      setSeedingFinals(false);
+    }
+  }
 
   const search = useDebouncedValue((searchInput || globalSearch).trim(), 300);
   const roundFilter = roundInput ? Number(roundInput) : null;
@@ -153,8 +196,7 @@ export default function AdminFixtures() {
       if (!map.has(r)) map.set(r, []);
       map.get(r)!.push(f);
     }
-    const entries = Array.from(map.entries()).sort((a, b) => b[0] - a[0]);
-    return entries.filter(([round]) => isRoundVisible(round));
+    return Array.from(map.entries()).sort((a, b) => b[0] - a[0]);
   }, [allFixtures]);
 
   const hasActiveFilters = seasonId !== 'all' || teamId !== 'all' || status !== 'all' || roundInput !== '' || searchInput !== '';
@@ -310,7 +352,29 @@ export default function AdminFixtures() {
               Clear
             </button>
           ) : null}
+          <button
+            type="button"
+            className="eg-fx-clear-btn"
+            onClick={handleSeedFinalsWeek1}
+            disabled={seedingFinals}
+            title={seasonId === 'all' ? 'Select a season first' : 'Seed Finals Week 1 from current ladder'}
+            style={{ marginLeft: 'auto' }}
+          >
+            {seedingFinals ? 'Seeding…' : 'Seed Finals Week 1'}
+          </button>
         </div>
+        {seedNotice ? (
+          <p
+            className={
+              seedNotice.type === 'error'
+                ? 'eg-admin-error'
+                : `eg-admin-muted eg-fx-seed-notice eg-fx-seed-notice--${seedNotice.type}`
+            }
+            style={{ margin: '8px 0 0' }}
+          >
+            {seedNotice.message}
+          </p>
+        ) : null}
 
         {/* ─── COLLAPSIBLE FILTERS ────────────────────── */}
         {filtersOpen ? (

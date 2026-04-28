@@ -201,6 +201,27 @@ export async function exchangeAdminPasscode(code: string): Promise<PasscodeAttem
   throw e;
 }
 
+export async function startSuperadminAutoSession(): Promise<PasscodeAttemptResult> {
+  const diagnostics: string[] = [];
+  const res = await supabase.rpc('eg_admin_superadmin_auto_session');
+  if (res.error) {
+    diagnostics.push(`[RPC] eg_admin_superadmin_auto_session ${res.error.message || 'request failed'}`);
+    const e = new Error(res.error.message || 'Unable to start super admin session.');
+    (e as any).diagnostics = diagnostics;
+    throw e;
+  }
+
+  diagnostics.push('[RPC] eg_admin_superadmin_auto_session response received');
+  const payload = parsePasscodePayload(res.data);
+  if (payload?.ok && text(payload?.token)) {
+    diagnostics.push('[RPC] super admin session ready');
+  } else {
+    diagnostics.push('[RPC] super admin session unavailable');
+  }
+
+  return { response: payload, diagnostics };
+}
+
 export async function fetchCurrentAuthUserId(): Promise<string> {
   const cached = getCached<string>('auth-user-id');
   if (cached !== null) return cached;

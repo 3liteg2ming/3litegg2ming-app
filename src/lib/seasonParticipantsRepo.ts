@@ -5,7 +5,7 @@ import { resolveSeasonRecord } from './seasonResolver';
 import { requireSupabaseClient } from './supabaseClient';
 
 const supabase = requireSupabaseClient();
-const TTL_MS = 60_000;
+const TTL_MS = 300_000;
 
 type SeasonRecord = {
   id: string;
@@ -135,7 +135,7 @@ async function fetchFixturesBaseline(args: { seasonSlug?: string | null; seasonI
   const slug = text(args.seasonSlug || args.season.slug);
   if (slug) {
     try {
-      const bySlug = await fetchSeasonFixtures(slug, { limit: 2000, offset: 0 });
+      const bySlug = await fetchSeasonFixtures(slug, { limit: 1000, offset: 0 });
       if (bySlug.fixtures.length > 0) {
         return {
           season: {
@@ -152,7 +152,7 @@ async function fetchFixturesBaseline(args: { seasonSlug?: string | null; seasonI
 
   const seasonId = text(args.seasonId || args.season.id);
   if (seasonId) {
-    const bySeasonId = await fetchSeasonFixturesBySeasonId(seasonId, { limit: 2000, offset: 0 });
+    const bySeasonId = await fetchSeasonFixturesBySeasonId(seasonId, { limit: 1000, offset: 0 });
     return {
       season: {
         id: seasonId,

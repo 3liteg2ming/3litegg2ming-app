@@ -101,8 +101,8 @@ export function useNextFixtures(
   return useQuery<FixtureRow[]>({
     queryKey: ['fixtures', 'next', seasonSlug, roundLimit],
     queryFn: () => fetchFixturesForSeason(seasonSlug, roundLimit * 10, 0),
-    staleTime: 45_000,
-    gcTime: 1_200_000,
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
   });
 }
 
@@ -113,8 +113,8 @@ export function useAllFixtures(
   return useQuery<FixtureRow[]>({
     queryKey: ['fixtures', 'all', seasonSlug],
     queryFn: () => fetchFixturesForSeason(seasonSlug, 1000, 0),
-    staleTime: 45_000,
-    gcTime: 1_200_000,
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
     enabled,
   });
 }
@@ -133,8 +133,8 @@ export function useSeasonFixtures(
   return useQuery<SeasonFixturesResult>({
     queryKey: ['fixtures', 'season', seasonSlug, limit, offset],
     queryFn: () => fetchResolvedSeasonFixtures(seasonSlug, limit, offset),
-    staleTime: 15_000,
-    gcTime: 1_200_000,
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
     enabled: options?.enabled ?? true,
   });
 }
@@ -155,8 +155,8 @@ export function useFixture(fixtureId: string | undefined) {
     queryKey: ['fixture', fixtureId],
     queryFn: () => fetchFixture(fixtureId!),
     enabled: !!fixtureId,
-    staleTime: 45_000,
-    gcTime: 1_200_000,
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
   });
 }
 

@@ -8,6 +8,7 @@ import TeamStats from '@/components/match-centre/broadcast/TeamStats';
 import PlayerStatsTable from '@/components/match-centre/broadcast/PlayerStatsTable';
 import MatchCentreTabs, { type MatchCentreTabKey } from '@/components/match-centre/broadcast/MatchCentreTabs';
 import { MelvinBetMatchOutlook } from '@/components/MelvinBet';
+import { useFixture } from '@/hooks/useFixtures';
 import { useMatchCentre } from '@/hooks/useMatchCentre';
 import { useAuth } from '@/state/auth/AuthProvider';
 import { FIXTURES_UNLOCK_LABEL, useFixtureVisibility } from '@/lib/fixtureVisibility';
@@ -67,21 +68,23 @@ export default function MatchCentrePage() {
   const previewState = (location.state as { matchCentrePreview?: Partial<MatchCentreModel> } | null)?.matchCentrePreview;
   const heroPreviewModel = previewState ? buildPreviewModel(previewState, resolvedFixtureId) : null;
   const model = matchCentreQuery.data ?? null;
+  const fixtureMetaQuery = useFixture(fixturesVisible ? resolvedFixtureId : undefined);
+  const fixtureMeta = fixtureMetaQuery.data ?? null;
   const heroModel = model ?? heroPreviewModel;
   const err = matchCentreQuery.error instanceof Error ? matchCentreQuery.error.message : null;
   const loading = matchCentreQuery.isLoading && !matchCentreQuery.data;
 
-  // Determine if the signed-in coach is eligible to submit results for this fixture.
-  // Eligible = signed in, has a team, fixture is SCHEDULED (not FINAL), and coach's team is home OR away.
   const showSubmitButton = (() => {
-    if (!fixturesVisible || !user || !model) return false;
-    const status = String(model.statusLabel || '').toUpperCase();
+    if (!fixturesVisible || !user || !model || !fixtureMeta) return false;
+    const status = String(model.statusLabel || fixtureMeta.status || '').toUpperCase();
     if (status === 'FINAL' || status === 'COMPLETED' || status === 'COMPLETE') return false;
     const coachTeamId = user.teamId;
     if (!coachTeamId) return false;
-    const homeId = String(model.home?.id || '');
-    const awayId = String(model.away?.id || '');
-    return homeId === coachTeamId || awayId === coachTeamId;
+    const homeId = String(fixtureMeta.home_team_id || model.home?.id || '');
+    const awayId = String(fixtureMeta.away_team_id || model.away?.id || '');
+    if (homeId === coachTeamId) return true;
+    if (fixtureMeta.is_finals) return false;
+    return awayId === coachTeamId;
   })();
 
   useEffect(() => {
