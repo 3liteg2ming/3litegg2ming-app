@@ -523,8 +523,6 @@ export default function SubmitPage() {
   const fixture = payload?.fixture || null;
   const homeTeam = payload?.homeTeam || null;
   const awayTeam = payload?.awayTeam || null;
-  const isSuperAdmin = myRole === 'super_admin';
-  const isAdminQuickMode = isSuperAdmin;
   const adminTeamOptions = useMemo(
     () => collectAdminTeamOptions(adminCandidateFixtures.map((entry) => entry.fixture)),
     [adminCandidateFixtures],
@@ -679,9 +677,8 @@ export default function SubmitPage() {
   const canSubmit = useMemo(() => {
     if (!fixture || !myTeamId || isSubmitting) return false;
     if (requiresAdminApproval) return false;
-    if (isSuperAdmin) return scoreValid;
     return scoreValid && quartersValid && allTeamStatsFilled && goalKickersValid && allScreenshotsValid;
-  }, [fixture, myTeamId, isSubmitting, requiresAdminApproval, isSuperAdmin, scoreValid, quartersValid, allTeamStatsFilled, goalKickersValid, allScreenshotsValid]);
+  }, [fixture, myTeamId, isSubmitting, requiresAdminApproval, scoreValid, quartersValid, allTeamStatsFilled, goalKickersValid, allScreenshotsValid]);
 
   const stepComplete = useMemo(
     () => ({
@@ -713,8 +710,7 @@ export default function SubmitPage() {
 
         const profile = await fetchCoachProfile(uid);
         if (!profile) throw new Error('Profile not found. Contact an admin.');
-        const superAdminAccount = String(profile.role || '').trim().toLowerCase() === 'super_admin';
-        if (!superAdminAccount && !profile.team_id) throw new Error('No team is linked to this account. Contact an admin.');
+        if (!profile.team_id) throw new Error('No team is linked to this account. Contact an admin.');
         if (!alive) return;
         setMyTeamId(profile.team_id);
         setMyCoachName(profile.display_name || profile.psn || 'Coach');
@@ -727,40 +723,6 @@ export default function SubmitPage() {
 
         const visibleRounds = getVisibleRounds(allFixtures.map((f) => f.round));
         const sortedVisible = Array.from(new Set(visibleRounds)).sort((a, b) => a - b);
-
-        if (superAdminAccount) {
-          const adminEligible = sortedVisible.flatMap((round) =>
-            allFixtures
-              .filter((fixture) => fixture.round === round && !isFixtureFinal(fixture.status))
-              .map((fixture) => ({ round, fixture })),
-          );
-
-          if (!alive) return;
-          setAdminCandidateFixtures(adminEligible);
-          setEligibleFixtures([]);
-          setSelectedRound(null);
-
-          if (!adminEligible.length) {
-            setPayload(null);
-            setLoadError('No non-final fixtures are available for admin quick submit right now.');
-            return;
-          }
-
-          const teamOptions = collectAdminTeamOptions(adminEligible.map((entry) => entry.fixture));
-          const preferredTeamId = teamOptions.some((team) => team.id === profile.team_id)
-            ? String(profile.team_id || '')
-            : teamOptions[0]?.id || '';
-          const firstFixture = adminEligible.find(({ fixture }) =>
-            String(fixture.home_team_id || '') === preferredTeamId ||
-            String(fixture.away_team_id || '') === preferredTeamId,
-          ) || adminEligible[0];
-
-          setAdminSelectedTeamId(preferredTeamId || '');
-          setAdminSelectedFixtureId(String(firstFixture.fixture.id));
-          setPayload(buildPayloadFromFixture(firstFixture.fixture));
-          setVenue(String(firstFixture.fixture.venue || ''));
-          return;
-        }
 
         const teamId = String(profile.team_id || '');
         const eligible: Array<{ round: number; fixture: typeof allFixtures[number] }> = [];
@@ -1504,22 +1466,7 @@ export default function SubmitPage() {
     );
   }
 
-  if (isAdminQuickMode && (loadError || !fixture || !homeTeam || !awayTeam)) {
-    return (
-      <div className="egSubmitPage">
-        <main className="egSubmitPage__main">
-          <div className="egSubmitPage__wrap">
-            <div className="mdcLoading">
-              <div className="mdcLoading__title">Super admin quick submit unavailable</div>
-              <div className="mdcLoading__sub">{loadError || 'No fixture is ready for super admin quick submit.'}</div>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (!isAdminQuickMode && (loadError || !fixture || !homeTeam || !awayTeam)) {
+  if (loadError || !fixture || !homeTeam || !awayTeam) {
     return (
       <div className="egSubmitPage">
         <main className="egSubmitPage__main">
@@ -1537,178 +1484,6 @@ export default function SubmitPage() {
   // Both early returns above cover every null case; this guard narrows the
   // types for the JSX below so it type-checks cleanly.
   if (!fixture || !homeTeam || !awayTeam) return null;
-
-  if (isAdminQuickMode && fixture && homeTeam && awayTeam) {
-    return (
-      <div className="egSubmitPage">
-        <main className="egSubmitPage__main">
-          <div className="egSubmitPage__wrap">
-            <section
-              className="mdcHero"
-              style={{
-                '--homeR': homeTeamColors.r,
-                '--homeG': homeTeamColors.g,
-                '--homeB': homeTeamColors.b,
-                '--awayR': awayTeamColors.r,
-                '--awayG': awayTeamColors.g,
-                '--awayB': awayTeamColors.b,
-              } as React.CSSProperties}
-            >
-              <div className="mdcHero__top">
-                <div className="mdcHero__titleWrap">
-                  <div className="mdcHero__eyebrow">Super Admin Quick Submit</div>
-                  <div className="mdcHero__titleRow">
-                    <div className="mdcHero__title">Round {fixture.round}</div>
-                    <span className={`mdcChip ${submitSuccess ? 'mdcChip--success' : 'mdcChip--warning'}`}>
-                      {submitSuccess ? 'Saved' : 'Score only'}
-                    </span>
-                  </div>
-                </div>
-                <div className="mdcCoachPill">
-                  <Shield size={13} />
-                  <span>{heroCoachLabel}</span>
-                </div>
-              </div>
-
-              <div className="mdcHero__match">
-                <div className="mdcTeamBlock">
-                  <div className="mdcTeamBlock__logo">{homeTeam.logo ? <img src={homeTeam.logo} alt={homeTeam.name} /> : <span>{homeTeam.name.slice(0, 1)}</span>}</div>
-                  <div className="mdcTeamBlock__name" title={homeTeam.name}>{homeDisplayName}</div>
-                </div>
-                <div className="mdcHero__center"><div className="mdcHero__divider" aria-hidden="true" /></div>
-                <div className="mdcTeamBlock">
-                  <div className="mdcTeamBlock__logo">{awayTeam.logo ? <img src={awayTeam.logo} alt={awayTeam.name} /> : <span>{awayTeam.name.slice(0, 1)}</span>}</div>
-                  <div className="mdcTeamBlock__name" title={awayTeam.name}>{awayDisplayName}</div>
-                </div>
-              </div>
-
-              {scoreValid ? (
-                <div className="mdcHero__scoreBanner">
-                  <span>{homeDisplayName} <strong>{homeScore}</strong></span>
-                  <span className="mdcHero__scoreDash">—</span>
-                  <span><strong>{awayScore}</strong> {awayDisplayName}</span>
-                </div>
-              ) : null}
-
-              <div className="mdcHero__bottom">
-                <div className="mdcHero__bottomMeta">
-                  <div className="mdcProgressMeta">Super admin override</div>
-                  <div className="mdcHero__bottomSub">Select a team, choose the fixture, enter only the final score, and save as FINAL.</div>
-                </div>
-                <button type="button" className="mdcHeroCta" onClick={() => navigate(`/match-centre/${fixture.id}`)}>
-                  Match Centre <ChevronRight size={14} />
-                </button>
-              </div>
-            </section>
-
-            {conflict?.message && (
-              <div className="mdcStatus mdcStatus--danger">
-                <AlertTriangle size={14} />
-                <div style={{ minWidth: 0 }}>
-                  <div>{conflict.message}</div>
-                  {conflict.detail && <pre style={{ margin: '6px 0 0', whiteSpace: 'pre-wrap', fontSize: 11, lineHeight: 1.45, color: 'rgba(255, 220, 220, 0.9)' }}>{conflict.detail}</pre>}
-                </div>
-              </div>
-            )}
-
-            <section className="mdcCard">
-              <div className="mdcCard__head">Score-Only Super Admin Submit</div>
-              <div className="mdcCard__body">
-                <div className="mdcStatus">
-                  <CheckCircle2 size={14} />
-                  <div>This super admin path saves the result directly. No photos, quarter scores, team stats, or goal kickers are required.</div>
-                </div>
-
-                <div className="mdcAdminQuickGrid">
-                  <label className="mdcAdminQuickField">
-                    <span>Team</span>
-                    <select value={adminSelectedTeamId} onChange={(event) => handleAdminTeamChange(event.target.value)}>
-                      {adminTeamOptions.map((team) => (
-                        <option key={team.id} value={team.id}>{team.name}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="mdcAdminQuickField">
-                    <span>Fixture</span>
-                    <select value={adminSelectedFixtureId} onChange={(event) => handleAdminFixtureChange(event.target.value)}>
-                      {adminFixturesForSelectedTeam.map(({ fixture: candidate }) => (
-                        <option key={candidate.id} value={candidate.id}>
-                          {`Round ${candidate.round} · ${candidate.home_team_name || 'Home'} vs ${candidate.away_team_name || 'Away'}`}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-
-                <div className="mdcAdminQuickMeta">
-                  <span>Acting as <strong>{actingTeamName}</strong></span>
-                  <span>{adminSelectedSide ? `Selected side: ${adminSelectedSide}` : 'Select a team to continue'}</span>
-                  <span>{hasMeaningfulMeta(venue) ? venue : 'Venue TBC'}</span>
-                </div>
-
-                <div className="mdcAdminQuickPresetRow">
-                  <button type="button" className="mdcBtn" onClick={() => applyAdminScorePreset(ADMIN_QUICK_RESULT_PRESETS.homeWin)}>
-                    Award {homeDisplayName} Win
-                  </button>
-                  <button type="button" className="mdcBtn" onClick={() => applyAdminScorePreset(ADMIN_QUICK_RESULT_PRESETS.awayWin)}>
-                    Award {awayDisplayName} Win
-                  </button>
-                  <button type="button" className="mdcBtn" onClick={() => applyAdminScorePreset(ADMIN_QUICK_RESULT_PRESETS.draw)}>
-                    Set Draw
-                  </button>
-                </div>
-
-                <div className="mdcScorePanel">
-                  {[{ label: homeDisplayName, goals: homeGoals, behinds: homeBehinds, setGoals: setHomeGoals, setBehinds: setHomeBehinds, total: homeScore, goalsNum: homeGoalsN, behindsNum: homeBehindsN }, { label: awayDisplayName, goals: awayGoals, behinds: awayBehinds, setGoals: setAwayGoals, setBehinds: setAwayBehinds, total: awayScore, goalsNum: awayGoalsN, behindsNum: awayBehindsN }].map((team) => (
-                    <div className="mdcScoreTeam" key={team.label}>
-                      <div className="mdcScoreTeam__head">{team.label}</div>
-                      <div className="mdcScoreInputs">
-                        <label>Goals<input inputMode="numeric" autoComplete="off" autoCorrect="off" onFocus={selectOnFocus} value={team.goals} onChange={(e) => team.setGoals(sanitizeNumericInput(e.target.value))} placeholder="0" /></label>
-                        <label>Behinds<input inputMode="numeric" autoComplete="off" autoCorrect="off" onFocus={selectOnFocus} value={team.behinds} onChange={(e) => team.setBehinds(sanitizeNumericInput(e.target.value))} placeholder="0" /></label>
-                      </div>
-                      <div className="mdcScoreTotal">{team.goalsNum}.{team.behindsNum} <span>({team.total})</span></div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mdcAdminQuickActions">
-                  <button type="button" className="mdcBtn" onClick={() => navigate('/fixtures')}>
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    className="mdcBtn mdcBtn--primary"
-                    disabled={!fixture?.id || !adminSelectedTeamId || !scoreValid || isSubmitting}
-                    onClick={submitAdminQuickResult}
-                  >
-                    {isSubmitting ? 'Saving…' : 'Save Final Result'}
-                  </button>
-                </div>
-              </div>
-            </section>
-          </div>
-        </main>
-
-        <AnimatePresence>
-          {submitSuccess && (
-            <motion.div className="mdcSuccessOverlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <motion.div className="mdcSuccessCard" initial={{ y: 10, scale: 0.97 }} animate={{ y: 0, scale: 1 }}>
-                <div className="mdcSuccessCard__icon"><Check size={24} /></div>
-                <div className="mdcSuccessCard__title">Super Admin Result Saved</div>
-                <div className="mdcSuccessCard__sub">The fixture is now marked final from the submit page without photos, quarter scores, team stats, or goal kicker uploads.</div>
-                <div className="mdcSuccessCard__score">{homeScore} — {awayScore}</div>
-                <div className="mdcSuccessCard__actions">
-                  <button type="button" className="mdcBtn mdcBtn--primary" onClick={() => navigate(`/match-centre/${fixture.id}`)}>Open Match Centre</button>
-                  <button type="button" className="mdcBtn" onClick={() => navigate('/fixtures')}>Back to Fixtures</button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    );
-  }
 
   const activeFixture = fixture!;
   const activeHomeTeam = homeTeam!;

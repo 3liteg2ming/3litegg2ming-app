@@ -3,11 +3,11 @@ import { useEffect, useState } from 'react';
 /**
  * Season-wide submission deadline (Melbourne time).
  *
- * All open fixture submissions — Sunday 26 April 2026, 23:59:59 AEST
+ * Set far in the future — finals are ongoing and all coaches submit normally.
  */
-export const SUBMISSION_DEADLINE_ISO = '2026-04-26T23:59:59+10:00';
-export const SUBMISSION_DEADLINE_LABEL = 'Sunday 26 April at 11:59 PM';
-export const SUBMISSION_CLOSED_LABEL = 'Season closed. Games cannot be submitted without admin approval.';
+export const SUBMISSION_DEADLINE_ISO = '2027-12-31T23:59:59+10:00';
+export const SUBMISSION_DEADLINE_LABEL = '';
+export const SUBMISSION_CLOSED_LABEL = 'Submissions are currently closed.';
 
 export const SUBMISSION_DEADLINE_MS = new Date(SUBMISSION_DEADLINE_ISO).getTime();
 

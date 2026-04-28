@@ -510,7 +510,12 @@ function FeaturedMatchCard({ coaches = [] }: { coaches?: Coach[] }) {
     return pool[0] ?? allFixtures[0];
   }, [allFixtures, featuredFinalsFixture, user, coaches]);
 
-  const sectionLabel = user ? 'Your Matchup' : 'Featured Match';
+  const myCoachForLabel = user ? coaches.find((c) => c.user_id === user.id) : null;
+  const isMyMatchup = !!(myCoachForLabel?.team_id && fixture && (
+    (fixture as any).home_team_id === myCoachForLabel.team_id ||
+    (fixture as any).away_team_id === myCoachForLabel.team_id
+  ));
+  const sectionLabel = isMyMatchup ? 'Your Matchup' : 'Featured Match';
   if (isLoading) {
     return (
       <section className="home-module home-module--feature">
