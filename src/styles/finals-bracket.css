@@ -11,8 +11,7 @@
 
 .finalsBracket__scroll {
   display: grid;
-  grid-template-columns: repeat(4, minmax(155px, 1fr));
-  grid-template-rows: auto;
+  grid-template-columns: minmax(168px, 1fr) 28px minmax(148px, 1fr) 28px minmax(148px, 1fr) 28px minmax(148px, 1fr);
   gap: 0;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
@@ -20,26 +19,12 @@
   padding-bottom: 6px;
 }
 
-/* SVG overlay — spans all 4 columns in the same grid row, behind cells */
-.finalsBracket__linesSvg {
-  grid-column: 1 / 5;
-  grid-row: 1;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0;
-  display: block;
-}
-
 .finalsBracket__col {
   display: flex;
   flex-direction: column;
   gap: 8px;
   scroll-snap-align: start;
-  min-width: 155px;
-  grid-row: 1;
-  position: relative;
-  z-index: 1;
+  min-width: 180px;
 }
 
 .finalsBracket__colTitle {
@@ -198,7 +183,7 @@
 }
 
 .finalsBracket__scroll {
-  grid-template-columns: repeat(4, minmax(148px, 1fr));
+  grid-template-columns: minmax(160px, 1fr) 28px minmax(140px, 1fr) 28px minmax(140px, 1fr) 28px minmax(140px, 1fr);
   gap: 0;
   padding-bottom: 4px;
 }
@@ -305,6 +290,31 @@
   background: rgba(212, 175, 55, 0.08);
 }
 
+/* ── Bracket connector SVGs ─────────────────────────────────────────── */
+.finalsBracket__connector {
+  width: 28px;
+  align-self: stretch;
+  overflow: visible;
+  padding-top: 28px; /* align with col content below title */
+}
+
+.finalsBracket__connLine {
+  fill: none;
+  stroke: rgba(212, 175, 55, 0.45);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.finalsBracket__connLine--loser {
+  stroke: rgba(180, 180, 180, 0.25);
+  stroke-dasharray: 3 3;
+}
+
+.finalsBracket__connDot {
+  fill: rgba(212, 175, 55, 0.60);
+}
+
 /* ── Cell top row (label + QF badge) ─────────────────────────────────── */
 .finalsBracket__cellTop {
   display: flex;
@@ -328,6 +338,10 @@
 
 @media (max-width: 720px) {
   .finalsBracket__scroll {
-    grid-template-columns: repeat(4, 72vw);
+    grid-template-columns: 74vw 24px 60vw 24px 60vw 24px 60vw;
+  }
+
+  .finalsBracket__connector {
+    width: 24px;
   }
 }

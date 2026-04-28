@@ -158,130 +158,89 @@ export default function FinalsBracket({ fixtures, seasonId = 'finals' }: Props) 
     if (cell.matchId) navigate(`/match-centre/${cell.matchId}`);
   };
 
-  return (
-    <div className="finalsBracket">
-      <div className="finalsBracket__scroll">
-        {/* Single SVG overlay — drawn behind all cells via z-index */}
-        <BracketLines />
-
-        {COLUMNS.map((col, i) => (
-          <div
-            key={col.key}
-            className={`finalsBracket__col finalsBracket__col--${col.key.toLowerCase()}`}
-            style={{ gridColumn: i + 1, gridRow: 1 }}
-          >
-            <div className="finalsBracket__colTitle">{col.title}</div>
-            <div className="finalsBracket__cells">
-              {col.slots.map((slot) => {
-                const cell = cells.get(slot);
-                if (!cell) return null;
-                const isFinal = String(cell.status || '').toUpperCase() === 'FINAL';
-                const isQF = slot === 'QF1' || slot === 'QF2';
-                return (
-                  <button
-                    key={slot}
-                    type="button"
-                    className={`finalsBracket__cell ${isFinal ? 'is-final' : ''} ${cell.matchId ? 'has-match' : 'is-tbd'} ${isQF ? 'is-qf' : ''}`}
-                    onClick={() => onClickCell(cell)}
-                    disabled={!cell.matchId}
-                  >
-                    <div className="finalsBracket__cellTop">
-                      <span className="finalsBracket__cellLabel">{cell.label}</span>
-                      {isQF && <span className="finalsBracket__qfBadge">W → PF</span>}
-                    </div>
-                    <BracketSide
-                      side="home"
-                      teamKey={cell.homeKey}
-                      teamName={cell.homeName}
-                      placeholder={cell.homePlaceholder}
-                      seed={cell.homeSeed}
-                      winChance={cell.homeWinChance}
-                      total={cell.homeTotal}
-                      isWinner={isFinal && (cell.homeTotal ?? 0) > (cell.awayTotal ?? 0)}
-                    />
-                    <BracketSide
-                      side="away"
-                      teamKey={cell.awayKey}
-                      teamName={cell.awayName}
-                      placeholder={cell.awayPlaceholder}
-                      seed={cell.awaySeed}
-                      winChance={cell.awayWinChance}
-                      total={cell.awayTotal}
-                      isWinner={isFinal && (cell.awayTotal ?? 0) > (cell.homeTotal ?? 0)}
-                    />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+  const renderColumn = (col: typeof COLUMNS[number]) => (
+    <div key={col.key} className={`finalsBracket__col finalsBracket__col--${col.key.toLowerCase()}`}>
+      <div className="finalsBracket__colTitle">{col.title}</div>
+      <div className="finalsBracket__cells">
+        {col.slots.map((slot) => {
+          const cell = cells.get(slot);
+          if (!cell) return null;
+          const isFinal = String(cell.status || '').toUpperCase() === 'FINAL';
+          const isQF = slot === 'QF1' || slot === 'QF2';
+          return (
+            <button
+              key={slot}
+              type="button"
+              className={`finalsBracket__cell ${isFinal ? 'is-final' : ''} ${cell.matchId ? 'has-match' : 'is-tbd'} ${isQF ? 'is-qf' : ''}`}
+              onClick={() => onClickCell(cell)}
+              disabled={!cell.matchId}
+            >
+              <div className="finalsBracket__cellTop">
+                <span className="finalsBracket__cellLabel">{cell.label}</span>
+                {isQF && <span className="finalsBracket__qfBadge">W → PF</span>}
+              </div>
+              <BracketSide
+                side="home"
+                teamKey={cell.homeKey}
+                teamName={cell.homeName}
+                placeholder={cell.homePlaceholder}
+                seed={cell.homeSeed}
+                winChance={cell.homeWinChance}
+                total={cell.homeTotal}
+                isWinner={isFinal && (cell.homeTotal ?? 0) > (cell.awayTotal ?? 0)}
+              />
+              <BracketSide
+                side="away"
+                teamKey={cell.awayKey}
+                teamName={cell.awayName}
+                placeholder={cell.awayPlaceholder}
+                seed={cell.awaySeed}
+                winChance={cell.awayWinChance}
+                total={cell.awayTotal}
+                isWinner={isFinal && (cell.awayTotal ?? 0) > (cell.homeTotal ?? 0)}
+              />
+            </button>
+          );
+        })}
       </div>
     </div>
   );
-}
-
-// Overlay SVG drawn behind all cells (grid-column:1/-1, grid-row:1, z-index:0)
-// Positions are % of total bracket width/height (viewBox 0 0 100 100)
-// Column boundaries: Week1 0-25, SF 25-50, PF 50-75, GF 75-100
-// Cell edges (with internal padding ~3%): w1R=22, sfL=28, sfR=47, pfL=53, pfR=72, gfL=78
-// Vertical centers (title≈15% + cells with space-around):
-//   Week1(4): qf1=25 ef2=47 ef1=68 qf2=89  |  SF/PF(2): top=38 bot=78  |  GF: 58
-function BracketLines() {
-  const WIN  = 'rgba(212,175,55,0.80)';
-  const LOSE = 'rgba(160,160,160,0.38)';
-  const DOT  = 'rgba(212,175,55,0.80)';
-
-  const w = { fill: 'none', stroke: WIN,  strokeWidth: '1.4', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
-  const l = { fill: 'none', stroke: LOSE, strokeWidth: '1.0', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, strokeDasharray: '2.5 1.8' };
 
   return (
-    <svg
-      className="finalsBracket__linesSvg"
-      viewBox="0 0 100 100"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-    >
-      {/* ── Week1 → SF merge brackets ───────────────────────────── */}
-      {/* QF1 loser (dashed) → merge → SF1 */}
-      <path d="M22,25 H25 V38 H28" {...l} />
-      {/* EF2 winner → merge → SF1 */}
-      <path d="M22,47 H25 V38"     {...w} />
-      {/* EF1 winner → merge → SF2 */}
-      <path d="M22,68 H25 V78 H28" {...w} />
-      {/* QF2 loser (dashed) → merge → SF2 */}
-      <path d="M22,89 H25 V78"     {...l} />
-      {/* Merge dots */}
-      <circle cx="25" cy="38" r="1.6" fill={DOT} />
-      <circle cx="25" cy="78" r="1.6" fill={DOT} />
+    <div className="finalsBracket">
+      <div className="finalsBracket__scroll">
+        {renderColumn(COLUMNS[0])}
 
-      {/* ── QF winner skip lines (pass above/below SF boxes) ──── */}
-      {/* QF1 winner → PF1: goes at y=25 (above SF1 at y=38), turns down at PF left */}
-      <path d="M22,25 H53 V38" {...w} />
-      {/* QF2 winner → PF2: goes at y=89 (below SF2 at y=78), turns up at PF left */}
-      <path d="M22,89 H53 V78" {...w} />
+        {/* Week 1 → SF: (QF1+EF2)→SF1, (EF1+QF2)→SF2 */}
+        <svg className="finalsBracket__connector" viewBox="0 0 24 100" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0,13 H10 V25 H24" className="finalsBracket__connLine" />
+          <path d="M0,38 H10 V25"   className="finalsBracket__connLine finalsBracket__connLine--loser" />
+          <path d="M0,63 H10 V75 H24" className="finalsBracket__connLine" />
+          <path d="M0,88 H10 V75"   className="finalsBracket__connLine finalsBracket__connLine--loser" />
+          <circle cx="10" cy="25" r="1.5" className="finalsBracket__connDot" />
+          <circle cx="10" cy="75" r="1.5" className="finalsBracket__connDot" />
+        </svg>
 
-      {/* ── SF winner → PF ──────────────────────────────────────── */}
-      <path d="M47,38 H53" {...w} />
-      <path d="M47,78 H53" {...w} />
-      {/* Merge dots at PF entries */}
-      <circle cx="53" cy="38" r="1.6" fill={DOT} />
-      <circle cx="53" cy="78" r="1.6" fill={DOT} />
+        {renderColumn(COLUMNS[1])}
 
-      {/* ── PF → GF ─────────────────────────────────────────────── */}
-      <path d="M72,38 H75 V58 H78" {...w} />
-      <path d="M72,78 H75 V58"     {...w} />
-      <circle cx="75" cy="58" r="1.6" fill={DOT} />
+        {/* SF → PF: SF1→PF1, SF2→PF2 (straight lines, QF winners also feed PF) */}
+        <svg className="finalsBracket__connector" viewBox="0 0 24 100" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0,25 H24" className="finalsBracket__connLine" />
+          <path d="M0,75 H24" className="finalsBracket__connLine" />
+        </svg>
 
-      {/* ── W / L labels on lines ───────────────────────────────── */}
-      {/* QF1 winner label */}
-      <text x="34" y="23.5" fontSize="3.2" fontWeight="800" fill="rgba(212,175,55,0.90)" textAnchor="middle" fontFamily="sans-serif">W</text>
-      {/* QF1 loser label */}
-      <text x="23.5" y="32" fontSize="3.0" fontWeight="700" fill="rgba(180,180,180,0.70)" textAnchor="middle" fontFamily="sans-serif">L</text>
-      {/* QF2 winner label */}
-      <text x="34" y="91.5" fontSize="3.2" fontWeight="800" fill="rgba(212,175,55,0.90)" textAnchor="middle" fontFamily="sans-serif">W</text>
-      {/* QF2 loser label */}
-      <text x="23.5" y="76" fontSize="3.0" fontWeight="700" fill="rgba(180,180,180,0.70)" textAnchor="middle" fontFamily="sans-serif">L</text>
-    </svg>
+        {renderColumn(COLUMNS[2])}
+
+        {/* PF → GF */}
+        <svg className="finalsBracket__connector" viewBox="0 0 24 100" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0,25 H12 V50 H24" className="finalsBracket__connLine" />
+          <path d="M0,75 H12 V50"     className="finalsBracket__connLine" />
+          <circle cx="12" cy="50" r="1.5" className="finalsBracket__connDot" />
+        </svg>
+
+        {renderColumn(COLUMNS[3])}
+      </div>
+    </div>
   );
 }
 
