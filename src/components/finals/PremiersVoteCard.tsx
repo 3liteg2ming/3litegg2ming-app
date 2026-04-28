@@ -17,7 +17,6 @@ export type PremiersVoteCardOption = PredictionVoteOption & {
 type PremiersVoteCardProps = {
   pollKey: string;
   options: PremiersVoteCardOption[];
-  coachVotes?: Map<string, string[]>;
 };
 
 function formatPercentage(value?: number) {
@@ -38,7 +37,7 @@ function PremiersVoteCardSkeleton() {
   );
 }
 
-export default function PremiersVoteCard({ pollKey, options, coachVotes }: PremiersVoteCardProps) {
+export default function PremiersVoteCard({ pollKey, options }: PremiersVoteCardProps) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = React.useState(false);
   const [optimisticVote, setOptimisticVote] = React.useState<string | null>(null);
@@ -150,69 +149,36 @@ export default function PremiersVoteCard({ pollKey, options, coachVotes }: Premi
           </span>
         </div>
 
-        {coachVotes && coachVotes.size > 0 ? (
-          <div className="premiersVoteTrigger__breakdown">
-            {normalizedOptions
-              .filter((opt) => (coachVotes.get(opt.key) || []).length > 0)
-              .sort((a, b) => (voteMap.get(b.key)?.votes || 0) - (voteMap.get(a.key)?.votes || 0))
-              .slice(0, 4)
-              .map((opt) => {
-                const names = coachVotes.get(opt.key) || [];
-                const result = voteMap.get(opt.key);
-                const pct = result?.pct || 0;
-                return (
-                  <div key={opt.key} className={`premiersVoteTrigger__bdRow${selectedVoteKey === opt.key ? ' is-mine' : ''}`}>
-                    <SmartImg
-                      className="premiersVoteTrigger__bdLogo"
-                      src={opt.logoUrl || ''}
-                      alt={opt.label}
-                      fallbackText={opt.label.slice(0, 2).toUpperCase()}
-                      loading="lazy"
-                      decoding="async"
-                      width={22}
-                      height={22}
-                    />
-                    <span className="premiersVoteTrigger__bdTeam">{opt.label}</span>
-                    <span className="premiersVoteTrigger__bdCoaches">{names.join(', ')}</span>
-                    {hasVotes && mode === 'live' ? (
-                      <span className="premiersVoteTrigger__bdPct">{pct}%</span>
-                    ) : null}
-                  </div>
-                );
-              })}
+        <div className="premiersVoteTrigger__body">
+          <div className="premiersVoteTrigger__copy">
+            <h3 className="premiersVoteTrigger__title">
+              {currentSelection ? `${currentSelection.label} tipped` : 'Premiership vote'}
+            </h3>
+            <p className="premiersVoteTrigger__subline">
+              {leader?.result?.votes
+                ? `${leader.option.label} leads with ${leader.result.votes} vote${leader.result.votes === 1 ? '' : 's'}.`
+                : 'Pick your flag favourite before finals begin.'}
+            </p>
           </div>
-        ) : (
-          <div className="premiersVoteTrigger__body">
-            <div className="premiersVoteTrigger__copy">
-              <h3 className="premiersVoteTrigger__title">
-                {currentSelection ? `${currentSelection.label} tipped` : 'Premiership vote'}
-              </h3>
-              <p className="premiersVoteTrigger__subline">
-                {leader?.result?.votes
-                  ? `${leader.option.label} leads with ${leader.result.votes} vote${leader.result.votes === 1 ? '' : 's'}.`
-                  : 'Pick your flag favourite before finals begin.'}
-              </p>
-            </div>
-            <div className="premiersVoteTrigger__side">
-              <div className="premiersVoteTrigger__logos" aria-hidden="true">
-                {featuredOptions.map((option) => (
-                  <span key={option.key} className="premiersVoteTrigger__logoChip">
-                    <SmartImg
-                      className="premiersVoteTrigger__logo"
-                      src={option.logoUrl || ''}
-                      alt=""
-                      fallbackText={option.label.slice(0, 2).toUpperCase()}
-                      loading="lazy"
-                      decoding="async"
-                      width={28}
-                      height={28}
-                    />
-                  </span>
-                ))}
-              </div>
+          <div className="premiersVoteTrigger__side">
+            <div className="premiersVoteTrigger__logos" aria-hidden="true">
+              {featuredOptions.map((option) => (
+                <span key={option.key} className="premiersVoteTrigger__logoChip">
+                  <SmartImg
+                    className="premiersVoteTrigger__logo"
+                    src={option.logoUrl || ''}
+                    alt=""
+                    fallbackText={option.label.slice(0, 2).toUpperCase()}
+                    loading="lazy"
+                    decoding="async"
+                    width={28}
+                    height={28}
+                  />
+                </span>
+              ))}
             </div>
           </div>
-        )}
+        </div>
 
         <div className="premiersVoteTrigger__footer">
           <span className="premiersVoteCard__voteSummary">

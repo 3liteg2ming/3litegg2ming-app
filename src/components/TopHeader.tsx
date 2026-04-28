@@ -9,7 +9,7 @@ export default function TopHeader() {
 
   return (
     <header className="egTopHeader" role="banner">
-      <div className="egTopHeader__inner">
+      <div className="egTopHeader__inner egTopHeader__inner--brandOnly">
         <button
           type="button"
           className="egTopHeader__brand"
