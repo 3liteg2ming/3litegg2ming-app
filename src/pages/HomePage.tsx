@@ -537,6 +537,8 @@ function FeaturedMatchCard({ coaches = [] }: { coaches?: Coach[] }) {
     awayName,
     fixture.away_team_logo_url,
   );
+  const homeCoach = coaches.find((c) => c.team_id === fixture.home_team_id) ?? null;
+  const awayCoach = coaches.find((c) => c.team_id === fixture.away_team_id) ?? null;
   const label = getFixturePrimaryLabel(fixture);
   const dateText = getFixtureStatusLabel(fixture);
   const displayHeading = isFinalsMatch
@@ -589,11 +591,84 @@ function FeaturedMatchCard({ coaches = [] }: { coaches?: Coach[] }) {
             <span>{awayName}</span>
           </div>
         </div>
+        {(homeCoach || awayCoach) && (
+          <div className="home-feature-card__coaches">
+            <span className="home-feature-card__coach">
+              {homeCoach ? homeCoach.display_name : '—'}
+              {homeCoach?.psn ? <em>@{homeCoach.psn}</em> : null}
+            </span>
+            <span className="home-feature-card__coachDiv" />
+            <span className="home-feature-card__coach home-feature-card__coach--away">
+              {awayCoach ? awayCoach.display_name : '—'}
+              {awayCoach?.psn ? <em>@{awayCoach.psn}</em> : null}
+            </span>
+          </div>
+        )}
         <div className="home-feature-card__cta">
           <span>{normalizeFixtureStatus(fixture.status, fixture) === 'FINAL' ? 'View Match Centre' : 'Enter Match Centre'}</span>
           <ArrowRight size={13} />
         </div>
       </button>
+    </section>
+  );
+}
+
+function RecentResultsRibbon() {
+  const seasonFixturesQuery = useSeasonFixtures('afl26-season-two', { limit: 1000 });
+
+  const completedFinals = useMemo<FixtureRow[]>(() => {
+    const all = Array.isArray(seasonFixturesQuery.data?.fixtures) ? seasonFixturesQuery.data!.fixtures : [];
+    return all
+      .filter((f) => isFinalsFixtureCandidate(f) && normalizeFixtureStatus(f.status, f) === 'FINAL')
+      .sort((a, b) => new Date(b.start_time || 0).getTime() - new Date(a.start_time || 0).getTime())
+      .slice(0, 4);
+  }, [seasonFixturesQuery.data?.fixtures]);
+
+  if (!FINALS_CONFIG.enabled || completedFinals.length === 0) return null;
+
+  return (
+    <section className="home-module home-module--results">
+      <header className="home-module__header">
+        <h2>Recent Results</h2>
+        <Link to="/fixtures">
+          All Results<ChevronRight size={13} />
+        </Link>
+      </header>
+      <div className="home-results-ribbon">
+        {completedFinals.map((f) => {
+          const homeG = Number(f.home_goals ?? 0);
+          const homeB = Number(f.home_behinds ?? 0);
+          const homeT = Number(f.home_total ?? homeG * 6 + homeB);
+          const awayG = Number(f.away_goals ?? 0);
+          const awayB = Number(f.away_behinds ?? 0);
+          const awayT = Number(f.away_total ?? awayG * 6 + awayB);
+          const homeWon = homeT > awayT;
+          const homeName = getFixtureTeamName(f, 'home');
+          const awayName = getFixtureTeamName(f, 'away');
+          const roundLabel = getFixturePrimaryLabel(f);
+          return (
+            <div key={f.id} className="home-result-card">
+              <span className="home-result-card__round">{roundLabel}</span>
+              <div className="home-result-card__row">
+                <span className={`home-result-card__team${homeWon ? ' home-result-card__team--winner' : ''}`}>
+                  {homeName}
+                </span>
+                <span className="home-result-card__score">
+                  {homeG}.{homeB}.{homeT}
+                </span>
+              </div>
+              <div className="home-result-card__row">
+                <span className={`home-result-card__team${!homeWon ? ' home-result-card__team--winner' : ''}`}>
+                  {awayName}
+                </span>
+                <span className="home-result-card__score">
+                  {awayG}.{awayB}.{awayT}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 }
@@ -856,6 +931,7 @@ export default function HomePage() {
           <FinalsHubSection fixturesVisible={fixturesVisible} coaches={coaches} />
           {fixturesVisible ? <FeaturedMatchCard coaches={coaches} /> : <LaunchPromoCard />}
         </div>
+        <RecentResultsRibbon />
         <CoachHubBanner coaches={coaches} />
         <EgNewsSection />
       </main>

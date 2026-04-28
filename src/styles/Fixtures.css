@@ -807,3 +807,134 @@
   color: rgba(99, 102, 241, 0.8);
   font-weight: 700;
 }
+
+/* ── Card Group wrapper (bracket badge + submit CTA + vote) ── */
+.fxCardGroup {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 14px;
+}
+
+.fxCardGroup > .fxPosterCard {
+  margin-bottom: 0;
+}
+
+/* ── Bracket advance badge ── */
+.fxAdvanceBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 12px;
+  background: rgba(245, 196, 0, 0.07);
+  border: 1px solid rgba(245, 196, 0, 0.18);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(245, 196, 0, 0.80);
+}
+
+/* ── Submit Result CTA ── */
+.fxSubmitCta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  border-radius: 10px;
+  margin-top: 6px;
+  background: linear-gradient(90deg, rgba(63, 126, 240, 0.20), rgba(63, 126, 240, 0.12));
+  border: 1px solid rgba(63, 126, 240, 0.30);
+  color: rgba(180, 210, 255, 0.92);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.fxSubmitCta:hover {
+  background: linear-gradient(90deg, rgba(63, 126, 240, 0.30), rgba(63, 126, 240, 0.18));
+  border-color: rgba(63, 126, 240, 0.50);
+}
+
+/* ── Inline fixture vote widget ── */
+.fxVoteInline {
+  margin-top: 6px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 10px 12px 8px;
+}
+
+.fxVoteInline__label {
+  display: block;
+  font-size: 0.60rem;
+  font-weight: 800;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(210, 225, 252, 0.50);
+  margin-bottom: 8px;
+}
+
+.fxVoteInline__btns {
+  display: flex;
+  gap: 6px;
+}
+
+.fxVoteInline__btn {
+  flex: 1;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(210, 225, 252, 0.80);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.fxVoteInline__btn:hover:not(:disabled) {
+  background: rgba(63, 126, 240, 0.15);
+  border-color: rgba(63, 126, 240, 0.35);
+  color: rgba(200, 220, 255, 0.95);
+}
+
+.fxVoteInline__btn--picked {
+  background: rgba(63, 126, 240, 0.20);
+  border-color: rgba(63, 126, 240, 0.45);
+  color: rgba(180, 210, 255, 1);
+  font-weight: 700;
+}
+
+.fxVoteInline__btn:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.fxVoteInline__pct {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: rgba(245, 196, 0, 0.85);
+}
+
+.fxVoteInline__bar {
+  margin-top: 8px;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.fxVoteInline__barHome {
+  height: 100%;
+  background: linear-gradient(90deg, #3f7ef0, #60a5fa);
+  border-radius: 99px;
+  transition: width 400ms ease;
+}

@@ -3,7 +3,7 @@ import { getFixtureVotingQueryBase, submitFixtureVote } from '../lib/fixtureVoti
 import type { FixtureVoteSubmitInput } from '../types/fixtureVoting';
 import { getPersistentVoterKey } from '../utils/voterKey';
 
-export function useFixtureVotingSubmit() {
+export function useFixtureVotingSubmit(voterKeyOverride?: string | null) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation<void, Error, FixtureVoteSubmitInput>({
@@ -11,7 +11,7 @@ export function useFixtureVotingSubmit() {
       await submitFixtureVote({
         fixtureId,
         selectedTeamSlug,
-        voterKey: getPersistentVoterKey(),
+        voterKey: voterKeyOverride || getPersistentVoterKey(),
       });
     },
     onSuccess: async (_data, variables) => {

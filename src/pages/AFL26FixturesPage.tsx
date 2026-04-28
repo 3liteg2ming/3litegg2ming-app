@@ -34,6 +34,8 @@ import { useMelvinOdds } from '../hooks/useMelvinOdds';
 import { useLadder } from '../hooks/useLadder';
 import { buildTeamRatings, generateFixtureOdds } from '../lib/autoOdds';
 import { useAuth } from '../state/auth/AuthProvider';
+import { useFixtureVoting } from '../hooks/useFixtureVoting';
+import { useFixtureVotingSubmit } from '../hooks/useFixtureVotingSubmit';
 import '../styles/Fixtures.css';
 
 type StatusFilter = 'ALL' | 'SCHEDULED' | 'FINAL' | 'PENDING_RESULTS';
@@ -287,6 +289,76 @@ function mapToPosterMatch(
       navigate(`/match-centre/${fixture.id}`, { state: previewState });
     },
   };
+}
+
+const SLOT_ADVANCE: Partial<Record<BracketSlot, string>> = {
+  QF1: 'Winner advances to Semi Final',
+  QF2: 'Winner advances to Semi Final',
+  EF1: 'Winner advances to Semi Final · Loser eliminated',
+  EF2: 'Winner advances to Semi Final · Loser eliminated',
+  SF1: 'Winner advances to Preliminary Final',
+  SF2: 'Winner advances to Preliminary Final',
+  PF1: 'Winner advances to Grand Final',
+  PF2: 'Winner advances to Grand Final',
+};
+
+function getAdvanceLabel(fixture: FixtureRow): string | null {
+  const slot = fixture.bracket_slot as BracketSlot | null;
+  return slot ? (SLOT_ADVANCE[slot] ?? null) : null;
+}
+
+function FixtureVoteInline({
+  fixtureId,
+  homeSlug,
+  awaySlug,
+  homeName,
+  awayName,
+}: {
+  fixtureId: string;
+  homeSlug?: string;
+  awaySlug?: string;
+  homeName: string;
+  awayName: string;
+}) {
+  const { user } = useAuth();
+  const voterKey = user?.id ?? null;
+  const voting = useFixtureVoting(fixtureId, homeSlug, awaySlug, voterKey);
+  const { submitVote, isSubmitting } = useFixtureVotingSubmit(voterKey);
+
+  const handleVote = (slug: string) => {
+    void submitVote(fixtureId, slug);
+  };
+
+  return (
+    <div className="fxVoteInline">
+      <span className="fxVoteInline__label">Who wins?</span>
+      <div className="fxVoteInline__btns">
+        <button
+          type="button"
+          className={`fxVoteInline__btn${voting.currentUserVote === homeSlug ? ' fxVoteInline__btn--picked' : ''}`}
+          onClick={() => homeSlug && handleVote(homeSlug)}
+          disabled={isSubmitting || !!voting.currentUserVote}
+        >
+          {homeName}
+          {voting.hasVotes ? <span className="fxVoteInline__pct">{voting.homePct}%</span> : null}
+        </button>
+        <button
+          type="button"
+          className={`fxVoteInline__btn${voting.currentUserVote === awaySlug ? ' fxVoteInline__btn--picked' : ''}`}
+          onClick={() => awaySlug && handleVote(awaySlug)}
+          disabled={isSubmitting || !!voting.currentUserVote}
+        >
+          {awayName}
+          {voting.hasVotes ? <span className="fxVoteInline__pct">{voting.awayPct}%</span> : null}
+        </button>
+      </div>
+      {voting.hasVotes && (
+        <div className="fxVoteInline__bar">
+          <div className="fxVoteInline__barHome" style={{ width: `${voting.homePct}%` }} />
+        </div>
+      )}
+    </div>
+  );
 }
 
 function getCompetitionOptions(): Array<{ key: CompetitionKey; label: string }> {
@@ -776,9 +848,38 @@ export default function AFL26FixturesPage() {
             <div className="fxAflEmpty">No matches found for this filter.</div>
           ) : (
             <div className="fxAflList">
-              {displayedMatches.map((match) => (
-                <FixturePosterCard key={match.id} m={match} />
-              ))}
+              {displayedMatches.map((match, i) => {
+                const raw = filteredMatches[i];
+                const isFinals = raw?.is_finals ?? false;
+                const advanceLabel =
+                  isFinals && match.status !== 'FINAL' ? getAdvanceLabel(raw) : null;
+                const isHomeCoach = !!(
+                  user &&
+                  raw?.home_team_id &&
+                  coachesByTeamId.get(String(raw.home_team_id))?.user_id === user.id &&
+                  match.status === 'SCHEDULED'
+                );
+                return (
+                  <div key={match.id} className="fxCardGroup">
+                    <FixturePosterCard m={match} />
+                    {advanceLabel ? (
+                      <div className="fxAdvanceBadge">{advanceLabel}</div>
+                    ) : null}
+                    {isHomeCoach ? (
+                      <Link to="/submit" className="fxSubmitCta">Submit Result</Link>
+                    ) : null}
+                    {isFinals && raw?.id ? (
+                      <FixtureVoteInline
+                        fixtureId={raw.id}
+                        homeSlug={raw.home_team_slug ?? undefined}
+                        awaySlug={raw.away_team_slug ?? undefined}
+                        homeName={match.home}
+                        awayName={match.away}
+                      />
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
           )}
 

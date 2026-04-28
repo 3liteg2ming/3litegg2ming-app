@@ -3427,3 +3427,111 @@
 .home-feature-card--spotlight .home-feature-card__cta {
   background: linear-gradient(90deg, rgba(245, 196, 0, 0.12), rgba(245, 196, 0, 0.035));
 }
+
+/* ── Coach Spotlight strip (FeaturedMatchCard) ── */
+.home-feature-card__coaches {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 2px;
+  width: 100%;
+}
+
+.home-feature-card__coach {
+  flex: 1;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(210, 225, 252, 0.72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-feature-card__coach em {
+  display: block;
+  font-style: italic;
+  font-size: 0.65rem;
+  font-weight: 400;
+  color: rgba(160, 180, 220, 0.50);
+  margin-top: 1px;
+}
+
+.home-feature-card__coach--away {
+  text-align: right;
+}
+
+.home-feature-card__coachDiv {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.10);
+  flex-shrink: 0;
+}
+
+/* ── Recent Results Ribbon ── */
+.home-module--results {
+  padding: 0 12px;
+  margin-bottom: 4px;
+}
+
+.home-results-ribbon {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.home-results-ribbon::-webkit-scrollbar {
+  display: none;
+}
+
+.home-result-card {
+  flex: 0 0 auto;
+  min-width: 140px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.home-result-card__round {
+  display: block;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(245, 196, 0, 0.75);
+  margin-bottom: 7px;
+}
+
+.home-result-card__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.home-result-card__team {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(210, 225, 252, 0.60);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+}
+
+.home-result-card__team--winner {
+  color: rgba(245, 246, 255, 0.95);
+  font-weight: 700;
+}
+
+.home-result-card__score {
+  font-size: 0.70rem;
+  font-weight: 700;
+  color: rgba(210, 225, 252, 0.80);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}

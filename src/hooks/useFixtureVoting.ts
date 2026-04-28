@@ -28,9 +28,11 @@ export function useFixtureVoting(
   fixtureId?: string | null,
   homeTeamSlug?: string | null,
   awayTeamSlug?: string | null,
+  voterKeyOverride?: string | null,
 ): FixtureVotingResult {
   const queryClient = useQueryClient();
-  const [voterKey] = useState(() => getPersistentVoterKey());
+  const [defaultVoterKey] = useState(() => getPersistentVoterKey());
+  const voterKey = voterKeyOverride || defaultVoterKey;
 
   const query = useQuery({
     queryKey: getFixtureVotingQueryKey(fixtureId, voterKey),
