@@ -154,6 +154,7 @@ export default function PremiersVoteCard({ pollKey, options, coachVotes }: Premi
           <div className="premiersVoteTrigger__breakdown">
             {normalizedOptions
               .filter((opt) => (coachVotes.get(opt.key) || []).length > 0)
+              .sort((a, b) => (voteMap.get(b.key)?.votes || 0) - (voteMap.get(a.key)?.votes || 0))
               .slice(0, 4)
               .map((opt) => {
                 const names = coachVotes.get(opt.key) || [];
