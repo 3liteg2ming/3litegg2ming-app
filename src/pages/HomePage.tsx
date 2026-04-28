@@ -143,20 +143,6 @@ function pickFeaturedFinalsFixture(fixtures: FixtureRow[]): FixtureRow | null {
   })[0] || null;
 }
 
-function hasFinalsStarted(fixtures: FixtureRow[]): boolean {
-  return fixtures.some((fixture) => {
-    if (!isFinalsFixtureCandidate(fixture)) return false;
-
-    const normalizedStatus = normalizeFixtureStatus(fixture.status, fixture);
-    if (normalizedStatus === 'LIVE' || normalizedStatus === 'PENDING_RESULTS' || normalizedStatus === 'FINAL') {
-      return true;
-    }
-
-    const timestamp = getFixtureTimestamp(fixture.start_time);
-    return Number.isFinite(timestamp) && timestamp <= Date.now();
-  });
-}
-
 function useHomepageNews() {
   const query = useQuery<HomeNewsItem[]>({
     queryKey: ['home', 'news', 2],
@@ -711,26 +697,9 @@ function CoachHubBanner({ coaches = [] }: { coaches?: Coach[] }) {
   );
 }
 
-function FinalsHubSection({ fixturesVisible, coaches = [] }: { fixturesVisible: boolean; coaches?: Coach[] }) {
-  const finalsFixturesQuery = useSeasonFixtures('afl26-season-two', {
-    limit: 1000,
-    enabled: fixturesVisible && FINALS_CONFIG.enabled,
-  });
+function FinalsHubSection(_props: { fixturesVisible: boolean; coaches?: Coach[] }) {
   const ladderQuery = useLadder('afl26-season-two');
 
-  const allFinalsFixtures = React.useMemo(
-    () => (Array.isArray(finalsFixturesQuery.data?.fixtures) ? finalsFixturesQuery.data?.fixtures || [] : []),
-    [finalsFixturesQuery.data?.fixtures],
-  );
-  const finalsStarted = React.useMemo(() => hasFinalsStarted(allFinalsFixtures), [allFinalsFixtures]);
-  const featuredFinalsFixture = React.useMemo(
-    () => pickFeaturedFinalsFixture(allFinalsFixtures),
-    [allFinalsFixtures],
-  );
-  const finalsVoteRoundLabel = featuredFinalsFixture ? getFixtureFinalsRoundLabel(featuredFinalsFixture) : undefined;
-  const finalsVoteStatus = featuredFinalsFixture
-    ? normalizeFixtureStatus(featuredFinalsFixture.status, featuredFinalsFixture)
-    : undefined;
   const premiersOptions = React.useMemo(
     () =>
       (ladderQuery.data || []).slice(0, 8).map((team, index) => ({
@@ -744,46 +713,18 @@ function FinalsHubSection({ fixturesVisible, coaches = [] }: { fixturesVisible: 
     [ladderQuery.data],
   );
 
-  const showPremiersVote = FINALS_CONFIG.enabled && !finalsStarted && premiersOptions.length >= 2;
-  const showFixtureVote = FINALS_CONFIG.enabled && finalsStarted && Boolean(featuredFinalsFixture);
+  const showPremiersVote = FINALS_CONFIG.enabled && premiersOptions.length >= 2;
 
-  if (!FINALS_CONFIG.enabled || (!showPremiersVote && !showFixtureVote)) return null;
+  if (!FINALS_CONFIG.enabled || !showPremiersVote) return null;
 
-  if (showPremiersVote) {
-    return (
-      <section className="home-finalsHub">
-        <PremiersVoteCard
-          pollKey="afl26-season-two-premiers-coaches"
-          options={premiersOptions}
-        />
-      </section>
-    );
-  }
-
-  return featuredFinalsFixture ? (
+  return (
     <section className="home-finalsHub">
-      <FinalsVoteCard
-        fixtureId={featuredFinalsFixture.id}
-        homeTeamName={
-          featuredFinalsFixture.home_team_name ||
-          featuredFinalsFixture.home_team_short_name ||
-          featuredFinalsFixture.home_team_slug?.replace(/-/g, ' ') ||
-          'TBC'
-        }
-        awayTeamName={
-          featuredFinalsFixture.away_team_name ||
-          featuredFinalsFixture.away_team_short_name ||
-          featuredFinalsFixture.away_team_slug?.replace(/-/g, ' ') ||
-          'TBC'
-        }
-        homeTeamSlug={featuredFinalsFixture.home_team_slug || undefined}
-        awayTeamSlug={featuredFinalsFixture.away_team_slug || undefined}
-        roundLabel={finalsVoteRoundLabel}
-        startTime={featuredFinalsFixture.start_time || undefined}
-        status={finalsVoteStatus}
+      <PremiersVoteCard
+        pollKey="afl26-season-two-premiers-coaches"
+        options={premiersOptions}
       />
     </section>
-  ) : null;
+  );
 }
 
 function FinalsShowcaseSection({ fixturesVisible, coaches = [] }: { fixturesVisible: boolean; coaches?: Coach[] }) {
