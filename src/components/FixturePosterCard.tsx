@@ -235,7 +235,12 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
     >
       <div className="fxPosterCard__topBar">
         <div className="fxPosterCard__badgeGroup">
-          {finalsBadgeLabel ? <span className="finals-badge">{finalsBadgeLabel}</span> : null}
+          {finalsBadgeLabel ? (
+            <span className="finals-badge">
+              <img src={assetUrl('elite-gaming-logo.png')} alt="" className="finals-badge__egLogo" aria-hidden="true" />
+              {finalsBadgeLabel}
+            </span>
+          ) : null}
           <div className="fxPosterCard__headerBadge">{headerMeta}</div>
         </div>
         <div className="fxPosterCard__statusPill">
