@@ -83,20 +83,84 @@ USING (auth.uid() = user_id)
 WITH CHECK (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Admins can read all preseason registrations" ON public.eg_preseason_registrations;
-CREATE POLICY "Admins can read all preseason registrations"
-ON public.eg_preseason_registrations
-FOR SELECT
-TO authenticated
-USING (
-  EXISTS (
+DO $$
+DECLARE
+  v_has_role boolean := false;
+  v_has_is_admin boolean := false;
+BEGIN
+  SELECT EXISTS (
     SELECT 1
-    FROM public.eg_profiles p
-    WHERE p.user_id = auth.uid()
-      AND (
-        COALESCE(p.is_admin, false) = true
-        OR LOWER(COALESCE(p.role, '')) IN ('admin', 'super_admin', 'superadmin')
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'eg_profiles'
+      AND column_name = 'role'
+  ) INTO v_has_role;
+
+  SELECT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'eg_profiles'
+      AND column_name = 'is_admin'
+  ) INTO v_has_is_admin;
+
+  IF v_has_role AND v_has_is_admin THEN
+    EXECUTE $policy$
+      CREATE POLICY "Admins can read all preseason registrations"
+      ON public.eg_preseason_registrations
+      FOR SELECT
+      TO authenticated
+      USING (
+        EXISTS (
+          SELECT 1
+          FROM public.eg_profiles p
+          WHERE p.user_id = auth.uid()
+            AND (
+              COALESCE(p.is_admin, false) = true
+              OR LOWER(COALESCE(p.role::text, '')) IN ('admin', 'super_admin', 'superadmin')
+            )
+        )
       )
-  )
-);
+    $policy$;
+  ELSIF v_has_is_admin THEN
+    EXECUTE $policy$
+      CREATE POLICY "Admins can read all preseason registrations"
+      ON public.eg_preseason_registrations
+      FOR SELECT
+      TO authenticated
+      USING (
+        EXISTS (
+          SELECT 1
+          FROM public.eg_profiles p
+          WHERE p.user_id = auth.uid()
+            AND COALESCE(p.is_admin, false) = true
+        )
+      )
+    $policy$;
+  ELSIF v_has_role THEN
+    EXECUTE $policy$
+      CREATE POLICY "Admins can read all preseason registrations"
+      ON public.eg_preseason_registrations
+      FOR SELECT
+      TO authenticated
+      USING (
+        EXISTS (
+          SELECT 1
+          FROM public.eg_profiles p
+          WHERE p.user_id = auth.uid()
+            AND LOWER(COALESCE(p.role::text, '')) IN ('admin', 'super_admin', 'superadmin')
+        )
+      )
+    $policy$;
+  ELSE
+    EXECUTE $policy$
+      CREATE POLICY "Admins can read all preseason registrations"
+      ON public.eg_preseason_registrations
+      FOR SELECT
+      TO authenticated
+      USING (false)
+    $policy$;
+  END IF;
+END $$;
 
 COMMIT;

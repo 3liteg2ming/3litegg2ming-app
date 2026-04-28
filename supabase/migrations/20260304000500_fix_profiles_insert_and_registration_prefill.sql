@@ -86,9 +86,24 @@ after insert on auth.users
 for each row execute function public.eg_handle_new_user();
 
 -- Pretty view: readable coach + PSN + team names
-create or replace view public.eg_preseason_registrations_pretty as
+drop view if exists public.eg_preseason_registrations_pretty;
+
+create view public.eg_preseason_registrations_pretty as
 select
-  r.*, 
+  r.id,
+  r.user_id,
+  r.season_slug,
+  r.created_at,
+  coalesce(r.updated_at, r.created_at) as updated_at,
+  r.coach_name,
+  r.psn,
+  r.psn_name,
+  r.pref_team_ids,
+  r.pref_team_1,
+  r.pref_team_2,
+  r.pref_team_3,
+  r.pref_team_4,
+  r.pref_team_slugs,
   coalesce(nullif(r.coach_name,''), p.display_name, '') as coach_display_name,
   coalesce(nullif(r.psn_name,''), p.psn, nullif(r.psn,''), '') as coach_psn,
   trim(both ', ' from concat_ws(', ',

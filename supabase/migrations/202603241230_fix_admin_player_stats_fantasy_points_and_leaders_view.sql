@@ -61,6 +61,7 @@ $$;
 -- Keep the existing ext-view shape for admin stats and append fantasy_points.
 -- Player goals continue to come from the separate manual submission aggregation
 -- already used in the app leaders cache.
+DROP VIEW IF EXISTS public.eg_player_season_totals_ext CASCADE;
 CREATE OR REPLACE VIEW public.eg_player_season_totals_ext AS
 SELECT
   f.season_id,

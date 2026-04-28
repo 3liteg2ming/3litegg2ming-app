@@ -180,7 +180,7 @@ begin
     select
       player_id,
       max(player_name) as player_name,
-      max(team_id) as team_id,
+      min(team_id::text)::uuid as team_id,
       sum(goals) as goals
     from kicker_rows
     where player_id is not null
@@ -240,7 +240,9 @@ grant execute on function public.eg_submit_result_v2(
   text
 ) to authenticated;
 
-create or replace view public.eg_player_season_totals_ext as
+drop view if exists public.eg_player_season_totals_ext;
+
+create view public.eg_player_season_totals_ext as
 with stat_rows as (
   select
     f.season_id,
@@ -297,7 +299,7 @@ goal_rows as (
   select
     season_id,
     player_id,
-    max(team_id) as team_id,
+    min(team_id::text)::uuid as team_id,
     sum(goals) as goals
   from parsed_goal_rows
   where player_id is not null

@@ -10,8 +10,13 @@ CREATE TABLE IF NOT EXISTS public.eg_admin_passcode_config (
 );
 
 INSERT INTO public.eg_admin_passcode_config (id, passcode_hash)
-VALUES (true, crypt('PendlesEZEMJ', gen_salt('bf')))
+VALUES (true, extensions.crypt('PendlesEZEMJ', extensions.gen_salt('bf')))
 ON CONFLICT (id) DO NOTHING;
+
+-- Recreate the RPC from scratch because some remote databases still have an
+-- older signature with a different return type, which CREATE OR REPLACE
+-- cannot mutate in-place.
+DROP FUNCTION IF EXISTS public.eg_admin_exchange_passcode(text);
 
 CREATE OR REPLACE FUNCTION public.eg_admin_exchange_passcode(p_code text)
 RETURNS jsonb
@@ -36,11 +41,11 @@ BEGIN
     RETURN jsonb_build_object('ok', false);
   END IF;
 
-  IF crypt(p_code, v_hash) <> v_hash THEN
+  IF extensions.crypt(p_code, v_hash) <> v_hash THEN
     RETURN jsonb_build_object('ok', false);
   END IF;
 
-  v_token := gen_random_uuid()::text || '-' || encode(gen_random_bytes(16), 'hex');
+  v_token := gen_random_uuid()::text || '-' || encode(extensions.gen_random_bytes(16), 'hex');
   v_expires_at := now() + interval '1 hour';
 
   DELETE FROM public.eg_admin_sessions WHERE expires_at <= now();

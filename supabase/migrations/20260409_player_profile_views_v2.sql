@@ -13,6 +13,7 @@ DROP VIEW IF EXISTS public.eg_player_career_averages CASCADE;
 DROP VIEW IF EXISTS public.eg_player_game_log CASCADE;
 
 -- 1) Latest fixture stat-line — now includes fantasy_points
+DROP VIEW IF EXISTS public.eg_player_latest_fixture_statline CASCADE;
 CREATE OR REPLACE VIEW public.eg_player_latest_fixture_statline AS
 WITH ranked AS (
   SELECT
@@ -52,6 +53,7 @@ FROM ranked
 WHERE rn = 1;
 
 -- 2) Season averages — now includes avg_fantasy_points
+DROP VIEW IF EXISTS public.eg_player_season_averages CASCADE;
 CREATE OR REPLACE VIEW public.eg_player_season_averages AS
 SELECT
   s.player_id,
@@ -70,6 +72,7 @@ JOIN public.eg_fixtures f ON f.id = s.fixture_id
 GROUP BY s.player_id, f.season_id, s.team_id;
 
 -- 3) Career averages — now includes avg_fantasy_points
+DROP VIEW IF EXISTS public.eg_player_career_averages CASCADE;
 CREATE OR REPLACE VIEW public.eg_player_career_averages AS
 SELECT
   s.player_id,
@@ -87,6 +90,7 @@ LEFT JOIN public.eg_players p ON p.id = s.player_id
 GROUP BY s.player_id, COALESCE(p.team_id, s.team_id);
 
 -- 4) NEW: Game log — match-by-match stats for the player profile
+DROP VIEW IF EXISTS public.eg_player_game_log CASCADE;
 CREATE OR REPLACE VIEW public.eg_player_game_log AS
 SELECT
   s.player_id,

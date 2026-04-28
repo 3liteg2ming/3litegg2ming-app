@@ -66,6 +66,14 @@ BEGIN
 END
 $$;
 
+DROP FUNCTION IF EXISTS public.eg_admin_session_ping(text);
+DROP FUNCTION IF EXISTS public.eg_admin_validate_session(text);
+DROP FUNCTION IF EXISTS public.eg_admin_list_seasons(text);
+DROP FUNCTION IF EXISTS public.eg_admin_list_fixtures(text, uuid);
+DROP FUNCTION IF EXISTS public.eg_admin_list_profiles(text);
+DROP FUNCTION IF EXISTS public.eg_admin_list_preseason_registrations(text);
+DROP FUNCTION IF EXISTS public.eg_admin_update_preseason_registration(text, uuid, text, uuid);
+
 CREATE OR REPLACE FUNCTION public.eg_admin_session_ping(p_token text)
 RETURNS jsonb
 LANGUAGE sql
@@ -125,14 +133,56 @@ RETURNS TABLE (
   role text,
   is_admin boolean
 )
-LANGUAGE sql
+LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT p.user_id, p.display_name, p.psn, p.team_id, p.role, p.is_admin
-  FROM public.eg_profiles p
-  WHERE public.eg_is_admin_session_valid(trim(COALESCE(p_token, '')))
-  ORDER BY p.display_name NULLS LAST, p.user_id;
+DECLARE
+  v_has_role boolean := false;
+  v_has_is_admin boolean := false;
+BEGIN
+  SELECT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'eg_profiles'
+      AND column_name = 'role'
+  ) INTO v_has_role;
+
+  SELECT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'eg_profiles'
+      AND column_name = 'is_admin'
+  ) INTO v_has_is_admin;
+
+  IF v_has_role AND v_has_is_admin THEN
+    RETURN QUERY
+    SELECT p.user_id, p.display_name, p.psn, p.team_id, p.role::text, p.is_admin
+    FROM public.eg_profiles p
+    WHERE public.eg_is_admin_session_valid(trim(COALESCE(p_token, '')))
+    ORDER BY p.display_name NULLS LAST, p.user_id;
+  ELSIF v_has_role THEN
+    RETURN QUERY
+    SELECT p.user_id, p.display_name, p.psn, p.team_id, p.role::text, false
+    FROM public.eg_profiles p
+    WHERE public.eg_is_admin_session_valid(trim(COALESCE(p_token, '')))
+    ORDER BY p.display_name NULLS LAST, p.user_id;
+  ELSIF v_has_is_admin THEN
+    RETURN QUERY
+    SELECT p.user_id, p.display_name, p.psn, p.team_id, NULL::text, p.is_admin
+    FROM public.eg_profiles p
+    WHERE public.eg_is_admin_session_valid(trim(COALESCE(p_token, '')))
+    ORDER BY p.display_name NULLS LAST, p.user_id;
+  ELSE
+    RETURN QUERY
+    SELECT p.user_id, p.display_name, p.psn, p.team_id, NULL::text, false
+    FROM public.eg_profiles p
+    WHERE public.eg_is_admin_session_valid(trim(COALESCE(p_token, '')))
+    ORDER BY p.display_name NULLS LAST, p.user_id;
+  END IF;
+END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.eg_admin_list_preseason_registrations(p_token text)

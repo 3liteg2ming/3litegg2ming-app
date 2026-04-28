@@ -6,6 +6,7 @@ BEGIN;
 
 DROP VIEW IF EXISTS public.eg_ladder_rows_v2;
 
+DROP VIEW IF EXISTS public.eg_ladder_rows_v2 CASCADE;
 CREATE OR REPLACE VIEW public.eg_ladder_rows_v2 AS
 WITH final_fixtures AS (
   SELECT

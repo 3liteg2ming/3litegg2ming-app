@@ -199,6 +199,7 @@ CREATE INDEX IF NOT EXISTS idx_eg_players_name_key
 -- ---------------------------------------------------------------------------
 -- E) Season totals view extension
 -- ---------------------------------------------------------------------------
+DROP VIEW IF EXISTS public.eg_player_season_totals_ext CASCADE;
 CREATE OR REPLACE VIEW public.eg_player_season_totals_ext AS
 SELECT
   f.season_id,

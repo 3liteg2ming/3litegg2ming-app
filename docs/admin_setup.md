@@ -1,6 +1,6 @@
 # Admin Setup
 
-Use this after running `supabase/migrations/20260301_admin_console.sql`.
+Use this after running `supabase/migrations/20260301000000_admin_console.sql`.
 
 ## 1) Find your user ID (`auth.uid()`)
 

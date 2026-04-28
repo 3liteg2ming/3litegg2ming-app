@@ -1,0 +1,40 @@
+[30784238ms] [ERROR] Failed to load resource: net::ERR_ADDRESS_UNREACHABLE @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/rpc/eg_get_prediction_vote_summary:0
+[30784253ms] [ERROR] Failed to load resource: net::ERR_ADDRESS_UNREACHABLE @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_fixtures?select=id&season_id=eq.208d6ceb-4428-43ee-b23b-96be347172bf:0
+[30784254ms] [ERROR] Failed to load resource: net::ERR_ADDRESS_UNREACHABLE @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_fixtures?select=*&season_id=eq.208d6ceb-4428-43ee-b23b-96be347172bf&order=round.asc%2Cstart_time.asc&offset=0&limit=1000:0
+[30784255ms] [WARNING] [useFixtures] slug fixture fetch failed, falling back to season.id path {requestedSeasonSlug: afl26-season-two, canonicalSeasonSlug: afl26-season-two, error: TypeError: Failed to fetch} @ http://127.0.0.1:4177/assets/melvin-bet-Dih_50G1.js:0
+[30784256ms] [ERROR] Failed to load resource: net::ERR_ADDRESS_UNREACHABLE @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_fixtures?select=id&season_id=eq.208d6ceb-4428-43ee-b23b-96be347172bf:0
+[30784256ms] [ERROR] Failed to load resource: net::ERR_ADDRESS_UNREACHABLE @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_fixtures?select=*&season_id=eq.208d6ceb-4428-43ee-b23b-96be347172bf&order=round.asc%2Cstart_time.asc&offset=0&limit=10:0
+[30784256ms] [WARNING] [useFixtures] slug fixture fetch failed, falling back to season.id path {requestedSeasonSlug: afl26-season-two, canonicalSeasonSlug: afl26-season-two, error: TypeError: Failed to fetch} @ http://127.0.0.1:4177/assets/melvin-bet-Dih_50G1.js:0
+[30784257ms] [ERROR] Failed to load resource: net::ERR_ADDRESS_UNREACHABLE @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_fixtures?select=id&season_id=eq.208d6ceb-4428-43ee-b23b-96be347172bf:0
+[30784259ms] [ERROR] Failed to load resource: net::ERR_ADDRESS_UNREACHABLE @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_fixtures?select=*&season_id=eq.208d6ceb-4428-43ee-b23b-96be347172bf&order=round.asc%2Cstart_time.asc&offset=0&limit=2000:0
+[30784271ms] [ERROR] [EG CRASH] unhandledrejection Error: TypeError: Failed to fetch
+    at Rd (http://127.0.0.1:4177/assets/index-DIJzfdn8.js:29:153792) @ http://127.0.0.1:4177/assets/index-DIJzfdn8.js:33
+[30791347ms] Error: TypeError: Failed to fetch
+    at Rd (http://127.0.0.1:4177/assets/index-DIJzfdn8.js:29:153792)
+[30784280ms] [ERROR] [EG CRASH] unhandledrejection Error: TypeError: Failed to fetch
+    at Rd (http://127.0.0.1:4177/assets/index-DIJzfdn8.js:29:153792) @ http://127.0.0.1:4177/assets/index-DIJzfdn8.js:33
+[30791350ms] Error: TypeError: Failed to fetch
+    at Rd (http://127.0.0.1:4177/assets/index-DIJzfdn8.js:29:153792)
+[30784280ms] [ERROR] [EG CRASH] unhandledrejection Error: TypeError: Failed to fetch
+    at Rd (http://127.0.0.1:4177/assets/index-DIJzfdn8.js:29:153792) @ http://127.0.0.1:4177/assets/index-DIJzfdn8.js:33
+[30791350ms] Error: TypeError: Failed to fetch
+    at Rd (http://127.0.0.1:4177/assets/index-DIJzfdn8.js:29:153792)
+[30784464ms] [WARNING] WebSocket connection to 'wss://zohtixrgskbzosgfluni.supabase.co/realtime/v1/websocket?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpvaHRpeHJnc2tiem9zZ2ZsdW5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1NTA3NTEsImV4cCI6MjA4NzEyNjc1MX0._DkN33LqQ4gkjlbvIO14OdYoHuvYOhHMr3uOu8qgv0U&vsn=2.0.0' failed: WebSocket is closed before the connection is established. @ http://127.0.0.1:4177/assets/vendor-supabase-yKjPlrCh.js:25
+[30786828ms] [ERROR] Failed to load resource: net::ERR_ADDRESS_UNREACHABLE @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_fixtures?select=id&season_id=eq.208d6ceb-4428-43ee-b23b-96be347172bf:0
+[30786832ms] [ERROR] [EG CRASH] unhandledrejection Error: TypeError: Failed to fetch
+    at Rd (http://127.0.0.1:4177/assets/index-DIJzfdn8.js:29:153792) @ http://127.0.0.1:4177/assets/index-DIJzfdn8.js:33
+[30791380ms] Error: TypeError: Failed to fetch
+    at Rd (http://127.0.0.1:4177/assets/index-DIJzfdn8.js:29:153792)
+[30787245ms] [ERROR] Failed to load resource: net::ERR_ADDRESS_UNREACHABLE @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_fixtures?select=*&season_id=eq.208d6ceb-4428-43ee-b23b-96be347172bf&order=round.asc%2Cstart_time.asc&offset=0&limit=1000:0
+[30787401ms] [ERROR] Failed to load resource: net::ERR_ADDRESS_UNREACHABLE @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_fixtures?select=id&season_id=eq.208d6ceb-4428-43ee-b23b-96be347172bf:0
+[30787401ms] [ERROR] [EG CRASH] unhandledrejection Error: TypeError: Failed to fetch
+    at Rd (http://127.0.0.1:4177/assets/index-DIJzfdn8.js:29:153792) @ http://127.0.0.1:4177/assets/index-DIJzfdn8.js:33
+[30791393ms] Error: TypeError: Failed to fetch
+    at Rd (http://127.0.0.1:4177/assets/index-DIJzfdn8.js:29:153792)
+[30787768ms] [ERROR] Failed to load resource: net::ERR_ADDRESS_UNREACHABLE @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_fixtures?select=*&season_id=eq.208d6ceb-4428-43ee-b23b-96be347172bf&order=round.asc%2Cstart_time.asc&offset=0&limit=10:0
+[30787973ms] [ERROR] Failed to load resource: net::ERR_ADDRESS_UNREACHABLE @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_fixtures?select=id&season_id=eq.208d6ceb-4428-43ee-b23b-96be347172bf:0
+[30787977ms] [ERROR] [EG CRASH] unhandledrejection Error: TypeError: Failed to fetch
+    at Rd (http://127.0.0.1:4177/assets/index-DIJzfdn8.js:29:153792) @ http://127.0.0.1:4177/assets/index-DIJzfdn8.js:33
+[30791477ms] Error: TypeError: Failed to fetch
+    at Rd (http://127.0.0.1:4177/assets/index-DIJzfdn8.js:29:153792)
+[30787992ms] [ERROR] Failed to load resource: net::ERR_ADDRESS_UNREACHABLE @ https://zohtixrgskbzosgfluni.supabase.co/rest/v1/eg_fixtures?select=*&season_id=eq.208d6ceb-4428-43ee-b23b-96be347172bf&order=round.asc%2Cstart_time.asc&offset=0&limit=2000:0

@@ -2,7 +2,7 @@ BEGIN;
 
 -- Token-gated RPC for admin fixture score corrections.
 -- Uses eg_assert_admin_session (passcode session token) consistent with
--- the existing admin session infrastructure in 20260303_admin_passcode_sessions_and_rpcs.sql.
+-- the existing admin session infrastructure in 20260303000200_admin_passcode_sessions_and_rpcs.sql.
 
 CREATE OR REPLACE FUNCTION public.eg_admin_update_fixture_scores(
   p_token text,

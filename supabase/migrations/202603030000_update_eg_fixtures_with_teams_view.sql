@@ -1,6 +1,7 @@
 -- Update eg_fixtures_with_teams to include knockout/preseason fields.
 -- Safe to run multiple times.
 
+drop view if exists public.eg_fixtures_with_teams cascade;
 create or replace view public.eg_fixtures_with_teams as
 select
   f.id,

@@ -28,6 +28,7 @@ create index if not exists eg_fixtures_season_stage_time_idx
 create index if not exists eg_fixtures_season_round_idx
   on public.eg_fixtures (season_id, round);
 
+drop view if exists public.eg_fixtures_by_stage cascade;
 create or replace view public.eg_fixtures_by_stage as
 select
   f.season_id,
@@ -39,7 +40,7 @@ select
   f.away_team_id,
   f.home_team_slug,
   f.away_team_slug,
-  upper(coalesce(f.status, 'SCHEDULED')) as status,
+  upper(coalesce(f.status::text, 'SCHEDULED')) as status,
   f.home_goals,
   f.home_behinds,
   f.home_total,

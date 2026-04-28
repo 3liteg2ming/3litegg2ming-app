@@ -15,10 +15,12 @@ create table if not exists eg_homepage_news (
 -- RLS: public read for published rows
 alter table eg_homepage_news enable row level security;
 
+drop policy if exists "Public can read published news" on eg_homepage_news;
 create policy "Public can read published news"
   on eg_homepage_news for select
   using (is_published = true);
 
+drop policy if exists "Admins can manage news" on eg_homepage_news;
 create policy "Admins can manage news"
   on eg_homepage_news for all
   using (true)

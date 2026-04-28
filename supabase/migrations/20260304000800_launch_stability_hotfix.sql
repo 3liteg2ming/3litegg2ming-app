@@ -184,7 +184,9 @@ using (auth.uid() = user_id and public.eg_preseason_registration_is_open())
 with check (auth.uid() = user_id and public.eg_preseason_registration_is_open());
 
 -- Admin-readable registration view with names/slugs for team prefs
-create or replace view public.eg_preseason_registrations_view as
+drop view if exists public.eg_preseason_registrations_view;
+
+create view public.eg_preseason_registrations_view as
 select
   r.user_id,
   r.created_at,

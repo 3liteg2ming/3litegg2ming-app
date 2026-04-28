@@ -8,6 +8,7 @@
 -- 1. CREATE VIEW: eg_fixtures_with_teams
 -- Joins fixtures with team data for efficient single-query loading
 -- ============================================================================
+DROP VIEW IF EXISTS public.eg_fixtures_with_teams CASCADE;
 CREATE OR REPLACE VIEW public.eg_fixtures_with_teams AS
 SELECT
   f.id,

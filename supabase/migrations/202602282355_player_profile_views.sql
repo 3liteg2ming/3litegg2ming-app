@@ -12,6 +12,7 @@ CREATE INDEX IF NOT EXISTS idx_eg_fixtures_id_season_start
 CREATE INDEX IF NOT EXISTS idx_eg_fixtures_start_time
   ON public.eg_fixtures (start_time DESC);
 
+DROP VIEW IF EXISTS public.eg_player_latest_fixture_statline CASCADE;
 CREATE OR REPLACE VIEW public.eg_player_latest_fixture_statline AS
 WITH ranked AS (
   SELECT
@@ -48,6 +49,7 @@ SELECT
 FROM ranked
 WHERE rn = 1;
 
+DROP VIEW IF EXISTS public.eg_player_season_averages CASCADE;
 CREATE OR REPLACE VIEW public.eg_player_season_averages AS
 SELECT
   s.player_id,
@@ -64,6 +66,7 @@ FROM public.eg_fixture_player_stats s
 JOIN public.eg_fixtures f ON f.id = s.fixture_id
 GROUP BY s.player_id, f.season_id, s.team_id;
 
+DROP VIEW IF EXISTS public.eg_player_career_averages CASCADE;
 CREATE OR REPLACE VIEW public.eg_player_career_averages AS
 SELECT
   s.player_id,

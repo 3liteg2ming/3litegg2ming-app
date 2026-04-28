@@ -131,7 +131,7 @@ begin
     stage_index = coalesce(f.stage_index, f.week_index, f.round, 1),
     stage_name = coalesce(nullif(trim(f.stage_name), ''), 'Round ' || coalesce(f.week_index, f.round, 1)::text),
     venue = coalesce(nullif(trim(f.venue), ''), 'TBC'),
-    status = upper(coalesce(nullif(trim(f.status), ''), 'SCHEDULED'))
+    status = upper(coalesce(nullif(trim(f.status::text), ''), 'SCHEDULED'))::public.eg_fixture_status
   where f.season_id = v_preseason_id;
 
   -- Backfill team slugs when missing for preseason fixtures.

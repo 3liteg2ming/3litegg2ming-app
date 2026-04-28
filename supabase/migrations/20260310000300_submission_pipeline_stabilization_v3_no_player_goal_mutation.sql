@@ -170,7 +170,7 @@ begin
     select
       player_id,
       max(player_name) as player_name,
-      max(team_id) as team_id
+      min(team_id::text)::uuid as team_id
     from kicker_rows
     where player_id is not null
     group by player_id

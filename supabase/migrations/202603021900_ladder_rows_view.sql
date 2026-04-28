@@ -7,6 +7,7 @@ BEGIN;
 -- Safety: if a previous version exists, replace it.
 DROP VIEW IF EXISTS public.eg_ladder_rows;
 
+DROP VIEW IF EXISTS public.eg_ladder_rows CASCADE;
 CREATE OR REPLACE VIEW public.eg_ladder_rows AS
 WITH final_fixtures AS (
   SELECT

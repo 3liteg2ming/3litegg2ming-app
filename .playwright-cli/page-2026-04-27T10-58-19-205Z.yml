@@ -1,0 +1,69 @@
+- application "Elite Gaming App" [ref=e4]:
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - button "Go to home" [ref=e7] [cursor=pointer]
+      - button "Sign In" [ref=e10] [cursor=pointer]
+  - main [ref=e11]:
+    - main [ref=e13]:
+      - generic [ref=e14]:
+        - generic [ref=e17]:
+          - generic [ref=e18]:
+            - generic [ref=e19]: Elite Gaming x BGL
+            - generic [ref=e20]: Finals Week 1
+          - generic [ref=e22]:
+            - heading "AFL26 Finals Hub" [level=1] [ref=e23]
+            - paragraph [ref=e24]: A cleaner finals home for bracket tracking, featured matchups and fan voting.
+          - generic [ref=e25]:
+            - generic [ref=e26]: Official Finals Partners
+            - generic [ref=e27]:
+              - img "Elite Gaming"
+              - img "BGL Media"
+              - img "AFL26"
+          - generic [ref=e30]:
+            - link "Open Fixtures" [ref=e31] [cursor=pointer]:
+              - /url: /fixtures
+              - img [ref=e33]
+              - text: Open Fixtures
+            - link "Best 23" [ref=e35] [cursor=pointer]:
+              - /url: /best-team
+              - img [ref=e37]
+              - text: Best 23
+        - generic [ref=e44]:
+          - heading "Featured Match" [level=2] [ref=e45]
+          - link "All Fixtures" [ref=e46] [cursor=pointer]:
+            - /url: /fixtures
+            - text: All Fixtures
+            - img [ref=e47]
+      - generic [ref=e51]:
+        - link "Club Tracker Finalists" [ref=e52] [cursor=pointer]:
+          - /url: /teams
+          - img [ref=e53]
+          - generic [ref=e58]: Club Tracker
+          - generic [ref=e59]: Finalists
+          - img [ref=e60]
+        - link "Best 23" [ref=e62] [cursor=pointer]:
+          - /url: /best-team
+          - img [ref=e63]
+          - generic [ref=e69]: Best 23
+          - img [ref=e70]
+  - navigation [ref=e74]:
+    - link "Home" [ref=e75] [cursor=pointer]:
+      - /url: /
+      - img [ref=e76]
+      - generic [ref=e79]: Home
+    - link "Fixtures" [ref=e80] [cursor=pointer]:
+      - /url: /fixtures
+      - img [ref=e81]
+      - generic [ref=e83]: Fixtures
+    - link "Teams" [ref=e84] [cursor=pointer]:
+      - /url: /teams
+      - img [ref=e85]
+      - generic [ref=e90]: Teams
+    - link "Ladder" [ref=e91] [cursor=pointer]:
+      - /url: /ladder
+      - img [ref=e92]
+      - generic [ref=e98]: Ladder
+    - link "Stats" [ref=e99] [cursor=pointer]:
+      - /url: /stats3
+      - img [ref=e100]
+      - generic [ref=e102]: Stats

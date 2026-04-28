@@ -292,10 +292,10 @@ CREATE POLICY "profiles_update_own" ON public.profiles
   USING (auth.uid() = user_id)
   WITH CHECK (
     auth.uid() = user_id
-    AND (display_name = OLD.display_name OR display_name IS NOT NULL)
-    AND (psn = OLD.psn OR psn IS NOT NULL)
-    AND (team_id = OLD.team_id OR team_id IS NOT NULL)
-    AND is_admin = OLD.is_admin
+    AND COALESCE(is_admin, false) = COALESCE(
+      (SELECT p.is_admin FROM public.profiles p WHERE p.user_id = auth.uid()),
+      false
+    )
   );
 
 -- Admins can update any profile

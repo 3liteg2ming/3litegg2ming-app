@@ -10,6 +10,9 @@ CREATE TABLE IF NOT EXISTS public.eg_admin_sessions (
   created_by text NULL
 );
 
+ALTER TABLE public.eg_admin_sessions
+  ALTER COLUMN token TYPE text USING token::text;
+
 CREATE INDEX IF NOT EXISTS idx_eg_admin_sessions_expires_at
   ON public.eg_admin_sessions (expires_at);
 
