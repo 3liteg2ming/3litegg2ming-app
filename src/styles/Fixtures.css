@@ -938,3 +938,55 @@
   border-radius: 99px;
   transition: width 400ms ease;
 }
+
+/* ── Vote dropdown toggle ── */
+.fxVoteInline__toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  color: rgba(210, 225, 252, 0.60);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.fxVoteInline__toggle--open {
+  border-radius: 10px 10px 0 0;
+  border-bottom-color: transparent;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.fxVoteInline__toggleMeta {
+  margin-left: auto;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: rgba(245, 196, 0, 0.80);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.fxVoteInline__chevron {
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.30);
+  margin-left: auto;
+}
+
+.fxVoteInline__toggleMeta ~ .fxVoteInline__chevron {
+  margin-left: 0;
+}
+
+.fxVoteInline__body {
+  padding: 10px 12px 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+}

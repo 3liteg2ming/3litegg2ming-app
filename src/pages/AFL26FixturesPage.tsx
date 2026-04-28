@@ -321,9 +321,12 @@ function FixtureVoteInline({
   awayName: string;
 }) {
   const { user } = useAuth();
+  const [open, setOpen] = useState(false);
   const voterKey = user?.id ?? null;
   const voting = useFixtureVoting(fixtureId, homeSlug, awaySlug, voterKey);
   const { submitVote, isSubmitting } = useFixtureVotingSubmit(voterKey);
+
+  const hasVoted = !!voting.currentUserVote;
 
   const handleVote = (slug: string) => {
     void submitVote(fixtureId, slug);
@@ -331,30 +334,49 @@ function FixtureVoteInline({
 
   return (
     <div className="fxVoteInline">
-      <span className="fxVoteInline__label">Who wins?</span>
-      <div className="fxVoteInline__btns">
-        <button
-          type="button"
-          className={`fxVoteInline__btn${voting.currentUserVote === homeSlug ? ' fxVoteInline__btn--picked' : ''}`}
-          onClick={() => homeSlug && handleVote(homeSlug)}
-          disabled={isSubmitting || !!voting.currentUserVote}
-        >
-          {homeName}
-          {voting.hasVotes ? <span className="fxVoteInline__pct">{voting.homePct}%</span> : null}
-        </button>
-        <button
-          type="button"
-          className={`fxVoteInline__btn${voting.currentUserVote === awaySlug ? ' fxVoteInline__btn--picked' : ''}`}
-          onClick={() => awaySlug && handleVote(awaySlug)}
-          disabled={isSubmitting || !!voting.currentUserVote}
-        >
-          {awayName}
-          {voting.hasVotes ? <span className="fxVoteInline__pct">{voting.awayPct}%</span> : null}
-        </button>
-      </div>
-      {voting.hasVotes && (
-        <div className="fxVoteInline__bar">
-          <div className="fxVoteInline__barHome" style={{ width: `${voting.homePct}%` }} />
+      <button
+        type="button"
+        className={`fxVoteInline__toggle${open ? ' fxVoteInline__toggle--open' : ''}`}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span>Who wins?</span>
+        {hasVoted && voting.hasVotes ? (
+          <span className="fxVoteInline__toggleMeta">
+            {voting.currentUserVote === homeSlug ? homeName : awayName} · {voting.currentUserVote === homeSlug ? voting.homePct : voting.awayPct}%
+          </span>
+        ) : voting.hasVotes ? (
+          <span className="fxVoteInline__toggleMeta">{voting.totalVotes} vote{voting.totalVotes !== 1 ? 's' : ''}</span>
+        ) : null}
+        <span className="fxVoteInline__chevron">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="fxVoteInline__body">
+          <div className="fxVoteInline__btns">
+            <button
+              type="button"
+              className={`fxVoteInline__btn${voting.currentUserVote === homeSlug ? ' fxVoteInline__btn--picked' : ''}`}
+              onClick={() => homeSlug && handleVote(homeSlug)}
+              disabled={isSubmitting || hasVoted}
+            >
+              {homeName}
+              {voting.hasVotes ? <span className="fxVoteInline__pct">{voting.homePct}%</span> : null}
+            </button>
+            <button
+              type="button"
+              className={`fxVoteInline__btn${voting.currentUserVote === awaySlug ? ' fxVoteInline__btn--picked' : ''}`}
+              onClick={() => awaySlug && handleVote(awaySlug)}
+              disabled={isSubmitting || hasVoted}
+            >
+              {awayName}
+              {voting.hasVotes ? <span className="fxVoteInline__pct">{voting.awayPct}%</span> : null}
+            </button>
+          </div>
+          {voting.hasVotes && (
+            <div className="fxVoteInline__bar">
+              <div className="fxVoteInline__barHome" style={{ width: `${voting.homePct}%` }} />
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -851,8 +873,6 @@ export default function AFL26FixturesPage() {
               {displayedMatches.map((match, i) => {
                 const raw = filteredMatches[i];
                 const isFinals = raw?.is_finals ?? false;
-                const advanceLabel =
-                  isFinals && match.status !== 'FINAL' ? getAdvanceLabel(raw) : null;
                 const isHomeCoach = !!(
                   user &&
                   raw?.home_team_id &&
@@ -862,9 +882,6 @@ export default function AFL26FixturesPage() {
                 return (
                   <div key={match.id} className="fxCardGroup">
                     <FixturePosterCard m={match} />
-                    {advanceLabel ? (
-                      <div className="fxAdvanceBadge">{advanceLabel}</div>
-                    ) : null}
                     {isHomeCoach ? (
                       <Link to="/submit" className="fxSubmitCta">Submit Result</Link>
                     ) : null}

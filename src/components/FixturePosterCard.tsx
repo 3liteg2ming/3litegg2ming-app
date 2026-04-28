@@ -382,45 +382,21 @@ function FixturePosterCardComponent({ m }: { m: FixturePosterMatch }) {
       {(isUpcoming || isPending) && (
         <div className="fxPosterCard__infoGrid">
           <div className="fxPosterCard__metaPill">
-            <div className="fxPosterCard__metaRow">
-              <span className="fxPosterCard__metaKey">Coach</span>
-              <span
-                className={`fxPosterCard__metaValue ${homeCoach === 'Coach TBC' ? 'is-tbc' : ''}`}
-                title={homeCoach}
-              >
-                {homeCoach}
-              </span>
-            </div>
-            <div className="fxPosterCard__metaRow">
-              <span className="fxPosterCard__metaKey">{homePlatform}</span>
-              <span
-                className={`fxPosterCard__metaValue fxPosterCard__metaValue--sub ${homePsn === 'PSN TBC' ? 'is-tbc' : ''}`}
-                title={homePsn}
-              >
-                {homePsn}
-              </span>
-            </div>
+            <span className={`fxPosterCard__metaValue ${homeCoach === 'Coach TBC' ? 'is-tbc' : ''}`} title={homeCoach}>
+              {homeCoach}
+            </span>
+            <span className={`fxPosterCard__metaValue fxPosterCard__metaValue--sub ${homePsn === 'PSN TBC' ? 'is-tbc' : ''}`} title={homePsn}>
+              {homePsn}
+            </span>
           </div>
 
           <div className="fxPosterCard__metaPill fxPosterCard__metaPill--away">
-            <div className="fxPosterCard__metaRow">
-              <span className="fxPosterCard__metaKey">Coach</span>
-              <span
-                className={`fxPosterCard__metaValue ${awayCoach === 'Coach TBC' ? 'is-tbc' : ''}`}
-                title={awayCoach}
-              >
-                {awayCoach}
-              </span>
-            </div>
-            <div className="fxPosterCard__metaRow">
-              <span className="fxPosterCard__metaKey">{awayPlatform}</span>
-              <span
-                className={`fxPosterCard__metaValue fxPosterCard__metaValue--sub ${awayPsn === 'PSN TBC' ? 'is-tbc' : ''}`}
-                title={awayPsn}
-              >
-                {awayPsn}
-              </span>
-            </div>
+            <span className={`fxPosterCard__metaValue ${awayCoach === 'Coach TBC' ? 'is-tbc' : ''}`} title={awayCoach}>
+              {awayCoach}
+            </span>
+            <span className={`fxPosterCard__metaValue fxPosterCard__metaValue--sub ${awayPsn === 'PSN TBC' ? 'is-tbc' : ''}`} title={awayPsn}>
+              {awayPsn}
+            </span>
           </div>
         </div>
       )}
