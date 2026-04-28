@@ -11,8 +11,8 @@
 
 .finalsBracket__scroll {
   display: grid;
-  grid-template-columns: repeat(4, minmax(180px, 1fr));
-  gap: 12px;
+  grid-template-columns: minmax(168px, 1fr) 28px minmax(148px, 1fr) 28px minmax(148px, 1fr) 28px minmax(148px, 1fr);
+  gap: 0;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
@@ -183,8 +183,8 @@
 }
 
 .finalsBracket__scroll {
-  grid-template-columns: repeat(4, minmax(168px, 1fr));
-  gap: 10px;
+  grid-template-columns: minmax(160px, 1fr) 28px minmax(140px, 1fr) 28px minmax(140px, 1fr) 28px minmax(140px, 1fr);
+  gap: 0;
   padding-bottom: 4px;
 }
 
@@ -290,8 +290,58 @@
   background: rgba(212, 175, 55, 0.08);
 }
 
+/* ── Bracket connector SVGs ─────────────────────────────────────────── */
+.finalsBracket__connector {
+  width: 28px;
+  align-self: stretch;
+  overflow: visible;
+  padding-top: 28px; /* align with col content below title */
+}
+
+.finalsBracket__connLine {
+  fill: none;
+  stroke: rgba(212, 175, 55, 0.45);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.finalsBracket__connLine--loser {
+  stroke: rgba(180, 180, 180, 0.25);
+  stroke-dasharray: 3 3;
+}
+
+.finalsBracket__connDot {
+  fill: rgba(212, 175, 55, 0.60);
+}
+
+/* ── Cell top row (label + QF badge) ─────────────────────────────────── */
+.finalsBracket__cellTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.finalsBracket__qfBadge {
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(212, 175, 55, 0.70);
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  border-radius: 4px;
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+
 @media (max-width: 720px) {
   .finalsBracket__scroll {
-    grid-template-columns: repeat(4, 74vw);
+    grid-template-columns: 74vw 24px 60vw 24px 60vw 24px 60vw;
+  }
+
+  .finalsBracket__connector {
+    width: 24px;
   }
 }

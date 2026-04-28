@@ -877,7 +877,7 @@ export default function AFL26FixturesPage() {
                   user &&
                   raw?.home_team_id &&
                   coachesByTeamId.get(String(raw.home_team_id))?.user_id === user.id &&
-                  match.status === 'SCHEDULED'
+                  match.status !== 'FINAL'
                 );
                 return (
                   <div key={match.id} className="fxCardGroup">
