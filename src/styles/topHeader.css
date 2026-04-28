@@ -2,10 +2,10 @@
   --eg-header-shell-h: 80px;
   --eg-header-shell-radius: 24px;
   --eg-header-inner-max: 1120px;
-  --eg-header-brand-w: 156px;
-  --eg-header-brand-h: 56px;
-  --eg-header-brand-img-h: 110px;
-  --eg-header-brand-shift-y: 6px;
+  --eg-header-brand-w: 100px;
+  --eg-header-brand-h: 44px;
+  --eg-header-brand-img-h: 40px;
+  --eg-header-brand-shift-y: 0px;
   --eg-header-pill-h: 44px;
 }
 
@@ -319,10 +319,10 @@
 @media (max-width: 520px) {
   :root {
     --eg-header-shell-h: 82px;
-    --eg-header-brand-w: 160px;
-    --eg-header-brand-h: 58px;
-    --eg-header-brand-img-h: 112px;
-    --eg-header-brand-shift-y: 6px;
+    --eg-header-brand-w: 96px;
+    --eg-header-brand-h: 42px;
+    --eg-header-brand-img-h: 38px;
+    --eg-header-brand-shift-y: 0px;
     --eg-header-pill-h: 44px;
   }
 
