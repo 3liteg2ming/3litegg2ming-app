@@ -507,15 +507,22 @@ export async function saveAdminProfile(token: string, userId: string, patch: {
   team_id?: string | null;
   email?: string | null;
 }) {
+  // eg_admin_update_profile signature is (p_token, p_user_id, p_display_name, p_psn, p_team_id).
+  // Do NOT pass p_email — the RPC does not accept it and Postgres errors out
+  // with "function ... does not exist" if extra args are sent.
   const { error } = await supabase.rpc('eg_admin_update_profile', {
     p_token: token,
     p_user_id: userId,
     p_display_name: patch.display_name ?? null,
     p_psn: patch.psn ?? null,
     p_team_id: patch.team_id ?? null,
-    p_email: patch.email ?? null,
   });
   if (error) throw new Error(error.message || 'Unable to update profile');
+
+  if (patch.email !== undefined && patch.email !== null) {
+    await saveAdminProfileEmail(userId, patch.email);
+  }
+
   invalidateAdminConsoleCache();
 }
 

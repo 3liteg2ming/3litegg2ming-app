@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Search, Edit2, Save, X, Plus, RotateCw, AlertCircle } from 'lucide-react';
 import { fetchAllFixtures } from '../../lib/fixturesRepo';
 import { requireSupabaseClient } from '../../lib/supabaseClient';
+import { setUserRoleAndTeam } from '../../lib/adminApi';
+import type { EgRole } from '../../lib/adminTypes';
 import '../../styles/adminPanel.css';
 
 const supabase = requireSupabaseClient();
@@ -14,6 +16,7 @@ type Coach = {
   display_name?: string;
   psn?: string;
   team_id?: string;
+  role?: EgRole;
   is_admin?: boolean;
 };
 
@@ -85,14 +88,26 @@ export default function AdminPanelPage() {
     setCoachesLoading(true);
     try {
       const { data, error: err } = await supabase
-        .from('profiles')
-        .select('*')
+        .from('eg_profiles')
+        .select('user_id,email,display_name,psn,team_id,role')
         .order('email');
       if (err) throw err;
-      setCoaches((data || []) as Coach[]);
+      const rows = ((data || []) as Array<Record<string, any>>).map((row) => ({
+        user_id: String(row.user_id || ''),
+        email: String(row.email || ''),
+        display_name: row.display_name || undefined,
+        psn: row.psn || undefined,
+        team_id: row.team_id || undefined,
+        role: (row.role || 'user') as EgRole,
+        is_admin: row.role === 'admin' || row.role === 'super_admin',
+      }));
+      setCoaches(rows);
 
       // Also load teams for dropdown
-      const { data: teamsData, error: teamsErr } = await supabase.from('teams').select('*').order('name');
+      const { data: teamsData, error: teamsErr } = await supabase
+        .from('eg_teams')
+        .select('id,name,short_name,team_key,logo_url')
+        .order('name');
       if (teamsErr) throw teamsErr;
       setTeams((teamsData || []) as Team[]);
     } catch (e: any) {
@@ -106,7 +121,10 @@ export default function AdminPanelPage() {
   const loadTeams = async () => {
     setTeamsLoading(true);
     try {
-      const { data, error: err } = await supabase.from('teams').select('*').order('name');
+      const { data, error: err } = await supabase
+        .from('eg_teams')
+        .select('id,name,short_name,team_key,logo_url')
+        .order('name');
       if (err) throw err;
       setTeamsList((data || []) as Team[]);
     } catch (e: any) {
@@ -174,25 +192,64 @@ export default function AdminPanelPage() {
       c.psn?.toLowerCase().includes(coachSearch.toLowerCase()),
   );
 
-  // Coach update handler
+  // Coach update handler — writes to eg_profiles (authoritative).
+  // Role/team go through eg_admin_set_user_role_and_team RPC so RLS is honoured
+  // and the legacy profiles table stays in sync. display_name/psn update
+  // eg_profiles directly (admin RLS allows it).
   const updateCoach = async (coachId: string) => {
     try {
       setError(null);
-      const { error: err } = await supabase.from('profiles').update(editCoachData).eq('user_id', coachId);
-      if (err) throw err;
+      const original = coaches.find((c) => c.user_id === coachId);
+      if (!original) throw new Error('Coach not found in list');
+
+      const nextTeamId = editCoachData.team_id === undefined
+        ? original.team_id ?? null
+        : editCoachData.team_id || null;
+
+      const wantsAdmin = editCoachData.is_admin ?? original.is_admin ?? false;
+      const currentRole = original.role || 'user';
+      let nextRole: EgRole = currentRole;
+      const currentlyAdmin = currentRole === 'admin' || currentRole === 'super_admin';
+      if (wantsAdmin && !currentlyAdmin) {
+        nextRole = 'admin';
+      } else if (!wantsAdmin && currentlyAdmin && currentRole !== 'super_admin') {
+        nextRole = 'coach';
+      }
+
+      const teamChanged = (original.team_id || null) !== (nextTeamId || null);
+      const roleChanged = currentRole !== nextRole;
+      if (teamChanged || roleChanged) {
+        await setUserRoleAndTeam(coachId, nextRole, nextTeamId);
+      }
+
+      const profilePatch: Record<string, unknown> = {};
+      if (editCoachData.display_name !== undefined && (editCoachData.display_name || null) !== (original.display_name || null)) {
+        profilePatch.display_name = editCoachData.display_name || null;
+      }
+      if (editCoachData.psn !== undefined && (editCoachData.psn || null) !== (original.psn || null)) {
+        profilePatch.psn = editCoachData.psn || null;
+      }
+      if (Object.keys(profilePatch).length > 0) {
+        const { error: profileErr } = await supabase
+          .from('eg_profiles')
+          .update(profilePatch)
+          .eq('user_id', coachId);
+        if (profileErr) throw profileErr;
+      }
+
       setSuccessMsg('Coach updated');
       setEditingCoachId(null);
-      loadCoaches();
+      await loadCoaches();
     } catch (e: any) {
       setError(e?.message || 'Failed to update coach');
     }
   };
 
-  // Team update handler
+  // Team update handler — eg_teams is the authoritative table.
   const updateTeam = async (teamId: string) => {
     try {
       setError(null);
-      const { error: err } = await supabase.from('teams').update(editTeamData).eq('id', teamId);
+      const { error: err } = await supabase.from('eg_teams').update(editTeamData).eq('id', teamId);
       if (err) throw err;
       setSuccessMsg('Team updated');
       setEditingTeamId(null);
