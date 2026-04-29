@@ -562,7 +562,7 @@ export default function SubmitPage() {
     stageName: fixture?.stageName,
     bracketSlot: fixture?.bracketSlot,
   });
-  const requiresAdminApproval = submissionDeadline.expired && !finalsSubmissionOpen && !lateSubmissionApproved;
+  const requiresAdminApproval = false;
 
   const mappedPlayers = useMemo(
     () => allAflPlayers.map((player) => ({
