@@ -663,37 +663,27 @@ export default function SubmitPage() {
   const validationMessages = useMemo(() => {
     const messages: string[] = [];
     if (!scoreValid) messages.push('Enter final score for both teams');
-    if (!finalsSubmissionOpen) {
-      if (!quartersFilled) messages.push('Enter all quarter-by-quarter scores');
-      if (quartersFilled && !quartersMatchFinal) messages.push('Q4 scores must match the final score');
-      if (quartersFilled && !quartersProgressive) messages.push('Quarter scores must be progressive (each quarter >= previous)');
-      if (!allTeamStatsFilled) messages.push('Enter all team stats for both teams');
-      if (!goalKickersValid) messages.push('Assign goal kickers (Step 5) so tagged goals match the final score for both teams');
-      if (!resultScreenshotsFilled) messages.push(`Upload the 3 required match screenshots (${resultScreenshotsCount} of 3 uploaded)`);
-      if (!playerScreenshotsValid) messages.push('Upload all player stats screenshots for all players, including behinds, disposals, kicks, handballs, marks, and fantasy points.');
-    }
     if (requiresAdminApproval) messages.push(`${SUBMISSION_CLOSED_LABEL} Admin approval must be switched on for this fixture first.`);
     return messages;
-  }, [finalsSubmissionOpen, scoreValid, quartersFilled, quartersMatchFinal, quartersProgressive, allTeamStatsFilled, goalKickersValid, resultScreenshotsFilled, resultScreenshotsCount, playerScreenshotsValid, playerScreenshotCount, requiresAdminApproval]);
+  }, [scoreValid, requiresAdminApproval]);
 
   const canSubmit = useMemo(() => {
     if (!fixture || !myTeamId || isSubmitting) return false;
     if (requiresAdminApproval) return false;
-    if (finalsSubmissionOpen) return scoreValid;
-    return scoreValid && quartersValid && allTeamStatsFilled && goalKickersValid && allScreenshotsValid;
-  }, [fixture, myTeamId, isSubmitting, requiresAdminApproval, finalsSubmissionOpen, scoreValid, quartersValid, allTeamStatsFilled, goalKickersValid, allScreenshotsValid]);
+    return scoreValid;
+  }, [fixture, myTeamId, isSubmitting, requiresAdminApproval, scoreValid]);
 
   const stepComplete = useMemo(
     () => ({
       1: true,
       2: scoreValid,
-      3: finalsSubmissionOpen ? true : quartersValid,
-      4: finalsSubmissionOpen ? true : allTeamStatsFilled,
-      5: finalsSubmissionOpen ? true : (scoreValid && goalKickersValid),
-      6: finalsSubmissionOpen ? true : allScreenshotsValid,
+      3: true,
+      4: true,
+      5: true,
+      6: true,
       7: canSubmit,
     }),
-    [finalsSubmissionOpen, scoreValid, quartersValid, allTeamStatsFilled, goalKickersValid, allScreenshotsValid, canSubmit],
+    [scoreValid, canSubmit],
   );
 
   useEffect(() => {
@@ -1277,10 +1267,7 @@ export default function SubmitPage() {
     try {
       for (const slot of RESULT_SCREENSHOT_SLOTS) {
         const file = resultScreenshots[slot.key];
-        if (!file) {
-          if (finalsSubmissionOpen) continue;
-          throw new Error(`Missing screenshot: ${slot.label}`);
-        }
+        if (!file) continue;
         const path = buildEvidencePath(fixture.id, sessionUserId, slot.key, file.name);
         const { error } = await supabase.storage.from('Assets').upload(path, file.file, {
           upsert: false,
