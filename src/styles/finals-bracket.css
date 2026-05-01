@@ -246,7 +246,28 @@
 }
 
 .finalsBracket__side.is-winner {
-  color: rgba(250, 219, 116, 0.98);
+  color: #fff3b0;
+  font-weight: 700;
+  background: linear-gradient(180deg, rgba(212, 175, 55, 0.28), rgba(212, 175, 55, 0.12));
+  border: 1px solid rgba(245, 205, 95, 0.55);
+  border-radius: 8px;
+  padding: 5px 6px;
+  box-shadow: 0 0 0 1px rgba(255, 215, 80, 0.18) inset, 0 2px 8px rgba(212, 175, 55, 0.18);
+}
+
+.finalsBracket__side.is-winner .finalsBracket__teamName,
+.finalsBracket__side.is-winner .finalsBracket__score {
+  color: #fff3b0;
+}
+
+.finalsBracket__side.is-loser {
+  opacity: 0.32;
+  filter: grayscale(0.7);
+}
+
+.finalsBracket__side.is-loser .finalsBracket__teamName,
+.finalsBracket__side.is-loser .finalsBracket__score {
+  color: rgba(180, 188, 200, 0.55);
 }
 
 .finalsBracket__seed {
