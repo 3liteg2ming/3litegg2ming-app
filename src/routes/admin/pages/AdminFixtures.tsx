@@ -117,6 +117,21 @@ export default function AdminFixtures() {
     refetchInterval: 15_000,
   });
 
+  const seasonTwoId = useMemo(
+    () => (seasonsQuery.data || []).find((season) => season.slug === 'afl26-season-two')?.id || '',
+    [seasonsQuery.data],
+  );
+
+  const allRoundsOcrSeasonId = seasonId !== 'all' ? seasonId : seasonTwoId;
+
+  const allRoundsMissingQuery = useQuery({
+    queryKey: ['admin', 'missing-player-stats', allRoundsOcrSeasonId],
+    queryFn: () => listMissingPlayerStatsFixtures(allRoundsOcrSeasonId),
+    enabled: Boolean(allRoundsOcrSeasonId),
+    placeholderData: keepPreviousData,
+    refetchInterval: 15_000,
+  });
+
   const teamById = useMemo(() => {
     const map = new Map<string, string>();
     for (const team of teamsQuery.data || []) {
@@ -308,12 +323,12 @@ export default function AdminFixtures() {
   }
 
   async function runAllRoundsPlayerStatsOcr() {
-    if (seasonId === 'all') {
-      pushToast('Select a season first so OCR only targets one season.', 'info');
+    if (!allRoundsOcrSeasonId) {
+      pushToast('Season Two is not configured yet, so OCR cannot run.', 'error');
       return;
     }
 
-    const targets = (missingPlayerStatsQuery.data || []).filter((fixture) => fixture.can_run_ocr);
+    const targets = (allRoundsMissingQuery.data || []).filter((fixture) => fixture.can_run_ocr);
     if (!targets.length) {
       pushToast('No submitted fixtures across rounds are ready for OCR.', 'info');
       return;
@@ -374,7 +389,7 @@ export default function AdminFixtures() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['admin', 'fixtures'] }),
         queryClient.invalidateQueries({ queryKey: ['admin', 'fixtures', 'playerStatsIds'] }),
-        queryClient.invalidateQueries({ queryKey: ['admin', 'missing-player-stats', seasonId] }),
+        queryClient.invalidateQueries({ queryKey: ['admin', 'missing-player-stats', allRoundsOcrSeasonId] }),
         queryClient.invalidateQueries({ queryKey: ['admin', 'ocr-queue'] }),
       ]);
 
@@ -390,8 +405,8 @@ export default function AdminFixtures() {
   }
 
   const allRoundsRunnableCount = useMemo(
-    () => (missingPlayerStatsQuery.data || []).filter((fixture) => fixture.can_run_ocr).length,
-    [missingPlayerStatsQuery.data],
+    () => (allRoundsMissingQuery.data || []).filter((fixture) => fixture.can_run_ocr).length,
+    [allRoundsMissingQuery.data],
   );
 
   return (
@@ -445,26 +460,26 @@ export default function AdminFixtures() {
             className="eg-fx-clear-btn"
             onClick={() => void runAllRoundsPlayerStatsOcr()}
             disabled={
-              seasonId === 'all' ||
+              !allRoundsOcrSeasonId ||
               allRoundsProgress !== null ||
               runningRound !== null ||
-              missingPlayerStatsQuery.isLoading ||
+              allRoundsMissingQuery.isLoading ||
               allRoundsRunnableCount === 0
             }
             title={
-              seasonId === 'all'
-                ? 'Select a season first to extract player stats from all uploaded photos'
+              !allRoundsOcrSeasonId
+                ? 'Season Two is not configured yet'
                 : allRoundsRunnableCount === 0
                   ? 'No submitted fixtures are ready for OCR'
-                  : 'Run AI extraction on every uploaded player-stats photo across all rounds in the selected season'
+                  : seasonId === 'all'
+                    ? 'Run AI extraction on every uploaded player-stats photo across all rounds (defaults to Season Two)'
+                    : 'Run AI extraction on every uploaded player-stats photo across all rounds in the selected season'
             }
             style={{ marginLeft: 'auto' }}
           >
             {allRoundsProgress !== null
               ? `Extracting ${allRoundsProgress.done}/${allRoundsProgress.total}…`
-              : seasonId === 'all'
-                ? 'Extract Player Stats — Pick Season'
-                : `Extract Player Stats — All Rounds${allRoundsRunnableCount ? ` (${allRoundsRunnableCount})` : ''}`}
+              : `Extract Player Stats — All Rounds${allRoundsRunnableCount ? ` (${allRoundsRunnableCount})` : ''}`}
           </button>
           <button
             type="button"
