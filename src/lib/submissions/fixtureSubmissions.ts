@@ -26,7 +26,8 @@ export type FixtureSubmissionStatKey =
   | 'handballs'
   | 'goals'
   | 'behinds'
-  | 'afl_fantasy';
+  | 'afl_fantasy'
+  | 'hitouts';
 
 export type CreateSubmissionOptions = {
   submittedTeamId?: string | null;
@@ -50,12 +51,16 @@ export type AddSubmissionImageInput = {
 export type FixturePlayerStatUpsertRow = {
   player_id: string;
   team_id: string;
+  goals?: number | null;
+  behinds?: number | null;
   disposals?: number | null;
   kicks?: number | null;
   handballs?: number | null;
   marks?: number | null;
   tackles?: number | null;
   clearances?: number | null;
+  hitouts?: number | null;
+  fantasy_points?: number | null;
 };
 
 function assertUuid(value: string, fieldName: string) {
@@ -78,12 +83,16 @@ function sanitizePlayerStatRow(row: FixturePlayerStatUpsertRow): FixturePlayerSt
   return {
     player_id: String(row.player_id || '').trim(),
     team_id: String(row.team_id || '').trim(),
+    goals: toIntOrNull(row.goals),
+    behinds: toIntOrNull(row.behinds),
     disposals: toIntOrNull(row.disposals),
     kicks: toIntOrNull(row.kicks),
     handballs: toIntOrNull(row.handballs),
     marks: toIntOrNull(row.marks),
     tackles: toIntOrNull(row.tackles),
     clearances: toIntOrNull(row.clearances),
+    hitouts: toIntOrNull(row.hitouts),
+    fantasy_points: toIntOrNull(row.fantasy_points),
   };
 }
 

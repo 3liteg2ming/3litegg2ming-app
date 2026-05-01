@@ -139,11 +139,14 @@ export type AdminPlayerStatsOcrDraftRow = {
     aflPlayerId: number | null;
     playerName: string | null;
   };
+  goals: number | null;
+  behinds: number | null;
   kicks: number | null;
   handballs: number | null;
   disposals: number | null;
   marks: number | null;
   tackles: number | null;
+  hitouts: number | null;
   fantasyPoints: number | null;
 };
 
@@ -211,6 +214,7 @@ export type AdminFixtureSubmissionImage = {
   fixture_id: string;
   submission_id: string;
   image_type: string;
+  stat_key?: string | null;
   page_number: number | null;
   storage_bucket: string;
   storage_path: string;

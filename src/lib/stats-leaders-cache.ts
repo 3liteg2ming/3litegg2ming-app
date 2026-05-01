@@ -91,6 +91,7 @@ type SeasonTotalsRow = {
   marks?: number | null;
   tackles?: number | null;
   clearances?: number | null;
+  hitouts?: number | null;
   fantasy_points?: number | null;
 };
 
@@ -322,7 +323,7 @@ async function fetchSeasonTotalsRows(seasonId: string): Promise<SeasonTotalsRow[
 
   const { data, error } = await supabase
     .from('eg_player_season_totals_ext')
-    .select('season_id,player_id,team_id,player_name,matches,disposals,kicks,handballs,marks,tackles,clearances,fantasy_points')
+    .select('season_id,player_id,team_id,player_name,matches,disposals,kicks,handballs,marks,tackles,clearances,hitouts,fantasy_points')
     .eq('season_id', seasonId)
     .limit(4000);
 
@@ -706,6 +707,7 @@ export async function fetchLivePlayerMetrics(): Promise<PlayerMetricRow[]> {
     target.totals.marks += safeNum(row.marks);
     target.totals.tackles += safeNum(row.tackles);
     target.totals.clearances += safeNum(row.clearances);
+    target.totals.hitOuts += safeNum(row.hitouts);
     target.totals.fantasyPoints += safeNum(row.fantasy_points);
     target.avgs.goals = matches;
   }
@@ -739,6 +741,7 @@ export async function fetchLivePlayerMetrics(): Promise<PlayerMetricRow[]> {
       row.avgs.marks = row.totals.marks / matches;
       row.avgs.tackles = row.totals.tackles / matches;
       row.avgs.clearances = row.totals.clearances / matches;
+      row.avgs.hitOuts = row.totals.hitOuts / matches;
       row.avgs.fantasyPoints = row.totals.fantasyPoints / matches;
       row.avgs.goalEfficiency = row.totals.goalEfficiency;
       return row;
@@ -751,6 +754,7 @@ export async function fetchLivePlayerMetrics(): Promise<PlayerMetricRow[]> {
       row.totals.marks > 0 ||
       row.totals.tackles > 0 ||
       row.totals.clearances > 0 ||
+      row.totals.hitOuts > 0 ||
       row.totals.fantasyPoints > 0,
     );
 

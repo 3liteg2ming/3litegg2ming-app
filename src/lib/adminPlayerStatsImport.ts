@@ -30,11 +30,14 @@ export type BulkPreviewRow = {
   playerId: string | null;
   teamId: string | null;
   teamLabel: string;
+  goals: number | null;
+  behinds: number | null;
   kicks: number | null;
   handballs: number | null;
   disposals: number | null;
   marks: number | null;
   tackles: number | null;
+  hitouts: number | null;
   fantasyPoints: number | null;
   refPlayerId?: string | null;
   refAflPlayerId?: number | null;
@@ -65,12 +68,15 @@ export function previewRowsToPlayerStatUpserts(preview: BulkPreviewRow[]) {
     {
       player_id: string;
       team_id: string;
+      goals?: number | null;
+      behinds?: number | null;
       disposals?: number | null;
       kicks?: number | null;
       handballs?: number | null;
       marks?: number | null;
       tackles?: number | null;
       clearances?: number | null;
+      hitouts?: number | null;
       fantasy_points?: number | null;
     }
   >();
@@ -80,12 +86,15 @@ export function previewRowsToPlayerStatUpserts(preview: BulkPreviewRow[]) {
     rowsByPlayerId.set(row.playerId, {
       player_id: row.playerId,
       team_id: row.teamId,
+      goals: row.goals ?? null,
+      behinds: row.behinds ?? null,
       disposals: row.disposals ?? null,
       kicks: row.kicks ?? null,
       handballs: row.handballs ?? null,
       marks: row.marks ?? null,
       tackles: row.tackles ?? null,
       clearances: null,
+      hitouts: row.hitouts ?? null,
       fantasy_points: row.fantasyPoints ?? null,
     });
   }
@@ -101,11 +110,14 @@ type ParsedRow = {
   refPlayerId: string | null;
   refAflPlayerId: number | null;
   refPlayerName: string | null;
+  goals: number | null;
+  behinds: number | null;
   kicks: number | null;
   handballs: number | null;
   disposals: number | null;
   marks: number | null;
   tackles: number | null;
+  hitouts: number | null;
   fantasyPoints: number | null;
 };
 
@@ -153,11 +165,14 @@ function parseImportRows(rawRows: Array<Record<string, unknown>>): { parsedRows:
       refPlayerId: refPlayerId && UUID_RE.test(refPlayerId) ? refPlayerId : null,
       refAflPlayerId,
       refPlayerName,
+      goals: toNullableStat(row.goals),
+      behinds: toNullableStat(row.behinds),
       kicks: toNullableStat(row.kicks),
       handballs: toNullableStat(row.handballs),
       disposals: toNullableStat(row.disposals),
       marks: toNullableStat(row.marks),
       tackles: toNullableStat(row.tackles),
+      hitouts: toNullableStat(row.hitouts ?? row.hit_outs),
       fantasyPoints: toNullableStat(row.fantasyPoints ?? row.fantasy_points),
     });
   }
@@ -222,11 +237,14 @@ export async function buildPlayerStatsImportPreview(
       teamSlug: row.rawSlug,
       teamId: row.teamMatch?.id || null,
       teamLabel: row.teamMatch?.label || row.rawSlug || '(empty)',
+      goals: row.goals,
+      behinds: row.behinds,
       kicks: row.kicks,
       handballs: row.handballs,
       disposals: row.disposals,
       marks: row.marks,
       tackles: row.tackles,
+      hitouts: row.hitouts,
       fantasyPoints: row.fantasyPoints,
       refPlayerId: row.refPlayerId,
       refAflPlayerId: row.refAflPlayerId,

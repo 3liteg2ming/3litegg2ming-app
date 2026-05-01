@@ -6,7 +6,7 @@ import { resolveKnownPlayerHeadshot } from '@/lib/playerHeadshots';
 import '@/styles/mc-player-table.css';
 
 type TeamFilter = 'all' | 'home' | 'away';
-type SortKey = 'FP' | 'G' | 'D' | 'CLR' | 'M' | 'T';
+type SortKey = 'FP' | 'G' | 'D' | 'K' | 'H' | 'M' | 'T' | 'HO';
 type SortDirection = 'desc' | 'asc';
 
 type PlayerDisplayRow = {
@@ -25,9 +25,11 @@ const STAT_COLUMNS: StatColumn[] = [
   { key: 'FP', label: 'FP', getValue: fantasyPoints },
   { key: 'G', label: 'G', getValue: (row) => safeStat(row.G) },
   { key: 'D', label: 'D', getValue: (row) => safeStat(row.D) },
-  { key: 'CLR', label: 'CLR', getValue: (row) => safeStat(row.CLR) },
+  { key: 'K', label: 'K', getValue: (row) => safeStat(row.K) },
+  { key: 'H', label: 'H', getValue: (row) => safeStat(row.H) },
   { key: 'M', label: 'M', getValue: (row) => safeStat(row.M) },
   { key: 'T', label: 'T', getValue: (row) => safeStat(row.T) },
+  { key: 'HO', label: 'HO', getValue: (row) => safeStat(row.HO) },
 ];
 
 function initials(name: string) {
@@ -49,6 +51,7 @@ function safeStat(value: number | null | undefined) {
 }
 
 function fantasyPoints(row: PlayerStatRow) {
+  if (row.FP !== null && row.FP !== undefined) return safeStat(row.FP);
   return safeStat(row.D) + safeStat(row.M) * 3 + safeStat(row.T) * 4 + safeStat(row.G) * 6;
 }
 

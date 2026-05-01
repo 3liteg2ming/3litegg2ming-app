@@ -32,7 +32,6 @@ export default function AdminSubmissions() {
   const [missingSeasonId, setMissingSeasonId] = useState('');
   const [missingRound, setMissingRound] = useState<'all' | string>('all');
   const [runningFixtureIds, setRunningFixtureIds] = useState<string[]>([]);
-  const [batchProgress, setBatchProgress] = useState<{ done: number; total: number } | null>(null);
 
   const search = useDebouncedValue((searchInput || globalSearch).trim(), 300);
 
@@ -144,14 +143,6 @@ export default function AdminSubmissions() {
     [filteredMissingFixtures],
   );
 
-  const batchRunLabel = useMemo(() => {
-    if (batchProgress) return `Running ${batchProgress.done}/${batchProgress.total}`;
-    if (missingRound !== 'all') {
-      return `Auto OCR + Save Round ${missingRound} (${runnableMissingFixtures.length})`;
-    }
-    return `Auto OCR + Save All Missing (${runnableMissingFixtures.length})`;
-  }, [batchProgress, missingRound, runnableMissingFixtures.length]);
-
   const [expandedOcrId, setExpandedOcrId] = useState<string>('');
 
   async function runFixtureOcr(fixture: AdminMissingPlayerStatsFixture) {
@@ -201,37 +192,11 @@ export default function AdminSubmissions() {
     }
   }
 
-  async function runAllMissingOcr() {
-    if (!runnableMissingFixtures.length) return;
-
-    setBatchProgress({ done: 0, total: runnableMissingFixtures.length });
-    try {
-      for (let index = 0; index < runnableMissingFixtures.length; index += 1) {
-        await runFixtureOcr(runnableMissingFixtures[index]);
-        setBatchProgress({ done: index + 1, total: runnableMissingFixtures.length });
-      }
-      pushToast(`Finished OCR batch for ${runnableMissingFixtures.length} fixture(s).`, 'success');
-    } finally {
-      setBatchProgress(null);
-    }
-  }
-
   return (
     <div className="eg-admin-stack">
       <AdminCard
         title="Missing Player Stats"
-        subtitle="Submitted fixtures without saved player stats. This now reads the uploaded player-stat screenshots and saves the matched rows straight into fixture stats."
-        actions={
-          <div className="eg-admin-inline-buttons">
-            <button
-              type="button"
-              onClick={() => void runAllMissingOcr()}
-              disabled={Boolean(batchProgress) || runnableMissingFixtures.length === 0}
-            >
-              {batchRunLabel}
-            </button>
-          </div>
-        }
+        subtitle="Submitted fixtures without full saved player stats. Backfill is intentionally one fixture at a time so admins can avoid rate-limit and credit spikes."
       >
         <div className="eg-admin-toolbar wrap">
           <label className="eg-admin-inline-field">
@@ -319,9 +284,9 @@ export default function AdminSubmissions() {
                     <button
                       type="button"
                       onClick={() => void runFixtureOcr(fixture)}
-                      disabled={isRunning || !fixture.can_run_ocr || Boolean(batchProgress)}
+                      disabled={isRunning || !fixture.can_run_ocr}
                     >
-                      {isRunning ? 'Running OCR…' : 'Auto OCR + Save'}
+                      {isRunning ? 'Running AI Extraction…' : 'Backfill Player Stats'}
                     </button>
                     <button
                       type="button"

@@ -114,11 +114,14 @@ function normalizePlayerStatsOcrDraft(value: unknown): AdminPlayerStatsOcrDraft 
             aflPlayerId: normalizeNullableInteger(playerRef.aflPlayerId),
             playerName: String(playerRef.playerName || '').trim() || null,
           },
+          goals: normalizeNullableInteger(raw.goals),
+          behinds: normalizeNullableInteger(raw.behinds),
           kicks: normalizeNullableInteger(raw.kicks),
           handballs: normalizeNullableInteger(raw.handballs),
           disposals: normalizeNullableInteger(raw.disposals),
           marks: normalizeNullableInteger(raw.marks),
           tackles: normalizeNullableInteger(raw.tackles),
+          hitouts: normalizeNullableInteger(raw.hitouts ?? raw.hit_outs),
           fantasyPoints: normalizeNullableInteger(raw.fantasyPoints ?? raw.fantasy_points),
         };
       })
@@ -777,12 +780,15 @@ export type AdminFixturePlayerStat = {
   player_id: string;
   team_id: string;
   player_name?: string | null;
+  goals: number | null;
+  behinds: number | null;
   disposals: number | null;
   kicks: number | null;
   handballs: number | null;
   marks: number | null;
   tackles: number | null;
   clearances: number | null;
+  hitouts: number | null;
   fantasy_points: number | null;
 };
 
@@ -930,11 +936,20 @@ export async function listFixtureIdsWithPlayerStats(fixtureIds: string[] = []): 
 
     const { data, error } = await supabase
       .from('eg_fixture_player_stats')
-      .select('fixture_id')
+      .select('fixture_id,disposals,kicks,handballs,marks,tackles,hitouts,fantasy_points')
       .in('fixture_id', fixtureIds);
 
     if (error) return new Set();
-    return new Set((data || []).map((row) => row.fixture_id as string));
+    return new Set(
+      ((data || []) as Array<Record<string, unknown>>)
+        .filter((row) =>
+          ['disposals', 'kicks', 'handballs', 'marks', 'tackles', 'hitouts', 'fantasy_points'].some(
+            (key) => row[key] !== null && row[key] !== undefined,
+          ),
+        )
+        .map((row) => String(row.fixture_id || '').trim())
+        .filter(Boolean),
+    );
   } catch {
     return new Set();
   }
@@ -943,7 +958,7 @@ export async function listFixtureIdsWithPlayerStats(fixtureIds: string[] = []): 
 export async function listFixturePlayerStats(fixtureId: string): Promise<AdminFixturePlayerStat[]> {
   const { data, error } = await supabase
     .from('eg_fixture_player_stats')
-    .select('fixture_id,player_id,team_id,disposals,kicks,handballs,marks,tackles,clearances,fantasy_points')
+    .select('fixture_id,player_id,team_id,goals,behinds,disposals,kicks,handballs,marks,tackles,clearances,hitouts,fantasy_points')
     .eq('fixture_id', fixtureId);
 
   if (error) {
@@ -1037,12 +1052,15 @@ export async function upsertFixturePlayerStats(
   rows: Array<{
     player_id: string;
     team_id: string;
+    goals?: number | null;
+    behinds?: number | null;
     disposals?: number | null;
     kicks?: number | null;
     handballs?: number | null;
     marks?: number | null;
     tackles?: number | null;
     clearances?: number | null;
+    hitouts?: number | null;
     fantasy_points?: number | null;
   }>,
 ) {
@@ -1187,7 +1205,7 @@ export async function invokeAdminPlayerStatsOcr(args: {
 export async function listFixturePlayerStatImages(fixtureId: string): Promise<AdminFixtureSubmissionImage[]> {
   const { data, error } = await supabase
     .from('eg_fixture_submission_images')
-    .select('id,fixture_id,submission_id,image_type,page_number,storage_bucket,storage_path,mime_type,ocr_status')
+    .select('id,fixture_id,submission_id,image_type,stat_key,page_number,storage_bucket,storage_path,mime_type,ocr_status')
     .eq('fixture_id', fixtureId)
     .eq('image_type', 'player_stat')
     .order('page_number', { ascending: true })
@@ -1210,6 +1228,7 @@ export async function listFixturePlayerStatImages(fixtureId: string): Promise<Ad
       fixture_id: String(row.fixture_id || '').trim(),
       submission_id: String(row.submission_id || '').trim(),
       image_type: String(row.image_type || '').trim(),
+      stat_key: row.stat_key ? String(row.stat_key) : null,
       page_number: normalizeNullableInteger(row.page_number),
       storage_bucket: storageBucket,
       storage_path: storagePath,

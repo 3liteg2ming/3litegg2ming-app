@@ -425,12 +425,15 @@ export default function AdminFixtureDetail() {
         validRows.map((d) => ({
           player_id: d.player_id,
           team_id: d.team_id,
+          goals: d.goals,
+          behinds: d.behinds,
           disposals: d.disposals,
           kicks: d.kicks,
           handballs: d.handballs,
           marks: d.marks,
           tackles: d.tackles,
           clearances: d.clearances,
+          hitouts: d.hitouts,
           fantasy_points: d.fantasy_points,
         })),
       );
@@ -593,12 +596,15 @@ export default function AdminFixtureDetail() {
         player_id: addPlayerId,
         team_id: addPlayerTeamId,
         player_name: player?.display_name || player?.name || addPlayerId,
+        goals: null,
+        behinds: null,
         disposals: null,
         kicks: null,
         handballs: null,
         marks: null,
         tackles: null,
         clearances: null,
+        hitouts: null,
         fantasy_points: null,
         dirty: true,
       });
@@ -698,12 +704,15 @@ export default function AdminFixtureDetail() {
             player_id: row.playerId!,
             team_id: row.teamId!,
             player_name: row.playerName,
+            goals: row.goals ?? null,
+            behinds: row.behinds ?? null,
             disposals: row.disposals ?? null,
             kicks: row.kicks ?? null,
             handballs: row.handballs ?? null,
             marks: row.marks ?? null,
             tackles: row.tackles ?? null,
             clearances: null,
+            hitouts: row.hitouts ?? null,
             fantasy_points: row.fantasyPoints ?? null,
             dirty: true,
           });
@@ -718,12 +727,15 @@ export default function AdminFixtureDetail() {
             player_id: tempId,
             team_id: row.teamId,
             player_name: row.playerName,
+            goals: row.goals ?? null,
+            behinds: row.behinds ?? null,
             disposals: row.disposals ?? null,
             kicks: row.kicks ?? null,
             handballs: row.handballs ?? null,
             marks: row.marks ?? null,
             tackles: row.tackles ?? null,
             clearances: null,
+            hitouts: row.hitouts ?? null,
             fantasy_points: row.fantasyPoints ?? null,
             dirty: true,
             _unmatched: true,
@@ -896,6 +908,10 @@ export default function AdminFixtureDetail() {
   }, [latestOcrDraftQuery.data?.warnings, latestOcrDraft?.warnings]);
   const latestOcrExtractedRows =
     Number(latestOcrSummary.playerStatRows || latestOcrDraft?.playerStats.length || 0) || 0;
+  const latestOcrImagesProcessed = Number(latestOcrSummary.imagesProcessed || 0) || 0;
+  const latestOcrMatchedRows = Number(latestOcrSummary.rowsMatched || 0) || 0;
+  const latestOcrUnmatchedRows = Number(latestOcrSummary.unmatchedRows || 0) || 0;
+  const latestOcrImageErrors = Number(latestOcrSummary.imageErrors || 0) || 0;
   const latestOcrWarningCount = latestOcrWarnings.length;
 
   if (!fixtureId) {
@@ -1187,7 +1203,7 @@ export default function AdminFixtureDetail() {
                       : undefined
                   }
                 >
-                  {runOcrMutation.isPending ? 'Running OCR + Saving...' : 'Auto OCR + Save Stats'}
+                  {runOcrMutation.isPending ? 'Running AI Extraction...' : 'Run AI Extraction For This Fixture'}
                 </button>
                 <button
                   type="button"
@@ -1207,7 +1223,11 @@ export default function AdminFixtureDetail() {
               </div>
               <div className="eg-fd-ocr-status-meta">
                 <span>{playerStatScreenshotCount} player-stat screenshot(s)</span>
+                <span>{latestOcrImagesProcessed} image(s) processed</span>
                 <span>{latestOcrExtractedRows} extracted row(s)</span>
+                <span>{latestOcrMatchedRows} matched</span>
+                <span>{latestOcrUnmatchedRows} unmatched</span>
+                <span>{latestOcrImageErrors} image error(s)</span>
                 <span>{latestOcrWarningCount} warning(s)</span>
                 <span>
                   {latestOcrItem?.updated_at
@@ -1249,6 +1269,22 @@ export default function AdminFixtureDetail() {
                 <div className="eg-fd-ocr-warning-list">
                   {latestOcrWarnings.map((warning, index) => (
                     <span key={`${warning}-${index}`}>{warning}</span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {Array.isArray((latestOcrSummary as { errorsByImage?: unknown[] }).errorsByImage) &&
+            ((latestOcrSummary as { errorsByImage?: unknown[] }).errorsByImage?.length || 0) > 0 ? (
+              <div className="eg-admin-highlight-block eg-fd-ocr-note eg-fd-ocr-note--error">
+                <p style={{ margin: '0 0 6px', fontSize: '0.8rem', fontWeight: 700 }}>
+                  Image extraction errors
+                </p>
+                <div className="eg-fd-ocr-warning-list">
+                  {((latestOcrSummary as { errorsByImage?: Array<Record<string, unknown>> }).errorsByImage || []).map((row, index) => (
+                    <span key={`${String(row.imageId || index)}-${index}`}>
+                      {String(row.statKey || `image ${index + 1}`)}: {String(row.error || 'Unknown error')}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -1462,6 +1498,14 @@ export default function AdminFixtureDetail() {
                     </div>
                     <div className="eg-fd-stat-fields">
                       <label>
+                        <span>G</span>
+                        <input type="number" min={0} value={stat.goals ?? ''} onChange={(e) => updatePlayerDraft(stat.player_id, 'goals', e.target.value)} />
+                      </label>
+                      <label>
+                        <span>B</span>
+                        <input type="number" min={0} value={stat.behinds ?? ''} onChange={(e) => updatePlayerDraft(stat.player_id, 'behinds', e.target.value)} />
+                      </label>
+                      <label>
                         <span>D</span>
                         <input type="number" min={0} value={stat.disposals ?? ''} onChange={(e) => updatePlayerDraft(stat.player_id, 'disposals', e.target.value)} />
                       </label>
@@ -1484,6 +1528,10 @@ export default function AdminFixtureDetail() {
                       <label>
                         <span>CLR</span>
                         <input type="number" min={0} value={stat.clearances ?? ''} onChange={(e) => updatePlayerDraft(stat.player_id, 'clearances', e.target.value)} />
+                      </label>
+                      <label>
+                        <span>HO</span>
+                        <input type="number" min={0} value={stat.hitouts ?? ''} onChange={(e) => updatePlayerDraft(stat.player_id, 'hitouts', e.target.value)} />
                       </label>
                       <label>
                         <span>FP</span>

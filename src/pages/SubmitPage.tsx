@@ -657,8 +657,10 @@ export default function SubmitPage() {
   );
   const playerScreenshotCount = playerScreenshotFiles.length;
   const totalUploadsCount = resultScreenshotsCount + playerScreenshotCount;
-  const playerScreenshotsValid = playerScreenshotCount > 0;
-  const allScreenshotsValid = resultScreenshotsFilled && playerScreenshotsValid;
+  // Allow coaches to submit with only scores (no screenshot requirement)
+  const isCoach = myRole === 'coach';
+  const playerScreenshotsValid = isCoach ? true : playerScreenshotCount > 0;
+  const allScreenshotsValid = isCoach ? true : (resultScreenshotsFilled && playerScreenshotsValid);
 
   const validationMessages = useMemo(() => {
     const messages: string[] = [];
@@ -668,17 +670,21 @@ export default function SubmitPage() {
     if (quartersFilled && !quartersProgressive) messages.push('Quarter scores must be progressive (each quarter >= previous)');
     if (!allTeamStatsFilled) messages.push('Enter all team stats for both teams');
     if (!goalKickersValid) messages.push('Assign goal kickers (Step 5) so tagged goals match the final score for both teams');
-    if (!resultScreenshotsFilled) messages.push(`Upload the 3 required match screenshots (${resultScreenshotsCount} of 3 uploaded)`);
-    if (!playerScreenshotsValid) messages.push('Upload all player stats screenshots for all players, including behinds, disposals, kicks, handballs, marks, and fantasy points.');
+    if (!isCoach && !resultScreenshotsFilled) messages.push(`Upload the 3 required match screenshots (${resultScreenshotsCount} of 3 uploaded)`);
+    if (!isCoach && !playerScreenshotsValid) messages.push('Upload all player stats screenshots for all players, including behinds, disposals, kicks, handballs, marks, and fantasy points.');
     if (requiresAdminApproval) messages.push(`${SUBMISSION_CLOSED_LABEL} Admin approval must be switched on for this fixture first.`);
     return messages;
-  }, [scoreValid, quartersFilled, quartersMatchFinal, quartersProgressive, allTeamStatsFilled, resultScreenshotsFilled, resultScreenshotsCount, playerScreenshotsValid, playerScreenshotCount, requiresAdminApproval]);
+  }, [scoreValid, quartersFilled, quartersMatchFinal, quartersProgressive, allTeamStatsFilled, resultScreenshotsFilled, resultScreenshotsCount, playerScreenshotsValid, playerScreenshotCount, requiresAdminApproval, isCoach]);
 
   const canSubmit = useMemo(() => {
     if (!fixture || !myTeamId || isSubmitting) return false;
     if (requiresAdminApproval) return false;
+    if (isCoach) {
+      // Only require scores for coaches
+      return scoreValid;
+    }
     return scoreValid && quartersValid && allTeamStatsFilled && goalKickersValid && allScreenshotsValid;
-  }, [fixture, myTeamId, isSubmitting, requiresAdminApproval, scoreValid, quartersValid, allTeamStatsFilled, goalKickersValid, allScreenshotsValid]);
+  }, [fixture, myTeamId, isSubmitting, requiresAdminApproval, scoreValid, quartersValid, allTeamStatsFilled, goalKickersValid, allScreenshotsValid, isCoach]);
 
   const stepComplete = useMemo(
     () => ({

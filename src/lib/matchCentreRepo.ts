@@ -576,16 +576,19 @@ export type PlayerStatRow = {
   position: string;
   photoUrl?: string;
 
+  B: number | null;
   G: number | null;
   D: number | null;
   K: number | null;
   H: number | null;
   M: number | null;
   T: number | null;
+  HO: number | null;
   CLR: number | null;
+  FP: number | null;
 };
 
-const PLAYER_STAT_KEYS = ['G', 'D', 'K', 'H', 'M', 'T', 'CLR'] as const;
+const PLAYER_STAT_KEYS = ['G', 'B', 'D', 'K', 'H', 'M', 'T', 'HO', 'CLR', 'FP'] as const;
 
 function normalizeTeamAbbreviation(teamKey: TeamKey, shortName: string, fullName: string) {
   if (teamKey === 'goldcoast') return 'GC';
@@ -735,13 +738,16 @@ function mergePlayerStatPair(base: PlayerStatRow, incoming: PlayerStatRow): Play
     number: preferred.number || fallback.number,
     position: preferred.position || fallback.position,
     photoUrl: preferred.photoUrl || fallback.photoUrl,
+    B: null,
     G: null,
     D: null,
     K: null,
     H: null,
     M: null,
     T: null,
+    HO: null,
     CLR: null,
+    FP: null,
   };
 
   for (const key of PLAYER_STAT_KEYS) {
@@ -916,12 +922,16 @@ type GoalKickerRow = {
 type FixturePlayerStatPackRow = {
   player_id: string;
   team_id: string;
+  goals: number | null;
+  behinds: number | null;
   disposals: number | null;
   kicks: number | null;
   handballs: number | null;
   marks: number | null;
   tackles: number | null;
   clearances: number | null;
+  hitouts: number | null;
+  fantasy_points: number | null;
 };
 
 type TeamStatPayloadConfig = {
@@ -1103,7 +1113,7 @@ async function fetchFixtureSubmissionsOrdered(fixtureId: string): Promise<any[]>
 async function fetchFixturePlayerStatPack(fixtureId: string): Promise<FixturePlayerStatPackRow[]> {
   const { data, error } = await supabase
     .from('eg_fixture_player_stats')
-    .select('player_id,team_id,disposals,kicks,handballs,marks,tackles,clearances')
+    .select('player_id,team_id,goals,behinds,disposals,kicks,handballs,marks,tackles,clearances,hitouts,fantasy_points')
     .eq('fixture_id', fixtureId);
 
   if (error) {
@@ -1616,13 +1626,16 @@ async function fetchFixtureTeamPlayers(args: {
         alternateNames: playerNameCandidates(p),
         supplementalResolver: supplementalHeadshotResolver,
       }),
+      B: null,
       G: null,
       D: null,
       K: null,
       H: null,
       M: null,
       T: null,
+      HO: null,
       CLR: null,
+      FP: null,
     } as PlayerStatRow;
   });
 
@@ -2053,13 +2066,16 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
                 alternateNames: [kicker.name],
                 supplementalResolver: supplementalHeadshotResolver,
               }),
+          B: null,
           G: null,
           D: null,
           K: null,
           H: null,
           M: null,
           T: null,
+          HO: null,
           CLR: null,
+          FP: null,
         };
         playerById.set(kicker.playerId, target);
         playerStats.push(target);
@@ -2202,13 +2218,16 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
                 alternateNames: linkedNames,
                 supplementalResolver: supplementalHeadshotResolver,
               }),
+          B: null,
           G: null,
           D: null,
           K: null,
           H: null,
           M: null,
           T: null,
+          HO: null,
           CLR: null,
+          FP: null,
         };
         playerById.set(playerId, target);
         playerStats.push(target);
@@ -2253,12 +2272,16 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
         }
       }
 
-      target.D = safeNum(statRow.disposals);
-      target.K = safeNum(statRow.kicks);
-      target.H = safeNum(statRow.handballs);
-      target.M = safeNum(statRow.marks);
-      target.T = safeNum(statRow.tackles);
-      target.CLR = safeNum(statRow.clearances);
+      if (statRow.goals !== null && statRow.goals !== undefined) target.G = safeNum(statRow.goals);
+      if (statRow.behinds !== null && statRow.behinds !== undefined) target.B = safeNum(statRow.behinds);
+      if (statRow.disposals !== null && statRow.disposals !== undefined) target.D = safeNum(statRow.disposals);
+      if (statRow.kicks !== null && statRow.kicks !== undefined) target.K = safeNum(statRow.kicks);
+      if (statRow.handballs !== null && statRow.handballs !== undefined) target.H = safeNum(statRow.handballs);
+      if (statRow.marks !== null && statRow.marks !== undefined) target.M = safeNum(statRow.marks);
+      if (statRow.tackles !== null && statRow.tackles !== undefined) target.T = safeNum(statRow.tackles);
+      if (statRow.hitouts !== null && statRow.hitouts !== undefined) target.HO = safeNum(statRow.hitouts);
+      if (statRow.clearances !== null && statRow.clearances !== undefined) target.CLR = safeNum(statRow.clearances);
+      if (statRow.fantasy_points !== null && statRow.fantasy_points !== undefined) target.FP = safeNum(statRow.fantasy_points);
     }
   }
 
@@ -2372,6 +2395,11 @@ export async function fetchMatchCentre(matchId: string): Promise<MatchCentreMode
       label: 'Marks',
       homeMatch: playerStats.filter((p) => p.team === home.fullName).reduce((acc, p) => acc + safeNum(p.M), 0),
       awayMatch: playerStats.filter((p) => p.team === away.fullName).reduce((acc, p) => acc + safeNum(p.M), 0),
+    },
+    {
+      label: 'Hit Outs',
+      homeMatch: playerStats.filter((p) => p.team === home.fullName).reduce((acc, p) => acc + safeNum(p.HO), 0),
+      awayMatch: playerStats.filter((p) => p.team === away.fullName).reduce((acc, p) => acc + safeNum(p.HO), 0),
     },
     {
       label: 'Clearances',
