@@ -144,6 +144,7 @@ export default function AdminSubmissions() {
   );
 
   const [expandedOcrId, setExpandedOcrId] = useState<string>('');
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
 
   async function runFixtureOcr(fixture: AdminMissingPlayerStatsFixture) {
     const homeTeam = fixture.home_team_id ? teamMetaById.get(fixture.home_team_id) : null;
@@ -193,6 +194,17 @@ export default function AdminSubmissions() {
     } finally {
       setRunningFixtureIds((prev) => prev.filter((fixtureId) => fixtureId !== fixture.fixture_id));
     }
+  }
+
+  async function runAllOcr() {
+    const targets = runnableMissingFixtures.filter((f) => !runningFixtureIds.includes(f.fixture_id));
+    if (!targets.length) return;
+    setBulkProgress({ done: 0, total: targets.length });
+    for (let i = 0; i < targets.length; i++) {
+      await runFixtureOcr(targets[i]);
+      setBulkProgress({ done: i + 1, total: targets.length });
+    }
+    setBulkProgress(null);
   }
 
   return (
@@ -250,6 +262,20 @@ export default function AdminSubmissions() {
             <p>Latest OCR Failed</p>
           </article>
         </div>
+
+        {runnableMissingFixtures.length > 0 && (
+          <div className="eg-admin-inline-buttons">
+            <button
+              type="button"
+              onClick={() => void runAllOcr()}
+              disabled={bulkProgress !== null || runningFixtureIds.length > 0}
+            >
+              {bulkProgress !== null
+                ? `Running ${bulkProgress.done} / ${bulkProgress.total}…`
+                : `Backfill All (${runnableMissingFixtures.length})`}
+            </button>
+          </div>
+        )}
 
         {missingFixturesQuery.isLoading ? <p className="eg-admin-muted">Loading missing player stats…</p> : null}
         {missingFixturesQuery.error ? (
