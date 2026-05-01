@@ -10,7 +10,6 @@ import {
   derivedPlaceholders,
   WEEK1_PAIRINGS,
 } from '../../lib/finalsBracket';
-import { matchupWinChance } from '../../lib/winChance';
 import type { FixtureRow } from '../../lib/fixturesRepo';
 import '../../styles/finals-bracket.css';
 
@@ -31,8 +30,6 @@ type CellData = {
   awaySeed?: number;
   homePlaceholder?: string;
   awayPlaceholder?: string;
-  homeWinChance?: number;
-  awayWinChance?: number;
   status?: string;
   homeTotal?: number | null;
   awayTotal?: number | null;
@@ -55,6 +52,24 @@ function teamKeyFor(fixture: FixtureRow | undefined, side: 'home' | 'away'): Tea
   return (k && k in TEAM_ASSETS ? (k as TeamKey) : undefined);
 }
 
+type TeamInfo = { key: TeamKey; name: string };
+
+function buildTeamInfoIndex(fixtures: FixtureRow[]): Map<string, TeamInfo> {
+  const map = new Map<string, TeamInfo>();
+  const consider = (id: string | null | undefined, slug: string | null | undefined, teamKey: string | null | undefined, name: string | null | undefined) => {
+    const tid = String(id || '').trim();
+    if (!tid || map.has(tid)) return;
+    const k = resolveTeamKey({ slug, teamKey, name });
+    if (!k || !(k in TEAM_ASSETS)) return;
+    map.set(tid, { key: k as TeamKey, name: name || TEAM_ASSETS[k as TeamKey].shortName });
+  };
+  for (const f of fixtures) {
+    consider(f.home_team_id, f.home_team_slug, f.home_team_key, f.home_team_short_name || f.home_team_name);
+    consider(f.away_team_id, f.away_team_slug, f.away_team_key, f.away_team_short_name || f.away_team_name);
+  }
+  return map;
+}
+
 export default function FinalsBracket({ fixtures, seasonId = 'finals' }: Props) {
   const navigate = useNavigate();
 
@@ -66,6 +81,8 @@ export default function FinalsBracket({ fixtures, seasonId = 'finals' }: Props) 
     }
     return map;
   }, [fixtures]);
+
+  const teamInfoById = useMemo(() => buildTeamInfoIndex(fixtures), [fixtures]);
 
   const lite = useMemo<Map<BracketSlot, FinalsFixtureLite>>(() => {
     const map = new Map<BracketSlot, FinalsFixtureLite>();
@@ -102,7 +119,6 @@ export default function FinalsBracket({ fixtures, seasonId = 'finals' }: Props) 
       const awayKey = teamKeyFor(f, 'away');
       const homeSeed = f?.home_seed ?? cfg.homeSeed;
       const awaySeed = f?.away_seed ?? cfg.awaySeed;
-      const wc = matchupWinChance({ seed: `${seasonId}:${slot}`, homeSeed, awaySeed });
       out.set(slot, {
         bracketSlot: slot,
         label: cfg.label,
@@ -115,8 +131,6 @@ export default function FinalsBracket({ fixtures, seasonId = 'finals' }: Props) 
         awaySeed,
         homePlaceholder: homeKey ? undefined : `Seed ${cfg.homeSeed}`,
         awayPlaceholder: awayKey ? undefined : `Seed ${cfg.awaySeed}`,
-        homeWinChance: wc.home,
-        awayWinChance: wc.away,
         status: f?.status,
         homeTotal: f?.home_total,
         awayTotal: f?.away_total,
@@ -126,25 +140,36 @@ export default function FinalsBracket({ fixtures, seasonId = 'finals' }: Props) 
     (['SF1', 'SF2', 'PF1', 'PF2', 'GF'] as const).forEach((slot) => {
       const f = fixturesBySlot.get(slot);
       const placeholder = placeholdersBySlot.get(slot);
-      const homeKey = teamKeyFor(f, 'home');
-      const awayKey = teamKeyFor(f, 'away');
+      const fixtureHomeKey = teamKeyFor(f, 'home');
+      const fixtureAwayKey = teamKeyFor(f, 'away');
+      const placeholderHome = placeholder?.homeTeamId ? teamInfoById.get(placeholder.homeTeamId) : undefined;
+      const placeholderAway = placeholder?.awayTeamId ? teamInfoById.get(placeholder.awayTeamId) : undefined;
+      const homeKey = fixtureHomeKey ?? placeholderHome?.key;
+      const awayKey = fixtureAwayKey ?? placeholderAway?.key;
+      const homeName = fixtureHomeKey
+        ? TEAM_ASSETS[fixtureHomeKey].shortName
+        : placeholderHome
+          ? TEAM_ASSETS[placeholderHome.key].shortName
+          : undefined;
+      const awayName = fixtureAwayKey
+        ? TEAM_ASSETS[fixtureAwayKey].shortName
+        : placeholderAway
+          ? TEAM_ASSETS[placeholderAway.key].shortName
+          : undefined;
       const homeSeed = f?.home_seed ?? placeholder?.homeSeed;
       const awaySeed = f?.away_seed ?? placeholder?.awaySeed;
-      const wc = matchupWinChance({ seed: `${seasonId}:${slot}`, homeSeed, awaySeed });
       out.set(slot, {
         bracketSlot: slot,
         label: placeholder?.label ?? slot,
         matchId: f?.id,
         homeKey,
         awayKey,
-        homeName: homeKey ? TEAM_ASSETS[homeKey].shortName : undefined,
-        awayName: awayKey ? TEAM_ASSETS[awayKey].shortName : undefined,
+        homeName,
+        awayName,
         homeSeed,
         awaySeed,
         homePlaceholder: homeKey ? undefined : (placeholder?.homeLabel || 'TBD'),
         awayPlaceholder: awayKey ? undefined : (placeholder?.awayLabel || 'TBD'),
-        homeWinChance: wc.home,
-        awayWinChance: wc.away,
         status: f?.status,
         homeTotal: f?.home_total,
         awayTotal: f?.away_total,
@@ -152,7 +177,7 @@ export default function FinalsBracket({ fixtures, seasonId = 'finals' }: Props) 
     });
 
     return out;
-  }, [fixturesBySlot, placeholdersBySlot, seasonId]);
+  }, [fixturesBySlot, placeholdersBySlot, teamInfoById]);
 
   const onClickCell = (cell: CellData) => {
     if (cell.matchId) navigate(`/match-centre/${cell.matchId}`);
@@ -185,9 +210,9 @@ export default function FinalsBracket({ fixtures, seasonId = 'finals' }: Props) 
                 teamName={cell.homeName}
                 placeholder={cell.homePlaceholder}
                 seed={cell.homeSeed}
-                winChance={cell.homeWinChance}
                 total={cell.homeTotal}
                 isWinner={isFinal && (cell.homeTotal ?? 0) > (cell.awayTotal ?? 0)}
+                isLoser={isFinal && (cell.homeTotal ?? 0) < (cell.awayTotal ?? 0)}
               />
               <BracketSide
                 side="away"
@@ -195,9 +220,9 @@ export default function FinalsBracket({ fixtures, seasonId = 'finals' }: Props) 
                 teamName={cell.awayName}
                 placeholder={cell.awayPlaceholder}
                 seed={cell.awaySeed}
-                winChance={cell.awayWinChance}
                 total={cell.awayTotal}
                 isWinner={isFinal && (cell.awayTotal ?? 0) > (cell.homeTotal ?? 0)}
+                isLoser={isFinal && (cell.awayTotal ?? 0) < (cell.homeTotal ?? 0)}
               />
             </button>
           );
@@ -250,16 +275,16 @@ function BracketSide(props: {
   teamName?: string;
   placeholder?: string;
   seed?: number;
-  winChance?: number;
   total?: number | null;
   isWinner?: boolean;
+  isLoser?: boolean;
 }) {
-  const { teamKey, teamName, placeholder, seed, winChance, total, isWinner } = props;
+  const { teamKey, teamName, placeholder, seed, total, isWinner, isLoser } = props;
   const asset = teamKey ? TEAM_ASSETS[teamKey] : null;
   const logo = asset?.logoPath ? assetUrl(asset.logoPath) : '';
 
   return (
-    <div className={`finalsBracket__side ${isWinner ? 'is-winner' : ''}`}>
+    <div className={`finalsBracket__side ${isWinner ? 'is-winner' : ''} ${isLoser ? 'is-loser' : ''}`}>
       {seed != null ? <span className="finalsBracket__seed">{seed}</span> : null}
       {logo ? (
         <SmartImg src={logo} alt={teamName || ''} className="finalsBracket__logo" />
@@ -269,8 +294,6 @@ function BracketSide(props: {
       <span className="finalsBracket__teamName">{teamName || placeholder || 'TBD'}</span>
       {total != null ? (
         <span className="finalsBracket__score">{total}</span>
-      ) : winChance != null && teamKey ? (
-        <span className="finalsBracket__wc">{Math.round(winChance)}%</span>
       ) : null}
     </div>
   );

@@ -811,13 +811,13 @@ export default function SubmitPage() {
     () => ({
       1: true,
       2: scoreValid,
-      3: quartersValid,
-      4: allTeamStatsFilled,
-      5: scoreValid && goalKickersValid,
-      6: allScreenshotsValid,
+      3: true,
+      4: true,
+      5: true,
+      6: true,
       7: canSubmit,
     }),
-    [scoreValid, quartersValid, allTeamStatsFilled, goalKickersValid, allScreenshotsValid, canSubmit],
+    [scoreValid, canSubmit],
   );
 
   useEffect(() => {
@@ -854,25 +854,34 @@ export default function SubmitPage() {
         const teamId = String(profile.team_id || '');
         const eligible: Array<{ round: number; fixture: typeof allFixtures[number] }> = [];
 
-        for (const round of sortedVisible) {
-          const candidate = allFixtures.find(
-            (f) => {
-              if (f.round !== round || isFixtureFinal(f.status)) return false;
-              const isFinalsFixture = isFinalsFixtureMeta({
-                isFinals: f.is_finals,
-                stageName: f.stage_name,
-                bracketSlot: f.bracket_slot,
-                roundLabel: f.round_label,
-              });
-              const homeTeamId = String(f.home_team_id || '');
-              const awayTeamId = String(f.away_team_id || '');
-              return isFinalsFixture
-                ? homeTeamId === teamId
-                : homeTeamId === teamId || awayTeamId === teamId;
-            },
-          );
-          if (!candidate) continue;
+        const fixtureIsEligible = (f: typeof allFixtures[number]) => {
+          if (isFixtureFinal(f.status)) return false;
+          const isFinalsFixture = isFinalsFixtureMeta({
+            isFinals: f.is_finals,
+            stageName: f.stage_name,
+            bracketSlot: f.bracket_slot,
+            roundLabel: f.round_label,
+          });
+          const homeTeamId = String(f.home_team_id || '');
+          const awayTeamId = String(f.away_team_id || '');
+          return isFinalsFixture
+            ? homeTeamId === teamId
+            : homeTeamId === teamId || awayTeamId === teamId;
+        };
 
+        const visibleEligible = allFixtures
+          .filter((f) => sortedVisible.includes(f.round) && fixtureIsEligible(f))
+          .sort((a, b) => {
+            const roundDiff = (a.round || 0) - (b.round || 0);
+            if (roundDiff !== 0) return roundDiff;
+            const stageDiff = (a.stage_index || 0) - (b.stage_index || 0);
+            if (stageDiff !== 0) return stageDiff;
+            const at = a.start_time ? new Date(a.start_time).getTime() : Number.MAX_SAFE_INTEGER;
+            const bt = b.start_time ? new Date(b.start_time).getTime() : Number.MAX_SAFE_INTEGER;
+            return at - bt;
+          });
+
+        for (const candidate of visibleEligible) {
           const { data: existingSubs } = await supabase
             .from('submissions')
             .select('id, team_id')
@@ -881,7 +890,7 @@ export default function SubmitPage() {
 
           if (existingSubs && existingSubs.length > 0) continue;
 
-          eligible.push({ round, fixture: candidate });
+          eligible.push({ round: candidate.round, fixture: candidate });
         }
 
         if (!alive) return;
