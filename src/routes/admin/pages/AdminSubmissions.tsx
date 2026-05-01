@@ -178,6 +178,9 @@ export default function AdminSubmissions() {
         queryClient.invalidateQueries({ queryKey: ['admin', 'ocr-queue'] }),
         queryClient.invalidateQueries({ queryKey: ['admin', 'missing-player-stats', missingSeasonId] }),
         queryClient.invalidateQueries({ queryKey: ['admin', 'fixtures', 'playerStatsIds'] }),
+        queryClient.invalidateQueries({ queryKey: ['match-centre', fixture.fixture_id] }),
+        queryClient.invalidateQueries({ queryKey: ['match-centre'] }),
+        queryClient.invalidateQueries({ queryKey: ['stats'] }),
       ]);
       return true;
     } catch (error) {

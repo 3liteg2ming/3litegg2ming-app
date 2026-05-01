@@ -83,19 +83,20 @@ export function previewRowsToPlayerStatUpserts(preview: BulkPreviewRow[]) {
 
   for (const row of preview) {
     if (!row.matched || !row.playerId || !row.teamId) continue;
+    const existing = rowsByPlayerId.get(row.playerId);
     rowsByPlayerId.set(row.playerId, {
       player_id: row.playerId,
       team_id: row.teamId,
-      goals: row.goals ?? null,
-      behinds: row.behinds ?? null,
-      disposals: row.disposals ?? null,
-      kicks: row.kicks ?? null,
-      handballs: row.handballs ?? null,
-      marks: row.marks ?? null,
-      tackles: row.tackles ?? null,
-      clearances: null,
-      hitouts: row.hitouts ?? null,
-      fantasy_points: row.fantasyPoints ?? null,
+      goals: row.goals ?? existing?.goals ?? null,
+      behinds: row.behinds ?? existing?.behinds ?? null,
+      disposals: row.disposals ?? existing?.disposals ?? null,
+      kicks: row.kicks ?? existing?.kicks ?? null,
+      handballs: row.handballs ?? existing?.handballs ?? null,
+      marks: row.marks ?? existing?.marks ?? null,
+      tackles: row.tackles ?? existing?.tackles ?? null,
+      clearances: existing?.clearances ?? null,
+      hitouts: row.hitouts ?? existing?.hitouts ?? null,
+      fantasy_points: row.fantasyPoints ?? existing?.fantasy_points ?? null,
     });
   }
 
@@ -135,6 +136,7 @@ function toNullableStat(value: unknown): number | null {
 
 function extractRows(parsed: any): Array<Record<string, unknown>> {
   if (Array.isArray(parsed)) return parsed as Array<Record<string, unknown>>;
+  if (Array.isArray(parsed?.player_stats)) return parsed.player_stats as Array<Record<string, unknown>>;
   if (Array.isArray(parsed?.playerStats)) return parsed.playerStats as Array<Record<string, unknown>>;
   if (Array.isArray(parsed?.players)) return parsed.players as Array<Record<string, unknown>>;
   if (Array.isArray(parsed?.stats)) return parsed.stats as Array<Record<string, unknown>>;
@@ -202,7 +204,16 @@ export async function buildPlayerStatsImportPreview(
   const teamMatchedRows = parsedRows.map((row) => {
     const normalizedSlug = row.rawSlug.toLowerCase().replace(/[^a-z0-9-]/g, '');
     const compactSlug = row.rawSlug.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const teamMatch = args.teamSlugMap.get(normalizedSlug) || args.teamSlugMap.get(compactSlug) || null;
+    const fallbackHomeId = args.fixtureTeamIds[0] ? String(args.fixtureTeamIds[0]) : '';
+    const fallbackAwayId = args.fixtureTeamIds[1] ? String(args.fixtureTeamIds[1]) : '';
+    const teamMatch =
+      args.teamSlugMap.get(normalizedSlug) ||
+      args.teamSlugMap.get(compactSlug) ||
+      (compactSlug === 'home' && fallbackHomeId
+        ? { id: fallbackHomeId, label: 'Home team' }
+        : compactSlug === 'away' && fallbackAwayId
+          ? { id: fallbackAwayId, label: 'Away team' }
+          : null);
     return { ...row, teamMatch };
   });
 

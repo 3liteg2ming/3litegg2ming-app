@@ -19,6 +19,8 @@ import {
 import { buildPlayerNameLookupKeys, normalizePlayerNameForLookup } from '@/lib/playerHeadshots';
 
 const supabase = requireSupabaseClient();
+let fixturePlayerStatsSupportsExtendedColumns: boolean | null = null;
+let fixturePlayerStatsSupportProbe: Promise<boolean> | null = null;
 
 type FixtureRow = {
   id: string;
@@ -77,6 +79,26 @@ type DbPlayerRow = {
 
 function normalizeSlug(value: unknown): string {
   return String(value || '').trim().toLowerCase();
+}
+
+function isMissingColumnError(error: { message?: string } | null | undefined, columns: string[]): boolean {
+  const message = String(error?.message || '').toLowerCase();
+  if (!message) return false;
+  return columns.some((column) => message.includes(String(column || '').toLowerCase()));
+}
+
+async function detectFixturePlayerStatsExtendedColumnSupport(): Promise<boolean> {
+  if (fixturePlayerStatsSupportsExtendedColumns !== null) return fixturePlayerStatsSupportsExtendedColumns;
+  if (fixturePlayerStatsSupportProbe) return fixturePlayerStatsSupportProbe;
+
+  fixturePlayerStatsSupportProbe = (async () => {
+    const { error } = await supabase.from('eg_fixture_player_stats').select('goals,behinds,hitouts').limit(1);
+    fixturePlayerStatsSupportsExtendedColumns = !isMissingColumnError(error, ['goals', 'behinds', 'hitouts']);
+    fixturePlayerStatsSupportProbe = null;
+    return fixturePlayerStatsSupportsExtendedColumns;
+  })();
+
+  return fixturePlayerStatsSupportProbe;
 }
 
 async function resolveActiveSeasonSlug(): Promise<string> {
@@ -1111,16 +1133,42 @@ async function fetchFixtureSubmissionsOrdered(fixtureId: string): Promise<any[]>
 }
 
 async function fetchFixturePlayerStatPack(fixtureId: string): Promise<FixturePlayerStatPackRow[]> {
+  const primarySelect: string =
+    'player_id,team_id,goals,behinds,disposals,kicks,handballs,marks,tackles,clearances,hitouts,fantasy_points';
+  const fallbackSelect: string = 'player_id,team_id,disposals,kicks,handballs,marks,tackles,clearances,fantasy_points';
+  const supportsExtendedColumns = await detectFixturePlayerStatsExtendedColumnSupport();
+
   const { data, error } = await supabase
     .from('eg_fixture_player_stats')
-    .select('player_id,team_id,goals,behinds,disposals,kicks,handballs,marks,tackles,clearances,hitouts,fantasy_points')
+    .select(supportsExtendedColumns ? primarySelect : fallbackSelect)
     .eq('fixture_id', fixtureId);
 
-  if (error) {
-    return [];
+  if (!error) {
+    const rows = ((data || []) as unknown) as FixturePlayerStatPackRow[];
+    return supportsExtendedColumns
+      ? rows
+      : rows.map((row) => ({
+          ...row,
+          goals: row.goals ?? null,
+          behinds: row.behinds ?? null,
+          hitouts: row.hitouts ?? null,
+        }));
   }
+  if (!supportsExtendedColumns || !isMissingColumnError(error, ['goals', 'behinds', 'hitouts'])) return [];
+  fixturePlayerStatsSupportsExtendedColumns = false;
 
-  return (data || []) as FixturePlayerStatPackRow[];
+  const { data: fallbackData, error: fallbackError } = await supabase
+    .from('eg_fixture_player_stats')
+    .select(fallbackSelect)
+    .eq('fixture_id', fixtureId);
+
+  if (fallbackError) return [];
+  return (((fallbackData || []) as unknown) as FixturePlayerStatPackRow[]).map((row) => ({
+    ...row,
+    goals: row.goals ?? null,
+    behinds: row.behinds ?? null,
+    hitouts: row.hitouts ?? null,
+  }));
 }
 
 function computeMatchStatus({ fixture, submissions }: { fixture: FixtureRow; submissions: any[] }): MatchTrustInfo {
@@ -1830,13 +1878,16 @@ async function fetchFullFixtureRoster(args: {
         alternateNames: playerNameCandidates(p),
         supplementalResolver: supplementalHeadshotResolver,
       }),
+      B: 0,
       G: 0,
       D: 0,
       K: 0,
       H: 0,
       M: 0,
       T: 0,
+      HO: 0,
       CLR: 0,
+      FP: 0,
     };
   };
 

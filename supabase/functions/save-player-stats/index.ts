@@ -34,8 +34,6 @@ type PlayerRow = {
   name: string | null;
   full_name: string | null;
   display_name: string | null;
-  first_name?: string | null;
-  last_name?: string | null;
   team_id: string | null;
   afl_player_id: number | null;
 };
@@ -204,7 +202,7 @@ Deno.serve(async (req) => {
       .in('id', [fixture.home_team_id, fixture.away_team_id]),
     adminDb
       .from('eg_players')
-      .select('id,name,full_name,display_name,first_name,last_name,team_id,afl_player_id')
+      .select('id,name,full_name,display_name,team_id,afl_player_id')
       .in('team_id', [fixture.home_team_id, fixture.away_team_id]),
     adminDb
       .from('eg_fixture_player_stats')

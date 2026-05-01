@@ -26,6 +26,8 @@ import type {
 } from './adminTypes';
 
 const supabase = requireSupabaseClient();
+let fixturePlayerStatsSupportsExtendedColumns: boolean | null = null;
+let fixturePlayerStatsSupportProbe: Promise<boolean> | null = null;
 
 const ADMIN_ERROR_MESSAGE = 'Admin privileges required';
 const ADMIN_WRITE_SESSION_MESSAGE = 'Admin write access is locked. Enter the admin passcode in the header to save manual results.';
@@ -53,6 +55,26 @@ function isMissingRpcError(error: unknown): boolean {
     message.includes('could not find the function') ||
     message.includes('schema cache')
   );
+}
+
+function isMissingColumnError(error: unknown, columns: string[]): boolean {
+  const message = String((error as { message?: string })?.message || '').toLowerCase();
+  if (!message) return false;
+  return columns.some((column) => message.includes(String(column || '').toLowerCase()));
+}
+
+async function detectFixturePlayerStatsExtendedColumnSupport(): Promise<boolean> {
+  if (fixturePlayerStatsSupportsExtendedColumns !== null) return fixturePlayerStatsSupportsExtendedColumns;
+  if (fixturePlayerStatsSupportProbe) return fixturePlayerStatsSupportProbe;
+
+  fixturePlayerStatsSupportProbe = (async () => {
+    const { error } = await supabase.from('eg_fixture_player_stats').select('goals,behinds,hitouts').limit(1);
+    fixturePlayerStatsSupportsExtendedColumns = !isMissingColumnError(error, ['goals', 'behinds', 'hitouts']);
+    fixturePlayerStatsSupportProbe = null;
+    return fixturePlayerStatsSupportsExtendedColumns;
+  })();
+
+  return fixturePlayerStatsSupportProbe;
 }
 
 function isAdminSessionError(error: unknown): boolean {
@@ -934,14 +956,30 @@ export async function listFixtureIdsWithPlayerStats(fixtureIds: string[] = []): 
   try {
     if (!fixtureIds.length) return new Set();
 
+    const primarySelect: string = 'fixture_id,disposals,kicks,handballs,marks,tackles,hitouts,fantasy_points';
+    const fallbackSelect: string = 'fixture_id,disposals,kicks,handballs,marks,tackles,fantasy_points';
+    const supportsExtendedColumns = await detectFixturePlayerStatsExtendedColumnSupport();
     const { data, error } = await supabase
       .from('eg_fixture_player_stats')
-      .select('fixture_id,disposals,kicks,handballs,marks,tackles,hitouts,fantasy_points')
+      .select(supportsExtendedColumns ? primarySelect : fallbackSelect)
       .in('fixture_id', fixtureIds);
 
-    if (error) return new Set();
+    let rows = ((data || []) as unknown) as Array<Record<string, unknown>>;
+    if (error) {
+      if (!supportsExtendedColumns || !isMissingColumnError(error, ['hitouts'])) return new Set();
+      fixturePlayerStatsSupportsExtendedColumns = false;
+
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('eg_fixture_player_stats')
+        .select(fallbackSelect)
+        .in('fixture_id', fixtureIds);
+
+      if (fallbackError) return new Set();
+      rows = ((fallbackData || []) as unknown) as Array<Record<string, unknown>>;
+    }
+
     return new Set(
-      ((data || []) as Array<Record<string, unknown>>)
+      rows
         .filter((row) =>
           ['disposals', 'kicks', 'handballs', 'marks', 'tackles', 'hitouts', 'fantasy_points'].some(
             (key) => row[key] !== null && row[key] !== undefined,
@@ -956,17 +994,49 @@ export async function listFixtureIdsWithPlayerStats(fixtureIds: string[] = []): 
 }
 
 export async function listFixturePlayerStats(fixtureId: string): Promise<AdminFixturePlayerStat[]> {
+  const primarySelect: string =
+    'fixture_id,player_id,team_id,goals,behinds,disposals,kicks,handballs,marks,tackles,clearances,hitouts,fantasy_points';
+  const fallbackSelect: string = 'fixture_id,player_id,team_id,disposals,kicks,handballs,marks,tackles,clearances,fantasy_points';
+  const supportsExtendedColumns = await detectFixturePlayerStatsExtendedColumnSupport();
   const { data, error } = await supabase
     .from('eg_fixture_player_stats')
-    .select('fixture_id,player_id,team_id,goals,behinds,disposals,kicks,handballs,marks,tackles,clearances,hitouts,fantasy_points')
+    .select(supportsExtendedColumns ? primarySelect : fallbackSelect)
     .eq('fixture_id', fixtureId);
 
+  let stats: AdminFixturePlayerStat[] = [];
   if (error) {
-    if (error.message.includes('does not exist')) return [];
-    throw new Error(error.message);
-  }
+    if (supportsExtendedColumns && isMissingColumnError(error, ['goals', 'behinds', 'hitouts'])) {
+      fixturePlayerStatsSupportsExtendedColumns = false;
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('eg_fixture_player_stats')
+        .select(fallbackSelect)
+        .eq('fixture_id', fixtureId);
 
-  const stats = (data || []) as AdminFixturePlayerStat[];
+      if (fallbackError) {
+        if (fallbackError.message.includes('does not exist')) return [];
+        throw new Error(fallbackError.message);
+      }
+
+      stats = (((fallbackData || []) as unknown) as AdminFixturePlayerStat[]).map((row) => ({
+        ...row,
+        goals: row.goals ?? null,
+        behinds: row.behinds ?? null,
+        hitouts: row.hitouts ?? null,
+      }));
+    } else {
+      if (error.message.includes('does not exist')) return [];
+      throw new Error(error.message);
+    }
+  } else {
+    stats = supportsExtendedColumns
+      ? (((data || []) as unknown) as AdminFixturePlayerStat[])
+      : (((data || []) as unknown) as AdminFixturePlayerStat[]).map((row) => ({
+          ...row,
+          goals: row.goals ?? null,
+          behinds: row.behinds ?? null,
+          hitouts: row.hitouts ?? null,
+        }));
+  }
 
   const playerIds = stats.map((s) => s.player_id).filter(Boolean);
   if (playerIds.length) {

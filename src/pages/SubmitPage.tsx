@@ -37,6 +37,12 @@ import {
   useDeadlineCountdown,
 } from '../hooks/useDeadlineCountdown';
 import { getVisibleRounds } from '../lib/visibleRounds';
+import {
+  countPopulatedPlayerStatFields,
+  mergeExtractedPlayerStats,
+  normalisePlayerStatRows,
+  type ExtractedPlayerStatRow,
+} from '../lib/playerStatsExtraction';
 import '../styles/submitPage.css';
 
 const supabase = requireSupabaseClient();
@@ -73,6 +79,17 @@ type UploadedFile = {
   name: string;
   size: number;
   previewUrl: string;
+  bucket?: string | null;
+  path?: string | null;
+  publicUrl?: string | null;
+  imageType?: string;
+  statKey?: string | null;
+  pageNumber?: number | null;
+  uploadStatus?: 'pending' | 'uploading' | 'uploaded' | 'error';
+  extractionStatus?: 'idle' | 'extracting' | 'done' | 'error';
+  extractionMessage?: string | null;
+  extractedRowCount?: number;
+  extractedRows?: ExtractedPlayerStatRow[];
 };
 
 type UploadedEvidenceAsset = {
@@ -135,6 +152,19 @@ type AdminTeamOption = {
   name: string;
 };
 
+type PlayerScreenshotStatKey =
+  | 'goals'
+  | 'behinds'
+  | 'disposals'
+  | 'kicks'
+  | 'handballs'
+  | 'marks'
+  | 'tackles'
+  | 'hitouts'
+  | 'afl_fantasy';
+
+type ExtractionType = 'final_score' | 'match_stats' | 'key_stats';
+
 const MANUAL_TEAM_STAT_FIELDS: Array<{ key: ManualTeamStatKey; label: string }> = [
   { key: 'disposals', label: 'Disposals' },
   { key: 'kicks', label: 'Kicks' },
@@ -159,6 +189,18 @@ const RESULT_SCREENSHOT_SLOTS = [
   { key: 'score_worm', label: 'Final Score + Worm', imageType: 'match_summary', statKey: null as string | null, page: null as number | null },
   { key: 'team_stats_1', label: 'Team Stats Page 1', imageType: 'team_stats', statKey: null as string | null, page: 1 },
   { key: 'team_stats_2', label: 'Team Stats Page 2', imageType: 'team_stats', statKey: null as string | null, page: 2 },
+] as const;
+
+const PLAYER_STAT_KEY_OPTIONS: Array<{ value: PlayerScreenshotStatKey; label: string }> = [
+  { value: 'goals', label: 'Goals' },
+  { value: 'behinds', label: 'Behinds' },
+  { value: 'disposals', label: 'Disposals' },
+  { value: 'kicks', label: 'Kicks' },
+  { value: 'handballs', label: 'Handballs' },
+  { value: 'marks', label: 'Marks' },
+  { value: 'tackles', label: 'Tackles' },
+  { value: 'hitouts', label: 'Hit Outs' },
+  { value: 'afl_fantasy', label: 'AFL Fantasy' },
 ] as const;
 
 const ADMIN_QUICK_RESULT_PRESETS = {
@@ -380,6 +422,57 @@ function buildEvidencePath(fixtureId: string, userId: string, slotKey: string, f
   return `submissions/${fixtureId}/${userId}/${slotKey}-${Date.now()}-${sanitizeFileName(fileName)}`;
 }
 
+function inferPlayerStatKey(fileName: string): PlayerScreenshotStatKey | null {
+  const normalized = normalizeCompareValue(fileName);
+  if (!normalized) return null;
+  if (normalized.includes('fantasy') || normalized.includes('afl fantasy') || normalized === 'af') return 'afl_fantasy';
+  if (normalized.includes('hit out') || normalized.includes('hitout')) return 'hitouts';
+  if (normalized.includes('behind')) return 'behinds';
+  if (normalized.includes('goal')) return 'goals';
+  if (normalized.includes('disposal')) return 'disposals';
+  if (normalized.includes('kick')) return 'kicks';
+  if (normalized.includes('handball')) return 'handballs';
+  if (normalized.includes('mark')) return 'marks';
+  if (normalized.includes('tackle')) return 'tackles';
+  return null;
+}
+
+function resultExtractionTypeForSlot(slotKey: string): ExtractionType {
+  return slotKey === 'score_worm' ? 'final_score' : 'match_stats';
+}
+
+function uploadedFileReady(file: UploadedFile | null | undefined) {
+  return Boolean(file?.bucket && file?.path && file?.publicUrl && file.uploadStatus === 'uploaded');
+}
+
+function playerStatsSavedOnlyGoals(fieldCounts: ReturnType<typeof countPopulatedPlayerStatFields> | {
+  goals?: number;
+  disposals?: number;
+  kicks?: number;
+  handballs?: number;
+  marks?: number;
+  tackles?: number;
+  hitouts?: number;
+  afl_fantasy?: number;
+  fantasyPoints?: number;
+  fantasy_points?: number;
+}) {
+  const detailedCount =
+    Number(fieldCounts.disposals || 0) +
+    Number(fieldCounts.kicks || 0) +
+    Number(fieldCounts.handballs || 0) +
+    Number(fieldCounts.marks || 0) +
+    Number(fieldCounts.tackles || 0) +
+    Number(fieldCounts.hitouts || 0) +
+    Number(
+      fieldCounts.afl_fantasy ||
+        fieldCounts.fantasyPoints ||
+        ('fantasy_points' in fieldCounts ? fieldCounts.fantasy_points : 0) ||
+        0,
+    );
+  return Number(fieldCounts.goals || 0) > 0 && detailedCount === 0;
+}
+
 function bytesToKb(n: number) {
   return Math.max(1, Math.round((n || 0) / 1024));
 }
@@ -510,6 +603,10 @@ export default function SubmitPage() {
   const [homeGoalKickers, setHomeGoalKickers] = useState<GoalKickerEntry[]>([]);
   const [awayGoalKickers, setAwayGoalKickers] = useState<GoalKickerEntry[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [submitStatsWarning, setSubmitStatsWarning] = useState<string | null>(null);
+  const [submitSuccessDetail, setSubmitSuccessDetail] = useState(
+    'Score, quarter-by-quarter, and team stats are now live across Fixtures, Match Centre, and Ladder.',
+  );
 
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -586,6 +683,18 @@ export default function SubmitPage() {
   );
 
   const competitionPlayerCount = homeTeamPlayers.length + awayTeamPlayers.length;
+  const extractedPlayerStats = useMemo(
+    () =>
+      playerScreenshotFiles.reduce<ExtractedPlayerStatRow[]>(
+        (rows, file) => mergeExtractedPlayerStats(rows, file.extractedRows || []),
+        [],
+      ),
+    [playerScreenshotFiles],
+  );
+  const extractedPlayerStatFieldCounts = useMemo(
+    () => countPopulatedPlayerStatFields(extractedPlayerStats),
+    [extractedPlayerStats],
+  );
 
   const homeGoalKickerTotal = useMemo(() => homeGoalKickers.reduce((sum, kicker) => sum + safeNum(kicker.goals), 0), [homeGoalKickers]);
   const awayGoalKickerTotal = useMemo(() => awayGoalKickers.reduce((sum, kicker) => sum + safeNum(kicker.goals), 0), [awayGoalKickers]);
@@ -651,6 +760,10 @@ export default function SubmitPage() {
     () => RESULT_SCREENSHOT_SLOTS.every((slot) => resultScreenshots[slot.key] !== null),
     [resultScreenshots],
   );
+  const resultScreenshotsUploaded = useMemo(
+    () => RESULT_SCREENSHOT_SLOTS.every((slot) => uploadedFileReady(resultScreenshots[slot.key])),
+    [resultScreenshots],
+  );
   const resultScreenshotsCount = useMemo(
     () => RESULT_SCREENSHOT_SLOTS.filter((slot) => resultScreenshots[slot.key] !== null).length,
     [resultScreenshots],
@@ -660,7 +773,13 @@ export default function SubmitPage() {
   // Allow coaches to submit with only scores (no screenshot requirement)
   const isCoach = myRole === 'coach';
   const playerScreenshotsValid = isCoach ? true : playerScreenshotCount > 0;
-  const allScreenshotsValid = isCoach ? true : (resultScreenshotsFilled && playerScreenshotsValid);
+  const playerScreenshotsUploaded = useMemo(
+    () => playerScreenshotFiles.length > 0 && playerScreenshotFiles.every((file) => uploadedFileReady(file)),
+    [playerScreenshotFiles],
+  );
+  const allScreenshotsValid = isCoach
+    ? true
+    : (resultScreenshotsFilled && playerScreenshotsValid && resultScreenshotsUploaded && playerScreenshotsUploaded);
 
   const validationMessages = useMemo(() => {
     const messages: string[] = [];
@@ -671,10 +790,12 @@ export default function SubmitPage() {
     if (!allTeamStatsFilled) messages.push('Enter all team stats for both teams');
     if (!goalKickersValid) messages.push('Assign goal kickers (Step 5) so tagged goals match the final score for both teams');
     if (!isCoach && !resultScreenshotsFilled) messages.push(`Upload the 3 required match screenshots (${resultScreenshotsCount} of 3 uploaded)`);
-    if (!isCoach && !playerScreenshotsValid) messages.push('Upload all player stats screenshots for all players, including behinds, disposals, kicks, handballs, marks, and fantasy points.');
+    if (!isCoach && !playerScreenshotsValid) messages.push('Upload all player stats screenshots for all players, including goals, behinds, disposals, kicks, handballs, marks, tackles, hit outs, and AFL Fantasy.');
+    if (!isCoach && resultScreenshotsFilled && !resultScreenshotsUploaded) messages.push('Wait for the 3 match screenshots to finish uploading.');
+    if (!isCoach && playerScreenshotsValid && !playerScreenshotsUploaded) messages.push('Wait for the player stat screenshots to finish uploading and extraction to start.');
     if (requiresAdminApproval) messages.push(`${SUBMISSION_CLOSED_LABEL} Admin approval must be switched on for this fixture first.`);
     return messages;
-  }, [scoreValid, quartersFilled, quartersMatchFinal, quartersProgressive, allTeamStatsFilled, resultScreenshotsFilled, resultScreenshotsCount, playerScreenshotsValid, playerScreenshotCount, requiresAdminApproval, isCoach]);
+  }, [scoreValid, quartersFilled, quartersMatchFinal, quartersProgressive, allTeamStatsFilled, goalKickersValid, resultScreenshotsFilled, resultScreenshotsCount, resultScreenshotsUploaded, playerScreenshotsValid, playerScreenshotsUploaded, requiresAdminApproval, isCoach]);
 
   const canSubmit = useMemo(() => {
     if (!fixture || !myTeamId || isSubmitting) return false;
@@ -892,6 +1013,8 @@ export default function SubmitPage() {
     setHomeGoalKickers([]);
     setAwayGoalKickers([]);
     setSubmitSuccess(false);
+    setSubmitStatsWarning(null);
+    setSubmitSuccessDetail('Score, quarter-by-quarter, and team stats are now live across Fixtures, Match Centre, and Ladder.');
     setConflict(null);
     setDraftSavedAt(null);
     setFileError(null);
@@ -961,25 +1084,6 @@ export default function SubmitPage() {
     return () => window.clearTimeout(timer);
   }, [sessionUserId, fixture?.id, venue, homeGoals, homeBehinds, awayGoals, awayBehinds, quarterScores, manualTeamStats, homeGoalKickers, awayGoalKickers, notes]);
 
-  useEffect(() => {
-    return () => {
-      Object.values(resultScreenshots).forEach((file) => {
-        if (file?.previewUrl) {
-          try {
-            URL.revokeObjectURL(file.previewUrl);
-          } catch {}
-        }
-      });
-      playerScreenshotFiles.forEach((file) => {
-        if (file.previewUrl) {
-          try {
-            URL.revokeObjectURL(file.previewUrl);
-          } catch {}
-        }
-      });
-    };
-  }, [resultScreenshots, playerScreenshotFiles]);
-
   const triggerResultUpload = (slotKey: string) => {
     activeResultSlotRef.current = slotKey;
     setFileError(null);
@@ -989,6 +1093,216 @@ export default function SubmitPage() {
   const triggerPlayerUpload = () => {
     setFileError(null);
     playerFilesInputRef.current?.click();
+  };
+
+  const updateResultScreenshotState = (slotKey: string, updater: (current: UploadedFile | null) => UploadedFile | null) => {
+    setResultScreenshots((prev) => ({
+      ...prev,
+      [slotKey]: updater(prev[slotKey]),
+    }));
+  };
+
+  const updatePlayerScreenshotState = (id: string, updater: (current: UploadedFile) => UploadedFile) => {
+    setPlayerScreenshotFiles((prev) => prev.map((file) => (file.id === id ? updater(file) : file)));
+  };
+
+  const removeUploadedAssetFromStorage = async (file: UploadedFile | null | undefined) => {
+    if (!file?.bucket || !file?.path) return;
+    try {
+      await supabase.storage.from(file.bucket).remove([file.path]);
+    } catch {
+      // Best effort only.
+    }
+  };
+
+  const uploadScreenshotAsset = async (args: {
+    file: UploadedFile;
+    slotKey: string;
+    imageType: string;
+    statKey: string | null;
+    pageNumber: number | null;
+  }) => {
+    if (!fixture?.id || !sessionUserId) {
+      throw new Error('Fixture context is missing for screenshot upload.');
+    }
+
+    const path = buildEvidencePath(fixture.id, sessionUserId, args.slotKey, args.file.name);
+    const { error } = await supabase.storage.from('Assets').upload(path, args.file.file, {
+      upsert: false,
+      contentType: args.file.file.type || undefined,
+    });
+    if (error) {
+      throw new Error(error.message || `Failed to upload ${args.file.name}`);
+    }
+
+    const publicUrl = supabase.storage.from('Assets').getPublicUrl(path).data.publicUrl;
+    return {
+      bucket: 'Assets',
+      path,
+      publicUrl,
+      imageType: args.imageType,
+      statKey: args.statKey,
+      pageNumber: args.pageNumber,
+      uploadStatus: 'uploaded' as const,
+    };
+  };
+
+  const invokeScorecardExtraction = async (args: {
+    imageUrl: string;
+    extractionType: ExtractionType;
+    sectionName: string;
+  }) => {
+    const { data, error } = await supabase.functions.invoke('extract-scorecard', {
+      body: {
+        imageUrl: args.imageUrl,
+        extractionType: args.extractionType,
+      },
+    });
+
+    if (error) {
+      throw new Error(error.message || `AI extraction failed for ${args.sectionName}`);
+    }
+
+    const payload = (data || {}) as Record<string, unknown>;
+    if (payload.error) {
+      throw new Error(String(payload.error));
+    }
+
+    return payload;
+  };
+
+  const processResultScreenshot = async (slotKey: string, file: UploadedFile) => {
+    const slot = RESULT_SCREENSHOT_SLOTS.find((entry) => entry.key === slotKey);
+    if (!slot) return;
+
+    updateResultScreenshotState(slotKey, (current) => (
+      current && current.id === file.id
+        ? { ...current, uploadStatus: 'uploading', extractionStatus: 'idle', extractionMessage: 'Uploading…' }
+        : current
+    ));
+
+    try {
+      const uploaded = await uploadScreenshotAsset({
+        file,
+        slotKey,
+        imageType: slot.imageType,
+        statKey: slot.statKey,
+        pageNumber: slot.page,
+      });
+
+      updateResultScreenshotState(slotKey, (current) => (
+        current && current.id === file.id
+          ? { ...current, ...uploaded, extractionStatus: 'extracting', extractionMessage: 'Running AI extraction…' }
+          : current
+      ));
+
+      const extractionType = resultExtractionTypeForSlot(slotKey);
+      const payload = await invokeScorecardExtraction({
+        imageUrl: uploaded.publicUrl,
+        extractionType,
+        sectionName: slot.label,
+      });
+      const confidence = String(payload.confidence || '').trim().toUpperCase() || 'DONE';
+
+      if (import.meta.env.DEV) {
+        console.log(`[AI section: ${slot.label}]`, payload);
+      }
+
+      updateResultScreenshotState(slotKey, (current) => (
+        current && current.id === file.id
+          ? {
+              ...current,
+              extractionStatus: 'done',
+              extractionMessage: `${confidence} confidence`,
+            }
+          : current
+      ));
+    } catch (error: any) {
+      const message = String(error?.message || `Failed to process ${slot.label}`);
+      updateResultScreenshotState(slotKey, (current) => (
+        current && current.id === file.id
+          ? {
+              ...current,
+              uploadStatus: current.uploadStatus === 'uploaded' ? current.uploadStatus : 'error',
+              extractionStatus: 'error',
+              extractionMessage: message,
+            }
+          : current
+      ));
+      setFileError(message);
+    }
+  };
+
+  const processPlayerScreenshot = async (file: UploadedFile) => {
+    const statKey = file.statKey || inferPlayerStatKey(file.name);
+    const sectionName = statKey || file.name;
+
+    updatePlayerScreenshotState(file.id, (current) => ({
+      ...current,
+      statKey,
+      uploadStatus: 'uploading',
+      extractionStatus: 'idle',
+      extractionMessage: 'Uploading…',
+    }));
+
+    try {
+      const uploaded = await uploadScreenshotAsset({
+        file,
+        slotKey: `player-pack-${file.pageNumber || file.id}`,
+        imageType: 'player_stat',
+        statKey,
+        pageNumber: file.pageNumber || null,
+      });
+
+      updatePlayerScreenshotState(file.id, (current) => ({
+        ...current,
+        ...uploaded,
+        statKey,
+        extractionStatus: 'extracting',
+        extractionMessage: 'Running AI extraction…',
+      }));
+
+      const payload = await invokeScorecardExtraction({
+        imageUrl: uploaded.publicUrl,
+        extractionType: 'key_stats',
+        sectionName,
+      });
+      const extractedRows = normalisePlayerStatRows(payload.player_stats || []);
+      const fieldCounts = countPopulatedPlayerStatFields(extractedRows);
+
+      if (import.meta.env.DEV) {
+        console.log(`[AI section: ${sectionName}] returned ${extractedRows.length} rows`, {
+          disposals: fieldCounts.disposals,
+          kicks: fieldCounts.kicks,
+          handballs: fieldCounts.handballs,
+          marks: fieldCounts.marks,
+          tackles: fieldCounts.tackles,
+          afl_fantasy: fieldCounts.afl_fantasy,
+          fantasyPoints: fieldCounts.fantasyPoints,
+        });
+      }
+
+      updatePlayerScreenshotState(file.id, (current) => ({
+        ...current,
+        statKey,
+        extractionStatus: 'done',
+        extractionMessage: `${String(payload.confidence || 'medium').toUpperCase()} confidence`,
+        extractedRowCount: extractedRows.length,
+        extractedRows,
+      }));
+    } catch (error: any) {
+      const message = String(error?.message || `Failed to process ${file.name}`);
+      updatePlayerScreenshotState(file.id, (current) => ({
+        ...current,
+        statKey,
+        uploadStatus: current.uploadStatus === 'uploaded' ? current.uploadStatus : 'error',
+        extractionStatus: 'error',
+        extractionMessage: message,
+        extractedRowCount: 0,
+        extractedRows: [],
+      }));
+      setFileError(message);
+    }
   };
 
   const onResultFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1007,10 +1321,29 @@ export default function SubmitPage() {
         URL.revokeObjectURL(old.previewUrl);
       } catch {}
     }
+    void removeUploadedAssetFromStorage(old);
+    const nextFile: UploadedFile = {
+      id: uuid(),
+      file,
+      name: file.name,
+      size: file.size,
+      previewUrl: URL.createObjectURL(file),
+      imageType: RESULT_SCREENSHOT_SLOTS.find((slot) => slot.key === slotKey)?.imageType || 'match_summary',
+      statKey: RESULT_SCREENSHOT_SLOTS.find((slot) => slot.key === slotKey)?.statKey || null,
+      pageNumber: RESULT_SCREENSHOT_SLOTS.find((slot) => slot.key === slotKey)?.page || null,
+      uploadStatus: 'pending',
+      extractionStatus: 'idle',
+      extractionMessage: 'Queued for upload',
+      extractedRowCount: 0,
+      extractedRows: [],
+    };
     setResultScreenshots((prev) => ({
       ...prev,
-      [slotKey]: { id: uuid(), file, name: file.name, size: file.size, previewUrl: URL.createObjectURL(file) },
+      [slotKey]: nextFile,
     }));
+    window.setTimeout(() => {
+      void processResultScreenshot(slotKey, nextFile);
+    }, 0);
     setFileError(null);
     activeResultSlotRef.current = null;
     event.target.value = '';
@@ -1027,9 +1360,30 @@ export default function SubmitPage() {
         firstError = firstError || err;
         continue;
       }
-      next.push({ id: uuid(), file, name: file.name, size: file.size, previewUrl: URL.createObjectURL(file) });
+      next.push({
+        id: uuid(),
+        file,
+        name: file.name,
+        size: file.size,
+        previewUrl: URL.createObjectURL(file),
+        imageType: 'player_stat',
+        statKey: inferPlayerStatKey(file.name),
+        pageNumber: playerScreenshotFiles.length + next.length + 1,
+        uploadStatus: 'pending',
+        extractionStatus: 'idle',
+        extractionMessage: 'Queued for upload',
+        extractedRowCount: 0,
+        extractedRows: [],
+      });
     }
-    if (next.length) setPlayerScreenshotFiles((prev) => [...prev, ...next]);
+    if (next.length) {
+      setPlayerScreenshotFiles((prev) => [...prev, ...next]);
+      window.setTimeout(() => {
+        next.forEach((entry) => {
+          void processPlayerScreenshot(entry);
+        });
+      }, 0);
+    }
     if (firstError) setFileError(firstError);
     else setFileError(null);
     event.target.value = '';
@@ -1037,6 +1391,7 @@ export default function SubmitPage() {
 
   const removeResultScreenshot = (slotKey: string) => {
     const old = resultScreenshots[slotKey];
+    void removeUploadedAssetFromStorage(old);
     if (old?.previewUrl) {
       try {
         URL.revokeObjectURL(old.previewUrl);
@@ -1048,6 +1403,7 @@ export default function SubmitPage() {
   const removePlayerScreenshot = (id: string) => {
     setPlayerScreenshotFiles((prev) => {
       const found = prev.find((file) => file.id === id);
+      void removeUploadedAssetFromStorage(found);
       if (found?.previewUrl) {
         try {
           URL.revokeObjectURL(found.previewUrl);
@@ -1055,6 +1411,12 @@ export default function SubmitPage() {
       }
       return prev.filter((file) => file.id !== id);
     });
+  };
+
+  const setPlayerScreenshotStatKey = (id: string, statKey: PlayerScreenshotStatKey | null) => {
+    setPlayerScreenshotFiles((prev) => prev.map((file) => (
+      file.id === id ? { ...file, statKey } : file
+    )));
   };
 
   const setManualTeamStatValue = (key: ManualTeamStatKey, side: 'home' | 'away', rawValue: string) => {
@@ -1109,6 +1471,8 @@ export default function SubmitPage() {
 
     setIsSubmitting(true);
     setConflict(null);
+    setSubmitStatsWarning(null);
+    setSubmitSuccessDetail('Score is now live across Fixtures, Match Centre, and Ladder.');
 
     try {
       await updateFixtureScores({
@@ -1266,49 +1630,38 @@ export default function SubmitPage() {
     }
     setIsSubmitting(true);
     setConflict(null);
-    let uploadedAssets: UploadedEvidenceAsset[] = [];
+    setSubmitStatsWarning(null);
+    setSubmitSuccessDetail('Score, quarter-by-quarter, and team stats are now live across Fixtures, Match Centre, and Ladder.');
 
     try {
+      const uploadedAssets: UploadedEvidenceAsset[] = [];
       for (const slot of RESULT_SCREENSHOT_SLOTS) {
         const file = resultScreenshots[slot.key];
-        if (!file) throw new Error(`Missing screenshot: ${slot.label}`);
-        const path = buildEvidencePath(fixture.id, sessionUserId, slot.key, file.name);
-        const { error } = await supabase.storage.from('Assets').upload(path, file.file, {
-          upsert: false,
-          contentType: file.file.type || undefined,
-        });
-        if (error) throw new Error(error.message || `Failed to upload ${slot.label}`);
-        const publicUrl = supabase.storage.from('Assets').getPublicUrl(path).data.publicUrl;
+        if (!file || !uploadedFileReady(file)) throw new Error(`Missing uploaded screenshot: ${slot.label}`);
         uploadedAssets.push({
-          bucket: 'Assets',
-          path,
-          publicUrl,
+          bucket: file.bucket || 'Assets',
+          path: file.path || '',
+          publicUrl: file.publicUrl || '',
           name: file.name,
           size: file.size,
           mimeType: file.file.type || null,
-          imageType: slot.imageType,
-          statKey: slot.statKey,
-          pageNumber: slot.page,
+          imageType: file.imageType || slot.imageType,
+          statKey: file.statKey ?? slot.statKey,
+          pageNumber: file.pageNumber ?? slot.page,
         });
       }
 
       for (const [index, file] of playerScreenshotFiles.entries()) {
-        const path = buildEvidencePath(fixture.id, sessionUserId, `player-pack-${index + 1}`, file.name);
-        const { error } = await supabase.storage.from('Assets').upload(path, file.file, {
-          upsert: false,
-          contentType: file.file.type || undefined,
-        });
-        if (error) throw new Error(error.message || `Failed to upload ${file.name}`);
-        const publicUrl = supabase.storage.from('Assets').getPublicUrl(path).data.publicUrl;
+        if (!uploadedFileReady(file)) throw new Error(`Player screenshot is still uploading: ${file.name}`);
         uploadedAssets.push({
-          bucket: 'Assets',
-          path,
-          publicUrl,
+          bucket: file.bucket || 'Assets',
+          path: file.path || '',
+          publicUrl: file.publicUrl || '',
           name: file.name,
           size: file.size,
           mimeType: file.file.type || null,
           imageType: 'player_stat',
-          statKey: null,
+          statKey: file.statKey ?? null,
           pageNumber: index + 1,
         });
       }
@@ -1338,13 +1691,64 @@ export default function SubmitPage() {
       });
 
       if (rpcErr) {
-        if (uploadedAssets.length) {
-          try {
-            await supabase.storage.from('Assets').remove(uploadedAssets.map((asset) => asset.path));
-          } catch {}
-        }
         setConflict(formatSubmitError(rpcErr));
         return;
+      }
+
+      let statsWarning: string | null = null;
+      try {
+        if (extractedPlayerStats.length > 0) {
+          const { data: saveStatsData, error: saveStatsError } = await supabase.functions.invoke('save-player-stats', {
+            body: {
+              fixture_id: fixture.id,
+              player_stats: extractedPlayerStats.map((row) => ({
+                name: row.name,
+                team: row.team,
+                goals: row.goals,
+                behinds: row.behinds,
+                disposals: row.disposals,
+                kicks: row.kicks,
+                handballs: row.handballs,
+                marks: row.marks,
+                tackles: row.tackles,
+                hitouts: row.hitouts,
+                afl_fantasy: row.afl_fantasy ?? row.fantasyPoints,
+                fantasyPoints: row.fantasyPoints ?? row.afl_fantasy,
+              })),
+            },
+          });
+
+          if (saveStatsError) {
+            throw saveStatsError;
+          }
+
+          const saveStatsPayload = (saveStatsData || {}) as {
+            success?: boolean;
+            diagnostics?: {
+              unmatched?: unknown[];
+              fieldCounts?: Record<string, number>;
+            };
+          };
+
+          if (!saveStatsPayload.success) {
+            statsWarning = 'Result submitted, but player stat saving needs admin review.';
+          } else {
+            const unmatchedCount = Array.isArray(saveStatsPayload.diagnostics?.unmatched)
+              ? saveStatsPayload.diagnostics?.unmatched?.length || 0
+              : 0;
+            const savedFieldCounts = saveStatsPayload.diagnostics?.fieldCounts || extractedPlayerStatFieldCounts;
+
+            if (playerStatsSavedOnlyGoals(savedFieldCounts)) {
+              statsWarning = 'Result submitted, but only goals were saved from the screenshots. Admin review is recommended for disposals and fantasy stats.';
+            } else if (unmatchedCount > 0) {
+              statsWarning = `Result submitted, but ${unmatchedCount} extracted player row(s) still need admin review.`;
+            }
+          }
+        } else {
+          statsWarning = 'Result submitted, but no player stat rows were extracted from the uploaded screenshots. Admin review is recommended.';
+        }
+      } catch (error: any) {
+        statsWarning = `Result submitted, but player stat saving needs admin review: ${String(error?.message || 'Unknown error')}`;
       }
 
       window.localStorage.removeItem(buildDraftKey(sessionUserId, fixture.id));
@@ -1373,13 +1777,14 @@ export default function SubmitPage() {
         }));
       }
 
+      if (statsWarning) {
+        setSubmitStatsWarning(statsWarning);
+        setSubmitSuccessDetail('Score, quarter-by-quarter, and team stats are now live. Player stat extraction finished with an admin-review warning.');
+      } else {
+        setSubmitSuccessDetail('Score, quarter-by-quarter, team stats, and player stats are now live across Fixtures, Match Centre, Ladder, and season leaders.');
+      }
       setSubmitSuccess(true);
     } catch (error: any) {
-      if (uploadedAssets.length) {
-        try {
-          await supabase.storage.from('Assets').remove(uploadedAssets.map((asset) => asset.path));
-        } catch {}
-      }
       setConflict(formatSubmitError(error));
     } finally {
       setIsSubmitting(false);
@@ -1819,6 +2224,9 @@ export default function SubmitPage() {
                                     <div className="mdcSlot__meta">
                                       <div className="mdcSlot__fileName">{file.name}</div>
                                       <div className="mdcSlot__fileSize">{bytesToKb(file.size)} KB</div>
+                                      <div className="mdcCard__hint" style={{ marginTop: 4 }}>
+                                        {file.extractionMessage || (uploadedFileReady(file) ? 'Uploaded' : 'Waiting')}
+                                      </div>
                                     </div>
                                     <div className="mdcSlot__actions">
                                       <button type="button" className="mdcSlot__replace" onClick={() => triggerResultUpload(slot.key)}>Replace</button>
@@ -1839,11 +2247,12 @@ export default function SubmitPage() {
 
                       <div className="mdcScreenshotGroup">
                         <div className="mdcScreenshotGroup__title">Player Stats Screenshots</div>
-                        <p className="mdcCard__hint">Both teams, all players — disposals, kicks, handballs, marks, behinds, fantasy points.</p>
+                        <p className="mdcCard__hint">Both teams, all players — goals, behinds, disposals, kicks, handballs, marks, tackles, hit outs, and AFL Fantasy.</p>
                         <div className={`mdcBulkUpload ${playerScreenshotsValid ? 'is-valid' : ''}`}>
                           <div className="mdcBulkUpload__top">
                             <div>
                               <div className="mdcBulkUpload__title">{playerScreenshotCount} uploaded</div>
+                              <div className="mdcCard__hint">{extractedPlayerStats.length} merged player row(s) extracted so far</div>
                             </div>
                             <button type="button" className="mdcBtn mdcBulkUpload__button" onClick={triggerPlayerUpload}>
                               <Upload size={14} /> Add
@@ -1858,6 +2267,22 @@ export default function SubmitPage() {
                                   <div className="mdcBulkUpload__meta">
                                     <div className="mdcBulkUpload__index">#{index + 1}</div>
                                     <div className="mdcBulkUpload__name">{file.name}</div>
+                                    <select
+                                      value={file.statKey || ''}
+                                      onChange={(event) => setPlayerScreenshotStatKey(file.id, (event.target.value || null) as PlayerScreenshotStatKey | null)}
+                                      style={{ marginTop: 6, width: '100%' }}
+                                    >
+                                      <option value="">Choose stat type</option>
+                                      {PLAYER_STAT_KEY_OPTIONS.map((option) => (
+                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                      ))}
+                                    </select>
+                                    <div className="mdcCard__hint" style={{ marginTop: 6 }}>
+                                      {file.extractionMessage || 'Queued for upload'}
+                                    </div>
+                                    {typeof file.extractedRowCount === 'number' && file.extractionStatus === 'done' ? (
+                                      <div className="mdcCard__hint">{file.extractedRowCount} extracted row(s)</div>
+                                    ) : null}
                                   </div>
                                   <button type="button" className="mdcSlot__remove mdcBulkUpload__remove" onClick={() => removePlayerScreenshot(file.id)}><X size={14} /></button>
                                 </div>
@@ -1923,7 +2348,12 @@ export default function SubmitPage() {
             <motion.div className="mdcSuccessCard" initial={{ y: 10, scale: 0.97 }} animate={{ y: 0, scale: 1 }}>
               <div className="mdcSuccessCard__icon"><Check size={24} /></div>
               <div className="mdcSuccessCard__title">Result Submitted</div>
-              <div className="mdcSuccessCard__sub">Score, quarter-by-quarter, and team stats are now live across Fixtures, Match Centre, and Ladder. Player stat screenshots have been attached for admin processing.</div>
+              <div className="mdcSuccessCard__sub">{submitSuccessDetail}</div>
+              {submitStatsWarning ? (
+                <div className="mdcValidation" style={{ marginTop: 12 }}>
+                  <div className="mdcValidation__item"><AlertTriangle size={12} /> {submitStatsWarning}</div>
+                </div>
+              ) : null}
               <div className="mdcSuccessCard__score">{homeScore} — {awayScore}</div>
               <div className="mdcSuccessCard__actions">
                 <button type="button" className="mdcBtn mdcBtn--primary" onClick={() => navigate(`/match-centre/${activeFixture.id}`)}>Open Match Centre</button>

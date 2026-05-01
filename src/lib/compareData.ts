@@ -53,6 +53,12 @@ export function safeNum(value: unknown): number {
   return Number.isFinite(num) ? num : 0;
 }
 
+function isMissingColumnError(error: { message?: string } | null | undefined, columns: string[]): boolean {
+  const message = String(error?.message || '').toLowerCase();
+  if (!message) return false;
+  return columns.some((column) => message.includes(String(column || '').toLowerCase()));
+}
+
 export function normalize(value: string): string {
   return String(value || '')
     .toLowerCase()
@@ -369,11 +375,29 @@ export async function loadCompareTeams(): Promise<CompareTeamRow[]> {
     target.stats.marks += safeNum(row.marks);
   }
 
-  const { data: fixtureRows } = await supabase
+  const primarySelect: string = 'id,is_final,home_team_id,away_team_id,home_goals,away_goals,team_stats_json';
+  const fallbackSelect: string = 'id,home_team_id,away_team_id,home_goals,away_goals,team_stats_json';
+  const { data: fixtureRowsData, error: fixtureRowsError } = await supabase
     .from('eg_fixtures')
-    .select('id,is_final,home_team_id,away_team_id,home_goals,away_goals,team_stats_json')
+    .select(primarySelect)
     .eq('season_id', seasonRecord.id)
     .limit(5000);
+
+  let fixtureRows = (fixtureRowsData || []) as any[];
+  if (fixtureRowsError && isMissingColumnError(fixtureRowsError, ['is_final'])) {
+    const { data: fallbackFixtureRows, error: fallbackFixtureError } = await supabase
+      .from('eg_fixtures')
+      .select(fallbackSelect)
+      .eq('season_id', seasonRecord.id)
+      .limit(5000);
+
+    if (!fallbackFixtureError) {
+      fixtureRows = (fallbackFixtureRows || []).map((row: any) => ({
+        ...row,
+        is_final: null,
+      }));
+    }
+  }
 
   const applyTeamBucket = (target: CompareTeamRow, bucket: any) => {
     if (!bucket || typeof bucket !== 'object') return;
@@ -399,7 +423,8 @@ export async function loadCompareTeams(): Promise<CompareTeamRow[]> {
     const away = awayMeta ? rowsByKey.get(awayMeta.key) : null;
     const statsJson = row.team_stats_json && typeof row.team_stats_json === 'object' ? row.team_stats_json : null;
 
-    if (safeNum(row.is_final ? 1 : 0) || row.is_final === true) {
+    const hasLegacyResult = row.home_goals !== null || row.away_goals !== null || Boolean(statsJson);
+    if (safeNum(row.is_final ? 1 : 0) || row.is_final === true || hasLegacyResult) {
       if (home) home.matchesPlayed += 1;
       if (away) away.matchesPlayed += 1;
     }

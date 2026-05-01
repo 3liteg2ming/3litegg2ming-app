@@ -193,6 +193,8 @@ const leadersCache = new Map<string, LeadersCacheEntry>();
 const LEADERS_TTL_MS = 180_000;
 const seasonRecordCache = new Map<string, SeasonRecord>();
 const liveMetricCache = new Map<string, { at: number; value: PlayerMetricRow[] }>();
+let seasonTotalsSupportsHitouts: boolean | null = null;
+let seasonTotalsSupportProbe: Promise<boolean> | null = null;
 
 function cacheNamespace(): string {
   const compKey = getStoredCompetitionKey();
@@ -218,6 +220,26 @@ function leadersCacheSet<T>(key: string, value: T): T {
 function safeNum(value: unknown): number {
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
+}
+
+function isMissingColumnError(error: { message?: string } | null | undefined, columns: string[]): boolean {
+  const message = String(error?.message || '').toLowerCase();
+  if (!message) return false;
+  return columns.some((column) => message.includes(String(column || '').toLowerCase()));
+}
+
+async function detectSeasonTotalsHitoutsSupport(supabase: NonNullable<ReturnType<typeof getSupabaseClient>>): Promise<boolean> {
+  if (seasonTotalsSupportsHitouts !== null) return seasonTotalsSupportsHitouts;
+  if (seasonTotalsSupportProbe) return seasonTotalsSupportProbe;
+
+  seasonTotalsSupportProbe = (async () => {
+    const { error } = await supabase.from('eg_player_season_totals_ext').select('hitouts').limit(1);
+    seasonTotalsSupportsHitouts = !isMissingColumnError(error, ['hitouts']);
+    seasonTotalsSupportProbe = null;
+    return seasonTotalsSupportsHitouts;
+  })();
+
+  return seasonTotalsSupportProbe;
 }
 
 function text(value: unknown): string {
@@ -321,14 +343,42 @@ async function fetchSeasonTotalsRows(seasonId: string): Promise<SeasonTotalsRow[
   const supabase = getSupabaseClient();
   if (!supabase) return [];
 
+  const primarySelect =
+    'season_id,player_id,team_id,player_name,matches,disposals,kicks,handballs,marks,tackles,clearances,hitouts,fantasy_points';
+  const fallbackSelect =
+    'season_id,player_id,team_id,player_name,matches,disposals,kicks,handballs,marks,tackles,clearances,fantasy_points';
+  const supportsHitouts = await detectSeasonTotalsHitoutsSupport(supabase);
+  const selectSql = supportsHitouts ? primarySelect : fallbackSelect;
+
   const { data, error } = await supabase
     .from('eg_player_season_totals_ext')
-    .select('season_id,player_id,team_id,player_name,matches,disposals,kicks,handballs,marks,tackles,clearances,hitouts,fantasy_points')
+    .select(selectSql)
     .eq('season_id', seasonId)
     .limit(4000);
 
-  if (error) return [];
-  return (data || []) as SeasonTotalsRow[];
+  if (!error) {
+    const rows = (data || []) as SeasonTotalsRow[];
+    return supportsHitouts
+      ? rows
+      : rows.map((row) => ({
+          ...row,
+          hitouts: row.hitouts ?? null,
+        }));
+  }
+  if (!supportsHitouts || !isMissingColumnError(error, ['hitouts'])) return [];
+  seasonTotalsSupportsHitouts = false;
+
+  const { data: fallbackData, error: fallbackError } = await supabase
+    .from('eg_player_season_totals_ext')
+    .select(fallbackSelect)
+    .eq('season_id', seasonId)
+    .limit(4000);
+
+  if (fallbackError) return [];
+  return ((fallbackData || []) as SeasonTotalsRow[]).map((row) => ({
+    ...row,
+    hitouts: row.hitouts ?? null,
+  }));
 }
 
 async function fetchGoalAggregates(seasonId: string): Promise<GoalAggregateRow[]> {

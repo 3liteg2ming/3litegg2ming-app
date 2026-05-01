@@ -442,6 +442,9 @@ export default function AdminFixtureDetail() {
       pushToast('Player stats saved.', 'success');
       queryClient.invalidateQueries({ queryKey: ['admin', 'fixture-player-stats', fixtureId] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'fixtures', 'playerStatsIds'] });
+      queryClient.invalidateQueries({ queryKey: ['match-centre', fixtureId] });
+      queryClient.invalidateQueries({ queryKey: ['match-centre'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
     },
     onError: (error) => {
       if (error instanceof AdminPermissionError) {
@@ -509,6 +512,9 @@ export default function AdminFixtureDetail() {
         queryClient.invalidateQueries({ queryKey: ['admin', 'fixture-player-stats', fixtureId] }),
         queryClient.invalidateQueries({ queryKey: ['admin', 'fixtures', 'playerStatsIds'] }),
         queryClient.invalidateQueries({ queryKey: ['admin', 'missing-player-stats'] }),
+        queryClient.invalidateQueries({ queryKey: ['match-centre', fixtureId] }),
+        queryClient.invalidateQueries({ queryKey: ['match-centre'] }),
+        queryClient.invalidateQueries({ queryKey: ['stats'] }),
       ]);
     },
     onError: (error) => {
@@ -528,6 +534,9 @@ export default function AdminFixtureDetail() {
       setPlayerDrafts(new Map());
       queryClient.invalidateQueries({ queryKey: ['admin', 'fixture-player-stats', fixtureId] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'fixtures', 'playerStatsIds'] });
+      queryClient.invalidateQueries({ queryKey: ['match-centre', fixtureId] });
+      queryClient.invalidateQueries({ queryKey: ['match-centre'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
     },
     onError: (error) => {
       if (error instanceof AdminPermissionError) {

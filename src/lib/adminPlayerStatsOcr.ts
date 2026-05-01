@@ -489,11 +489,14 @@ export function parsePlayerStatsOcrPages(args: {
           aflPlayerId: entry.player.aflPlayerId,
           playerName: entry.player.playerName,
         },
+        goals: null,
+        behinds: null,
         kicks: entry.stats.kicks?.value ?? null,
         handballs: entry.stats.handballs?.value ?? null,
         disposals: entry.stats.disposals?.value ?? null,
         marks: entry.stats.marks?.value ?? null,
         tackles: entry.stats.tackles?.value ?? null,
+        hitouts: null,
         fantasyPoints: entry.stats.fantasyPoints?.value ?? null,
       };
 
