@@ -521,8 +521,8 @@ export default function AdminFixtures() {
             style={{ marginLeft: 'auto' }}
           >
             {allRoundsProgress !== null
-              ? `Extracting ${allRoundsProgress.done}/${allRoundsProgress.total}…`
-              : `Extract Player Stats — All Rounds${allRoundsRunnableCount ? ` (${allRoundsRunnableCount})` : ''}`}
+              ? `Extracting ${allRoundsProgress.done}/${allRoundsProgress.total} fixtures…`
+              : `Extract Player Stats — All Rounds${allRoundsRunnableCount ? ` (${allRoundsRunnableCount} fixtures)` : ''}`}
           </button>
           <button
             type="button"

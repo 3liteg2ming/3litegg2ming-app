@@ -214,9 +214,26 @@ export async function runFixturePlayerStatsOcrWorkflow(args: {
       args.onProgress?.(`Running AI extraction for ${screenshotLabel}…`);
 
       try {
+        let imageUrl = screenshot.public_url || '';
+        if (screenshot.storage_bucket && screenshot.storage_path) {
+          const { data: signed, error: signError } = await supabase.storage
+            .from(screenshot.storage_bucket)
+            .createSignedUrl(screenshot.storage_path, 60 * 30);
+          if (signError) {
+            if (!imageUrl) {
+              throw new Error(signError.message || 'Failed to sign screenshot URL');
+            }
+          } else if (signed?.signedUrl) {
+            imageUrl = signed.signedUrl;
+          }
+        }
+        if (!imageUrl) {
+          throw new Error('Screenshot has no accessible storage URL.');
+        }
+
         const { data, error } = await supabase.functions.invoke('extract-scorecard', {
           body: {
-            imageUrl: screenshot.public_url,
+            imageUrl,
             extractionType: 'key_stats',
           },
         });
