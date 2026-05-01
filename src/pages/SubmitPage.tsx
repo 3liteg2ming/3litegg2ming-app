@@ -663,34 +663,37 @@ export default function SubmitPage() {
   const validationMessages = useMemo(() => {
     const messages: string[] = [];
     if (!scoreValid) messages.push('Enter final score for both teams');
-    if (!quartersFilled) messages.push('Enter all quarter-by-quarter scores');
-    if (quartersFilled && !quartersMatchFinal) messages.push('Q4 scores must match the final score');
-    if (quartersFilled && !quartersProgressive) messages.push('Quarter scores must be progressive (each quarter >= previous)');
-    if (!allTeamStatsFilled) messages.push('Enter all team stats for both teams');
-    if (!goalKickersValid) messages.push('Assign goal kickers (Step 5) so tagged goals match the final score for both teams');
-    if (!resultScreenshotsFilled) messages.push(`Upload the 3 required match screenshots (${resultScreenshotsCount} of 3 uploaded)`);
-    if (!playerScreenshotsValid) messages.push('Upload all player stats screenshots for all players, including behinds, disposals, kicks, handballs, marks, and fantasy points.');
+    if (!finalsSubmissionOpen) {
+      if (!quartersFilled) messages.push('Enter all quarter-by-quarter scores');
+      if (quartersFilled && !quartersMatchFinal) messages.push('Q4 scores must match the final score');
+      if (quartersFilled && !quartersProgressive) messages.push('Quarter scores must be progressive (each quarter >= previous)');
+      if (!allTeamStatsFilled) messages.push('Enter all team stats for both teams');
+      if (!goalKickersValid) messages.push('Assign goal kickers (Step 5) so tagged goals match the final score for both teams');
+      if (!resultScreenshotsFilled) messages.push(`Upload the 3 required match screenshots (${resultScreenshotsCount} of 3 uploaded)`);
+      if (!playerScreenshotsValid) messages.push('Upload all player stats screenshots for all players, including behinds, disposals, kicks, handballs, marks, and fantasy points.');
+    }
     if (requiresAdminApproval) messages.push(`${SUBMISSION_CLOSED_LABEL} Admin approval must be switched on for this fixture first.`);
     return messages;
-  }, [scoreValid, quartersFilled, quartersMatchFinal, quartersProgressive, allTeamStatsFilled, resultScreenshotsFilled, resultScreenshotsCount, playerScreenshotsValid, playerScreenshotCount, requiresAdminApproval]);
+  }, [finalsSubmissionOpen, scoreValid, quartersFilled, quartersMatchFinal, quartersProgressive, allTeamStatsFilled, goalKickersValid, resultScreenshotsFilled, resultScreenshotsCount, playerScreenshotsValid, playerScreenshotCount, requiresAdminApproval]);
 
   const canSubmit = useMemo(() => {
     if (!fixture || !myTeamId || isSubmitting) return false;
     if (requiresAdminApproval) return false;
+    if (finalsSubmissionOpen) return scoreValid;
     return scoreValid && quartersValid && allTeamStatsFilled && goalKickersValid && allScreenshotsValid;
-  }, [fixture, myTeamId, isSubmitting, requiresAdminApproval, scoreValid, quartersValid, allTeamStatsFilled, goalKickersValid, allScreenshotsValid]);
+  }, [fixture, myTeamId, isSubmitting, requiresAdminApproval, finalsSubmissionOpen, scoreValid, quartersValid, allTeamStatsFilled, goalKickersValid, allScreenshotsValid]);
 
   const stepComplete = useMemo(
     () => ({
       1: true,
       2: scoreValid,
-      3: quartersValid,
-      4: allTeamStatsFilled,
-      5: scoreValid && goalKickersValid,
-      6: allScreenshotsValid,
+      3: finalsSubmissionOpen ? true : quartersValid,
+      4: finalsSubmissionOpen ? true : allTeamStatsFilled,
+      5: finalsSubmissionOpen ? true : (scoreValid && goalKickersValid),
+      6: finalsSubmissionOpen ? true : allScreenshotsValid,
       7: canSubmit,
     }),
-    [scoreValid, quartersValid, allTeamStatsFilled, goalKickersValid, allScreenshotsValid, canSubmit],
+    [finalsSubmissionOpen, scoreValid, quartersValid, allTeamStatsFilled, goalKickersValid, allScreenshotsValid, canSubmit],
   );
 
   useEffect(() => {
@@ -727,25 +730,34 @@ export default function SubmitPage() {
         const teamId = String(profile.team_id || '');
         const eligible: Array<{ round: number; fixture: typeof allFixtures[number] }> = [];
 
-        for (const round of sortedVisible) {
-          const candidate = allFixtures.find(
-            (f) => {
-              if (f.round !== round || isFixtureFinal(f.status)) return false;
-              const isFinalsFixture = isFinalsFixtureMeta({
-                isFinals: f.is_finals,
-                stageName: f.stage_name,
-                bracketSlot: f.bracket_slot,
-                roundLabel: f.round_label,
-              });
-              const homeTeamId = String(f.home_team_id || '');
-              const awayTeamId = String(f.away_team_id || '');
-              return isFinalsFixture
-                ? homeTeamId === teamId
-                : homeTeamId === teamId || awayTeamId === teamId;
-            },
-          );
-          if (!candidate) continue;
+        const fixtureIsEligible = (f: typeof allFixtures[number]) => {
+          if (isFixtureFinal(f.status)) return false;
+          const isFinalsFixture = isFinalsFixtureMeta({
+            isFinals: f.is_finals,
+            stageName: f.stage_name,
+            bracketSlot: f.bracket_slot,
+            roundLabel: f.round_label,
+          });
+          const homeTeamId = String(f.home_team_id || '');
+          const awayTeamId = String(f.away_team_id || '');
+          return isFinalsFixture
+            ? homeTeamId === teamId
+            : homeTeamId === teamId || awayTeamId === teamId;
+        };
 
+        const visibleEligible = allFixtures
+          .filter((f) => sortedVisible.includes(f.round) && fixtureIsEligible(f))
+          .sort((a, b) => {
+            const roundDiff = (a.round || 0) - (b.round || 0);
+            if (roundDiff !== 0) return roundDiff;
+            const stageDiff = (a.stage_index || 0) - (b.stage_index || 0);
+            if (stageDiff !== 0) return stageDiff;
+            const at = a.start_time ? new Date(a.start_time).getTime() : Number.MAX_SAFE_INTEGER;
+            const bt = b.start_time ? new Date(b.start_time).getTime() : Number.MAX_SAFE_INTEGER;
+            return at - bt;
+          });
+
+        for (const candidate of visibleEligible) {
           const { data: existingSubs } = await supabase
             .from('submissions')
             .select('id, team_id')
@@ -754,7 +766,7 @@ export default function SubmitPage() {
 
           if (existingSubs && existingSubs.length > 0) continue;
 
-          eligible.push({ round, fixture: candidate });
+          eligible.push({ round: candidate.round, fixture: candidate });
         }
 
         if (!alive) return;
@@ -1265,7 +1277,10 @@ export default function SubmitPage() {
     try {
       for (const slot of RESULT_SCREENSHOT_SLOTS) {
         const file = resultScreenshots[slot.key];
-        if (!file) throw new Error(`Missing screenshot: ${slot.label}`);
+        if (!file) {
+          if (finalsSubmissionOpen) continue;
+          throw new Error(`Missing screenshot: ${slot.label}`);
+        }
         const path = buildEvidencePath(fixture.id, sessionUserId, slot.key, file.name);
         const { error } = await supabase.storage.from('Assets').upload(path, file.file, {
           upsert: false,
