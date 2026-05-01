@@ -4,6 +4,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import {
   AdminPermissionError,
   clearFixtureScores,
+  listCompetitions,
   listFixtureIdsWithPlayerStats,
   listFixtures,
   listMissingPlayerStatsFixtures,
@@ -117,10 +118,41 @@ export default function AdminFixtures() {
     refetchInterval: 15_000,
   });
 
-  const seasonTwoId = useMemo(
-    () => (seasonsQuery.data || []).find((season) => season.slug === 'afl26-season-two')?.id || '',
-    [seasonsQuery.data],
-  );
+  const competitionsLookupQuery = useQuery({
+    queryKey: ['admin', 'competitions', 'lookup'],
+    queryFn: () => listCompetitions(''),
+    staleTime: 10 * 60_000,
+  });
+
+  const seasonTwoId = useMemo(() => {
+    const seasons = seasonsQuery.data || [];
+    const competitions = competitionsLookupQuery.data || [];
+
+    const bySlug = seasons.find((season) => String(season.slug || '').toLowerCase() === 'afl26-season-two');
+    if (bySlug?.id) return bySlug.id;
+
+    const afl26Competition = competitions.find((competition) => {
+      const slug = String(competition.slug || '').toLowerCase();
+      const name = String(competition.name || '').toLowerCase();
+      return slug === 'afl26' || slug.includes('afl26') || name.includes('afl 26') || name.includes('afl26');
+    });
+    if (afl26Competition?.season_id) return afl26Competition.season_id;
+
+    const byName = seasons.find((season) => {
+      const name = String(season.name || '').toLowerCase();
+      const slug = String(season.slug || '').toLowerCase();
+      return (
+        slug.includes('afl26') ||
+        name.includes('season two') ||
+        name.includes('season 2') ||
+        name.includes('afl 26') ||
+        name.includes('afl26')
+      );
+    });
+    if (byName?.id) return byName.id;
+
+    return seasons[0]?.id || '';
+  }, [seasonsQuery.data, competitionsLookupQuery.data]);
 
   const allRoundsOcrSeasonId = seasonId !== 'all' ? seasonId : seasonTwoId;
 
@@ -324,15 +356,30 @@ export default function AdminFixtures() {
 
   async function runAllRoundsPlayerStatsOcr() {
     if (!allRoundsOcrSeasonId) {
-      pushToast('Season Two is not configured yet, so OCR cannot run.', 'error');
+      pushToast('Could not resolve Season Two — open the season selector and pick a season.', 'error');
       return;
     }
 
-    const targets = (allRoundsMissingQuery.data || []).filter((fixture) => fixture.can_run_ocr);
+    const refreshed = await queryClient.fetchQuery({
+      queryKey: ['admin', 'missing-player-stats', allRoundsOcrSeasonId],
+      queryFn: () => listMissingPlayerStatsFixtures(allRoundsOcrSeasonId),
+    });
+
+    const allMissing = refreshed || [];
+    const targets = allMissing.filter((fixture) => fixture.can_run_ocr);
+
     if (!targets.length) {
-      pushToast('No submitted fixtures across rounds are ready for OCR.', 'info');
+      const blockedCount = allMissing.filter((fixture) => !fixture.can_run_ocr).length;
+      pushToast(
+        allMissing.length === 0
+          ? 'Every submitted fixture in Season Two already has player stats saved.'
+          : `No fixtures across rounds are ready for OCR (${blockedCount} blocked — usually missing screenshots).`,
+        'info',
+      );
       return;
     }
+
+    pushToast(`Starting AI extraction across ${targets.length} fixture(s)…`, 'info');
 
     setAllRoundsProgress({ done: 0, total: targets.length });
     let successCount = 0;
@@ -462,18 +509,14 @@ export default function AdminFixtures() {
             disabled={
               !allRoundsOcrSeasonId ||
               allRoundsProgress !== null ||
-              runningRound !== null ||
-              allRoundsMissingQuery.isLoading ||
-              allRoundsRunnableCount === 0
+              runningRound !== null
             }
             title={
               !allRoundsOcrSeasonId
-                ? 'Season Two is not configured yet'
-                : allRoundsRunnableCount === 0
-                  ? 'No submitted fixtures are ready for OCR'
-                  : seasonId === 'all'
-                    ? 'Run AI extraction on every uploaded player-stats photo across all rounds (defaults to Season Two)'
-                    : 'Run AI extraction on every uploaded player-stats photo across all rounds in the selected season'
+                ? 'Could not resolve Season Two — open the season selector and pick a season'
+                : seasonId === 'all'
+                  ? 'Run AI extraction on every uploaded player-stats photo across all rounds (defaults to Season Two)'
+                  : 'Run AI extraction on every uploaded player-stats photo across all rounds in the selected season'
             }
             style={{ marginLeft: 'auto' }}
           >
