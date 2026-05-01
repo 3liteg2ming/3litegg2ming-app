@@ -222,6 +222,7 @@ export default function FinalsBracket({ fixtures, seasonId = 'finals' }: Props) 
                 winChance={cell.homeWinChance}
                 total={cell.homeTotal}
                 isWinner={isFinal && (cell.homeTotal ?? 0) > (cell.awayTotal ?? 0)}
+                isLoser={isFinal && (cell.homeTotal ?? 0) < (cell.awayTotal ?? 0)}
               />
               <BracketSide
                 side="away"
@@ -232,6 +233,7 @@ export default function FinalsBracket({ fixtures, seasonId = 'finals' }: Props) 
                 winChance={cell.awayWinChance}
                 total={cell.awayTotal}
                 isWinner={isFinal && (cell.awayTotal ?? 0) > (cell.homeTotal ?? 0)}
+                isLoser={isFinal && (cell.awayTotal ?? 0) < (cell.homeTotal ?? 0)}
               />
             </button>
           );
@@ -287,13 +289,14 @@ function BracketSide(props: {
   winChance?: number;
   total?: number | null;
   isWinner?: boolean;
+  isLoser?: boolean;
 }) {
-  const { teamKey, teamName, placeholder, seed, winChance, total, isWinner } = props;
+  const { teamKey, teamName, placeholder, seed, winChance, total, isWinner, isLoser } = props;
   const asset = teamKey ? TEAM_ASSETS[teamKey] : null;
   const logo = asset?.logoPath ? assetUrl(asset.logoPath) : '';
 
   return (
-    <div className={`finalsBracket__side ${isWinner ? 'is-winner' : ''}`}>
+    <div className={`finalsBracket__side ${isWinner ? 'is-winner' : ''} ${isLoser ? 'is-loser' : ''}`}>
       {seed != null ? <span className="finalsBracket__seed">{seed}</span> : null}
       {logo ? (
         <SmartImg src={logo} alt={teamName || ''} className="finalsBracket__logo" />
