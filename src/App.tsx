@@ -66,6 +66,8 @@ const PreseasonPage = lazy(() => import('./pages/PreseasonPage'));
 const PreseasonRegistrationPage = lazy(() => import('./pages/PreseasonRegistrationPage'));
 const AdminConsolePage = lazy(() => import('./pages/AdminConsolePage'));
 
+const PlayerModePage = lazy(() => import('./pages/player-mode/index'));
+
 const AdminGate = lazy(() => import('./routes/admin/AdminGate'));
 const AdminLayout = lazy(() => import('./routes/admin/AdminLayout'));
 const AdminDashboard = lazy(() => import('./routes/admin/pages/AdminDashboard'));
@@ -139,10 +141,11 @@ function AppRoutes() {
   const [globalCrash, setGlobalCrash] = useState<{ message: string; source: string } | null>(null);
 
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isPlayerMode = location.pathname === '/player-mode';
   const HIDE_NAV = false;
 
-  const hideNav = HIDE_NAV;
-  const hideTopHeader = isAdminRoute;
+  const hideNav = HIDE_NAV || isPlayerMode;
+  const hideTopHeader = isAdminRoute || isPlayerMode;
 
   const [navHidden, setNavHidden] = useState(false);
   const navHiddenRef = useRef(false);
@@ -332,6 +335,16 @@ function AppRoutes() {
                 <Route path="/match-centre/:fixtureId" element={<MatchCentrePage />} />
 
                 <Route path="/coming-soon" element={<ComingSoonPage />} />
+
+                <Route
+                  path="/player-mode"
+                  element={
+                    <ProtectedRoute>
+                      <PlayerModePage />
+                    </ProtectedRoute>
+                  }
+                />
+
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Suspense>
