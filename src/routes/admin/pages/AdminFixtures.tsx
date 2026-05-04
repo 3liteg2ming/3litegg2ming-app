@@ -13,6 +13,7 @@ import {
   swapFixtureTeams,
   updateFixture,
 } from '@/lib/adminApi';
+import { exportPlayerStatsPhotos } from '@/lib/adminPlayerStatsPhotoExport';
 import { runFixturePlayerStatsOcrWorkflow } from '@/lib/adminPlayerStatsOcrWorkflow';
 import { useAdminLayoutContext } from '../AdminLayout';
 import { formatDateTime, useDebouncedValue } from '../useAdminTools';
@@ -394,6 +395,35 @@ export default function AdminFixtures() {
     [missingPlayerStatsQuery.data],
   );
 
+  const [exportProgress, setExportProgress] = useState<{ done: number; total: number } | null>(null);
+
+  async function handleExportPhotos() {
+    if (exportProgress !== null) return;
+    setExportProgress({ done: 0, total: 0 });
+    try {
+      const result = await exportPlayerStatsPhotos({
+        seasonId: seasonId !== 'all' ? seasonId : undefined,
+        onProgress: (done, total) => setExportProgress({ done, total }),
+      });
+      if (result.total === 0) {
+        pushToast('No player-stat photos found for rounds 1–11.', 'info');
+      } else if (result.downloaded === 0) {
+        pushToast(`All ${result.total} photos failed to download. Check your connection and try again.`, 'error');
+      } else if (result.skipped > 0) {
+        pushToast(
+          `Downloaded ${result.downloaded} photo${result.downloaded !== 1 ? 's' : ''}. ${result.skipped} could not be fetched and were skipped.`,
+          'info',
+        );
+      } else {
+        pushToast(`Downloaded ${result.downloaded} player-stat photo${result.downloaded !== 1 ? 's' : ''} as ZIP.`, 'success');
+      }
+    } catch (error) {
+      pushToast(error instanceof Error ? error.message : 'Export failed.', 'error');
+    } finally {
+      setExportProgress(null);
+    }
+  }
+
   return (
     <div className="eg-admin-grid">
       <AdminCard title="Fixtures & Results" subtitle="Tap any fixture to edit scores, stats, and data">
@@ -474,6 +504,19 @@ export default function AdminFixtures() {
             title={seasonId === 'all' ? 'Select a season first' : 'Seed Finals Week 1 from current ladder'}
           >
             {seedingFinals ? 'Seeding…' : 'Seed Finals Week 1'}
+          </button>
+          <button
+            type="button"
+            className="eg-fx-clear-btn"
+            onClick={() => void handleExportPhotos()}
+            disabled={exportProgress !== null}
+            title="Download all player-stat photos for rounds 1–11 as a ZIP file"
+          >
+            {exportProgress !== null
+              ? exportProgress.total > 0
+                ? `Downloading ${exportProgress.done} of ${exportProgress.total}…`
+                : 'Preparing…'
+              : 'Download Player Stats Photos'}
           </button>
         </div>
         {seedNotice ? (
