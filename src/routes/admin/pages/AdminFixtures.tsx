@@ -15,6 +15,7 @@ import {
 } from '@/lib/adminApi';
 import { exportPlayerStatsPhotos } from '@/lib/adminPlayerStatsPhotoExport';
 import { runFixturePlayerStatsOcrWorkflow } from '@/lib/adminPlayerStatsOcrWorkflow';
+import { buildRoundOcrTemplate } from '@/lib/adminRoundOcrTemplate';
 import { useAdminLayoutContext } from '../AdminLayout';
 import { formatDateTime, useDebouncedValue } from '../useAdminTools';
 import { AdminCard, EmptyState } from './AdminUi';
@@ -35,6 +36,7 @@ export default function AdminFixtures() {
   const [runningRound, setRunningRound] = useState<number | null>(null);
   const [runningFixtureIds, setRunningFixtureIds] = useState<string[]>([]);
   const [allRoundsProgress, setAllRoundsProgress] = useState<{ done: number; total: number } | null>(null);
+  const [copyingTemplateRound, setCopyingTemplateRound] = useState<number | null>(null);
   const [seedingFinals, setSeedingFinals] = useState(false);
   const [seedNotice, setSeedNotice] = useState<{ type: 'info' | 'success' | 'error'; message: string } | null>(null);
 
@@ -219,6 +221,37 @@ export default function AdminFixtures() {
 
   function hasStats(f: typeof allFixtures[0]) {
     return f.home_total != null || f.away_total != null;
+  }
+
+  async function copyRoundJsonTemplate(round: number, fixturesInRound: typeof allFixtures) {
+    if (!fixturesInRound.length) {
+      pushToast(`No fixtures in Round ${round}.`, 'info');
+      return;
+    }
+    setCopyingTemplateRound(round);
+    try {
+      const result = await buildRoundOcrTemplate({
+        round,
+        fixtures: fixturesInRound,
+        teamMetaById,
+      });
+      if (!result.template.matchups.length) {
+        pushToast(`Round ${round} has no fixtures with both team slugs set.`, 'error');
+        return;
+      }
+      await navigator.clipboard.writeText(result.json);
+      const skippedNote = result.skipped.length
+        ? ` ${result.skipped.length} fixture${result.skipped.length === 1 ? '' : 's'} skipped (missing team slug).`
+        : '';
+      pushToast(
+        `Copied Round ${round} JSON template — ${result.template.matchups.length} matchup${result.template.matchups.length === 1 ? '' : 's'}.${skippedNote}`,
+        result.skipped.length ? 'info' : 'success',
+      );
+    } catch (error) {
+      pushToast(error instanceof Error ? error.message : `Failed to build Round ${round} template.`, 'error');
+    } finally {
+      setCopyingTemplateRound(null);
+    }
   }
 
   async function runRoundPlayerStatsOcr(round: number, fixturesInRound: typeof allFixtures) {
@@ -618,6 +651,15 @@ export default function AdminFixtures() {
                           {roundRunnableFixtures.length}/{roundMissingFixtures.length} OCR ready
                         </span>
                       ) : null}
+                      <button
+                        type="button"
+                        className="eg-fx-round-ocrBtn"
+                        disabled={copyingTemplateRound === round}
+                        onClick={() => void copyRoundJsonTemplate(round, fixtures)}
+                        title="Copy a JSON template covering every matchup in this round (paste into ChatGPT with screenshots)"
+                      >
+                        {copyingTemplateRound === round ? 'Copying…' : 'Copy Round JSON Template'}
+                      </button>
                       <button
                         type="button"
                         className="eg-fx-round-ocrBtn"
